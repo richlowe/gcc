@@ -909,6 +909,7 @@ static tree ix86_md_asm_clobbers (tree outputs, tree inputs, tree clobbers);
 static bool ix86_must_pass_in_stack (enum machine_mode mode, tree type);
 static bool ix86_pass_by_reference (CUMULATIVE_ARGS *, enum machine_mode,
 				    tree, bool);
+static int ix86_nsaved_args (void);
 static void ix86_init_builtins (void);
 static rtx ix86_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
 static const char *ix86_mangle_fundamental_type (tree);
@@ -1408,7 +1409,8 @@ override_options (void)
 	      error ("CPU you selected does not support x86-64 "
 		     "instruction set");
 	  }
-        /* Intel CPUs have always interpreted SSE prefetch instructions as
+
+	/* Intel CPUs have always interpreted SSE prefetch instructions as
 	   NOPs; so, we can enable SSE prefetch instructions even when
 	   -mtune (rather than -march) points us to a processor that has them.
 	   However, the VIA C3 gives a SIGILL, so we only do that for i686 and
