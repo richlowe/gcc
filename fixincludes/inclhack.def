@@ -3314,7 +3314,6 @@ fix = {
     test_text = "";
 };
 
-
 /*
  *  Don't use or define the name va_list in stdio.h.  This is for
  *  ANSI.  Note _BSD_VA_LIST_ is dealt with elsewhere.  The presence
@@ -3415,7 +3414,6 @@ fix = {
           "s@_Va_LIST@_VA_LIST@";
     test_text = "extern void mumble( va_list);";
 };
-
 
 /*
  *  "!__STDC__" or "__STDC__==0" or "__STDC__!=1" or "__STDC__-0==0"
@@ -4531,7 +4529,6 @@ fix = {
     "\tgetgroups(),\n"
     "\tfork(),\n";
 };
-
 
 /*
  * On Cray Unicos/Mk some standard headers use the C99 keyword "restrict"
