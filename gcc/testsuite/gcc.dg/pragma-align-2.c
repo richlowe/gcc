@@ -25,9 +25,9 @@ void abort (void);
 #pragma align bad_align		/* { dg-warning "malformed" } */
 #pragma align 1(bad_align	/* { dg-warning "malformed" } */
 
-int x, x1, x2, x4, x8, y8, z8, x16, x32, x64, x128, y128, z128;
+int x1, x2, x4, x8, y8, z8, x16, y16, x32, x64, x128, y128, z128;
 
-#pragma align 16(x)		/* { dg-warning "must appear before" } */
+#pragma align 16(y16)
 
 int
 main ()
@@ -45,6 +45,9 @@ main ()
     abort ();
 
   if (__alignof__ (x16) < 16)
+    abort ();
+
+  if (__alignof__ (y16) < 16)
     abort ();
 
   if (__alignof__ (x32) < 32)

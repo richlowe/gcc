@@ -90,7 +90,7 @@ solaris_pragma_align (cpp_reader *pfile ATTRIBUTE_UNUSED)
   if (pragma_lex (&x) != CPP_NUMBER
       || pragma_lex (&t) != CPP_OPEN_PAREN)
     {
-      warning (0, "malformed %<#pragma align%>, ignoring");
+      warning (0, "malformed '#pragma align', ignoring");
       return;
     }
 
@@ -99,14 +99,14 @@ solaris_pragma_align (cpp_reader *pfile ATTRIBUTE_UNUSED)
       || (low != 1 && low != 2 && low != 4 && low != 8 && low != 16
 	  && low != 32 && low != 64 && low != 128))
     {
-      warning (0, "invalid alignment for %<#pragma align%>, ignoring");
+      warning (0, "invalid alignment for '#pragma align', ignoring");
       return;
     }
 
   ttype = pragma_lex (&t);
   if (ttype != CPP_NAME)
     {
-      warning (0, "malformed %<#pragma align%>, ignoring");
+      warning (0, "malformed '#pragma align', ignoring");
       return;
     }
 
@@ -114,8 +114,9 @@ solaris_pragma_align (cpp_reader *pfile ATTRIBUTE_UNUSED)
     {
       tree decl = identifier_global_value (t);
       if (decl && DECL_P (decl))
-	warning (0, "%<#pragma align%> must appear before the declaration of "
-		 "%D, ignoring", decl);
+	decl_attributes (&decl, build_tree_list (get_identifier ("aligned"),
+						   build_tree_list (NULL, x)),
+			   0);
       else
 	solaris_pending_aligns = tree_cons (t, build_tree_list (NULL, x),
 					    solaris_pending_aligns);
@@ -126,19 +127,19 @@ solaris_pragma_align (cpp_reader *pfile ATTRIBUTE_UNUSED)
 	  ttype = pragma_lex (&t);
 	  if (ttype != CPP_NAME)
 	    {
-	      warning (0, "malformed %<#pragma align%>");
+	      warning (0, "malformed '#pragma align'");
 	      return;
 	    }
 	}
       else if (ttype == CPP_CLOSE_PAREN)
 	{
 	  if (pragma_lex (&t) != CPP_EOF)
-	    warning (0, "junk at end of %<#pragma align%>");
+	    warning (0, "junk at end of '#pragma align'");
 	  return;
 	}
       else
 	{
-	  warning (0, "malformed %<#pragma align%>");
+	  warning (0, "malformed '#pragma align'");
 	  return;
 	}
     }
@@ -154,21 +155,21 @@ solaris_pragma_init (cpp_reader *pfile ATTRIBUTE_UNUSED)
 
   if (pragma_lex (&t) != CPP_OPEN_PAREN)
     {
-      warning (0, "malformed %<#pragma init%>, ignoring");
+      warning (0, "malformed '#pragma init', ignoring");
       return;
     }
 
   ttype = pragma_lex (&t);
   if (ttype != CPP_NAME)
     {
-      warning (0, "malformed %<#pragma init%>, ignoring");
+      warning (0, "malformed '#pragma init', ignoring");
       return;
     }
 
   while (1)
     {
       tree decl = identifier_global_value (t);
-      if (decl && DECL_P (decl))
+      if (decl && TREE_CODE_CLASS (TREE_CODE (decl)) == 'd')
 	{
 	  tree init_list = build_tree_list (get_identifier ("init"),
 					    NULL);
@@ -184,19 +185,19 @@ solaris_pragma_init (cpp_reader *pfile ATTRIBUTE_UNUSED)
 	  ttype = pragma_lex (&t);
 	  if (ttype != CPP_NAME)
 	    {
-	      warning (0, "malformed %<#pragma init%>");
+	      warning (0, "malformed '#pragma init'");
 	      return;
 	    }
 	}
       else if (ttype == CPP_CLOSE_PAREN)
 	{
 	  if (pragma_lex (&t) != CPP_EOF)
-	    warning (0, "junk at end of %<#pragma init%>");
+	    warning (0, "junk at end of '#pragma init'");
 	  return;
 	}
       else
 	{
-	  warning (0, "malformed %<#pragma init%>");
+	  warning (0, "malformed '#pragma init'");
 	  return;
 	}
     }
@@ -212,21 +213,21 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
 
   if (pragma_lex (&t) != CPP_OPEN_PAREN)
     {
-      warning (0, "malformed %<#pragma fini%>, ignoring");
+      warning (0, "malformed '#pragma fini', ignoring");
       return;
     }
 
   ttype = pragma_lex (&t);
   if (ttype != CPP_NAME)
     {
-      warning (0, "malformed %<#pragma fini%>, ignoring");
+      warning (0, "malformed '#pragma fini', ignoring");
       return;
     }
 
   while (1)
     {
       tree decl = identifier_global_value (t);
-      if (decl && DECL_P (decl))
+      if (decl && TREE_CODE_CLASS (TREE_CODE (decl)) == 'd')
 	{
 	  tree fini_list = build_tree_list (get_identifier ("fini"),
 					    NULL);
@@ -242,19 +243,19 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
 	  ttype = pragma_lex (&t);
 	  if (ttype != CPP_NAME)
 	    {
-	      warning (0, "malformed %<#pragma fini%>");
+	      warning (0, "malformed '#pragma fini'");
 	      return;
 	    }
 	}
       else if (ttype == CPP_CLOSE_PAREN)
 	{
 	  if (pragma_lex (&t) != CPP_EOF)
-	    warning (0, "junk at end of %<#pragma fini%>");
+	    warning (0, "junk at end of '#pragma fini'");
 	  return;
 	}
       else
 	{
-	  warning (0, "malformed %<#pragma fini%>");
+	  warning (0, "malformed '#pragma fini'");
 	  return;
 	}
     }
