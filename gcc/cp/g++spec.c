@@ -58,6 +58,9 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
   /* If nonzero, the user gave us the `-v' flag.  */
   int saw_verbose_flag = 0;
 
+  /* If nonzero, the user gave us the '-m64' flag.  */
+  int saw_m64_flag = 0;
+
   /* This is a tristate:
      -1 means we should not link in libstdc++
      0  means we should link in libstdc++ if it is needed
@@ -195,6 +198,10 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
 	    shared_libgcc = 0;
 	  else if (DEFAULT_WORD_SWITCH_TAKES_ARG (&argv[i][1]))
 	    i++;
+	  else if (strcmp (argv[i], "-m64") == 0)
+	    saw_m64_flag = 1;
+	  else if (strcmp (argv[i], "-m32") == 0)
+	    saw_m64_flag = 0;
 	  else
 	    /* Pass other options through.  */
 	    continue;
@@ -251,7 +258,7 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
 #endif
 
   /* Make sure to have room for the trailing NULL argument.  */
-  num_args = argc + added + need_math + shared_libgcc + (library > 0) + 1;
+  num_args = argc + added + need_math + shared_libgcc + 2 * (library > 0) + 1;
   arglist = xmalloc (num_args * sizeof (char *));
 
   i = 0;
@@ -309,6 +316,9 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
   /* Add `-lstdc++' if we haven't already done so.  */
   if (library > 0)
     {
+      arglist[j++] = saw_m64_flag
+	? "-R" LIBDIR "/amd64"
+	: "-R" LIBDIR;
       arglist[j] = saw_profile_flag ? LIBSTDCXX_PROFILE : LIBSTDCXX;
       if (arglist[j][0] != '-' || arglist[j][1] == 'l')
 	added_libraries++;
