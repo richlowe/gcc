@@ -17,6 +17,7 @@ int main()
   int i = 1;
   long l = 2;
   llong ll = 3;
+  float f = 4.0;
 
   cmn_err_func (0, "%s", string);
   cmn_err_func (0, "%d %D %o %O %x %X %u", i, i, i, i, i, i, i);
@@ -26,6 +27,7 @@ int main()
   cmn_err_func (0, "%b %s", i, "\01Foo", string);
   cmn_err_func (0, "%p", string);
   cmn_err_func (0, "%16b", i, "\01Foo");
+  cmn_err_func (0, "%#x", i);
 
   cmn_err_func (0, "%i", i);		/* { dg-error "unknown|too many" } */
   cmn_err_func (0, "%d", l);		/* { dg-error "expects type" } */
@@ -34,5 +36,6 @@ int main()
   cmn_err_func (0, "%b", i, i);		/* { dg-error "expects type" } */
   cmn_err_func (0, "%b", string, i);	/* { dg-error "expects type" } */
   cmn_err_func (0, "%p", 3);            /* { dg-error "expects type" } */
+  cmn_err_func (0, "%#x", f);           /* { dg-error "double arg" } */
   return 0;
 }
