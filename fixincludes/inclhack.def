@@ -3346,6 +3346,21 @@ fix = {
      */
     select    = '\(\*[a-z][a-z_]*\)\(\)';
 
+    /* Solaris 2.8 and above (and perhaps earlier versions) do not
+       need these fixes.  The unprototyped declarations in these files
+       are only visible if __STDC__ is not defined.  This test looks
+       for a #pragma ident directives with particular versions, since
+       we know those versions are OK.  (Earlier versions may also be
+       OK, but we do not know that.)  */
+    /* For rpc/auth.h, 1.43 or better is OK.  */
+    bypass    = "pragma ident.*auth.*(1\.4[3-9]|1\.[5-9][0-9]).*SMI";
+    /* For rpc/clnt.h, 1.60 or better is OK.  */
+    bypass    = "pragma ident.*clnt.*1\.[6-9][0-9].*SMI";
+    /* For rpc/svc.h, 1.69 or better is OK.  */
+    bypass    = "pragma ident.*svc.*(1\.69|1\.[7-9][0-9]).*SMI";
+    /* For rpc/xdr.h, 1.45 or better is OK.  */
+    bypass    = "pragma ident.*xdr.*(1\.4[5-9]|1\.[5-9][0-9]).*SMI";
+
     c_fix     = format;
     c_fix_arg = "#ifdef __cplusplus\n%1(...);%2\n"
                 "#else\n%1();%2\n#endif";
