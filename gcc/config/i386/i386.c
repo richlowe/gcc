@@ -2869,7 +2869,8 @@ override_options (bool main_args_p)
 	      error ("CPU you selected does not support x86-64 "
 		     "instruction set");
 	  }
-        /* Intel CPUs have always interpreted SSE prefetch instructions as
+
+	/* Intel CPUs have always interpreted SSE prefetch instructions as
 	   NOPs; so, we can enable SSE prefetch instructions even when
 	   -mtune (rather than -march) points us to a processor that has them.
 	   However, the VIA C3 gives a SIGILL, so we only do that for i686 and
