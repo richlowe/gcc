@@ -5412,6 +5412,9 @@ assemble_alias (tree decl, tree target)
 #endif
     }
 
+  if (TREE_ASM_WRITTEN (decl))
+    return;
+
   /* We must force creation of DECL_RTL for debug info generation, even though
      we don't use it here.  */
   make_decl_rtl (decl);
