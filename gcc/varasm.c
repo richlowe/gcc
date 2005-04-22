@@ -5871,6 +5871,10 @@ assemble_alias (tree decl, tree target)
 # endif
 #endif
     }
+
+  if (TREE_ASM_WRITTEN (decl))
+    return;
+
   TREE_USED (decl) = 1;
 
   /* Allow aliases to aliases.  */
