@@ -301,6 +301,7 @@ Objective-C and Objective-C++ Dialects}.
 -ftree-vectorizer-verbose=@var{n} @gol
 -fdump-tree-storeccp@r{[}-@var{n}@r{]} @gol
 -feliminate-dwarf2-dups -feliminate-unused-debug-types @gol
+-fdwarf2-indirect-strings @gol
 -feliminate-unused-debug-symbols -femit-class-debug-always @gol
 -fmem-report -fpre-ipa-mem-report -fpost-ipa-mem-report -fprofile-arcs @gol
 -frandom-seed=@var{string} -fsched-verbose=@var{n} @gol
@@ -4420,6 +4421,14 @@ information describing them as in @file{@var{new}} instead.
 @opindex fno-dwarf2-cfi-asm
 Emit DWARF 2 unwind info as compiler generated @code{.eh_frame} section
 instead of using GAS @code{.cfi_*} directives.
+
+@item -fdwarf2-indirect-strings
+@opindex fdwarf2-indirect-strings
+Enable use of @code{DW_FORM_strp} for strings in DWARF2 debugging
+information.  This is on by default.  To output strings using
+@code{DW_FORM_string} only, use
+@option{-fno-dwarf2-indirect-strings}.  This option only makes sense
+when generating DWARF2 debugging information with @option{-gdwarf-2}.
 
 @cindex @command{prof}
 @item -p
