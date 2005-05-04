@@ -344,6 +344,10 @@ fdump-unnumbered
 Common Report Var(flag_dump_unnumbered) VarExists
 Suppress output of instruction numbers and line number notes in debugging dumps
 
+fdwarf2-indirect-strings
+Common Report Var(flag_dwarf2_indirect_strings) Init(1)
+Enable use of indirect strings in DWARF2 debug info
+
 feliminate-dwarf2-dups
 Common Report Var(flag_eliminate_dwarf2_dups)
 Perform DWARF2 duplicate elimination
