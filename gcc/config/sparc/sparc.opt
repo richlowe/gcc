@@ -38,6 +38,10 @@ mimpure-text
 Target Report
 Pass -assert pure-text to linker
 
+mno-integer-ldd-std
+Target Report RejectNegative Mask(NO_INTEGER_LDD_STD)
+Utilize integer ldd and std
+
 mapp-regs
 Target Report Mask(APP_REGS)
 Use ABI reserved registers

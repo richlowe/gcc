@@ -790,7 +790,8 @@ See RS/6000 and PowerPC Options.
 -mfaster-structs  -mno-faster-structs @gol
 -mfpu  -mno-fpu  -mhard-float  -msoft-float @gol
 -mhard-quad-float  -msoft-quad-float @gol
--mimpure-text  -mno-impure-text  -mlittle-endian @gol
+-mimpure-text  -mno-impure-text @gol
+-mno-integer-ldd-std -mlittle-endian @gol
 -mstack-bias  -mno-stack-bias @gol
 -munaligned-doubles  -mno-unaligned-doubles @gol
 -mv8plus  -mno-v8plus  -mvis  -mno-vis
@@ -15125,6 +15126,13 @@ mode for all SPARC-V9 processors.
 @opindex mno-vis
 With @option{-mvis}, GCC generates code that takes advantage of the UltraSPARC
 Visual Instruction Set extensions.  The default is @option{-mno-vis}.
+
+@item -mno-integer-ldd-std
+@opindex mno-integer-ldd-std
+With @option{-mno-integer-ldd-std}, GCC does not use the @code{ldd}
+and @code{std} instructions for integer operands in 32-bit mode.  This
+is for use with legacy code using 64-bit quantities which are not
+64-bit aligned.
 @end table
 
 These @samp{-m} options are supported in addition to the above

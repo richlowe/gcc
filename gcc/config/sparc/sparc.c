@@ -38,7 +38,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "insn-attr.h"
 #include "flags.h"
 #include "function.h"
-#include "expr.h"
+#include "expr.h"l
 #include "optabs.h"
 #include "recog.h"
 #include "toplev.h"
@@ -2989,6 +2989,9 @@ legitimate_address_p (enum machine_mode mode, rtx addr, int strict)
 	  if (TARGET_ARCH32 && !optimize
 	      && (mode == DFmode || mode == DImode))
 	    return 0;
+          if (TARGET_ARCH32 && TARGET_NO_INTEGER_LDD_STD
+              && mode == DImode)
+              return 0;
 	}
       else if (USE_AS_OFFSETABLE_LO10
 	       && GET_CODE (rs1) == LO_SUM
@@ -6577,7 +6580,8 @@ sparc_splitdi_legitimate (rtx reg, rtx mem)
 
   /* If we have legitimate args for ldd/std, we do not want
      the split to happen.  */
-  if ((REGNO (reg) % 2) == 0
+  if (!TARGET_NO_INTEGER_LDD_STD
+      && (REGNO (reg) % 2) == 0
       && mem_min_alignment (mem, 8))
     return 0;
 
