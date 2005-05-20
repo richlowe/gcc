@@ -128,7 +128,7 @@ solaris_pragma_align (cpp_reader *pfile ATTRIBUTE_UNUSED)
 	  ttype = pragma_lex (&t);
 	  if (ttype != CPP_NAME)
 	    {
-              warning (0, "malformed '#pragma align'");
+	      warning (0, "malformed '#pragma align'");
 	      return;
 	    }
 	}
