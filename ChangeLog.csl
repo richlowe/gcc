@@ -1,3 +1,15 @@
+2005-05-20  Joseph S. Myers  <joseph@codesourcery.com>
+
+	* gcc/common.opt (fconstant-pools): New.
+	* gcc/doc/invoke.texi (-fno-constant-pools): Document.
+	* gcc/flags.h (flag_constant_pools): New.
+	* gcc/opts.c (common_handle_option): Handle OPT_fconstant_pools.
+	* gcc/toplev.c (flag_constant_pools): New.
+	* gcc/varasm.c (force_const_mem): Return NULL_RTX for
+	-fno-constant-pools.
+	* gcc/reload.c (find_reloads): Do not try reloading a constant
+	from a constant pool if -fno-constant-pools.
+
 2005-05-05  Michael Pogue  <michael.pogue@sun.com>
             Joseph S. Myers  <joseph@codesourcery.com>
 
