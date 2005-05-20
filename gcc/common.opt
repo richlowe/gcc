@@ -294,6 +294,10 @@ fcommon
 Common Report Var(flag_no_common,0)
 Do not put uninitialized globals in the common section
 
+fconstant-pools
+Common Report Var(flag_constant_pools) Init(1)
+Put constants in pools in read-only memory if convenient
+
 fcprop-registers
 Common Report Var(flag_cprop_registers)
 Perform a register copy-propagation optimization pass
