@@ -1638,8 +1638,12 @@ struct stack_local_entry GTY(())
 
    saved frame pointer if frame_pointer_needed
 					      <- HARD_FRAME_POINTER
-   [saved regs]
+   [-msave-args]
 
+   [padding0]          \
+			)
+   [saved regs]        /
+		      (
    [padding1]          \
 		        )
    [va_arg registers]  (
@@ -1650,6 +1654,8 @@ struct stack_local_entry GTY(())
   */
 struct ix86_frame
 {
+  int nmsave_args;
+  int padding0;
   int nregs;
   int padding1;
   int va_arg_size;
@@ -1712,6 +1718,8 @@ int internal_label_prefix_len;
 
 /* Fence to use after loop using movnt.  */
 tree x86_mfence;
+
+static int ix86_nsaved_args (void);
 
 /* Register class used for passing given 64bit part of the argument.
    These represent classes as documented by the PS ABI, with the exception
@@ -2611,6 +2619,9 @@ override_options (void)
   /* Turn on popcnt instruction for -msse4.2 or -mabm.  */
   if (TARGET_SSE4_2 || TARGET_ABM)
     x86_popcnt = true;
+
+  if (!TARGET_64BIT && TARGET_SAVE_ARGS)
+      error ("-msave-args makes no sense in the 32-bit mode");
 
   /* Validate -mpreferred-stack-boundary= value, or provide default.
      The default of 128 bits is for Pentium III's SSE __m128.  We can't
@@ -5685,7 +5696,7 @@ ix86_can_use_return_insn_p (void)
     return 0;
 
   ix86_compute_frame_layout (&frame);
-  return frame.to_allocate == 0 && frame.nregs == 0;
+  return frame.to_allocate == 0 && frame.nregs == 0 && frame.nmsave_args == 0;;
 }
 
 /* Value should be nonzero if functions must have frame pointers.
@@ -5704,6 +5715,9 @@ ix86_frame_pointer_required (void)
      usually pertaining to setjmp.  */
   if (SUBTARGET_FRAME_POINTER_REQUIRED)
     return 1;
+
+  if (TARGET_SAVE_ARGS)
+    return 1;  
 
   /* In override_options, TARGET_OMIT_LEAF_FRAME_POINTER turns off
      the frame pointer by default.  Turn it back on now if we've not
@@ -6017,6 +6031,7 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
   HOST_WIDE_INT size = get_frame_size ();
 
   frame->nregs = ix86_nsaved_regs ();
+  frame->nmsave_args = ix86_nsaved_args ();
   total_size = size;
 
   stack_alignment_needed = cfun->stack_alignment_needed / BITS_PER_UNIT;
@@ -6058,6 +6073,11 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
   else
     frame->save_regs_using_mov = false;
 
+  if (TARGET_SAVE_ARGS)
+    {
+      cfun->machine->use_fast_prologue_epilogue = true;
+      frame->save_regs_using_mov = true;
+    }
 
   /* Skip return address and saved base pointer.  */
   offset = frame_pointer_needed ? UNITS_PER_WORD * 2 : UNITS_PER_WORD;
@@ -6076,6 +6096,16 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
 
   if (stack_alignment_needed < STACK_BOUNDARY / BITS_PER_UNIT)
     stack_alignment_needed = STACK_BOUNDARY / BITS_PER_UNIT;
+
+  /* Argument save area */
+  if (TARGET_SAVE_ARGS)
+    {
+      offset += frame->nmsave_args * UNITS_PER_WORD;
+      frame->padding0 = (frame->nmsave_args % 2) * UNITS_PER_WORD;
+      offset += frame->padding0;
+    }
+  else
+    frame->padding0 = 0;
 
   /* Register save area */
   offset += frame->nregs * UNITS_PER_WORD;
@@ -6134,8 +6164,10 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
     (size + frame->padding1 + frame->padding2
      + frame->outgoing_arguments_size + frame->va_arg_size);
 
-  if ((!frame->to_allocate && frame->nregs <= 1)
-      || (TARGET_64BIT && frame->to_allocate >= (HOST_WIDE_INT) 0x80000000))
+  if (!TARGET_SAVE_ARGS
+      && ((!frame->to_allocate && frame->nregs <= 1)
+	  || (TARGET_64BIT
+	      && frame->to_allocate >= (HOST_WIDE_INT) 0x80000000)))
     frame->save_regs_using_mov = false;
 
   if (TARGET_RED_ZONE && current_function_sp_is_unchanging
@@ -6144,7 +6176,11 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
     {
       frame->red_zone_size = frame->to_allocate;
       if (frame->save_regs_using_mov)
-	frame->red_zone_size += frame->nregs * UNITS_PER_WORD;
+	{
+	  frame->red_zone_size
+	    += (frame->nregs + frame->nmsave_args) * UNITS_PER_WORD;
+	  frame->red_zone_size += frame->padding0;
+	}
       if (frame->red_zone_size > RED_ZONE_SIZE - RED_ZONE_RESERVE)
 	frame->red_zone_size = RED_ZONE_SIZE - RED_ZONE_RESERVE;
     }
@@ -6154,6 +6190,8 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
   frame->stack_pointer_offset -= frame->red_zone_size;
 #if 0
   fprintf (stderr, "\n");
+  fprintf (stderr, "nmsave_args: %ld\n", (long)frame->nmsave_args);
+  fprintf (stderr, "padding0: %ld\n", (long)frame->padding0);
   fprintf (stderr, "nregs: %ld\n", (long)frame->nregs);
   fprintf (stderr, "size: %ld\n", (long)size);
   fprintf (stderr, "alignment1: %ld\n", (long)stack_alignment_needed);
@@ -6170,41 +6208,6 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
   fprintf (stderr, "current_function_calls_alloca: %ld\n", (long)current_function_calls_alloca);
   fprintf (stderr, "x86_current_function_calls_tls_descriptor: %ld\n", (long)ix86_current_function_calls_tls_descriptor);
 #endif
-}
-
-/* Emit code to save registers in the prologue.  */
-
-static void
-ix86_emit_save_regs (void)
-{
-  unsigned int regno;
-  rtx insn;
-
-  for (regno = FIRST_PSEUDO_REGISTER; regno-- > 0; )
-    if (ix86_save_reg (regno, true))
-      {
-	insn = emit_insn (gen_push (gen_rtx_REG (Pmode, regno)));
-	RTX_FRAME_RELATED_P (insn) = 1;
-      }
-}
-
-/* Emit code to save registers using MOV insns.  First register
-   is restored from POINTER + OFFSET.  */
-static void
-ix86_emit_save_regs_using_mov (rtx pointer, HOST_WIDE_INT offset)
-{
-  unsigned int regno;
-  rtx insn;
-
-  for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-    if (ix86_save_reg (regno, true))
-      {
-	insn = emit_move_insn (adjust_address (gen_rtx_MEM (Pmode, pointer),
-					       Pmode, offset),
-			       gen_rtx_REG (Pmode, regno));
-	RTX_FRAME_RELATED_P (insn) = 1;
-	offset += UNITS_PER_WORD;
-      }
 }
 
 /* Expand prologue or epilogue stack adjustment.
@@ -6239,6 +6242,77 @@ pro_epilogue_adjust_stack (rtx dest, rtx src, rtx offset, int style)
     }
   if (style < 0)
     RTX_FRAME_RELATED_P (insn) = 1;
+}
+
+
+
+/* Emit code to save registers in the prologue.  */
+
+static void
+ix86_emit_save_regs (void)
+{
+  unsigned int regno;
+  rtx insn;
+
+  if (TARGET_SAVE_ARGS)
+    {
+      int i;
+      int nsaved = ix86_nsaved_args ();
+      int start = current_function_returns_struct;
+      for (i = start; i < start + nsaved; i++)
+	{
+	  regno = x86_64_int_parameter_registers[i];
+	  insn = emit_insn (gen_push (gen_rtx_REG (Pmode, regno)));
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	}
+      if (nsaved % 2 != 0)
+	pro_epilogue_adjust_stack (stack_pointer_rtx, stack_pointer_rtx,
+				   GEN_INT (-UNITS_PER_WORD), -1);
+    }
+
+  for (regno = FIRST_PSEUDO_REGISTER; regno-- > 0; )
+    if (ix86_save_reg (regno, true))
+      {
+	insn = emit_insn (gen_push (gen_rtx_REG (Pmode, regno)));
+	RTX_FRAME_RELATED_P (insn) = 1;
+      }
+}
+
+/* Emit code to save registers using MOV insns.  First register
+   is restored from POINTER + OFFSET.  */
+static void
+ix86_emit_save_regs_using_mov (rtx pointer, HOST_WIDE_INT offset)
+{
+  unsigned int regno;
+  rtx insn;
+
+  for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
+    if (ix86_save_reg (regno, true))
+      {
+	insn = emit_move_insn (adjust_address (gen_rtx_MEM (Pmode, pointer),
+					       Pmode, offset),
+			       gen_rtx_REG (Pmode, regno));
+	RTX_FRAME_RELATED_P (insn) = 1;
+	offset += UNITS_PER_WORD;
+      }
+
+  if (TARGET_SAVE_ARGS)
+    {
+      int i;
+      int nsaved = ix86_nsaved_args ();
+      int start = current_function_returns_struct;
+      if (nsaved % 2 != 0)
+	offset += UNITS_PER_WORD;
+      for (i = start + nsaved - 1; i >= start; i--)
+	{
+	  regno = x86_64_int_parameter_registers[i];
+	  insn = emit_move_insn (adjust_address (gen_rtx_MEM (Pmode, pointer),
+						 Pmode, offset),
+				 gen_rtx_REG (Pmode, regno));
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	  offset += UNITS_PER_WORD;
+	}
+    }
 }
 
 /* Handle the TARGET_INTERNAL_ARG_POINTER hook.  */
@@ -6374,7 +6448,8 @@ ix86_expand_prologue (void)
   if (!frame.save_regs_using_mov)
     ix86_emit_save_regs ();
   else
-    allocate += frame.nregs * UNITS_PER_WORD;
+    allocate += (frame.nregs + frame.nmsave_args) * UNITS_PER_WORD
+      + frame.padding0;
 
   /* When using red zone we may start register saving before allocating
      the stack frame saving one cycle of the prologue. However I will
@@ -6385,7 +6460,8 @@ ix86_expand_prologue (void)
       && (! TARGET_STACK_PROBE || allocate < CHECK_STACK_LIMIT))
     ix86_emit_save_regs_using_mov (frame_pointer_needed ? hard_frame_pointer_rtx
 				   : stack_pointer_rtx,
-				   -frame.nregs * UNITS_PER_WORD);
+				   -(frame.nregs + frame.nmsave_args)
+                                   * UNITS_PER_WORD - frame.padding0);
 
   if (allocate == 0)
     ;
@@ -6439,11 +6515,12 @@ ix86_expand_prologue (void)
       && !(TARGET_RED_ZONE
          && (! TARGET_STACK_PROBE || allocate < CHECK_STACK_LIMIT)))
     {
-      if (!frame_pointer_needed || !frame.to_allocate)
+      if (!TARGET_SAVE_ARGS && (!frame_pointer_needed || !frame.to_allocate))
         ix86_emit_save_regs_using_mov (stack_pointer_rtx, frame.to_allocate);
       else
         ix86_emit_save_regs_using_mov (hard_frame_pointer_rtx,
-				       -frame.nregs * UNITS_PER_WORD);
+				       -(frame.nregs + frame.nmsave_args)
+                                       * UNITS_PER_WORD - frame.padding0);
     }
 
   pic_reg_used = false;
@@ -6554,10 +6631,11 @@ ix86_expand_epilogue (int style)
      must be taken for the normal return case of a function using
      eh_return: the eax and edx registers are marked as saved, but not
      restored along this path.  */
-  offset = frame.nregs;
+  offset = frame.nregs + frame.nmsave_args;
   if (current_function_calls_eh_return && style != 2)
     offset -= 2;
   offset *= -UNITS_PER_WORD;
+  offset -= frame.padding0;
 
   /* If we're only restoring one register and sp is not valid then
      using a move instruction to restore the register since it's
@@ -6613,14 +6691,18 @@ ix86_expand_epilogue (int style)
 	    {
 	      tmp = gen_rtx_PLUS (Pmode, stack_pointer_rtx, sa);
 	      tmp = plus_constant (tmp, (frame.to_allocate
-                                         + frame.nregs * UNITS_PER_WORD));
+                                         + (frame.nregs + frame.nmsave_args)
+					   * UNITS_PER_WORD
+					 + frame.padding0));
 	      emit_insn (gen_rtx_SET (VOIDmode, stack_pointer_rtx, tmp));
 	    }
 	}
       else if (!frame_pointer_needed)
 	pro_epilogue_adjust_stack (stack_pointer_rtx, stack_pointer_rtx,
 				   GEN_INT (frame.to_allocate
-					    + frame.nregs * UNITS_PER_WORD),
+					    + (frame.nregs + frame.nmsave_args)
+					      * UNITS_PER_WORD
+					    + frame.padding0),
 				   style);
       /* If not an i386, mov & pop is faster than "leave".  */
       else if (TARGET_USE_LEAVE || optimize_size
@@ -6660,6 +6742,9 @@ ix86_expand_epilogue (int style)
 	    else
 	      emit_insn (gen_popsi1 (gen_rtx_REG (Pmode, regno)));
 	  }
+      pro_epilogue_adjust_stack (stack_pointer_rtx, stack_pointer_rtx,
+				 GEN_INT (frame.nmsave_args * UNITS_PER_WORD
+					  + frame.padding0), style);
       if (frame_pointer_needed)
 	{
 	  /* Leave results in shorter dependency chains on CPUs that are
@@ -7082,10 +7167,21 @@ constant_address_p (rtx x)
   return CONSTANT_P (x) && legitimate_address_p (Pmode, x, 1);
 }
 
+/* Return number of arguments to be saved on the stack with
+   -msave-args.  */
+
+static int
+ix86_nsaved_args (void)
+{
+  if (TARGET_SAVE_ARGS)
+    return current_function_args_info.regno - current_function_returns_struct;
+  else
+    return 0;
+}
+
 /* Nonzero if the constant value X is a legitimate general operand
    when generating PIC code.  It is given that flag_pic is on and
    that X satisfies CONSTANT_P or is a CONST_DOUBLE.  */
-
 bool
 legitimate_pic_operand_p (rtx x)
 {
