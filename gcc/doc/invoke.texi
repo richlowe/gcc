@@ -13973,6 +13973,10 @@ be statically or dynamically linked.
 @opindex mcmodel=large
 Generate code for the large model: This model makes no assumptions
 about addresses and sizes of sections.
+
+@item -msave-args
+@opindex msave-args
+Save integer arguments on the stack at function entry.
 @end table
 
 @node i386 and x86-64 Windows Options
