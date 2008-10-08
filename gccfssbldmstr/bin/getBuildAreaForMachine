@@ -1,0 +1,37 @@
+#!/bin/ksh
+
+PATH=/bin:/usr/bin
+
+SCRIPTDIR=$(dirname $0)
+. $SCRIPTDIR/commonconfig
+
+function usage {
+	echo "Usage: $0 [<machine>]"
+	echo "where <machine> is the name of a machine, e.g., sacrum, build64"
+	echo "If no machine is specified, the machine running the script is used."
+	exit 1
+}
+
+if [ $# -gt 1 ]
+then
+	usage
+fi
+
+if [ $# -eq 1 ]
+then
+	MACH=$1
+else
+	MACH=$(uname -n)
+fi
+
+# Remove any -'s from the machine name.
+MACH2=$(echo $MACH | sed 's/-//g')
+
+eval BUILDAREA=\$BUILDAREA_$MACH2
+if [ "" = "$BUILDAREA" ]
+then
+	echo "ERROR: unknown machine $MACH" >&2
+	exit 1
+fi
+
+echo $BUILDAREA
