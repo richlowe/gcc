@@ -1,0 +1,54 @@
+#!/bin/ksh
+
+if [ `uname -s` = Linux ]
+then
+	COMPILERDIR=/net/perftech-064/data/compilers
+else
+	COMPILERDIR=/ws/gccfss/builds/4.2.1
+fi
+
+MAIL_LIST=
+
+if [ $# -ne 1 -a $# -ne 2 ]
+then
+	echo 'Usage: $0 <train> [<buildid>]'
+	echo 'where <train> is the release/patch whose current is being updated'
+	echo 'and <buildid> is the id of the build to which to set that current'
+	echo 'If <buildid> is not specified, the latest build of that release is used.'
+	exit 1
+fi
+
+TRAIN=$1
+
+cd $COMPILERDIR
+
+if [ $# -eq 1 ]
+then
+	# Make the latest build of this release current.
+	latest=`/bin/ls -d *_$TRAIN 2> /dev/null | grep -v current_$TRAIN | awk '{last=$1}; END { print last }'`
+
+	if [ "$latest" = "" ]
+	then
+		echo "No compiler exists for train $TRAIN."
+		exit 2
+	fi
+else	# Make the specified build current.
+	if [ ! -a "$2" ]
+	then
+		echo "Compiler $2 does not exist."
+		exit 3
+	fi
+	latest="$2"
+fi
+
+rm -f current_$TRAIN
+ln -s $latest current_$TRAIN
+
+echo Build $COMPILERDIR/$latest is now current_$TRAIN.
+
+if [ ! "$MAIL_LIST" = "" ]
+then
+	mailx -s "new current_$TRAIN build installed" $MAIL_LIST <<EOF
+Build $COMPILERDIR/$latest is now current_$TRAIN.
+EOF
+fi

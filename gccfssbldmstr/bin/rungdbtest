@@ -1,0 +1,111 @@
+#!/bin/ksh
+
+CC=gcc
+export CC
+GNU_TOOL_BIN=/import/dr3/gnu/bin
+PATH=$GNU_TOOL_BIN:/usr/dist/exe:/usr/bin:/usr/sbin:/sbin:/usr/ccs/bin:/bin:/set/mars/cbe/sparc-S2/bin
+export PATH
+LD_LIBRARY_PATH=/import/dr3/gnu/lib
+export LD_LIBRARY_PATH
+
+function run_tests {
+	typeset SGCC_BIN=$1
+	typeset GDB_EXE=$2
+	typeset TEST_SRC=$3
+	typeset OUTPUT_DIR=$4
+
+
+	PATH=$SGCC_BIN:$OUTPUT_DIR:$PATH
+	cd $OUTPUT_DIR
+	ln -s $GNU_TOOL_BIN/gnu_ld  $OUTPUT_DIR/ld
+        ln -s $GNU_TOOL_BIN/gas $OUTPUT_DIR/as  
+	
+	echo "Running tests ..."
+	$TEST_SRC/configure --srcdir $TEST_SRC
+	if [ "$OPTIONS" = "" ]
+	then
+	    runtest --target_board unix/gdb:debug_flags=-gdwarf-2 --tool gdb GDB=$GDB_EXE --srcdir $TEST_SRC 
+	else
+	    OPTIONSTRING=`echo $OPTIONS | sed 's![ 	][ 	]*!/!g'`
+	    runtest --target_board unix/gdb:debug_flags=-gdwarf-2/gdb:cflags=$OPTIONSTRING --tool gdb GDB=$GDB_EXE --srcdir $TEST_SRC
+	fi
+    }
+
+
+function usage {
+	cat <<EOF
+Usage: $0 -c <gcc bin dir> -g <gdb exec> -T <gdb testsuite source dir> -o <gcc options> -r <output dir>
+where	<gcc bin dir> is bin directory of gcc/sgcc installation
+        <gdb exec> is gdb executable to use for testing
+	<gdb testsuite source dir> is gdb/testsuite source directory
+	<output dir> directory to carry out tests and dump results
+	<gcc options> compiler options for testing,-gdwarf-2 is always used.
+EOF
+	exit 1
+}
+
+
+while getopts c:g:o:r:T: optflag
+do
+	case $optflag in
+		c)	SGCC_BIN="$OPTARG";;
+		g)	GDB_EXE=$OPTARG;;
+		o)      OPTIONS=$OPTARG;;
+		r)	OUTPUT_DIR=$OPTARG;;
+		T)	TEST_SRC=$OPTARG;;
+		*)	usage;;
+        esac
+done
+
+if [ "$SGCC_BIN" = "" ]
+then
+	usage
+fi
+
+if [ "$GDB_EXE" = "" ]
+then
+	usage
+fi
+
+if [ "$OUTPUT_DIR" = "" ]
+then
+        usage
+fi
+
+if [ "$OPTIONS" = "" ]
+then
+        usage
+fi
+
+if [ "$TEST_SRC" = "" ]
+then
+        usage
+fi
+
+if [ ! -d $SGCC_BIN ]
+then
+	echo >&2 "ERROR:  $SGCC_BIN is not a directory."
+	usage
+fi
+
+if [ ! -f $GDB_EXE ]
+then
+	echo >&2 "ERROR:  $GDB_EXE does not exist."
+	usage
+fi
+
+if [ ! -d $TEST_SRC ]
+then
+	echo >&2 "ERROR:  Testsuite source directory $TEST_SRC does not exist."
+	usage
+fi
+
+if [ ! -d $OUTPUT_DIR ]
+then 
+     mkdir $OUTPUT_DIR
+else 
+    rm -f -r $OUTPUT_DIR/*
+fi
+
+run_tests $SGCC_BIN $GDB_EXE $TEST_SRC $OUTPUT_DIR
+
