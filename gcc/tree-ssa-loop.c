@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -42,7 +44,7 @@ along with GCC; see the file COPYING3.  If not see
 static bool
 gate_tree_loop (void)
 {
-  return flag_tree_loop_optimize != 0;
+  return flag_tree_loop_optimize != 0 && flag_preir_tree_optimizations != 0;
 }
 
 struct gimple_opt_pass pass_tree_loop = 

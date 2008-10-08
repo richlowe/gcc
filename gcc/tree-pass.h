@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
 
 #ifndef GCC_TREE_PASS_H
 #define GCC_TREE_PASS_H 1
@@ -388,6 +389,14 @@ extern struct gimple_opt_pass pass_reassoc;
 extern struct gimple_opt_pass pass_rebuild_cgraph_edges;
 extern struct gimple_opt_pass pass_build_cgraph_edges;
 extern struct gimple_opt_pass pass_reset_cc_flags;
+
+extern struct tree_opt_pass pass_regimple;
+extern struct tree_opt_pass pass_lower_vector_nocfg;
+extern struct tree_opt_pass pass_generate_ir;
+extern struct tree_opt_pass pass_rest_of_genir;
+extern struct tree_opt_pass pass_all_passes_rtl;
+extern bool gate_generate_ir (void);
+extern bool gate_generate_rtl (void);
 
 /* IPA Passes */
 extern struct ipa_opt_pass pass_ipa_inline;

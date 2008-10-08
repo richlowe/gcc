@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #ifndef GCC_TREE_H
 #define GCC_TREE_H
 
@@ -177,6 +179,24 @@ extern const enum tree_code_class tree_code_type[];
 
 #define EXPR_P(NODE) IS_EXPR_CODE_CLASS (TREE_CODE_CLASS (TREE_CODE (NODE)))
 
+/* Returns nonzero iff NODE is an OpenMP directive.  */
+
+#define OMP_DIRECTIVE_P(NODE)                           \
+    (TREE_CODE (NODE) == OMP_PARALLEL                   \
+     || TREE_CODE (NODE) == OMP_FOR                     \
+     || TREE_CODE (NODE) == OMP_SECTIONS                \
+     || TREE_CODE (NODE) == OMP_SECTIONS_SWITCH         \
+     || TREE_CODE (NODE) == OMP_SINGLE                  \
+     || TREE_CODE (NODE) == OMP_SECTION                 \
+     || TREE_CODE (NODE) == OMP_MASTER                  \
+     || TREE_CODE (NODE) == OMP_ORDERED                 \
+     || TREE_CODE (NODE) == OMP_CRITICAL                \
+     || TREE_CODE (NODE) == OMP_RETURN                  \
+     || TREE_CODE (NODE) == OMP_ATOMIC_LOAD             \
+     || TREE_CODE (NODE) == OMP_ATOMIC_STORE            \
+     || TREE_CODE (NODE) == OMP_TASK                    \
+     || TREE_CODE (NODE) == OMP_CONTINUE)
+
 /* Number of argument-words in each kind of tree-node.  */
 
 extern const unsigned char tree_code_length[];
@@ -324,7 +344,10 @@ enum omp_clause_code
   OMP_CLAUSE_COLLAPSE,
 
   /* OpenMP clause: untied.  */
-  OMP_CLAUSE_UNTIED
+  OMP_CLAUSE_UNTIED,
+  
+   /* Sun Extension Auto scoping */
+  OMP_CLAUSE_AUTO
 };
 
 /* The definition of tree nodes fills the next several pages.  */
@@ -1717,6 +1740,7 @@ extern void protected_set_expr_location (tree, location_t);
 #define OMP_FOR_COND(NODE)	   TREE_OPERAND (OMP_FOR_CHECK (NODE), 3)
 #define OMP_FOR_INCR(NODE)	   TREE_OPERAND (OMP_FOR_CHECK (NODE), 4)
 #define OMP_FOR_PRE_BODY(NODE)	   TREE_OPERAND (OMP_FOR_CHECK (NODE), 5)
+#define OMP_FOR_PAR_CLAUSES(NODE)  TREE_OPERAND (OMP_FOR_CHECK (NODE), 6)
 
 #define OMP_SECTIONS_BODY(NODE)    TREE_OPERAND (OMP_SECTIONS_CHECK (NODE), 0)
 #define OMP_SECTIONS_CLAUSES(NODE) TREE_OPERAND (OMP_SECTIONS_CHECK (NODE), 1)
@@ -1749,6 +1773,12 @@ extern void protected_set_expr_location (tree, location_t);
 #define OMP_PARALLEL_COMBINED(NODE) \
   (OMP_PARALLEL_CHECK (NODE)->base.private_flag)
 
+/* True on an OMP_FOR statement if its iterator is of c++ class. it will 
+   affect OMP_PARALLEL_COMBINED of its combined omp_parallel. the only write  
+   to it is in finish_omp_for. */ 
+#define OMP_FOR_NOT_COMBINED(NODE) \
+  TREE_PRIVATE (OMP_FOR_CHECK (NODE))
+  
 /* True on a PRIVATE clause if its decl is kept around for debugging
    information only and its DECL_VALUE_EXPR is supposed to point
    to what it has been remapped to.  */
@@ -1816,7 +1846,8 @@ enum omp_clause_default_kind
   OMP_CLAUSE_DEFAULT_SHARED,
   OMP_CLAUSE_DEFAULT_NONE,
   OMP_CLAUSE_DEFAULT_PRIVATE,
-  OMP_CLAUSE_DEFAULT_FIRSTPRIVATE
+  OMP_CLAUSE_DEFAULT_FIRSTPRIVATE,
+  OMP_CLAUSE_DEFAULT_AUTO
 };
 
 #define OMP_CLAUSE_DEFAULT_KIND(NODE) \
@@ -1984,6 +2015,8 @@ struct varray_head_tag;
    the debugging output format in use.  */
 #define BLOCK_NUMBER(NODE) (BLOCK_CHECK (NODE)->block.block_num)
 
+#define BLOCK_TM_ATOMIC(NODE) (BLOCK_CHECK (NODE)->block.tm_atomic_attr)
+
 /* If block reordering splits a lexical block into discontiguous
    address ranges, we'll make a copy of the original block.
 
@@ -2015,12 +2048,15 @@ struct varray_head_tag;
 
 #define BLOCK_SOURCE_LOCATION(NODE) (BLOCK_CHECK (NODE)->block.locus)
 
+#define BLOCK_SCOPE_ID(NODE) (BLOCK_CHECK (NODE)->block.scope_id)
+
 struct tree_block GTY(())
 {
   struct tree_common common;
 
   unsigned abstract_flag : 1;
-  unsigned block_num : 31;
+  unsigned tm_atomic_attr : 1;
+  unsigned block_num : 29;
 
   location_t locus;
 
@@ -2032,6 +2068,7 @@ struct tree_block GTY(())
   tree abstract_origin;
   tree fragment_origin;
   tree fragment_chain;
+  unsigned scope_id;
 };
 
 /* Define fields and accessors for nodes representing data types.  */
@@ -2106,6 +2143,19 @@ extern enum machine_mode vector_type_mode (const_tree);
 #define TYPE_LANG_SPECIFIC(NODE) (TYPE_CHECK (NODE)->type.lang_specific)
 #define TYPE_IBIT(NODE) (GET_MODE_IBIT (TYPE_MODE (NODE)))
 #define TYPE_FBIT(NODE) (GET_MODE_FBIT (TYPE_MODE (NODE)))
+
+#define TYPE_IR_TAGNODE(NODE) (TYPE_CHECK (NODE)->type.ir_tagnode)
+
+/* calculated tword for given type for quick access */
+#define TYPE_IR_TWORD(NODE) (TYPE_CHECK (NODE)->type.ir_tword)
+
+/* calculated dbg_gen struct type info for given type for quick access
+ * stored in two ints */
+#define TYPE_IR_DBG_GEN_1(NODE) (TYPE_CHECK (NODE)->type.dbg_gen_type_part1)
+#define TYPE_IR_DBG_GEN_2(NODE) (TYPE_CHECK (NODE)->type.dbg_gen_type_part2)
+
+/* tells whether IR_TYPE_NODE in hashtable is valid for this type */    
+#define TYPE_IR_TYPE_NODE_VALID(NODE) (TYPE_CHECK (NODE)->type.ir_type_node_valid)
 
 /* For a VECTOR_TYPE node, this describes a different type which is emitted
    in the debugging output.  We use this to describe a vector as a
@@ -2244,6 +2294,11 @@ extern enum machine_mode vector_type_mode (const_tree);
 #define TYPE_NONALIASED_COMPONENT(NODE) \
   (ARRAY_TYPE_CHECK (NODE)->type.transparent_union_flag)
 
+#define CLASS_TYPE_IS_TM_ATOMIC_P(T) (TYPE_CHECK (T)->type.tm_atomic_attr)
+#define CLASS_TYPE_IS_TM_CALLABLE_P(T) (TYPE_CHECK (T)->type.tm_callable_attr)
+#define CLASS_TYPE_IS_TM_ABORT_OK_P(T) (TYPE_CHECK (T)->type.tm_abort_ok_attr)
+#define CLASS_TYPE_IS_TM_PURE_P(T) (TYPE_CHECK (T)->type.tm_pure_attr)
+
 /* Indicated that objects of this type should be laid out in as
    compact a way as possible.  */
 #define TYPE_PACKED(NODE) (TYPE_CHECK (NODE)->type.packed_flag)
@@ -2305,6 +2360,16 @@ struct tree_type GTY(())
   tree canonical;
   /* Points to a structure whose details depend on the language in use.  */
   struct lang_type *lang_specific;
+  unsigned int ir_tword;
+  unsigned int dbg_gen_type_part1;
+  unsigned int dbg_gen_type_part2;
+  unsigned int ir_type_node_valid:1;
+  unsigned tm_atomic_attr : 1; 
+  unsigned tm_callable_attr : 1; 
+  unsigned tm_abort_ok_attr : 1; 
+  unsigned tm_pure_attr : 1; 
+  /* Used for generating exact ir tagnames for typedef .  */
+  tree ir_tagnode;
 };
 
 /* Define accessor macros for information about type inheritance
@@ -2467,6 +2532,9 @@ struct function;
 /* Every ..._DECL node gets a unique number.  */
 #define DECL_UID(NODE) (DECL_MINIMAL_CHECK (NODE)->decl_minimal.uid)
 
+/* offset for setting code_label_number of rtl generated from label_tree */
+#define UID_IR_OFFSET 32767
+
 /* These two fields describe where in the source code the declaration
    was.  If the declaration appears in several places (as for a C
    function that is declared first and then defined later), this
@@ -2623,6 +2691,10 @@ struct tree_memory_partition_tag GTY(())
    a C99 "extern inline" function.  */
 #define DECL_EXTERNAL(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.decl_flag_2)
 
+/* decl.ir_offset field is used to store offset in stack of automatic 
+ * variable or function parameter */
+#define DECL_IR_OFFSET(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.ir_offset)
+
 /* Nonzero in a ..._DECL means this variable is ref'd from a nested function.
    For VAR_DECL nodes, PARM_DECL nodes, and FUNCTION_DECL nodes.
 
@@ -2732,13 +2804,26 @@ struct tree_decl_common GTY(())
   unsigned int align : 24;
   /* DECL_OFFSET_ALIGN, used only for FIELD_DECLs.  */
   unsigned int off_align : 8;
-
+  
+  unsigned has_scoped_lastprivate : 1;
+  /* supporting transactional memory. the attributes could be applied to 
+     functions or classes. */
+  unsigned tm_atomic_attr : 1;
+  unsigned tm_callable_attr : 1;
+  unsigned tm_abort_ok_attr : 1;
+  unsigned tm_pure_attr : 1;
+  
   tree size_unit;
   tree initial;
   tree attributes;
   tree abstract_origin;
 
   alias_set_type pointer_alias_set;
+  long long ir_offset;
+  /* The following two fields represent DbgTypeIDs for NAMESPACE_DECLs and 
+     DbgSymIDs for all other *_DECLs.  */
+  unsigned int dbg_sym_id_part1;
+  unsigned int dbg_sym_id_part2;
   /* Points to a structure whose details depend on the language in use.  */
   struct lang_decl *lang_specific;
 };
@@ -2756,6 +2841,17 @@ extern void decl_value_expr_insert (tree, tree);
   (decl_value_expr_lookup (DECL_WRTL_CHECK (NODE)))
 #define SET_DECL_VALUE_EXPR(NODE, VAL)			\
   (decl_value_expr_insert (DECL_WRTL_CHECK (NODE), VAL))
+
+#define DECL_HAS_SCOPED_LASTPRIVATE_P(NODE) \
+  (TREE_CHECK2 (NODE, VAR_DECL, PARM_DECL)->decl_common.has_scoped_lastprivate)
+#define DECL_IS_TM_ATOMIC_P(NODE)	\
+  (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_atomic_attr)
+#define DECL_IS_TM_CALLABLE_P(NODE)	\
+  (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_callable_attr)
+#define DECL_IS_TM_ABORT_OK_P(NODE)	\
+  (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_abort_ok_attr)
+#define DECL_IS_TM_PURE_P(NODE)	\
+  (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_pure_attr)
 
 /* Holds the RTL expression for the value of a variable or function.
    This value can be evaluated lazily for functions, variables with
@@ -3057,8 +3153,15 @@ struct tree_decl_with_vis GTY(())
 
  /* Belongs to VAR_DECL exclusively.  */
  ENUM_BITFIELD(tls_model) tls_model : 3;
- /* 12 unused bits. */
+ /* 10 unused bits. */
+ unsigned has_scoped_clause: 1;
+ /* only set for c++ iterator transformation. lower and upper both have to 
+    be scoped by gimplifier as shared. */
+ unsigned refer_scoped_shared: 1; 
 };
+
+#define DECL_HAS_SCOPED_CLAUSE_P(NODE) (VAR_DECL_CHECK (NODE)-decl_with_vis.has_scoped_clause)
+#define DECL_REFER_SCOPED_SHARED(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.refer_scoped_shared)
 
 /* In a VAR_DECL that's static,
    nonzero if the space is in the text section.  */
@@ -3262,6 +3365,20 @@ struct tree_decl_non_common GTY(())
    that describes the status of this function.  */
 #define DECL_STRUCT_FUNCTION(NODE) (FUNCTION_DECL_CHECK (NODE)->function_decl.f)
 
+/* dbg_gen symbol identifier for a given decl */
+#define DECL_DBG_SYM_ID_1(DECL) (DECL_COMMON_CHECK (DECL)->decl_common.dbg_sym_id_part1)
+#define DECL_DBG_SYM_ID_2(DECL) (DECL_COMMON_CHECK (DECL)->decl_common.dbg_sym_id_part2)
+
+/* True if dbg_gen symbol identifier for a given decl is set.  */
+#define DECL_DBG_SYM_ID_SET_P(DECL) \
+ (DECL_DBG_SYM_ID_1 (DECL) && DECL_DBG_SYM_ID_2 (DECL))
+
+/* In dbggen C++ namespaces are treated as types.  */
+#define NSPACE_DBG_TYPE_ID_1(DECL)  (NAMESPACE_DECL_CHECK (DECL)->decl_common.dbg_sym_id_part1)
+#define NSPACE_DBG_TYPE_ID_2(DECL)  (NAMESPACE_DECL_CHECK (DECL)->decl_common.dbg_sym_id_part2)
+#define NSPACE_DBG_TYPE_ID_SET_P(DECL) \
+ (NSPACE_DBG_TYPE_ID_1 (DECL) && NSPACE_DBG_TYPE_ID_2 (DECL))
+ 
 /* In a FUNCTION_DECL, nonzero means a built in function.  */
 #define DECL_BUILT_IN(NODE) (DECL_BUILT_IN_CLASS (NODE) != NOT_BUILT_IN)
 
@@ -3361,6 +3478,13 @@ struct tree_type_decl GTY(())
 #define STATEMENT_LIST_TAIL(NODE) \
   (STATEMENT_LIST_CHECK (NODE)->stmt_list.tail)
 
+#define STATEMENT_LIST_TM_ATOMIC(NODE) \
+  (STATEMENT_LIST_CHECK (NODE)->stmt_list.tm_atomic_attr)
+#define STATEMENT_LIST_TM_ABORT_OK(NODE) \
+  (STATEMENT_LIST_CHECK (NODE)->stmt_list.tm_abort_ok_attr)
+#define STATEMENT_LIST_TM_WAIVER(NODE) \
+  (STATEMENT_LIST_CHECK (NODE)->stmt_list.tm_waiver_attr)
+  
 struct tree_statement_list_node
   GTY ((chain_next ("%h.next"), chain_prev ("%h.prev")))
 {
@@ -3375,6 +3499,9 @@ struct tree_statement_list
   struct tree_common common;
   struct tree_statement_list_node *head;
   struct tree_statement_list_node *tail;
+  unsigned tm_atomic_attr : 1;
+  unsigned tm_abort_ok_attr : 1;
+  unsigned tm_waiver_attr : 1;
 };
 
 
@@ -4146,7 +4273,10 @@ enum attribute_flags
   /* The attributes are being applied by default to a library function whose
      name indicates known behavior, and should be silently ignored if they
      are not in fact compatible with the function type.  */
-  ATTR_FLAG_BUILT_IN = 16
+  ATTR_FLAG_BUILT_IN = 16,
+  /* The type passed in is a class type that might be labeled as TM 
+     attributes. */
+  ATTR_FLAG_TYPE_TM_ATTR = 32
 };
 
 /* Default versions of target-overridable functions.  */
@@ -4693,6 +4823,7 @@ extern bool commutative_tree_code (enum tree_code);
 extern tree upper_bound_in_type (tree, tree);
 extern tree lower_bound_in_type (tree, tree);
 extern int operand_equal_for_phi_arg_p (const_tree, const_tree);
+extern int check_field_array (tree, int);
 extern tree call_expr_arg (tree, int);
 extern tree *call_expr_argp (tree, int);
 extern tree call_expr_arglist (tree);
@@ -5180,6 +5311,11 @@ extern int tree_node_sizes[];
    be restricted.  False if we are not in gimple form and folding is not
    restricted to creating gimple expressions.  */
 extern bool in_gimple_form;
+
+/* True if we are in a openmp loop condition area. folders need to avoid
+   execute boolean expression transition. it will make later check 
+   invalid. */
+extern bool in_omp_for_cond;
 
 /* In tree-gimple.c.  */
 extern tree get_base_address (tree t);

@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_C_COMMON_H
 #define GCC_C_COMMON_H
 
@@ -74,6 +76,8 @@ enum rid
   RID_TYPES_COMPATIBLE_P,
   RID_DFLOAT32, RID_DFLOAT64, RID_DFLOAT128,
   RID_FRACT, RID_ACCUM,
+  
+  RID_TM_ATOMIC,  RID_TM_ABORT_OK, RID_TM_WAIVER,
 
   /* This means to warn that this is a C++ keyword, and then treat it
      as a normal identifier.  */
@@ -608,6 +612,12 @@ extern int flag_new_for_scope;
 
 extern int flag_weak;
 
+/* Nonzero if we want to emit defined symbols with common-like linkage as
+   comdat symbols where possible, in order to conform to C++ semantics.
+   Otherwise, emit them as weak or local symbols, depending on flag_weak.  */
+
+extern int flag_comdat;
+
 /* 0 means we want the preprocessor to not emit line directives for
    the current working directory.  1 means we want it to do it.  -1
    means we should decide depending on whether debugging information
@@ -624,6 +634,12 @@ extern int flag_use_cxa_atexit;
    logic.  */
 
 extern int flag_use_cxa_get_exception_ptr;
+
+/* Nonzero means to allow C++ non-constant references bound to
+   temporary objects.  This mode is only used to compile some legacy
+   code and should not be used to compile with standard C++ libraries. */
+
+extern int flag_nonconst_ref_to_temp_object;
 
 /* Nonzero means to implement standard semantics for exception
    specifications, calling unexpected if an exception is thrown that
@@ -818,6 +834,8 @@ extern tree build_case_label (tree, tree, tree);
 extern tree build_unary_op (location_t, enum tree_code, tree, int);
 extern tree build_binary_op (location_t, enum tree_code, tree, tree, int);
 extern tree perform_integral_promotions (tree);
+
+extern void c_check_tm_calling_rules (tree);
 
 /* These functions must be defined by each front-end which implements
    a variant of the C language.  They are used by port files.  */

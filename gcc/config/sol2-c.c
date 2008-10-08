@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -32,6 +34,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "cpplib.h"
 #include "c-pragma.h"
 #include "c-common.h"
+#include "output.h" /* asm_out_file */
+#include "langhooks.h" /* lang_hooks */
+#include "tree-ir.h" /* globalize_flag */
 
 /* cmn_err only accepts "l" and "ll".  */
 static const format_length_info cmn_err_length_specs[] =
@@ -174,10 +179,36 @@ solaris_pragma_init (cpp_reader *pfile ATTRIBUTE_UNUSED)
 					    NULL);
 	  tree attrs = tree_cons (get_identifier ("used"), NULL, init_list);
 	  decl_attributes (&decl, attrs, 0);
+#ifndef __linux__
+          if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0)
+            {
+              if (!TREE_PUBLIC (decl))
+                error ("%qs referenced in #pragma should be global and previously declared.", IDENTIFIER_POINTER (t));
+              fprintf (asm_out_file, "\t.pushsection\t\".init\"\n");
+              fprintf (asm_out_file, "\tcall\t");
+              fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
+              fprintf (asm_out_file, "\n\tnop\n");
+              fprintf (asm_out_file, "\t.popsection\n");
+            }
+#endif
 	}
+#ifndef __linux__
+      else if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0) 
+        error ("%qs referenced in #pragma should be global and previously declared.", IDENTIFIER_POINTER (t));
+#endif
       else
 	solaris_pending_inits = tree_cons (t, NULL, solaris_pending_inits);
 
+#ifndef __linux__
+        if (globalize_flag == 0 && strcmp (lang_hooks.name, "GNU C") == 0)
+          {
+            fprintf (asm_out_file, "\t.pushsection\t\".init\"\n");
+            fprintf (asm_out_file, "\tcall\t");
+            fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (t));
+            fprintf (asm_out_file, "\n\tnop\n");
+            fprintf (asm_out_file, "\t.popsection\n");
+          }
+#endif
       ttype = pragma_lex (&t);
       if (ttype == CPP_COMMA)
 	{
@@ -232,10 +263,36 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
 					    NULL);
 	  tree attrs = tree_cons (get_identifier ("used"), NULL, fini_list);
 	  decl_attributes (&decl, attrs, 0);
+#ifndef __linux__
+          if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0)
+            {
+              if (!TREE_PUBLIC (decl))
+                error ("%qs referenced in #pragma should be global and previously declared.", IDENTIFIER_POINTER (t));
+              fprintf (asm_out_file, "\t.pushsection\t\".fini\"\n");
+              fprintf (asm_out_file, "\tcall\t");
+              fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
+              fprintf (asm_out_file, "\n\tnop\n");
+              fprintf (asm_out_file, "\t.popsection\n");
+            }
+#endif
 	}
+#ifndef __linux__
+      else if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0)
+        error ("%qs referenced in #pragma should be global and previously declared.", IDENTIFIER_POINTER (t));
+#endif
       else
 	solaris_pending_finis = tree_cons (t, NULL, solaris_pending_finis);
-
+	
+#ifndef __linux__
+        if (globalize_flag == 0 && strcmp (lang_hooks.name, "GNU C") == 0)
+          {
+            fprintf (asm_out_file, "\t.pushsection\t\".fini\"\n");
+            fprintf (asm_out_file, "\tcall\t");
+            fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (t));
+            fprintf (asm_out_file, "\n\tnop\n");
+            fprintf (asm_out_file, "\t.popsection\n");
+          }
+#endif
       ttype = pragma_lex (&t);
       if (ttype == CPP_COMMA)
 	{

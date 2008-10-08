@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -249,7 +251,7 @@ tree_nrv (void)
 static bool
 gate_pass_return_slot (void)
 {
-  return optimize > 0;
+  return optimize > 0 && flag_preir_tree_optimizations;
 }
 
 struct gimple_opt_pass pass_nrv = 

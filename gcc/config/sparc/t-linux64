@@ -6,8 +6,10 @@ LIBGCC = stmp-multilib
 INSTALL_LIBGCC = install-multilib
 
 EXTRA_MULTILIB_PARTS=crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o \
-	crtfastmath.o
+	crtfastmath.o gccbuiltins.il
 
 CRTSTUFF_T_CFLAGS = `if test x$$($(GCC_FOR_TARGET) $(MULTILIB_CFLAGS) \
 				 -print-multi-os-directory) \
 			= x../lib64; then echo -mcmodel=medany; fi`
+
+EXTRA_PASSES=$(T)gccbuiltins.il

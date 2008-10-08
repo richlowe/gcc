@@ -22,6 +22,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* TODO:
 
    Make sure all relevant comments, and all relevant code from all
@@ -57,6 +59,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "vec.h"
 #include "target.h"
 #include "cgraph.h"
+#include "tree-ir.h"
 
 
 /* Initialization routine for this file.  */
@@ -184,6 +187,11 @@ typedef struct c_parser GTY(())
   BOOL_BITFIELD objc_need_raw_identifier : 1;
 } c_parser;
 
+
+/* True if we are in a openmp loop condition area. folders need to avoid
+   execute boolean expression transition. it will make later check
+   invalid. */
+bool in_omp_for_cond = false;
 
 /* The actual parser and external interface.  ??? Does this need to be
    garbage-collected?  */
@@ -3306,6 +3314,47 @@ static tree
 c_parser_compound_statement (c_parser *parser)
 {
   tree stmt;
+  int tm_atomic_p, tm_abort_ok_p, tm_waiver_p;
+
+  tm_atomic_p = tm_abort_ok_p = tm_waiver_p = 0;
+
+  if (flag_tm_mode && c_parser_peek_token (parser)->type == CPP_KEYWORD)
+    {
+      switch (c_parser_peek_token (parser)->keyword)
+      {
+      case RID_TM_ATOMIC: 
+        c_parser_consume_token (parser);
+        tm_atomic_p = 1;
+        break;
+      case RID_TM_ABORT_OK: 
+        c_parser_consume_token (parser);
+        tm_abort_ok_p = 1;
+        /* A __tm_abort_ok statement shall not appear within a function 
+           labeled with any tm-related attribute, nor shall it appear 
+           within another __tm_atomic or __tm_abort_ok section. */
+        if (current_function_decl 
+            && (DECL_IS_TM_ATOMIC_P (current_function_decl) 
+                || DECL_IS_TM_CALLABLE_P (current_function_decl) 
+                || DECL_IS_TM_ABORT_OK_P (current_function_decl) 
+                || DECL_IS_TM_PURE_P (current_function_decl))) 
+          {
+            error ("__tm_abort_ok statement shall not appear within a function labeled with any tm-related attribute.");
+          }
+        if (cur_stmt_list 
+            && (STATEMENT_LIST_TM_ATOMIC (cur_stmt_list)
+                || STATEMENT_LIST_TM_ABORT_OK (cur_stmt_list)))
+          {
+            error ("__tm_abort_ok statement shall not appear within another __tm_atomic or __tm_abort_ok section."); 
+          }
+        break;
+        case RID_TM_WAIVER: 
+          c_parser_consume_token (parser);
+          tm_waiver_p = 1;
+          break;
+        default:
+          break;
+      }
+    }
   if (!c_parser_require (parser, CPP_OPEN_BRACE, "expected %<{%>"))
     {
       /* Ensure a scope is entered and left anyway to avoid confusion
@@ -3315,6 +3364,19 @@ c_parser_compound_statement (c_parser *parser)
       return error_mark_node;
     }
   stmt = c_begin_compound_stmt (true);
+  if (tm_atomic_p)
+    {
+      tree fake_decl;
+      fake_decl = build_decl (VAR_DECL, 
+                              get_identifier ("$TEMP.sgcc.tm.atomic"), 
+                              integer_type_node);
+      pushdecl (fake_decl);
+      STATEMENT_LIST_TM_ATOMIC (stmt) = 1;
+    }
+  else if (tm_abort_ok_p)
+      STATEMENT_LIST_TM_ABORT_OK (stmt) = 1;
+  else if (tm_waiver_p)
+      STATEMENT_LIST_TM_WAIVER (stmt) = 1;
   c_parser_compound_statement_nostart (parser);
   return c_end_compound_stmt (stmt, true);
 }
@@ -3761,6 +3823,15 @@ c_parser_statement_after_labels (c_parser *parser)
 	  gcc_assert (c_dialect_objc ());
 	  c_parser_objc_synchronized_statement (parser);
 	  break;
+        case RID_TM_ATOMIC:
+        case RID_TM_ABORT_OK:
+        case RID_TM_WAIVER:
+          if (flag_tm_mode)
+            {
+              add_stmt (c_parser_compound_statement (parser));
+              break;
+            }
+          /* else fall through */
 	default:
 	  goto expr_stmt;
 	}
@@ -3993,7 +4064,7 @@ c_parser_while_statement (c_parser *parser)
   save_cont = c_cont_label;
   c_cont_label = NULL_TREE;
   body = c_parser_c99_block_statement (parser);
-  c_finish_loop (loc, cond, NULL, body, c_break_label, c_cont_label, true);
+  c_finish_loop (loc, cond, NULL, body, c_break_label, c_cont_label, 1);
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
   c_break_label = save_break;
   c_cont_label = save_cont;
@@ -4031,7 +4102,7 @@ c_parser_do_statement (c_parser *parser)
   cond = c_parser_paren_condition (parser);
   if (!c_parser_require (parser, CPP_SEMICOLON, "expected %<;%>"))
     c_parser_skip_to_end_of_block_or_statement (parser);
-  c_finish_loop (loc, cond, NULL, body, new_break, new_cont, false);
+  c_finish_loop (loc, cond, NULL, body, new_break, new_cont, 0);
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
 }
 
@@ -4129,7 +4200,7 @@ c_parser_for_statement (c_parser *parser)
   save_cont = c_cont_label;
   c_cont_label = NULL_TREE;
   body = c_parser_c99_block_statement (parser);
-  c_finish_loop (loc, cond, incr, body, c_break_label, c_cont_label, true);
+  c_finish_loop (loc, cond, incr, body, c_break_label, c_cont_label, 2);
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
   c_break_label = save_break;
   c_cont_label = save_cont;
@@ -5094,6 +5165,8 @@ c_parser_postfix_expression (c_parser *parser)
   struct c_expr expr, e1, e2, e3;
   struct c_type_name *t1, *t2;
   location_t loc;
+  int tm_atomic_p, tm_waiver_p;
+
   switch (c_parser_peek_token (parser)->type)
     {
     case CPP_NUMBER:
@@ -5152,6 +5225,21 @@ c_parser_postfix_expression (c_parser *parser)
     case CPP_OPEN_PAREN:
       /* A parenthesized expression, statement expression or compound
 	 literal.  */
+      tm_atomic_p = tm_waiver_p = 0;
+      if (flag_tm_mode 
+          && c_parser_peek_2nd_token (parser)->type == CPP_KEYWORD)
+        {
+          if (c_parser_peek_2nd_token (parser)->keyword == RID_TM_ATOMIC)
+            {
+              c_parser_consume_token (parser);
+              tm_atomic_p = 1;
+            }
+          else if (c_parser_peek_2nd_token (parser)->keyword == RID_TM_WAIVER)
+            {
+              c_parser_consume_token (parser);
+              tm_waiver_p = 1;
+            }
+        }
       if (c_parser_peek_2nd_token (parser)->type == CPP_OPEN_BRACE)
 	{
 	  /* A statement expression.  */
@@ -5171,6 +5259,17 @@ c_parser_postfix_expression (c_parser *parser)
 	      break;
 	    }
 	  stmt = c_begin_stmt_expr ();
+          if (tm_atomic_p)
+            {
+              tree fake_decl;
+              fake_decl = build_decl (VAR_DECL, 
+                              get_identifier ("$TEMP.sgcc.tm.atomic"), 
+                              integer_type_node);
+              pushdecl (fake_decl);
+              STATEMENT_LIST_TM_ATOMIC (stmt) = 1;
+            }
+          else if (tm_waiver_p)
+            STATEMENT_LIST_TM_WAIVER (stmt) = 1;
 	  c_parser_compound_statement_nostart (parser);
 	  c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
 				     "expected %<)%>");
@@ -6752,6 +6851,10 @@ c_parser_omp_clause_name (c_parser *parser)
 
       switch (p[0])
 	{
+        case '_':
+          if (!strcmp ("__auto", p))
+            result = PRAGMA_OMP_CLAUSE_AUTO;
+          break;
 	case 'c':
 	  if (!strcmp ("collapse", p))
 	    result = PRAGMA_OMP_CLAUSE_COLLAPSE;
@@ -6759,6 +6862,8 @@ c_parser_omp_clause_name (c_parser *parser)
 	    result = PRAGMA_OMP_CLAUSE_COPYIN;
           else if (!strcmp ("copyprivate", p))
 	    result = PRAGMA_OMP_CLAUSE_COPYPRIVATE;
+          else if (!strcmp ("collapse", p))
+            result = PRAGMA_OMP_CLAUSE_COLLAPSE;
 	  break;
 	case 'f':
 	  if (!strcmp ("firstprivate", p))
@@ -6956,6 +7061,11 @@ c_parser_omp_clause_default (c_parser *parser, tree list)
 
       switch (p[0])
 	{
+        case '_':
+          if (strcmp ("__auto", p) != 0)
+	    goto invalid_kind;
+	  kind = OMP_CLAUSE_DEFAULT_AUTO;
+	  break;
 	case 'n':
 	  if (strcmp ("none", p) != 0)
 	    goto invalid_kind;
@@ -7275,6 +7385,15 @@ c_parser_omp_clause_shared (c_parser *parser, tree list)
   return c_parser_omp_var_list_parens (parser, OMP_CLAUSE_SHARED, list);
 }
 
+/* Sun extension Autoscoping variable list:
+   __auto ( variable-list ) */
+
+static tree
+c_parser_omp_clause_auto (c_parser *parser, tree list)
+{
+  return c_parser_omp_var_list_parens (parser, OMP_CLAUSE_AUTO, list);
+}
+
 /* OpenMP 3.0:
    untied */
 
@@ -7304,6 +7423,7 @@ c_parser_omp_all_clauses (c_parser *parser, unsigned int mask,
 
   while (c_parser_next_token_is_not (parser, CPP_PRAGMA_EOL))
     {
+      pragma_omp_clause c_kind;
       location_t here;
       pragma_omp_clause c_kind;
       const char *c_name;
@@ -7377,6 +7497,10 @@ c_parser_omp_all_clauses (c_parser *parser, unsigned int mask,
 	case PRAGMA_OMP_CLAUSE_UNTIED:
 	  clauses = c_parser_omp_clause_untied (parser, clauses);
 	  c_name = "untied";
+	  break;
+        case PRAGMA_OMP_CLAUSE_AUTO:
+	  clauses = c_parser_omp_clause_auto (parser, clauses);
+	  c_name = "__auto";
 	  break;
 	default:
 	  c_parser_error (parser, "expected %<#pragma omp%> clause");
@@ -7558,14 +7682,26 @@ c_parser_omp_critical (c_parser *parser)
 static void
 c_parser_omp_flush (c_parser *parser)
 {
+  tree flush_list = NULL_TREE, op1;
   c_parser_consume_pragma (parser);
   if (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
-    c_parser_omp_var_list_parens (parser, OMP_CLAUSE_ERROR, NULL);
+    flush_list = c_parser_omp_var_list_parens (parser, OMP_CLAUSE_ERROR,, NULL);
   else if (c_parser_next_token_is_not (parser, CPP_PRAGMA_EOL))
     c_parser_error (parser, "expected %<(%> or end of line");
   c_parser_skip_to_pragma_eol (parser);
 
-  c_finish_omp_flush ();
+  if (flag_use_rtl_backend == 0)
+    {
+      for (op1 = flush_list; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
+        {
+          TREE_VALUE (op1) = TREE_PURPOSE (op1);
+          TREE_PURPOSE (op1) = NULL_TREE;
+        }
+    }
+  else
+    flush_list = NULL_TREE;
+  
+  c_finish_omp_flush (flush_list);
 }
 
 /* Parse the restricted form of the for statement allowed by OpenMP.
@@ -7580,6 +7716,7 @@ c_parser_omp_for_loop (c_parser *parser, tree clauses, tree *par_clauses)
   location_t loc;
   bool fail = false, open_brace_parsed = false;
   int i, collapse = 1, nbraces = 0;
+  struct c_expr tmp;
 
   for (cl = clauses; cl; cl = OMP_CLAUSE_CHAIN (cl))
     if (OMP_CLAUSE_CODE (cl) == OMP_CLAUSE_COLLAPSE)
@@ -7682,8 +7819,9 @@ c_parser_omp_for_loop (c_parser *parser, tree clauses, tree *par_clauses)
       if (c_parser_next_token_is_not (parser, CPP_CLOSE_PAREN))
 	{
 	  location_t incr_loc = c_parser_peek_token (parser)->location;
-
+          in_omp_for_cond = 1;
 	  incr = c_process_expr_stmt (c_parser_expression (parser).value);
+          in_omp_for_cond = 0;
 	  protected_set_expr_location (incr, incr_loc);
 	}
       c_parser_skip_until_found (parser, CPP_CLOSE_PAREN, "expected %<)%>");
@@ -8023,7 +8161,8 @@ c_parser_omp_sections (c_parser *parser)
 	| (1u << PRAGMA_OMP_CLAUSE_SHARED)		\
 	| (1u << PRAGMA_OMP_CLAUSE_COPYIN)		\
 	| (1u << PRAGMA_OMP_CLAUSE_REDUCTION)		\
-	| (1u << PRAGMA_OMP_CLAUSE_NUM_THREADS))
+	| (1u << PRAGMA_OMP_CLAUSE_NUM_THREADS)         \
+        | (1u << PRAGMA_OMP_CLAUSE_AUTO))
 
 static tree
 c_parser_omp_parallel (c_parser *parser)
@@ -8239,7 +8378,7 @@ c_parser_omp_threadprivate (c_parser *parser)
 	error ("%<threadprivate%> %qE has incomplete type", v);
       else
 	{
-	  if (! DECL_THREAD_LOCAL_P (v))
+	  if (!DECL_THREAD_LOCAL_P (v) && flag_use_rtl_backend != 0)
 	    {
 	      DECL_TLS_MODEL (v) = decl_default_tls_model (v);
 	      /* If rtl has been already set for this var, call
@@ -8249,6 +8388,7 @@ c_parser_omp_threadprivate (c_parser *parser)
 		make_decl_rtl (v);
 	    }
 	  C_DECL_THREADPRIVATE_P (v) = 1;
+          register_threadprivate_variable (v, NULL_TREE, NULL_TREE, NULL_TREE);
 	}
     }
 

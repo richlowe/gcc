@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -519,9 +521,14 @@ make_edges (void)
 		 create abnormal edges to them.  */
 	      make_eh_edges (last);
 
-	      /* Some calls are known not to return.  */
-	      fallthru = !(gimple_call_flags (last) & ECF_NORETURN);
-	      break;
+	      /* Some calls are known not to return. Dont
+                 mess with control flow if we are inside
+                 an openmp region. */
+              if (cur_region == NULL)
+                fallthru = !(gimple_call_flags (last) & ECF_NORETURN);
+              else
+                fallthru = true;
+              break;
 
 	    case GIMPLE_ASSIGN:
 	       /* A GIMPLE_ASSIGN may throw internally and thus be considered
@@ -547,11 +554,17 @@ make_edges (void)
 
 	    case GIMPLE_OMP_SECTIONS:
 	      cur_region = new_omp_region (bb, code, cur_region);
-	      fallthru = true;
+	      if (flag_use_rtl_backend == 0)
+                fallthru = true;
+              else
+                fallthru = false;
 	      break;
 
 	    case GIMPLE_OMP_SECTIONS_SWITCH:
-	      fallthru = false;
+	      if (flag_use_rtl_backend == 0)
+                fallthru = true;
+              else
+                fallthru = false;
 	      break;
 
 
@@ -566,7 +579,10 @@ make_edges (void)
 		 somewhere other than the next block.  This will be
 		 created later.  */
 	      cur_region->exit = bb;
-	      fallthru = cur_region->type != GIMPLE_OMP_SECTION;
+	      if (flag_use_rtl_backend == 0)
+                fallthru = true;
+              else
+                fallthru = cur_region->type != GIMPLE_OMP_SECTION;
 	      cur_region = cur_region->outer;
 	      break;
 
@@ -2875,7 +2891,9 @@ verify_expr (tree *tp, int *walk_subtrees, void *data ATTRIBUTE_UNUSED)
 	   tree) and ensure that any variable used as a prefix is marked
 	   addressable.  */
 	for (x = TREE_OPERAND (t, 0);
-	     handled_component_p (x);
+	     handled_component_p (x)
+	     && (TREE_CODE (x) != ARRAY_REF 
+                 || TREE_CODE (TREE_TYPE (TREE_OPERAND (x, 0))) == ARRAY_TYPE);
 	     x = TREE_OPERAND (x, 0))
 	  ;
 
@@ -2940,6 +2958,8 @@ verify_expr (tree *tp, int *walk_subtrees, void *data ATTRIBUTE_UNUSED)
 		CHECK_OP (2, "invalid array lower bound");
 	      if (TREE_OPERAND (t, 3))
 		CHECK_OP (3, "invalid array stride");
+              if (TREE_CODE (t) == ARRAY_REF && TREE_OPERAND (t, 4))
+                CHECK_OP (4, "Invalid array max index.");
 	    }
 	  else if (TREE_CODE (t) == BIT_FIELD_REF)
 	    {

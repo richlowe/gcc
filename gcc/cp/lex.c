@@ -20,7 +20,6 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-
 /* This file is the lexical analyzer for GNU C++.  */
 
 #include "config.h"

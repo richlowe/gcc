@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2629,7 +2631,7 @@ create_component_ref_by_pieces_1 (basic_block block, vn_reference_t ref,
 	pre_expr op1expr;
 	tree genop2 = currop->op1;
 	pre_expr op2expr;
-	tree genop3;
+	tree genop3, genop4;
 	genop0 = create_component_ref_by_pieces_1 (block, ref, operand,
 						   stmts, domstmt);
 	if (!genop0)
@@ -2648,8 +2650,9 @@ create_component_ref_by_pieces_1 (basic_block block, vn_reference_t ref,
 	  }
 
 	genop3 = currop->op2;
-	return build4 (currop->opcode, currop->type, genop0, genop1,
-		       genop2, genop3);
+	genop4 = currop->op3;
+	return build5 (currop->opcode, currop->type, genop0, genop1,
+		       genop2, genop3, genop4);
       }
     case COMPONENT_REF:
       {
@@ -4309,7 +4312,8 @@ static bool
 gate_pre (void)
 {
   /* PRE tends to generate bigger code.  */
-  return flag_tree_pre != 0 && optimize_function_for_speed_p (cfun);
+  return flag_tree_pre != 0 && optimize_function_for_speed_p (cfun)
+         && flag_preir_tree_optimizations != 0;
 }
 
 struct gimple_opt_pass pass_pre =
@@ -4345,7 +4349,7 @@ execute_fre (void)
 static bool
 gate_fre (void)
 {
-  return flag_tree_fre != 0;
+  return flag_tree_fre != 0 && flag_preir_tree_optimizations != 0;
 }
 
 struct gimple_opt_pass pass_fre =

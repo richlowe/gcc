@@ -18,6 +18,8 @@
 ; along with GCC; see the file COPYING3.  If not see
 ; <http://www.gnu.org/licenses/>.
 
+; Modified by Sun Microsystems 2008
+
 mfpu
 Target Report Mask(FPU)
 Use hardware FP
@@ -41,6 +43,10 @@ Pass -assert pure-text to linker
 mapp-regs
 Target Report Mask(APP_REGS)
 Use ABI reserved registers
+
+minteger-ldd-std
+Target Report Mask(MASK_NO_INTEGER_LDD_STD)
+Utilize integer ldd and std
 
 mhard-quad-float
 Target Report RejectNegative Mask(HARD_QUAD)

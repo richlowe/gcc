@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* High-level class interface.  */
 
 #include "config.h"
@@ -69,7 +71,7 @@ begin_init_stmts (tree *stmt_expr_p, tree *compound_stmt_p)
 {
   bool is_global = !building_stmt_tree ();
 
-  *stmt_expr_p = begin_stmt_expr ();
+  *stmt_expr_p = begin_stmt_expr (false);
   *compound_stmt_p = begin_compound_stmt (BCS_NO_SCOPE);
 
   return is_global;
@@ -83,7 +85,7 @@ finish_init_stmts (bool is_global, tree stmt_expr, tree compound_stmt)
 {
   finish_compound_stmt (compound_stmt);
 
-  stmt_expr = finish_stmt_expr (stmt_expr, true);
+  stmt_expr = finish_stmt_expr (stmt_expr, false, true);
 
   gcc_assert (!building_stmt_tree () == is_global);
 

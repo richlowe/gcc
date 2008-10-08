@@ -23,6 +23,8 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "tconfig.h"
 #include "tsystem.h"
 #include "coretypes.h"
@@ -81,6 +83,7 @@ struct _Unwind_Context
 static unsigned char dwarf_reg_size_table[DWARF_FRAME_REGISTERS+1];
 
 
+#if 0 /* TODO GCCFSS */
 /* Read unaligned data from the instruction buffer.  */
 
 union unaligned
@@ -125,6 +128,7 @@ read_8u (const void *p) { const union unaligned *up = p; return up->u8; }
 static inline unsigned long
 read_8s (const void *p) { const union unaligned *up = p; return up->s8; }
 
+#endif
 static inline _Unwind_Word
 _Unwind_IsSignalFrame (struct _Unwind_Context *context)
 {

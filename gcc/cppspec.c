@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -208,3 +210,16 @@ int lang_specific_pre_link (void)
 
 /* Number of extra output files that lang_specific_pre_link may generate.  */
 int lang_specific_extra_outfiles = 0;  /* Not used for cpp.  */
+
+#ifdef TARGET_OPTION_TRANSLATE_TABLE
+const struct {
+  const char *const option_found;
+  const char *const replacements;
+} target_option_translations[] =
+{
+  {"-fast", "-Zfast" },
+  TARGET_OPTION_TRANSLATE_TABLE,
+  { 0, 0 }
+};
+#endif
+

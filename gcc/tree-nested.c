@@ -17,6 +17,8 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -962,6 +964,9 @@ convert_nonlocal_reference_op (tree *tp, int *walk_subtrees, void *data)
 			 wi, NULL);
 	      walk_tree (&TREE_OPERAND (t, 3), convert_nonlocal_reference_op,
 			 wi, NULL);
+              if (TREE_CODE (t) == ARRAY_REF)
+	        walk_tree (&TREE_OPERAND (t, 4), convert_nonlocal_reference_op,
+			   wi, NULL);
 	    }
 	  else if (TREE_CODE (t) == BIT_FIELD_REF)
 	    {
@@ -1031,6 +1036,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_FIRSTPRIVATE:
 	case OMP_CLAUSE_COPYPRIVATE:
 	case OMP_CLAUSE_SHARED:
+        case OMP_CLAUSE_AUTO:
 	do_decl_clause:
 	  decl = OMP_CLAUSE_DECL (clause);
 	  if (TREE_CODE (decl) == VAR_DECL
@@ -1038,7 +1044,8 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	    break;
 	  if (decl_function_context (decl) != info->context)
 	    {
-	      bitmap_set_bit (new_suppress, DECL_UID (decl));
+	      //fix 6675065. 
+	      //bitmap_set_bit (new_suppress, DECL_UID (decl));
 	      OMP_CLAUSE_DECL (clause) = get_nonlocal_debug_decl (info, decl);
 	      need_chain = true;
 	    }
@@ -1364,6 +1371,9 @@ convert_local_reference_op (tree *tp, int *walk_subtrees, void *data)
 			 NULL);
 	      walk_tree (&TREE_OPERAND (t, 3), convert_local_reference_op, wi,
 			 NULL);
+              if (TREE_CODE (t) == ARRAY_REF)
+	        walk_tree (&TREE_OPERAND (t, 4), convert_local_reference, wi,
+			   NULL);
 	    }
 	  else if (TREE_CODE (t) == BIT_FIELD_REF)
 	    {
@@ -1434,6 +1444,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_FIRSTPRIVATE:
 	case OMP_CLAUSE_COPYPRIVATE:
 	case OMP_CLAUSE_SHARED:
+        case OMP_CLAUSE_AUTO:
 	do_decl_clause:
 	  decl = OMP_CLAUSE_DECL (clause);
 	  if (TREE_CODE (decl) == VAR_DECL
@@ -1445,7 +1456,8 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	      tree field = lookup_field_for_decl (info, decl, NO_INSERT);
 	      if (field)
 		{
-		  bitmap_set_bit (new_suppress, DECL_UID (decl));
+		  //fix 6675065. 
+		  //bitmap_set_bit (new_suppress, DECL_UID (decl));
 		  OMP_CLAUSE_DECL (clause)
 		    = get_local_debug_decl (info, decl, field);
 		  need_frame = true;

@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -79,7 +81,6 @@ c_finish_omp_barrier (void)
   add_stmt (x);
 }
 
-
 /* Complete a #pragma omp taskwait construct.  */
 
 void
@@ -90,6 +91,9 @@ c_finish_omp_taskwait (void)
   x = built_in_decls[BUILT_IN_GOMP_TASKWAIT];
   x = build_call_expr (x, 0);
   add_stmt (x);
+  /* FIXME: in 432 we do the follows.
+  add_stmt (make_node (OMP_TASKWAIT));
+  */
 }
 
 
@@ -157,12 +161,12 @@ c_finish_omp_atomic (enum tree_code code, tree lhs, tree rhs)
    variable list that the syntax allows.  */
 
 void
-c_finish_omp_flush (void)
+c_finish_omp_flush (tree args)
 {
   tree x;
 
   x = built_in_decls[BUILT_IN_SYNCHRONIZE];
-  x = build_call_expr (x, 0);
+  x = build_call_expr (x, args);
   add_stmt (x);
 }
 
@@ -218,7 +222,7 @@ check_omp_for_incr_expr (tree exp, tree decl)
 
 tree
 c_finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
-		  tree incrv, tree body, tree pre_body)
+		  tree incrv, tree body, tree pre_body, tree post_body)
 {
   location_t elocus;
   bool fail = false;
@@ -432,7 +436,7 @@ c_finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
     return NULL;
   else
     {
-      tree t = make_node (OMP_FOR);
+      tree ret, t = make_node (OMP_FOR);
 
       TREE_TYPE (t) = void_type_node;
       OMP_FOR_INIT (t) = initv;
@@ -442,7 +446,19 @@ c_finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
       OMP_FOR_PRE_BODY (t) = pre_body;
 
       SET_EXPR_LOCATION (t, locus);
-      return add_stmt (t);
+      //ret = add_stmt (t);
+      if (post_body)
+        {
+          if (TREE_CODE (post_body) == STATEMENT_LIST)
+            {
+              tree_stmt_iterator tsi;
+              for (tsi = tsi_start (post_body); !tsi_end_p (tsi); tsi_next (&tsi))
+                add_stmt (tsi_stmt (tsi));
+            }
+          else
+            add_stmt (post_body);
+         }
+       return ret;
     }
 }
 
@@ -475,6 +491,7 @@ c_split_parallel_clauses (tree clauses, tree *par_clauses, tree *ws_clauses)
 	case OMP_CLAUSE_IF:
 	case OMP_CLAUSE_NUM_THREADS:
 	case OMP_CLAUSE_DEFAULT:
+	case OMP_CLAUSE_AUTO:
 	  OMP_CLAUSE_CHAIN (clauses) = *par_clauses;
 	  *par_clauses = clauses;
 	  break;

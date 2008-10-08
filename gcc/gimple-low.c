@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -306,6 +308,35 @@ lower_sequence (gimple_seq seq, struct lower_data *data)
     lower_stmt (&gsi, data);
 }
 
+/* If exceptions are enabled, wrap *STMT_P in a MUST_NOT_THROW catch
+   handler.  This prevents programs from violating the structured
+   block semantics with throws.  */
+
+static void
+maybe_catch_exception (tree *stmt_p)
+{
+  tree f, t;
+
+  if (!flag_exceptions)
+    return;
+  
+  if (lang_protect_cleanup_actions)
+    t = lang_protect_cleanup_actions ();
+  else
+    {
+      t = built_in_decls[BUILT_IN_TRAP];
+      t = build_function_call_expr (t, NULL);
+    }
+  f = build2 (EH_FILTER_EXPR, void_type_node, NULL, NULL);
+  EH_FILTER_MUST_NOT_THROW (f) = 1;
+  gimplify_and_add (t, &EH_FILTER_FAILURE (f));
+  
+  t = build2 (TRY_CATCH_EXPR, void_type_node, *stmt_p, NULL);
+  append_to_statement_list (f, &TREE_OPERAND (t, 1));
+
+  *stmt_p = NULL;
+  append_to_statement_list (t, stmt_p);
+}
 
 /* Lower the OpenMP directive statement pointed by GSI.  DATA is
    passed through the recursion.  */
@@ -313,15 +344,51 @@ lower_sequence (gimple_seq seq, struct lower_data *data)
 static void
 lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
 {
-  gimple stmt;
-  
-  stmt = gsi_stmt (*gsi);
+  if (flag_use_rtl_backend == 0)
+    {
+      tree stmt, bind;
+      stmt = gsi_stmt (*gsi);
+        /* For C++ exceptions to work correctly, first off
+           wrap the complete omp structured block in a
+           try-finally region. No exception must propagate
+           outside of the parallel region. Take the body
+           of the parallel region, insert the OMP_RETURN and
+           simply attach it after the parallel pragma and
+           continue gimplification to go on. Also for OMP
+           for, take the pre-loop body and attach it before
+           the omp node */
 
-  lower_sequence (gimple_omp_body (stmt), data);
-  gsi_insert_before (gsi, stmt, GSI_SAME_STMT);
-  gsi_insert_seq_before (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
-  gimple_omp_set_body (stmt, NULL);
-  gsi_remove (gsi, false);
+      if (TREE_CODE (stmt) == OMP_FOR
+          && OMP_FOR_PRE_BODY (stmt) != NULL_TREE)
+        {
+          lower_stmt_body (OMP_FOR_PRE_BODY (stmt), data);
+          tsi_link_before (tsi, OMP_FOR_PRE_BODY (stmt), TSI_SAME_STMT);
+          OMP_FOR_PRE_BODY (stmt) = NULL_TREE;
+        } 
+      bind = OMP_BODY (stmt);
+      if (TREE_CODE(bind) == BIND_EXPR)
+	{
+	  record_vars (BIND_EXPR_VARS (bind));
+          bind = BIND_EXPR_BODY (bind);
+	}
+      gcc_assert (TREE_CODE(bind) == STATEMENT_LIST);
+      maybe_catch_exception (&bind);
+      append_to_statement_list (make_node (OMP_RETURN), &bind);
+      tsi_link_after (tsi, bind, TSI_SAME_STMT);
+      OMP_BODY (stmt) = NULL_TREE;
+    }
+  else
+    {
+      gimple stmt;
+  
+      stmt = gsi_stmt (*gsi);
+
+      lower_sequence (gimple_omp_body (stmt), data);
+      gsi_insert_before (gsi, stmt, GSI_SAME_STMT);
+      gsi_insert_seq_before (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
+      gimple_omp_set_body (stmt, NULL);
+      gsi_remove (gsi, false);
+    }
 }
 
 
@@ -389,7 +456,8 @@ lower_stmt (gimple_stmt_iterator *gsi, struct lower_data *data)
 
 	if (decl
 	    && DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL
-	    && DECL_FUNCTION_CODE (decl) == BUILT_IN_SETJMP)
+	    && DECL_FUNCTION_CODE (decl) == BUILT_IN_SETJMP
+	    && 0/* TODO reimplement builtin_setjmp_* in GCCFSS*/)
 	  {
 	    data->calls_builtin_setjmp = true;
 	    lower_builtin_setjmp (gsi);

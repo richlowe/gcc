@@ -40,6 +40,10 @@
 # endif
 #endif
 
+#ifdef __linux__
+#define STDC_HEADERS
+#endif
+
 #include <ansidecl.h>
 
 #ifndef INSIDE_RECURSION

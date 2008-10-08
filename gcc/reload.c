@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This file contains subroutines used only from the file reload1.c.
    It knows how to scan one insn for operands and values
    that need to be copied into registers to make valid code.
@@ -116,6 +118,7 @@ a register with any other reload.  */
 /* True if X is a constant that can be forced into the constant pool.  */
 #define CONST_POOL_OK_P(X)			\
   (CONSTANT_P (X)				\
+   && flag_constant_pools                       \
    && GET_CODE (X) != HIGH			\
    && !targetm.cannot_force_const_mem (X))
 

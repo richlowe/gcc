@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 /* This file implements mangling of C++ names according to the IA64
    C++ ABI specification.  A mangled name encodes a function or
    variable's name, scope, type, and/or template arguments into a text
@@ -58,6 +60,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "varray.h"
 #include "flags.h"
 #include "target.h"
+#include "tree-ir.h"
 
 /* Debugging support.  */
 
@@ -2785,6 +2788,23 @@ mangle_decl_string (const tree decl)
     write_mangled_name (decl, true);
 
   result = finish_mangling_get_identifier (/*warn=*/true);
+  
+  if ((TREE_CODE (decl) == VAR_DECL || TREE_CODE (decl) == FUNCTION_DECL)
+      && TREE_STATIC (decl) 
+      && globalize_flag && !TREE_PUBLIC (decl))
+    {
+      result = make_global_name (result, 
+                                 0/* don't add function suffix to
+                                     globalized name in C++ */,
+                                 DECL_CONTEXT (decl)/* for future use*/);
+      TREE_PUBLIC (decl) = 1;
+      DECL_VISIBILITY (decl) = VISIBILITY_HIDDEN;
+
+      start_mangling (0, true);
+      write_string (result);
+      result = finish_mangling (true);
+    }
+    
   if (DEBUG_MANGLE)
     fprintf (stderr, "mangle_decl_string = '%s'\n\n",
 	     IDENTIFIER_POINTER (result));
@@ -2836,6 +2856,17 @@ mangle_special_for_type (const tree type, const char *code)
   /* Add the type.  */
   write_type (type);
   result = finish_mangling_get_identifier (/*warn=*/false);
+
+  if (globalize_flag && result[4] == 'Z') /* 'Z' for local name. */ 
+    {
+      result = make_global_name (result,
+                                 0/* don't add function suffix to
+                                     globalized name in C++ */,
+                                 0/* for future use*/);
+      start_mangling (0, true);
+      write_string (result);
+      result = finish_mangling (true);
+    }
 
   if (DEBUG_MANGLE)
     fprintf (stderr, "mangle_special_for_type = %s\n\n",
@@ -3078,10 +3109,24 @@ mangle_guard_variable (const tree variable)
 tree
 mangle_ref_init_variable (const tree variable)
 {
+  const char *result;
   start_mangling (variable);
   write_string ("_ZGR");
   write_name (variable, /*ignore_local_scope=*/0);
-  return finish_mangling_get_identifier (/*warn=*/false);
+  result = finish_mangling_get_identifier (/*warn=*/false);
+
+  if (TREE_STATIC (variable) && globalize_flag && !TREE_PUBLIC (variable))
+    {
+      result = make_global_name (result,
+                                 0/* don't add function suffix to
+                                     globalized name in C++ */,
+                                 DECL_CONTEXT (variable)/* for future use*/);
+      start_mangling (0);
+      write_string (result);
+      result = finish_mangling_get_identifier (false);
+    }
+
+  return result;
 }
 
 

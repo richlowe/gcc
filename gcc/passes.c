@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 /* This is the top level of cc1/c++.
    It parses command args, opens files, invokes the various passes
    in the proper order, and counts the time used by each.
@@ -281,7 +283,8 @@ gate_rest_of_compilation (void)
 {
   /* Early return if there were errors.  We can run afoul of our
      consistency checks, and there's not really much point in fixing them.  */
-  return !(rtl_dump_and_exit || flag_syntax_only || errorcount || sorrycount);
+  return !(rtl_dump_and_exit || flag_syntax_only || errorcount || sorrycount
+	       || gate_generate_ir ());
 }
 
 struct gimple_opt_pass pass_rest_of_compilation =
@@ -510,17 +513,20 @@ init_optimization_passes (void)
     by these passes.  */
   p = &all_lowering_passes;
   NEXT_PASS (pass_remove_useless_stmts);
+  NEXT_PASS (pass_regimple);  /* need to regimplify after gimple for rtl.*/
   NEXT_PASS (pass_mudflap_1);
   NEXT_PASS (pass_lower_omp);
   NEXT_PASS (pass_lower_cf);
   NEXT_PASS (pass_refactor_eh);
   NEXT_PASS (pass_lower_eh);
-  NEXT_PASS (pass_build_cfg);
+  NEXT_PASS (pass_lower_vector_nocfg);
+  NEXT_PASS (pass_build_cgraph_edges);
+  /* NEXT_PASS (pass_build_cfg);
   NEXT_PASS (pass_lower_complex_O0);
   NEXT_PASS (pass_lower_vector);
   NEXT_PASS (pass_warn_function_return);
   NEXT_PASS (pass_build_cgraph_edges);
-  NEXT_PASS (pass_inline_parameters);
+  NEXT_PASS (pass_inline_parameters); */
   *p = NULL;
 
   /* Interprocedural optimization passes.  */
@@ -533,7 +539,7 @@ init_optimization_passes (void)
       NEXT_PASS (pass_inline_parameters);
       NEXT_PASS (pass_rebuild_cgraph_edges);
     }
-  NEXT_PASS (pass_early_local_passes);
+  /*NEXT_PASS (pass_early_local_passes);
     {
       struct opt_pass **p = &pass_early_local_passes.pass.sub;
       NEXT_PASS (pass_tree_profile);
@@ -566,21 +572,30 @@ init_optimization_passes (void)
       NEXT_PASS (pass_release_ssa_names);
       NEXT_PASS (pass_rebuild_cgraph_edges);
       NEXT_PASS (pass_inline_parameters);
-    }
-  NEXT_PASS (pass_ipa_increase_alignment);
+    }*/
+  /*NEXT_PASS (pass_ipa_increase_alignment);
   NEXT_PASS (pass_ipa_matrix_reorg);
-  NEXT_PASS (pass_ipa_cp);
+  NEXT_PASS (pass_ipa_cp);*/
   NEXT_PASS (pass_ipa_inline);
+  /* the trees after 1st pass of gimplifier are unusable for IPA passes
+   which may cause wrong ECF_CONST markings leading to wrong code
+   or ICE during compile time
   NEXT_PASS (pass_ipa_reference);
   NEXT_PASS (pass_ipa_pure_const); 
   NEXT_PASS (pass_ipa_type_escape);
   NEXT_PASS (pass_ipa_pta);
-  NEXT_PASS (pass_ipa_struct_reorg);  
+  NEXT_PASS (pass_ipa_struct_reorg);  */
   *p = NULL;
 
   /* These passes are run after IPA passes on every function that is being
      output to the assembler file.  */
   p = &all_passes;
+  NEXT_PASS (pass_generate_ir);
+  NEXT_PASS (pass_all_passes_rtl);
+  NEXT_PASS (pass_rest_of_genir);  /* generate LSDA and global variables */
+  *p = NULL;
+  
+  p = &pass_all_passes_rtl.sub;
   NEXT_PASS (pass_all_optimizations);
     {
       struct opt_pass **p = &pass_all_optimizations.pass.sub;

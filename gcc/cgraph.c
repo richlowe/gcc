@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 /*  This file contains basic routines manipulating call graph
 
 The callgraph:
@@ -85,6 +87,7 @@ The callgraph:
 #include "tree-dump.h"
 #include "tree-flow.h"
 #include "value-prof.h"
+#include "tree-ir.h"
 
 static void cgraph_node_remove_callers (struct cgraph_node *node);
 static inline void cgraph_edge_remove_caller (struct cgraph_edge *e);

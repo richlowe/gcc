@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 /* This is the top level of cc1/c++.
    It parses command args, opens files, invokes the various passes
    in the proper order, and counts the time used by each.
@@ -84,6 +86,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-mudflap.h"
 #include "tree-pass.h"
 #include "gimple.h"
+#include "tree-ir.h"
 
 #if defined (DWARF2_UNWIND_INFO) || defined (DWARF2_DEBUGGING_INFO)
 #include "dwarf2out.h"
@@ -226,6 +229,10 @@ int flag_signed_char;
    of 2 means it has not yet been initialized.  */
 
 int flag_short_enums;
+
+/* Nonzero means use signed integer type for enumeration types.  */
+
+int flag_signed_enums;
 
 /* Nonzero if structures and unions should be returned in memory.
 
@@ -985,6 +992,8 @@ compile_file (void)
 
   varpool_assemble_pending_decls ();
   finish_aliases_2 ();
+  
+  global_ir_fini ();
 
   /* This must occur after the loop to output deferred functions.
      Else the coverage initializer would not be emitted if all the
@@ -1785,7 +1794,12 @@ process_options (void)
   /* Now we know write_symbols, set up the debug hooks based on it.
      By default we do nothing for debug output.  */
   if (PREFERRED_DEBUGGING_TYPE == NO_DEBUG)
-    default_debug_hooks = &do_nothing_debug_hooks;
+    {
+      if (flag_use_dbg_gen)
+        default_debug_hooks = &dbg_gen_debug_hooks;
+      else
+        default_debug_hooks = &dbx_debug_hooks;
+    }
 #if defined(DBX_DEBUGGING_INFO)
   else if (PREFERRED_DEBUGGING_TYPE == DBX_DEBUG)
     default_debug_hooks = &dbx_debug_hooks;
@@ -1800,7 +1814,12 @@ process_options (void)
 #endif
 #ifdef DWARF2_DEBUGGING_INFO
   else if (PREFERRED_DEBUGGING_TYPE == DWARF2_DEBUG)
-    default_debug_hooks = &dwarf2_debug_hooks;
+    {
+      if (flag_use_dbg_gen)
+        default_debug_hooks = &dbg_gen_debug_hooks; 
+      else 
+        default_debug_hooks = &dwarf2_debug_hooks;
+    }
 #endif
 #ifdef VMS_DEBUGGING_INFO
   else if (PREFERRED_DEBUGGING_TYPE == VMS_DEBUG
@@ -1812,7 +1831,12 @@ process_options (void)
     ;
 #if defined(DBX_DEBUGGING_INFO)
   else if (write_symbols == DBX_DEBUG)
-    debug_hooks = &dbx_debug_hooks;
+    {
+      if (flag_use_dbg_gen)
+        debug_hooks = &dbg_gen_debug_hooks;
+      else 
+        debug_hooks = &dbx_debug_hooks;
+    }
 #endif
 #if defined(XCOFF_DEBUGGING_INFO)
   else if (write_symbols == XCOFF_DEBUG)
@@ -1824,7 +1848,12 @@ process_options (void)
 #endif
 #ifdef DWARF2_DEBUGGING_INFO
   else if (write_symbols == DWARF2_DEBUG)
-    debug_hooks = &dwarf2_debug_hooks;
+    {
+      if (flag_use_dbg_gen)
+        debug_hooks = &dbg_gen_debug_hooks;
+      else 
+        debug_hooks = &dwarf2_debug_hooks; 
+    }
 #endif
 #ifdef VMS_DEBUGGING_INFO
   else if (write_symbols == VMS_DEBUG || write_symbols == VMS_AND_DWARF2_DEBUG)
@@ -2008,6 +2037,8 @@ backend_init_target (void)
   if (flag_caller_saves)
     init_caller_save ();
   expand_dummy_function_end ();
+  
+  global_ir_init ();
 }
 
 /* Initialize the compiler back end.  This function is called only once,
