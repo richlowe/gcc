@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* Process declarations and symbol lookup for C++ front end.
    Also constructs types; the standard scalar types at initialization,
@@ -159,6 +160,13 @@ tree global_scope_name;
    the TREE_VALUE slot and the initializer is stored
    in the TREE_PURPOSE slot.  */
 tree static_aggregates;
+
+/* A list of objects which have constructors or destructors
+   which reside in the static block scope and objects without
+   constructors (include struct). TREE_VALUE: decl, 
+   TREE_PURPOSE: init. this is used for threadprivate init-
+   ialization.*/ 
+tree static_block_aggregates;
 
 /* -- end of C++ */
 
@@ -1812,6 +1820,10 @@ duplicate_decls (tree newdecl, tree olddecl, bool newdecl_is_friend)
 	  DECL_IS_MALLOC (newdecl) |= DECL_IS_MALLOC (olddecl);
 	  DECL_IS_OPERATOR_NEW (newdecl) |= DECL_IS_OPERATOR_NEW (olddecl);
 	  DECL_IS_PURE (newdecl) |= DECL_IS_PURE (olddecl);
+	  DECL_IS_TM_ATOMIC_P (newdecl) |= DECL_IS_TM_ATOMIC_P (olddecl);
+          DECL_IS_TM_CALLABLE_P (newdecl) |= DECL_IS_TM_CALLABLE_P (olddecl);
+          DECL_IS_TM_ABORT_OK_P (newdecl) |= DECL_IS_TM_ABORT_OK_P (olddecl);
+          DECL_IS_TM_PURE_P (newdecl) |= DECL_IS_TM_PURE_P (olddecl);
 	  /* Keep the old RTL.  */
 	  COPY_DECL_RTL (olddecl, newdecl);
 	}
@@ -4320,7 +4332,8 @@ static void
 maybe_deduce_size_from_array_init (tree decl, tree init)
 {
   tree type = TREE_TYPE (decl);
-
+  tree initializer = init ? init : DECL_INITIAL (decl);
+  
   if (TREE_CODE (type) == ARRAY_TYPE
       && TYPE_DOMAIN (type) == NULL_TREE
       && TREE_CODE (decl) != TYPE_DECL)
@@ -4381,6 +4394,30 @@ maybe_deduce_size_from_array_init (tree decl, tree init)
 
       layout_decl (decl, 0);
     }
+    
+  if (TREE_CODE (decl) == VAR_DECL)
+    {
+      if (initializer && TREE_CODE (initializer) == CONSTRUCTOR)
+        {
+          unsigned HOST_WIDE_INT ix;
+          tree value;
+
+          FOR_EACH_CONSTRUCTOR_VALUE (CONSTRUCTOR_ELTS (initializer),ix, value)
+            {
+              if (TREE_CODE (value) == NOP_EXPR)
+                value = TREE_OPERAND (value, 0);
+              if (TREE_CODE (value) == ADDR_EXPR)
+                value = TREE_OPERAND (value, 0);
+
+              /* value must be a FUNCTION_decl */
+              if (TREE_CODE (value) == FUNCTION_DECL && TREE_STATIC (value))
+                {
+                  struct cgraph_node *node = cgraph_node (value);
+                  cgraph_mark_needed_node (node);
+                }
+             }
+         }
+     }    
 }
 
 /* Set DECL_SIZE, DECL_ALIGN, etc. for DECL (a VAR_DECL), and issue
@@ -6036,7 +6073,11 @@ expand_static_init (tree decl, tree init)
   if (!init
       && !TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (decl))
       && TYPE_HAS_TRIVIAL_DESTRUCTOR (TREE_TYPE (decl)))
-    return;
+    {
+      if (CLASS_TYPE_P (TREE_TYPE (decl)))
+        static_block_aggregates = tree_cons (init, decl, static_block_aggregates);
+      return;
+    }
 
   if (DECL_FUNCTION_SCOPE_P (decl))
     {
@@ -6046,6 +6087,8 @@ expand_static_init (tree decl, tree init)
       tree guard, guard_addr;
       tree acquire_fn, release_fn, abort_fn;
       tree flag, begin;
+      
+      static_block_aggregates = tree_cons (init, decl, static_block_aggregates);
 
       /* Emit code to perform this initialization but once.  This code
 	 looks like:
@@ -11724,6 +11767,27 @@ begin_function_body (void)
   return stmt;
 }
 
+/* Emit diagnostics that require gimple input for detection.  Operate on
+   FNDECL and all its nested functions.  */
+
+static void
+cp_gimple_diagnostics_recursively (tree fndecl)
+{
+  struct cgraph_node *cgn;
+
+  /* Handle attribute((warn_unused_result)).  Relies on gimple input.  */
+  c_warn_unused_result (&DECL_SAVED_TREE (fndecl));
+
+  /* Notice when OpenMP structured block constraints are violated.  */
+  if (flag_openmp)
+    diagnose_omp_structured_block_errors (fndecl);
+
+  /* Finalize all nested functions now.  */
+  cgn = cgraph_node (fndecl);
+  for (cgn = cgn->nested; cgn ; cgn = cgn->next_nested)
+    cp_gimple_diagnostics_recursively (cgn->decl);
+}
+
 /* Do the processing for the end of a function body.  Currently, this means
    closing out the cleanups for fully-constructed bases and members, and in
    the case of the destructor, deleting the object if desired.  Again, this
@@ -11958,7 +12022,9 @@ finish_function (int flags)
       f->extern_decl_map = NULL;
 
       /* Handle attribute((warn_unused_result)).  Relies on gimple input.  */
-      c_warn_unused_result (&DECL_SAVED_TREE (fndecl));
+      /*c_warn_unused_result (&DECL_SAVED_TREE (fndecl));*/
+      cp_gimple_diagnostics_recursively (fndecl);
+
     }
   /* Clear out the bits we don't need.  */
   local_names = NULL;
@@ -12393,7 +12459,7 @@ cxx_comdat_group (tree decl)
   else
     {
       while (DECL_THUNK_P (decl))
-	{
+	      {
 	  /* If TARGET_USE_LOCAL_THUNK_ALIAS_P, use_thunk puts the thunk
 	     into the same section as the target function.  In that case
 	     we must return target's name.  */
@@ -12409,6 +12475,13 @@ cxx_comdat_group (tree decl)
     }
 
   return IDENTIFIER_POINTER (name);
+}
+
+/* True if decl is global namespace.  */
+bool
+cxx_global_namespace_decl_p (tree decl)
+{
+  return (decl == global_namespace);
 }
 
 #include "gt-cp-decl.h"

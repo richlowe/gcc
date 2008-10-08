@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This module implements main driver of compilation process as well as
    few basic interprocedural optimizers.
 
@@ -151,6 +153,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-gimple.h"
 #include "tree-pass.h"
 #include "output.h"
+#include "tree-ir.h"
 
 static void cgraph_expand_all_functions (void);
 static void cgraph_mark_functions_to_output (void);
@@ -663,7 +666,9 @@ verify_cgraph_node (struct cgraph_node *node)
   block_stmt_iterator bsi;
   bool error_found = false;
 
-  if (errorcount || sorrycount)
+  if (errorcount || sorrycount
+      /* cannot verify it properly without CFG, TODO fix it for GCCFSS */
+      || 1)
     return;
 
   timevar_push (TV_CGRAPH_VERIFY);
@@ -1080,6 +1085,12 @@ cgraph_finalize_compilation_unit (void)
 
   finish_aliases_1 ();
 
+  /* Emit special functions required for handling
+     #pragma omp threadprivate in Sun IR. Need to
+     do it before the loop below as we will register
+     this function for static construction */
+  dump_ir_threadprivate_fn ();
+
   if (!flag_unit_at_a_time)
     {
       cgraph_output_pending_asms ();
@@ -1154,6 +1165,8 @@ cgraph_expand_function (struct cgraph_node *node)
 
   /* We ought to not compile any inline clones.  */
   gcc_assert (!node->global.inlined_to);
+
+  current_function_number++;
 
   if (flag_unit_at_a_time)
     announce_function (decl);

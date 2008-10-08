@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -32,6 +34,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "hashtab.h"
 #include "pointer-set.h"
 #include "flags.h"
+#include "tree-ir.h"
+#include "tree-inline.h"
 
 /* Local declarations.  */
 
@@ -178,6 +182,40 @@ gimplify_if_stmt (tree *stmt_p)
   *stmt_p = stmt;
 }
 
+static int 
+is_simple_condition_expr (tree cond)
+{
+  enum tree_code code = TREE_CODE (cond);
+  tree t;
+  int i, len, k;
+
+  if (code == CALL_EXPR)
+    return 0;
+
+  if (IS_EXPR_CODE_CLASS (TREE_CODE_CLASS (code)))
+    {
+      len = TREE_CODE_LENGTH (code);
+
+      if (len)
+	for (i = 0; i < len ; i++)
+	  {
+	    t = TREE_OPERAND (cond, i);
+	    if (t)
+	      {	
+	        k = is_simple_condition_expr (t);
+	        if ( k == 0) return 0;
+	      }
+	  } 
+      return 1;
+    }
+  else if (TREE_CODE_CLASS (code) == tcc_type
+           || TREE_CODE_CLASS (code) == tcc_declaration 
+           || TREE_CODE_CLASS (code) == tcc_constant)
+    return 1;
+  else
+    return 0;
+}
+
 /* Build a generic representation of one of the C loop forms.  COND is the
    loop condition or NULL_TREE.  BODY is the (possibly compound) statement
    controlled by the loop.  INCR is the increment expression of a for-loop,
@@ -188,7 +226,7 @@ gimplify_if_stmt (tree *stmt_p)
 static tree
 gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
 {
-  tree top, entry, exit, cont_block, break_block, stmt_list, t;
+  tree top, entry, exit, cont_block, break_block, stmt_list, t, t1, t2;
   location_t stmt_locus;
 
   stmt_locus = input_location;
@@ -198,6 +236,7 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
   break_block = begin_bc_block (bc_break);
   cont_block = begin_bc_block (bc_continue);
 
+  /* If condition is zero don't generate a loop construct.  */
   /* If condition is zero don't generate a loop construct.  */
   if (cond && integer_zerop (cond))
     {
@@ -223,11 +262,7 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
       exit = build_and_jump (&LABEL_EXPR_LABEL (top));
       if (cond && !integer_nonzerop (cond))
 	{
-	  t = build_bc_goto (bc_break);
-	  exit = fold_build3 (COND_EXPR, void_type_node, cond, exit, t);
-	  gimplify_stmt (&exit);
-
-	  if (cond_is_first)
+          if (cond_is_first)
 	    {
 	      if (incr)
 		{
@@ -235,9 +270,24 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
 		  t = build_and_jump (&LABEL_EXPR_LABEL (entry));
 		}
 	      else
-		t = build_bc_goto (bc_continue);
+		{
+		  if (is_simple_condition_expr (cond))
+		    {
+		      t = cond;
+		      walk_tree (&t, copy_tree_r, NULL, NULL);
+		      t1 = build_and_jump (&LABEL_EXPR_LABEL (top));
+		      t2 = build_bc_goto (bc_break);
+		      t = fold_build3 (COND_EXPR, void_type_node, t, t1, t2);
+		      gimplify_stmt (&t);
+		    }
+		  else
+		    t = build_bc_goto (bc_continue);
+		}
 	      append_to_statement_list (t, &stmt_list);
 	    }
+	  t = build_bc_goto (bc_break);
+	  exit = fold_build3 (COND_EXPR, void_type_node, cond, exit, t);
+	  gimplify_stmt (&exit);
 	}
     }
 
@@ -257,6 +307,120 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
   return finish_bc_block (bc_break, break_block, stmt_list);
 }
 
+static tree
+is_unshareable_expr_r (tree *tp, int *walk_subtrees, void *data)
+{
+  enum tree_code code = TREE_CODE (*tp);
+  if (TREE_CODE_CLASS (code) == tcc_type
+      || TREE_CODE_CLASS (code) == tcc_declaration
+      || TREE_CODE_CLASS (code) == tcc_constant
+      || code == SAVE_EXPR || code == TARGET_EXPR || code == BLOCK)
+    {
+      *walk_subtrees = 0;
+      if (code == SAVE_EXPR || code == TARGET_EXPR)
+        *(bool*)data = false;
+    }
+  else
+    {
+      gcc_assert (code != BIND_EXPR);
+      gcc_assert (code != STATEMENT_LIST);
+    }
+
+  return NULL_TREE;
+}
+
+static bool
+is_unshareable_expr (tree expr)
+{
+  bool data = true;
+  walk_tree (&expr, is_unshareable_expr_r, &data, NULL);
+  return data;
+}
+
+static tree
+gimplify_for_loop (tree cond, tree body, tree incr)
+{
+  tree top, entry, exit, cont_block, break_block, stmt_list, t;
+  location_t stmt_locus;
+  bool unshareable = true;
+
+  stmt_locus = input_location;
+  stmt_list = NULL_TREE;
+  entry = NULL_TREE;
+
+  break_block = begin_bc_block (bc_break);
+  cont_block = begin_bc_block (bc_continue);
+
+  /* If condition is zero don't generate a loop construct.  */
+  if (cond && integer_zerop (cond))
+    {
+      top = NULL_TREE;
+      exit = NULL_TREE;
+      t = build_bc_goto (bc_break);
+      append_to_statement_list (t, &stmt_list);
+    }
+  else
+    {
+      /* If we use a LOOP_EXPR here, we have to feed the whole thing
+	 back through the main gimplifier to lower it.  Given that we
+	 have to gimplify the loop body NOW so that we can resolve
+	 break/continue stmts, seems easier to just expand to gotos.  */
+      top = build1 (LABEL_EXPR, void_type_node, NULL_TREE);
+
+      /* If we have an exit condition, then we build an IF with gotos either
+	 out of the loop, or to the top of it.  If there's no exit condition,
+	 then we just build a jump back to the top.  */
+      exit = build_and_jump (&LABEL_EXPR_LABEL (top));
+      if (cond && !integer_nonzerop (cond))
+	{
+          if (is_unshareable_expr (cond))
+            {
+              tree cc = unshare_expr (cond);
+              t = build_bc_goto (bc_break);
+              entry = build_and_jump (&LABEL_EXPR_LABEL (top));
+              entry = build3 (COND_EXPR, void_type_node, cc, entry, t);
+              entry = fold (entry);
+              gimplify_stmt (&entry);
+            }
+          else
+            {
+              unshareable = false;
+	      if (incr)
+		{
+		  entry = build1 (LABEL_EXPR, void_type_node, NULL_TREE);
+		  t = build_and_jump (&LABEL_EXPR_LABEL (entry));
+		}
+	      else
+		t = build_bc_goto (bc_continue);
+	      append_to_statement_list (t, &stmt_list);
+            }
+
+	  t = build_bc_goto (bc_break);
+	  exit = build3 (COND_EXPR, void_type_node, cond, exit, t);
+	  exit = fold (exit);
+	  gimplify_stmt (&exit);
+	}
+    }
+
+  gimplify_stmt (&body);
+  gimplify_stmt (&incr);
+
+  body = finish_bc_block (bc_continue, cont_block, body);
+
+  if (unshareable)
+    append_to_statement_list (entry, &stmt_list);
+  append_to_statement_list (top, &stmt_list);
+  append_to_statement_list (body, &stmt_list);
+  append_to_statement_list (incr, &stmt_list);
+  if (!unshareable)
+    append_to_statement_list (entry, &stmt_list);
+  append_to_statement_list (exit, &stmt_list);
+
+  annotate_all_with_locus (&stmt_list, stmt_locus);
+
+  return finish_bc_block (bc_break, break_block, stmt_list);
+}
+
 /* Gimplify a FOR_STMT node.  Move the stuff in the for-init-stmt into the
    prequeue and hand off to gimplify_cp_loop.  */
 
@@ -268,8 +432,13 @@ gimplify_for_stmt (tree *stmt_p, tree *pre_p)
   if (FOR_INIT_STMT (stmt))
     gimplify_and_add (FOR_INIT_STMT (stmt), pre_p);
 
-  *stmt_p = gimplify_cp_loop (FOR_COND (stmt), FOR_BODY (stmt),
-			      FOR_EXPR (stmt), 1);
+  /* gcov tests are too sensitive if 'for' is represented as bottom tested loop */
+  if (!flag_test_coverage)
+    /* generate bottom test "for" loop */
+    *stmt_p = gimplify_for_loop (FOR_COND (stmt), FOR_BODY (stmt), FOR_EXPR (stmt));
+  else
+    *stmt_p = gimplify_cp_loop (FOR_COND (stmt), FOR_BODY (stmt),
+			        FOR_EXPR (stmt), 1);
 }
 
 /* Gimplify a WHILE_STMT node.  */
@@ -811,11 +980,11 @@ cxx_omp_clause_apply_fn (tree fn, tree arg1, tree arg2)
       do
 	{
 	  inner_type = TREE_TYPE (inner_type);
-	  start1 = build4 (ARRAY_REF, inner_type, start1,
-			   size_zero_node, NULL, NULL);
+	  start1 = build5 (ARRAY_REF, inner_type, start1,
+			   size_zero_node, NULL, NULL, NULL);
 	  if (arg2)
-	    start2 = build4 (ARRAY_REF, inner_type, start2,
-			     size_zero_node, NULL, NULL);
+	    start2 = build5 (ARRAY_REF, inner_type, start2,
+			     size_zero_node, NULL, NULL, NULL);
 	}
       while (TREE_CODE (inner_type) == ARRAY_TYPE);
       start1 = build_fold_addr_expr (start1);
@@ -958,3 +1127,141 @@ cxx_omp_privatize_by_reference (const_tree decl)
 {
   return is_invisiref_parm (decl);
 }
+
+/* Return IR equivalent decl is thread private */
+tree
+cxx_var_is_omp_threadprivate (tree decl) 
+{
+  if (DECL_LANG_SPECIFIC (decl)
+      && CP_DECL_THREADPRIVATE_P (decl) == 1)
+    return lookup_threadprivate_variable (decl);
+
+  return NULL_TREE;
+}
+
+void
+cxx_register_omp_threadprivate_init (tree var)
+{
+  tree type, inner_type;
+
+  inner_type = type = TREE_TYPE (var);
+  while (TREE_CODE (inner_type) == ARRAY_TYPE)
+    inner_type = TREE_TYPE (inner_type);
+  
+  if (CLASS_TYPE_P (inner_type))
+    {
+      /* C++ specific initialization */
+      tree t, default_ctor, default_copyctor, default_assign;
+
+      if (!TYPE_HAS_TRIVIAL_INIT_REF (inner_type))
+        {
+          t = build_special_member_call (NULL_TREE,
+                                         complete_ctor_identifier,
+                                         NULL_TREE, inner_type, LOOKUP_NORMAL);
+          default_ctor = get_callee_fndecl (t);
+
+          t = build_int_cst (build_pointer_type (inner_type), 0);
+          t = build1 (INDIRECT_REF, inner_type, t);
+          t = build_tree_list (NULL, t);
+
+          t = build_special_member_call (NULL_TREE,
+                                         complete_ctor_identifier,
+                                         t, inner_type, LOOKUP_NORMAL);
+          default_copyctor = get_callee_fndecl (t);
+        }
+      else
+        {
+          default_ctor = NULL_TREE;
+          default_copyctor = NULL_TREE;
+        }
+      
+      if (!TYPE_HAS_TRIVIAL_ASSIGN_REF (inner_type))
+        {
+          t = build_int_cst (build_pointer_type (inner_type), 0);
+          t = build1 (INDIRECT_REF, inner_type, t);
+          t = build_special_member_call (t, ansi_assopname (NOP_EXPR),
+                                         build_tree_list (NULL, t),
+                                         inner_type, LOOKUP_NORMAL);
+          
+          /* We'll have called convert_from_reference on the call, which
+             may well have added an indirect_ref.  It's unneeded here,
+             and in the way, so kill it.  */
+          if (TREE_CODE (t) == INDIRECT_REF)
+            t = TREE_OPERAND (t, 0);
+            
+          default_assign = get_callee_fndecl (t);
+        }
+      else
+        default_assign = NULL_TREE;
+
+      /* We now have our three functions generate a call to
+         runtime library to initialize them. */
+      register_threadprivate_variable (var, default_ctor,
+                                       default_copyctor, default_assign);
+    }
+  else
+    register_threadprivate_variable (var, NULL_TREE, NULL_TREE, NULL_TREE);
+}
+
+void
+cxx_new_register_omp_threadprivate_init (tree var)
+{
+  tree type, inner_type;
+
+  inner_type = type = TREE_TYPE (var);
+  while (TREE_CODE (inner_type) == ARRAY_TYPE)
+    inner_type = TREE_TYPE (inner_type);
+
+  if (CLASS_TYPE_P (inner_type))
+    {
+      /* C++ specific initialization */
+      tree t, ctor, dtor, copy_assign, arg_types;
+      char *name, *fun_name;
+
+     /* the init function's type should be void (*init)(class_type omp_var) */
+      arg_types = build_function_type_list (void_type_node, inner_type, NULL);
+
+      /* later we will generate a new function named _INIT_VarName. */
+      name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME(var));
+      fun_name = xmalloc ( strlen (name) +6 );
+
+      /* find the decl without initialization func. 
+	 we record them in static_block_aggregates list.*/
+      if ( !TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (var)))
+	ctor = NULL_TREE;
+      else
+	{
+          strcpy (fun_name, "_INIT_");
+          strcpy (fun_name + 6, name );
+          ctor = build_fn_decl ( fun_name, arg_types);
+	}
+
+      strcpy (fun_name, "_FINI_");
+      strcpy (fun_name + 6, name );
+      dtor = build_fn_decl ( fun_name, arg_types);
+
+      if (!TYPE_HAS_TRIVIAL_ASSIGN_REF (inner_type))
+        {
+          t = build_int_cst (build_pointer_type (inner_type), 0);
+          t = build1 (INDIRECT_REF, inner_type, t);
+          t = build_special_member_call (t, ansi_assopname (NOP_EXPR),
+                                         build_tree_list (NULL, t),
+                                         inner_type, LOOKUP_NORMAL);
+          
+          /* We'll have called convert_from_reference on the call, which
+             may well have added an indirect_ref.  It's unneeded here,
+             and in the way, so kill it.  */
+          if (TREE_CODE (t) == INDIRECT_REF)
+            t = TREE_OPERAND (t, 0);
+            
+          copy_assign = get_callee_fndecl (t);
+        }
+      else
+        copy_assign = NULL_TREE;
+
+      register_threadprivate_variable (var, ctor, dtor, copy_assign);
+    }
+  else
+    register_threadprivate_variable (var, NULL_TREE, NULL_TREE, NULL_TREE);
+}
+

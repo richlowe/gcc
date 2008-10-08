@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_TOPLEV_H
 #define GCC_TOPLEV_H
 
@@ -111,6 +113,7 @@ extern const char *dump_base_name;
 extern const char *aux_base_name;
 extern const char *aux_info_file_name;
 extern const char *asm_file_name;
+extern const char *ir_file_name;
 extern bool exit_after_options;
 
 /* True if the user has tagged the function with the 'section'

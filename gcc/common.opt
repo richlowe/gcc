@@ -23,6 +23,8 @@
 
 ; Please try to keep this file in ASCII collating order.
 
+; Modified by Sun Microsystems 2008
+
 -help
 Common
 Display this information
@@ -370,6 +372,10 @@ fcommon
 Common Report Var(flag_no_common,0) Optimization
 Do not put uninitialized globals in the common section
 
+fconstant-pools
+Common Report Var(flag_constant_pools) Init(1)
+Put constants in pools in read-only memory if convenient
+
 fcprop-registers
 Common Report Var(flag_cprop_registers) Optimization
 Perform a register copy-propagation optimization pass
@@ -443,6 +449,10 @@ Suppress output of instruction numbers, line number notes and addresses in debug
 fearly-inlining
 Common Report Var(flag_early_inlining) Init(1) Optimization
 Perform early inlining
+
+fdwarf2-indirect-strings
+Common Report Var(flag_dwarf2_indirect_strings) Init(1)
+Enable use of indirect strings in DWARF2 debug info
 
 feliminate-dwarf2-dups
 Common Report Var(flag_eliminate_dwarf2_dups)
@@ -623,7 +633,7 @@ Perform structure layout optimizations based
 on profiling information.
 
 fivopts
-Common Report Var(flag_ivopts) Init(1) Optimization
+Common Report Var(flag_ivopts) Init(0) Optimization
 Optimize induction variables on trees
 
 fjump-tables
@@ -728,6 +738,10 @@ Do the full register move optimization pass
 foptimize-sibling-calls
 Common Report Var(flag_optimize_sibling_calls) Optimization
 Optimize sibling and tail recursive calls
+
+foptimize-unsigned-comparison
+Common Report Var(flag_optimize_unsigned_comparison) Init(1)
+Optimize comparison of unsigned integer type with zero constant
 
 fpre-ipa-mem-report
 Common Report Var(pre_ipa_mem_report)
@@ -1079,7 +1093,7 @@ Enable dead store elimination
 ftree-fre
 Common Report Var(flag_tree_fre) Optimization
 Enable Full Redundancy Elimination (FRE) on trees
-
+tree
 ftree-loop-im
 Common Report Var(flag_tree_loop_im) Init(1) Optimization
 Enable loop invariant motion on trees
@@ -1095,6 +1109,10 @@ Create canonical induction variables in loops
 ftree-loop-optimize
 Common Report Var(flag_tree_loop_optimize) Init(1) Optimization
 Enable loop optimizations on tree level
+
+ftree-opts
+Common Report Var(flag_preir_tree_optimizations) Init(0)
+Enable pre-IR tree optimizations
 
 ftree-parallelize-loops=
 Common Report Joined UInteger Var(flag_tree_parallelize_loops) Init(1)
@@ -1131,6 +1149,30 @@ Perform live range splitting during the SSA->normal pass
 ftree-vrp
 Common Report Var(flag_tree_vrp) Init(0) Optimization
 Perform Value Range Propagation on trees
+
+ftree-ir-crossfile
+Common Report Var(flag_tree_ir_crossfile)
+Prepare IR for crossfile optimizations (xipo)
+
+ftriple-as-base
+Common Report Var(flag_triple_as_base) Init(1)
+Generate triples as base address of ir_arrayloc instead of just leaves
+
+ftree-ir-regalloc
+Common Report Var(flag_tree_ir_regalloc) Init(0)
+Allocate temp variables in IR register segments
+
+fbitfield-refs
+Common Report Var(flag_use_bitfield_refs) Init(1)
+Allow \"bit_field_ref\" generation in front-end
+
+ftree-ir-verbose=
+Common RejectNegative Joined
+-ftree-ir-verbose=<number>	Set the verbosity level of the IR generator
+
+ftree-ir-eh
+Common Report Var(flag_tree_ir_eh_supported) Init(0)
+Emit EH table in IR instead of side-door file
 
 funit-at-a-time
 Common Report Var(flag_unit_at_a_time) Optimization
@@ -1235,9 +1277,49 @@ fwrapv
 Common Report Var(flag_wrapv) Optimization
 Assume signed arithmetic overflow wraps around
 
+fwritable-strings
+Common Report Var(flag_writable_strings) Init(0)
+Store strings in writable data section
+
 fzero-initialized-in-bss
 Common Report Var(flag_zero_initialized_in_bss) Init(1)
 Put zero initialized data in the bss section
+
+fnew-tp
+Common Report Var(flag_new_tp) Init(1)
+Support changed threadprivate behavior for Openmp3.0
+
+fcppiter
+Common Report Var(flag_cpp_iter) Init(1)
+Support c++ iterator for Openmp3.0
+
+tm_mode
+Common RejectNegative Var(flag_tm_mode, 1) Init(0) 
+Support transactional memory, ={none|htm|phtm|stm} 
+
+tm_mode=none
+Common RejectNegative Var(flag_tm_mode, 0) VarExists
+Support transactional memory, ={none|htm|phtm|stm} 
+
+tm_mode=htm
+Common RejectNegative Var(flag_tm_mode, 1) VarExists
+Support transactional memory, ={none|htm|phtm|stm} 
+
+tm_mode=phtm
+Common RejectNegative Var(flag_tm_mode, 1) VarExists
+Support transactional memory, ={none|htm|phtm|stm} 
+
+tm_mode=stm
+Common RejectNegative Var(flag_tm_mode, 1) VarExists
+Support transactional memory, ={none|htm|phtm|stm} 
+
+ffield-array
+Common Report Var(flag_field_array) Init(1)
+Generate Darrayloc IR triple for a struture field array access.
+
+fgen-more-array
+Common Report Var(flag_gen_more_array) Init(0)
+Generate more array_ref expression.
 
 g
 Common JoinedOrMissing
@@ -1279,6 +1361,10 @@ o
 Common Joined Separate
 -o <file>	Place output into <file>
 
+r
+Common Joined Separate
+-r <file>	Place output SunIR into <file>
+
 p
 Common Var(profile_flag)
 Enable function profiling
@@ -1302,6 +1388,54 @@ Display the compiler's version
 w
 Common Var(inhibit_warnings)
 Suppress warnings
+
+cmdline
+Common RejectNegative Separate 
+Contain original command line passed by driver
+
+xalias_level=
+Common RejectNegative Joined
+Enable optimizations based on the specified alias_level
+
+xinline=
+Common RejectNegative Joined
+Attempt inlining of specified user routines, ={%auto,func,no%func}
+
+xopenmp
+Common RejectNegative Var(flag_openmp, 1) VarExists
+Enable OpenMP language extensions, ={noopt|parallel|none}
+
+xopenmp=noopt
+Common RejectNegative Var(flag_openmp, 1) VarExists
+Enable OpenMP language extensions, ={noopt|parallel|none}
+
+xopenmp=parallel
+Common RejectNegative Var(flag_openmp, 1) VarExists
+Enable OpenMP language extensions, ={noopt|parallel|none}
+
+xopenmp=none
+Common RejectNegative Var(flag_openmp, 0) VarExists
+Enable OpenMP language extensions, ={noopt|parallel|none}
+
+xpagesize_stack=
+Common RejectNegative Joined
+Controls the preferred page size for the stack, ={8K|64K|512K|4M|32M|256M|2G|16G|default}
+
+xpagesize_heap=
+Common RejectNegative Joined
+Controls the preferred page size for the heap, ={8K|64K|512K|4M|32M|256M|2G|16G|default}
+
+xcpp
+Common Report Var(flag_mark_ir_as_cpp, 0) Init(1)
+Mark outgoing Sun IR as C language for C++ sources (experimental)
+
+xrestrict
+Common Report Var(flag_xrestrict) Init(0)
+Treat pointer valued function parameters as restricted
+
+xrestrict=
+Common RejectNegative Joined
+Treat pointer valued function parameters as restricted, ={%none,%all,<function-name list>}
 
 shared
 Common RejectNegative Negative(pie)

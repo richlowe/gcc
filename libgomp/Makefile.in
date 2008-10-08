@@ -411,7 +411,7 @@ clean-toolexeclibLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libgomp.la: $(libgomp_la_OBJECTS) $(libgomp_la_DEPENDENCIES) 
-	$(LINK) -rpath $(toolexeclibdir) $(libgomp_la_LDFLAGS) $(libgomp_la_OBJECTS) $(libgomp_la_LIBADD) $(LIBS)
+	$(LINK) -Wl,-R\$$ORIGIN -rpath $(toolexeclibdir) $(libgomp_la_LDFLAGS) $(libgomp_la_OBJECTS) $(libgomp_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

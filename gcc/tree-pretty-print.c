@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -291,6 +293,9 @@ dump_omp_clause (pretty_printer *buffer, tree clause, int spc, int flags)
     case OMP_CLAUSE_COPYPRIVATE:
       name = "copyprivate";
       goto print_remap;
+    case OMP_CLAUSE_AUTO:
+      name = "__auto";
+      goto print_remap;
   print_remap:
       pp_string (buffer, name);
       pp_character (buffer, '(');
@@ -328,7 +333,16 @@ dump_omp_clause (pretty_printer *buffer, tree clause, int spc, int flags)
     case OMP_CLAUSE_ORDERED:
       pp_string (buffer, "ordered");
       break;
+    case OMP_CLAUSE_UNTIED:
+      pp_string (buffer, "untied");
+      break;
 
+    case OMP_CLAUSE_COLLAPSE:
+      pp_string (buffer, "collapse(");
+      dump_generic_node (buffer, OMP_CLAUSE_COLLAPSE_EXPR (clause),
+                         spc, flags, false);
+      pp_character (buffer, ')');
+      break;
     case OMP_CLAUSE_DEFAULT:
       pp_string (buffer, "default(");
       switch (OMP_CLAUSE_DEFAULT_KIND (clause))
@@ -343,6 +357,9 @@ dump_omp_clause (pretty_printer *buffer, tree clause, int spc, int flags)
 	break;
       case OMP_CLAUSE_DEFAULT_PRIVATE:
 	pp_string (buffer, "private");
+	break
+	case OMP_CLAUSE_DEFAULT_AUTO:
+        pp_string (buffer, "__auto");
 	break;
       default:
 	gcc_unreachable ();
@@ -366,6 +383,9 @@ dump_omp_clause (pretty_printer *buffer, tree clause, int spc, int flags)
       case OMP_CLAUSE_SCHEDULE_RUNTIME:
 	pp_string (buffer, "runtime");
 	break;
+	case OMP_CLAUSE_SCHEDULE_AUTO:
+        pp_string (buffer, "auto");
+	break; 
       default:
 	gcc_unreachable ();
 	}
@@ -970,7 +990,7 @@ dump_generic_node (pretty_printer *buffer, tree node, int spc, int flags,
 	pp_string (buffer, " ...");
       pp_character (buffer, ']');
 
-      op0 = array_ref_low_bound (node);
+      /*op0 = array_ref_low_bound (node);
       op1 = array_ref_element_size (node);
 
       if (!integer_zerop (op0)
@@ -982,7 +1002,7 @@ dump_generic_node (pretty_printer *buffer, tree node, int spc, int flags,
 	  pp_string (buffer, " sz: ");
 	  dump_generic_node (buffer, op1, spc, flags, false);
 	  pp_character (buffer, '}');
-	}
+	}*/
       break;
 
     case CONSTRUCTOR:
@@ -1919,6 +1939,16 @@ dump_generic_node (pretty_printer *buffer, tree node, int spc, int flags,
       pp_string (buffer, "#pragma omp ordered");
       goto dump_omp_body;
 
+    case OMP_TASK:
+      pp_string (buffer, "#pragma omp task");
+      dump_omp_clauses (buffer, OMP_TASK_CLAUSES (node), spc, flags);
+      goto dump_omp_body;
+      
+    case OMP_TASKWAIT:
+      pp_string (buffer, "#pragma omp taskwait");
+      is_expr = false;
+      break;
+      
     case OMP_CRITICAL:
       pp_string (buffer, "#pragma omp critical");
       if (OMP_CRITICAL_NAME (node))

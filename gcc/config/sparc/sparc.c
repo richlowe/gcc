@@ -22,6 +22,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -651,6 +653,19 @@ sparc_override_options (void)
     { TARGET_CPU_ultrasparc3, "ultrasparc3" },
     { TARGET_CPU_niagara, "niagara" },
     { TARGET_CPU_niagara2, "niagara2" },
+    { TARGET_CPU_ultrasparc2, "ultrasparc2" },
+    { TARGET_CPU_ultrasparc2i, "ultrasparc2i" },
+    { TARGET_CPU_ultrasparc2e, "ultrasparc2e" },
+    { TARGET_CPU_gemini, "gemini" },
+    { TARGET_CPU_ultrasparc3cu, "ultrasparc3cu" },
+    { TARGET_CPU_ultrasparc3i, "ultrasparc3i" },
+    { TARGET_CPU_ultrasparc3iplus, "ultrasparc3iplus" },
+    { TARGET_CPU_ultrasparc4, "ultrasparc4" },
+    { TARGET_CPU_ultrasparc4plus, "ultrasparc4plus" },
+    { TARGET_CPU_ultraT1, "ultraT1" },
+    { TARGET_CPU_ultraT2, "ultraT2" },
+    { TARGET_CPU_sparc64vi, "sparc64vi" },
+    { TARGET_CPU_sparc64vii, "sparc64vii" },
     { 0, 0 }
   };
   const struct cpu_default *def;
@@ -689,6 +704,21 @@ sparc_override_options (void)
     /* UltraSPARC T1 */
     { "niagara", PROCESSOR_NIAGARA, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
     { "niagara2", PROCESSOR_NIAGARA, MASK_ISA, MASK_V9},
+    /* for completeness */
+    { "ultrasparc2", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultrasparc2i", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultrasparc2e", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "gemini", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultrasparc3cu", PROCESSOR_ULTRASPARC3, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultrasparc3i", PROCESSOR_ULTRASPARC3, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultrasparc3iplus", PROCESSOR_ULTRASPARC3, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultrasparc4", PROCESSOR_ULTRASPARC3, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultrasparc4plus", PROCESSOR_ULTRASPARC3, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultraT1", PROCESSOR_NIAGARA, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultraT2", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "sparc64vi", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "sparc64vii", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    
     { 0, 0, 0, 0 }
   };
   const struct cpu_table *cpu;
@@ -3000,6 +3030,9 @@ legitimate_address_p (enum machine_mode mode, rtx addr, int strict)
 	  if (TARGET_ARCH32 && !optimize
 	      && (mode == DFmode || mode == DImode))
 	    return 0;
+	  if (TARGET_ARCH32 && !TARGET_INTEGER_LDD_STD
+	      && mode == DImode)
+	    return 0;
 	}
       else if (USE_AS_OFFSETABLE_LO10
 	       && GET_CODE (rs1) == LO_SUM
@@ -3823,7 +3856,7 @@ sparc_compute_frame_size (HOST_WIDE_INT size, int leaf_function_p)
 void
 sparc_output_scratch_registers (FILE *file ATTRIBUTE_UNUSED)
 {
-#ifdef HAVE_AS_REGISTER_PSEUDO_OP
+#if defined(HAVE_AS_REGISTER_PSEUDO_OP) || defined(CROSS_COMPILE)
   int i;
 
   if (TARGET_ARCH32)
@@ -3839,8 +3872,9 @@ sparc_output_scratch_registers (FILE *file ATTRIBUTE_UNUSED)
 	  sparc_hard_reg_printed [i] = 1;
 	  /* %g7 is used as TLS base register, use #ignore
 	     for it instead of #scratch.  */
-	  fprintf (file, "\t.register\t%%g%d, #%s\n", i,
-		   i == 7 ? "ignore" : "scratch");
+    if (i!=7) /* workaround for CG bug 6574691 */
+	    fprintf (file, "\t.register\t%%g%d, #%s\n", i,
+		           i == 7 ? "ignore" : "scratch");
 	}
       if (i == 3) i = 5;
     }
@@ -6565,7 +6599,8 @@ sparc_splitdi_legitimate (rtx reg, rtx mem)
 
   /* If we have legitimate args for ldd/std, we do not want
      the split to happen.  */
-  if ((REGNO (reg) % 2) == 0
+  if (TARGET_INTEGER_LDD_STD
+      && (REGNO (reg) % 2) == 0
       && mem_min_alignment (mem, 8))
     return 0;
 
@@ -7807,6 +7842,9 @@ static void
 sparc_elf_asm_named_section (const char *name, unsigned int flags,
 			     tree decl)
 {
+  char *third_dot;
+  extern int flag_comdat;
+
   if (flags & SECTION_MERGE)
     {
       /* entsize cannot be expressed in this section attributes
@@ -7815,7 +7853,21 @@ sparc_elf_asm_named_section (const char *name, unsigned int flags,
       return;
     }
 
-  fprintf (asm_out_file, "\t.section\t\"%s\"", name);
+  /* Use Solaris .group and #comdat for comdat variable sections */
+  if (flag_comdat && decl
+      && TREE_CODE (decl) == VAR_DECL && DECL_COMDAT (decl)
+      && !strncmp (name, ".gnu.linkonce.", sizeof (".gnu.linkonce"))
+      && NULL != (third_dot = strchr (name + sizeof (".gnu.linkonce"), '.')))
+    {
+      char *group_name = third_dot + 1;
+      *third_dot = '%';
+      /* current Sun backend compiler needs a .group for #comdat */
+      fprintf (asm_out_file, "\t.group\t%s,\"%s\",#comdat\n", group_name, name);
+      fprintf (asm_out_file, "\t.section\t\"%s\"", name);
+      *third_dot = '.';
+    }
+  else
+    fprintf (asm_out_file, "\t.section\t\"%s\"", name);
 
   if (!(flags & SECTION_DEBUG))
     fputs (",#alloc", asm_out_file);
@@ -8003,6 +8055,9 @@ sparc_vis_init_builtins (void)
   tree di_ftype_v8qi_v8qi_di = build_function_type_list (intDI_type_node,
 							 v8qi, v8qi,
 							 intDI_type_node, 0);
+	tree df_ftype_v8qi_v8qi_di = build_function_type_list (double_type_node,
+							 v8qi, v8qi,
+							 intDI_type_node, 0);
   tree di_ftype_di_di = build_function_type_list (intDI_type_node,
 						  intDI_type_node,
 						  intDI_type_node, 0);
@@ -8057,7 +8112,7 @@ sparc_vis_init_builtins (void)
 
   /* Pixel distance.  */
   def_builtin ("__builtin_vis_pdist", CODE_FOR_pdist_vis,
-	       di_ftype_v8qi_v8qi_di);
+	       df_ftype_v8qi_v8qi_di);
 }
 
 /* Handle TARGET_EXPAND_BUILTIN target hook.

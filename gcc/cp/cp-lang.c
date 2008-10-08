@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -51,12 +53,22 @@ static enum classify_record cp_classify_record (tree type);
 #define LANG_HOOKS_GENERIC_TYPE_P class_tmpl_impl_spec_p
 #undef LANG_HOOKS_DECL_PRINTABLE_NAME
 #define LANG_HOOKS_DECL_PRINTABLE_NAME	cxx_printable_name
+#undef LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR
+#define LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR cp_handle_tm_atomic_attribute  
+#undef LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR
+#define LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR cp_handle_tm_callable_attribute 
+#undef LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR
+#define LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR cp_handle_tm_abort_ok_attribute 
+#undef LANG_HOOKS_DECL_HANDLE_TM_PURE_ATTR
+#define LANG_HOOKS_DECL_HANDLE_TM_PURE_ATTR cp_handle_tm_pure_attribute 
 #undef LANG_HOOKS_DWARF_NAME
 #define LANG_HOOKS_DWARF_NAME cxx_dwarf_name
 #undef LANG_HOOKS_FOLD_OBJ_TYPE_REF
 #define LANG_HOOKS_FOLD_OBJ_TYPE_REF cp_fold_obj_type_ref
 #undef LANG_HOOKS_INIT_TS
 #define LANG_HOOKS_INIT_TS cp_init_ts
+#undef LANG_HOOKS_GLOBAL_NAMESPACE_DECL_P
+#define LANG_HOOKS_GLOBAL_NAMESPACE_DECL_P cxx_global_namespace_decl_p
 #undef LANG_HOOKS_REDUCE_BIT_FIELD_OPERATIONS
 #define LANG_HOOKS_REDUCE_BIT_FIELD_OPERATIONS true
 

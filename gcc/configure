@@ -9,6 +9,8 @@
 ## M4sh Initialization.  ##
 ## --------------------- ##
 
+# /* Modified by Sun Microsystems 2008 */
+
 # Be Bourne compatible
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then
   emulate sh
@@ -19850,6 +19852,9 @@ _ACEOF
 
 fi
 
+# Hack here for gccfss, not to use .subsection, which is rejected by iropt/cg.
+echo "$as_me:$LINENO: force gcc_cv_as_subsection_m1 to no" >&5
+gcc_cv_as_subsection_m1=no
 echo "$as_me:$LINENO: checking assembler for working .subsection -1" >&5
 echo $ECHO_N "checking assembler for working .subsection -1... $ECHO_C" >&6
 if test "${gcc_cv_as_subsection_m1+set}" = set; then
@@ -20441,6 +20446,9 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_COMDAT_GROUP `if test $gcc_cv_as_comdat_group = yes || test $gcc_cv_as_comdat_group_percent = yes; then echo 1; else echo 0; fi`
 _ACEOF
 
+cat >>confdefs.h <<_ACEOF
+#define USE_GNU_LD `if test x$gnu_ld = xyes; then echo 1; else echo 0; fi`
+_ACEOF
 
 # Thread-local storage - the check is heavily parametrized.
 conftest_s=

@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -74,7 +76,7 @@ tree built_in_decls[(int) END_BUILTINS];
    required to implement the function call in all cases).  */
 tree implicit_built_in_decls[(int) END_BUILTINS];
 
-static const char *c_getstr (tree);
+/*static*/ const char *c_getstr (tree);
 static rtx c_readstr (const char *, enum machine_mode);
 static int target_char_cast (tree, char *);
 static rtx get_memory_rtx (tree, tree);
@@ -144,7 +146,7 @@ static rtx expand_builtin_fprintf (tree, rtx, enum machine_mode, bool);
 static rtx expand_builtin_sprintf (tree, rtx, enum machine_mode);
 static tree stabilize_va_list (tree, int);
 static rtx expand_builtin_expect (tree, rtx);
-static tree fold_builtin_constant_p (tree);
+/*static*/ tree fold_builtin_constant_p (tree);
 static tree fold_builtin_expect (tree, tree);
 static tree fold_builtin_classify_type (tree);
 static tree fold_builtin_strlen (tree);
@@ -154,7 +156,7 @@ static tree rewrite_call_expr (tree, int, tree, int, ...);
 static bool validate_arg (const_tree, enum tree_code code);
 static bool integer_valued_real_p (tree);
 static tree fold_trunc_transparent_mathfn (tree, tree);
-static bool readonly_data_expr (tree);
+/*static*/ bool readonly_data_expr (tree);
 static rtx expand_builtin_fabs (tree, rtx, rtx);
 static rtx expand_builtin_signbit (tree, rtx);
 static tree fold_builtin_sqrt (tree, tree);
@@ -464,7 +466,7 @@ c_strlen (tree src, int only_value)
 /* Return a char pointer for a C string if it is a string constant
    or sum of string constant and integer constant.  */
 
-static const char *
+/*static*/ const char *
 c_getstr (tree src)
 {
   tree offset_node;
@@ -6529,8 +6531,23 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
       break;
 
     case BUILT_IN_SETJMP:
+      {
+        tree id, decl;
+        tree call;
+        id = get_identifier ("setjmp");
+        decl = build_decl (FUNCTION_DECL, id, TREE_TYPE (fndecl));
+        DECL_EXTERNAL (decl) = 1;
+        TREE_PUBLIC (decl) = 1;
+        DECL_ARTIFICIAL (decl) = 1;
+        TREE_NOTHROW (decl) = 1;
+        DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
+        DECL_VISIBILITY_SPECIFIED (decl) = 1;
+        call = build_function_call_expr (decl, arglist);
+
+        return expand_call (call, target, ignore);
+      }
       /* This should have been lowered to the builtins below.  */
-      gcc_unreachable ();
+      /* gcc_unreachable (); Not for GCCFSS */
 
     case BUILT_IN_SETJMP_SETUP:
       /* __builtin_setjmp_setup is passed a pointer to an array of five words
@@ -6960,6 +6977,11 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
       maybe_emit_sprintf_chk_warning (exp, fcode);
       break;
 
+    case BUILT_IN_LNI_START:
+    case BUILT_IN_LNI_END:
+      /* No real body for these functions */
+      return const0_rtx;
+      
     default:	/* just do library call, if unknown builtin */
       break;
     }
@@ -7044,7 +7066,7 @@ builtin_mathfn_code (const_tree t)
 /* Fold a call to __builtin_constant_p, if we know its argument ARG will
    evaluate to a constant.  */
 
-static tree
+/*static*/ tree
 fold_builtin_constant_p (tree arg)
 {
   /* We return 1 for a numeric type that's known to be a constant
@@ -10823,7 +10845,7 @@ default_expand_builtin (tree exp ATTRIBUTE_UNUSED,
 /* Returns true is EXP represents data that would potentially reside
    in a readonly section.  */
 
-static bool
+/*static*/ bool
 readonly_data_expr (tree exp)
 {
   STRIP_NOPS (exp);

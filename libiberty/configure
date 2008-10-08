@@ -3514,10 +3514,10 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  if grep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
+  if egrep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
   ac_cv_c_bigendian=yes
 fi
-if grep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
+if egrep LiTTleEnDian conftest.$ac_objext >/dev/null ; then
   if test "$ac_cv_c_bigendian" = unknown; then
     ac_cv_c_bigendian=no
   else

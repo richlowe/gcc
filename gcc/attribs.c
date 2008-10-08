@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -268,7 +270,7 @@ decl_attributes (tree *node, tree attributes, int flags)
 	      returned_attrs = tree_cons (name, args, returned_attrs);
 	      continue;
 	    }
-	  else
+	  else if (!(flags & (int) ATTR_FLAG_TYPE_TM_ATTR))
 	    {
 	      warning (OPT_Wattributes, "%qs attribute does not apply to types",
 		       IDENTIFIER_POINTER (name));

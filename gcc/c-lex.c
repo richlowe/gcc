@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -41,6 +43,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "splay-tree.h"
 #include "debug.h"
 #include "target.h"
+#include "tree-ir.h"
 
 /* We may keep statistics about how long which files took to compile.  */
 static int header_time, body_time;
@@ -632,7 +635,16 @@ interpret_integer (const cpp_token *token, unsigned int flags)
 
   /* Convert imaginary to a complex type.  */
   if (flags & CPP_N_IMAGINARY)
-    value = build_complex (NULL_TREE, build_int_cst (type, 0), value);
+    {
+      /* need to convert complex const to float_type for SGCC */
+      /* value = build_complex (NULL_TREE, build_int_cst (type, 0), value); */
+      if ((flags & CPP_N_WIDTH) != CPP_N_LARGE)
+        type = float_type_node;
+      else
+        type = double_type_node;
+      value = build_complex (NULL_TREE, convert (type, integer_zero_node), 
+                             convert (type, value));
+    }
 
   return value;
 }

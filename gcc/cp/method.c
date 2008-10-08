@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* Handle method declarations.  */
 #include "config.h"
@@ -38,6 +39,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "target.h"
 #include "tree-pass.h"
 #include "diagnostic.h"
+#include "tree-ir.h"
 
 /* Various flags to control the mangling process.  */
 
@@ -303,7 +305,13 @@ make_alias_for_thunk (tree function)
   ASM_GENERATE_INTERNAL_LABEL (buf, "LTHUNK", thunk_labelno);
   thunk_labelno++;
 
-  alias = make_alias_for (function, get_identifier (buf));
+  if (globalize_flag)
+    {
+      char * name = make_global_name (targetm.strip_name_encoding (buf), 1, function);
+      alias = make_alias_for (function, get_identifier (name));
+    }
+  else
+    alias = make_alias_for (function, get_identifier (buf));
 
   if (!flag_syntax_only)
     assemble_alias (alias, DECL_ASSEMBLER_NAME (function));

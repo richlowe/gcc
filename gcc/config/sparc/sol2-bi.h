@@ -4,6 +4,9 @@
 /* The default code model used to be CM_MEDANY on Solaris
    but even Sun eventually found it to be quite wasteful
    and changed it to CM_MEDMID in the Studio 9 compiler.  */
+
+/* Modified by Sun Microsystems 2008 */
+
 #undef SPARC_DEFAULT_CMODEL
 #define SPARC_DEFAULT_CMODEL CM_MEDMID
 
@@ -80,7 +83,9 @@
 "
 
 #undef ASM_CPU_SPEC
-#define ASM_CPU_SPEC "\
+#define ASM_CPU_SPEC "%(ssbe_xarch)"
+/* original definition of ASM_CPU_SPEC 
+"\
 %{mcpu=v9:" DEF_ARCH32_SPEC("-xarch=v8plus") DEF_ARCH64_SPEC(AS_SPARC64_FLAG) "} \
 %{mcpu=ultrasparc:" DEF_ARCH32_SPEC("-xarch=v8plusa") DEF_ARCH64_SPEC(AS_SPARC64_FLAG "a") "} \
 %{mcpu=ultrasparc3:" DEF_ARCH32_SPEC("-xarch=v8plusb") DEF_ARCH64_SPEC(AS_SPARC64_FLAG "b") "} \
@@ -89,6 +94,7 @@
 %{!mcpu=niagara2:%{!mcpu=niagara:%{!mcpu=ultrasparc3:%{!mcpu=ultrasparc:%{!mcpu=v9:%{mcpu*:" DEF_ARCH32_SPEC("-xarch=v8") DEF_ARCH64_SPEC(AS_SPARC64_FLAG) "}}}}}} \
 %{!mcpu*:%(asm_cpu_default)} \
 "
+*/
 
 #undef CPP_CPU_DEFAULT_SPEC
 #define CPP_CPU_DEFAULT_SPEC \
@@ -168,16 +174,30 @@
  */
 #define LINK_ARCH64_SPEC_BASE \
   "%{mcmodel=medlow:-M /usr/lib/ld/sparcv9/map.below4G} \
+  %{xcode=abs32:-M /usr/lib/ld/sparcv9/map.below4G} \
+   %{!shared: %{!xcode=pic32: %{!xcode=pic13: \
+                %{xmemalign=1i | xmemalign=2i | xmemalign=4i | \
+                  xmemalign=8i | xmemalign=16i: %J/v9/misalign.o }\
+                %{xmemalign=8f | xmemalign=16f: %J/v9/wordalignI8.o} } } }\
    %{G:-G} \
    %{YP,*} \
    %{R*} \
    %{compat-bsd: \
      %{!YP,*:%{p|pg:-Y P,/usr/ucblib/sparcv9:/usr/lib/libp/sparcv9:/usr/lib/sparcv9} \
-       %{!p:%{!pg:-Y P,/usr/ucblib/sparcv9:/usr/lib/sparcv9}}} \
-     -R /usr/ucblib/sparcv9} \
+       %{!p:%{!pg:-Y P,/usr/ucblib/sparcv9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9}}} \
+       %{!norpath:%{!nodefaultlibs:%{!nostdlib: -R /usr/ucblib/sparcv9}}} } \
    %{!compat-bsd: \
-     %{!YP,*:%{p|pg:-Y P,/usr/lib/libp/sparcv9:/usr/lib/sparcv9} \
-       %{!p:%{!pg:-Y P,/usr/lib/sparcv9}}}}"
+     %{!YP,*:%{p|pg:%{mcpu=ultrasparc3|Zarchm64=v9b: -Y P,%J/v9b:%J/v9:/usr/lib/libp/sparcv9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                   mcpu=ultrasparc|Zarchm64=v9a: -Y P,%J/v9a:%J/v9:/usr/lib/libp/sparcv9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                   Zarchm64=v9c: -Y P,%J/v9c:%J/v9:/usr/lib/libp/sparcv9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                   Zarchm64=v9d: -Y P,%J/v9d:%J/v9:/usr/lib/libp/sparcv9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                       : -Y P,%J/v9:/usr/lib/libp/sparcv9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9}} \
+       %{!p:%{!pg:%{mcpu=ultrasparc3|Zarchm64=v9b: -Y P,%J/v9b:%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                   mcpu=ultrasparc|Zarchm64=v9a: -Y P,%J/v9a:%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                   Zarchm64=v9c: -Y P,%J/v9c:%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                   Zarchm64=v9d: -Y P,%J/v9d:%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
+                       : -Y P,%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9}}}} \
+     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %Hsparcv9}}}} } " 
 
 #define LINK_ARCH64_SPEC LINK_ARCH64_SPEC_BASE
 

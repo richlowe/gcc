@@ -2,7 +2,7 @@
 $(T)gmon.o:	$(srcdir)/config/sparc/gmon-sol2.c $(GCC_PASSES) \
   $(TCONFIG_H) tsystem.h coretypes.h $(TM_H) stmp-int-hdrs
 	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(MULTILIB_CFLAGS) \
-		-c $(srcdir)/config/sparc/gmon-sol2.c -o $(T)gmon.o
+		-c $(srcdir)/config/sparc/gmon-sol2.c -mno-app-regs -o $(T)gmon.o
 
 # Assemble startup files.
 $(T)crt1.o: $(srcdir)/config/sparc/sol2-c1.asm $(GCC_PASSES)

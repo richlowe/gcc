@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_C_TREE_H
 #define GCC_C_TREE_H
 
@@ -583,7 +585,7 @@ extern int c_types_compatible_p (tree, tree);
 extern tree c_begin_compound_stmt (bool);
 extern tree c_end_compound_stmt (tree, bool);
 extern void c_finish_if_stmt (location_t, tree, tree, tree, bool);
-extern void c_finish_loop (location_t, tree, tree, tree, tree, tree, bool);
+extern void c_finish_loop (location_t, tree, tree, tree, tree, tree, int);
 extern tree c_begin_stmt_expr (void);
 extern tree c_finish_stmt_expr (tree);
 extern tree c_process_expr_stmt (tree);

@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 extern void dw2_assemble_integer (int, rtx);
 
@@ -64,6 +65,7 @@ extern int size_of_encoded_value (int);
 extern const char *eh_data_format_name (int);
 
 extern void dw2_output_indirect_constants (void);
+extern rtx dw2_force_const_mem (rtx, bool);
 
 /* These are currently unused.  */
 

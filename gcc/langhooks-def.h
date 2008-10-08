@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_LANG_HOOKS_DEF_H
 #define GCC_LANG_HOOKS_DEF_H
 
@@ -48,6 +50,10 @@ extern tree lhd_do_nothing_iii_return_null_tree (int, int, int);
 extern tree lhd_staticp (tree);
 extern void lhd_print_tree_nothing (FILE *, tree, int);
 extern const char *lhd_decl_printable_name (tree, int);
+extern void c_handle_tm_atomic_attribute (tree *, tree, bool *);
+extern void c_handle_tm_callable_attribute (tree *, tree, bool *);
+extern void c_handle_tm_abort_ok_attribute (tree *, tree, bool *);
+extern void c_handle_tm_pure_attribute (tree *, tree, bool *);
 extern const char *lhd_dwarf_name (tree, int);
 extern int lhd_types_compatible_p (tree, tree);
 extern rtx lhd_expand_expr (tree, rtx, enum machine_mode, int, rtx *);
@@ -61,6 +67,7 @@ extern tree lhd_type_promotes_to (tree);
 extern void lhd_register_builtin_type (tree, const char *);
 extern bool lhd_decl_ok_for_sibcall (const_tree);
 extern const char *lhd_comdat_group (tree);
+extern bool lhd_global_namespace_decl_p (tree);
 extern tree lhd_expr_size (const_tree);
 extern size_t lhd_tree_size (enum tree_code);
 extern HOST_WIDE_INT lhd_to_target_charset (HOST_WIDE_INT);
@@ -76,6 +83,7 @@ extern tree lhd_callgraph_analyze_expr (tree *, int *);
 extern int lhd_gimplify_expr (tree *, tree *, tree *);
 extern enum omp_clause_default_kind lhd_omp_predetermined_sharing (tree);
 extern tree lhd_omp_assignment (tree, tree, tree);
+extern tree lhd_var_is_omp_threadprivate (tree);
 struct gimplify_omp_ctx;
 extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
 					       tree);
@@ -107,6 +115,10 @@ extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
 #define LANG_HOOKS_PRINT_IDENTIFIER	lhd_print_tree_nothing
 #define LANG_HOOKS_PRINT_ERROR_FUNCTION lhd_print_error_function
 #define LANG_HOOKS_DECL_PRINTABLE_NAME	lhd_decl_printable_name
+#define LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR c_handle_tm_atomic_attribute 
+#define LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR c_handle_tm_callable_attribute 
+#define LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR c_handle_tm_abort_ok_attribute 
+#define LANG_HOOKS_DECL_HANDLE_TM_PURE_ATTR c_handle_tm_pure_attribute
 #define LANG_HOOKS_DWARF_NAME		lhd_dwarf_name
 #define LANG_HOOKS_GET_CALLEE_FNDECL	lhd_return_null_const_tree
 #define LANG_HOOKS_EXPR_SIZE		lhd_expr_size
@@ -219,6 +231,8 @@ extern tree lhd_make_node (enum tree_code);
 #define LANG_HOOKS_OMP_CLAUSE_COPY_CTOR lhd_omp_assignment
 #define LANG_HOOKS_OMP_CLAUSE_ASSIGN_OP lhd_omp_assignment
 #define LANG_HOOKS_OMP_CLAUSE_DTOR hook_tree_tree_tree_null
+#define LANG_HOOKS_GLOBAL_NAMESPACE_DECL_P lhd_global_namespace_decl_p
+#define LANG_HOOKS_OMP_IS_THREADPRIVATE lhd_var_is_omp_threadprivate
 
 #define LANG_HOOKS_DECLS { \
   LANG_HOOKS_GLOBAL_BINDINGS_P, \
@@ -236,7 +250,9 @@ extern tree lhd_make_node (enum tree_code);
   LANG_HOOKS_OMP_CLAUSE_DEFAULT_CTOR, \
   LANG_HOOKS_OMP_CLAUSE_COPY_CTOR, \
   LANG_HOOKS_OMP_CLAUSE_ASSIGN_OP, \
-  LANG_HOOKS_OMP_CLAUSE_DTOR \
+  LANG_HOOKS_OMP_CLAUSE_DTOR, \
+  LANG_HOOKS_GLOBAL_NAMESPACE_DECL_P, \
+  LANG_HOOKS_OMP_IS_THREADPRIVATE \
 }
 
 /* The whole thing.  The structure is defined in langhooks.h.  */
@@ -269,6 +285,10 @@ extern tree lhd_make_node (enum tree_code);
   LANG_HOOKS_PRINT_TYPE, \
   LANG_HOOKS_PRINT_IDENTIFIER, \
   LANG_HOOKS_DECL_PRINTABLE_NAME, \
+  LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR, \
+  LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR, \
+  LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR, \
+  LANG_HOOKS_DECL_HANDLE_TM_PURE_ATTR, \
   LANG_HOOKS_DWARF_NAME, \
   LANG_HOOKS_TYPES_COMPATIBLE_P, \
   LANG_HOOKS_GET_CALLEE_FNDECL, \

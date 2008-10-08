@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -37,6 +39,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "langhooks-def.h"
 #include "ggc.h"
 #include "diagnostic.h"
+#include "tree-ir.h"
 
 /* Do nothing; in many cases the default hook.  */
 
@@ -171,7 +174,24 @@ lhd_set_decl_assembler_name (tree decl)
      is less than the whole compilation.  Concatenate a distinguishing
      number - we use the DECL_UID.  */
 
-  if (TREE_PUBLIC (decl) || DECL_CONTEXT (decl) == NULL_TREE)
+  if (TREE_STATIC (decl) && globalize_flag && !TREE_PUBLIC (decl))
+    {
+      char * label;
+      const char *name = IDENTIFIER_POINTER (DECL_NAME (decl));
+      char * globalized_name = make_global_name (name, 0, 
+                                                 DECL_CONTEXT (decl));
+          
+      if (DECL_CONTEXT (decl) != NULL_TREE)
+        /* function scope static */
+        ASM_FORMAT_PRIVATE_NAME (label, globalized_name, DECL_UID (decl));
+      else
+        /* file scope static */
+        label = globalized_name;
+
+      id = get_identifier (label);
+      TREE_PUBLIC (decl) = 1;
+    }
+  else if (TREE_PUBLIC (decl) || DECL_CONTEXT (decl) == NULL_TREE)
     id = targetm.mangle_decl_assembler_name (decl, DECL_NAME (decl));
   else
     {
@@ -333,6 +353,13 @@ const char *
 lhd_comdat_group (tree decl)
 {
   return IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+}
+
+/* True if decl is global namespace decl.  */
+bool
+lhd_global_namespace_decl_p (tree decl ATTRIBUTE_UNUSED)
+{
+  return false;
 }
 
 /* lang_hooks.decls.final_write_globals: perform final processing on

@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_CP_OBJCP_COMMON
 #define GCC_CP_OBJCP_COMMON
 
@@ -148,5 +150,8 @@ extern tree objcp_tsubst_copy_and_build (tree, tree, tsubst_flags_t,
 #define LANG_HOOKS_OMP_CLAUSE_DTOR cxx_omp_clause_dtor
 #undef LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE
 #define LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE cxx_omp_privatize_by_reference
+#undef LANG_HOOKS_OMP_IS_THREADPRIVATE
+#define LANG_HOOKS_OMP_IS_THREADPRIVATE cxx_var_is_omp_threadprivate
+
 
 #endif /* GCC_CP_OBJCP_COMMON */

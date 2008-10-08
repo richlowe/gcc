@@ -37,7 +37,7 @@ ZW_PROG_COMPILER_DEPENDENCIES([CC])
 # Checks for header files.
 AC_HEADER_TIME
 ACX_HEADER_STRING
-AC_CHECK_HEADERS(iconv.h locale.h fcntl.h limits.h stddef.h \
+AC_CHECK_HEADERS(locale.h fcntl.h limits.h stddef.h \
 	stdlib.h strings.h string.h sys/file.h unistd.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -77,7 +77,7 @@ if test $ac_cv_type_uchar = yes; then
   [Define if <sys/types.h> defines \`uchar'.])
 fi
 
-AM_ICONV
+#AM_ICONV
 
 # More defines and substitutions.
 PACKAGE="$PACKAGE_TARNAME"

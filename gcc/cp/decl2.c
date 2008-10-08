@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* Process declarations and symbol lookup for C++ front end.
    Also constructs types; the standard scalar types at initialization,
@@ -51,6 +52,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "c-pragma.h"
 #include "tree-dump.h"
 #include "intl.h"
+#include "tree-ir.h"
 
 extern cpp_reader *parse_in;
 
@@ -75,6 +77,7 @@ static void finish_static_storage_duration_function (tree);
 static priority_info get_priority_info (int);
 static void do_static_initialization_or_destruction (tree, bool);
 static void one_static_initialization_or_destruction (tree, tree, bool);
+static void build_cxx_tp_init_function (tree, tree, bool);
 static void generate_ctor_or_dtor_function (bool, int, location_t *);
 static int generate_ctor_and_dtor_functions_for_priority (splay_tree_node,
 							  void *);
@@ -299,7 +302,7 @@ grok_array_decl (tree array_expr, tree index_exp)
       if (type_dependent_expression_p (array_expr)
 	  || type_dependent_expression_p (index_exp))
 	return build_min_nt (ARRAY_REF, array_expr, index_exp,
-			     NULL_TREE, NULL_TREE);
+			     NULL_TREE, NULL_TREE, NULL_TREE);
       array_expr = build_non_dependent_expr (array_expr);
       index_exp = build_non_dependent_expr (index_exp);
     }
@@ -357,7 +360,7 @@ grok_array_decl (tree array_expr, tree index_exp)
     }
   if (processing_template_decl && expr != error_mark_node)
     return build_min_non_dep (ARRAY_REF, expr, orig_array_expr, orig_index_exp,
-			      NULL_TREE, NULL_TREE);
+			      NULL_TREE, NULL_TREE, NULL_TREE);
   return expr;
 }
 
@@ -1275,6 +1278,12 @@ build_anon_union_vars (tree type, tree object)
 	  DECL_HAS_VALUE_EXPR_P (decl) = 1;
 
 	  decl = pushdecl (decl);
+	  if (globalize_flag)
+            {
+              /* pre-set mangled/assembler name for all fields of static
+               * anonymous union, so the mangle_decl will not be called */
+              SET_DECL_ASSEMBLER_NAME (decl, get_identifier ("bad asm"));
+            }
 	}
       else if (ANON_AGGR_TYPE_P (TREE_TYPE (field)))
 	decl = build_anon_union_vars (TREE_TYPE (field), ref);
@@ -3014,6 +3023,12 @@ do_static_initialization_or_destruction (tree vars, bool initp)
   /* Finish up the init/destruct if-stmt body.  */
   finish_then_clause (init_if_stmt);
   finish_if_stmt (init_if_stmt);
+  
+  if ( flag_new_tp == 1)
+    for (node = vars; node; node = TREE_CHAIN (node))
+      if (DECL_LANG_SPECIFIC (TREE_VALUE (node))
+           && CP_DECL_THREADPRIVATE_P (TREE_VALUE (node)))
+        build_cxx_tp_init_function (TREE_VALUE (node),TREE_PURPOSE (node), initp);
 }
 
 /* VARS is a list of variables with static storage duration which may
@@ -3437,6 +3452,20 @@ cp_write_global_declarations (void)
 #endif
 	}
 
+    if (flag_new_tp == 1
+        && static_block_aggregates != NULL)
+      {
+        tree node;
+        for (node = static_block_aggregates; node; node = TREE_CHAIN (node))
+          if (DECL_LANG_SPECIFIC (TREE_VALUE (node))
+              && CP_DECL_THREADPRIVATE_P (TREE_VALUE (node)))
+            {
+              build_cxx_tp_init_function (TREE_VALUE (node),TREE_PURPOSE (node), true);
+              build_cxx_tp_init_function (TREE_VALUE (node),TREE_PURPOSE (node), false);
+              static_block_aggregates = NULL;
+            }
+      }
+	  
       /* Go through the set of inline functions whose bodies have not
 	 been emitted yet.  If out-of-line copies of these functions
 	 are required, emit them.  */
@@ -3815,6 +3844,184 @@ mark_used (tree decl)
 		      /*expl_inst_class_mem_p=*/false);
 
   processing_template_decl = saved_processing_template_decl;
+}
+
+static void 
+build_cxx_tp_init_function (tree decl, tree init, bool initp)
+{
+  tree fn_decl, list;
+  tree t, t1, body, type, fun_type;
+  char *fun_name, *name;
+
+  /* if init == NULL; we don't need generate a function here. 
+     Later when register a threadprivate, we need check this 
+     situation to emit NULL_TREE as ctor.*/
+  if (initp == 1 && !init)
+    return;
+  
+  /* the init function's type should be 
+	void (*init)(class_type omp_var) */
+  type = TREE_TYPE (decl);
+  fun_type = build_function_type_list (void_type_node, type, NULL);
+
+  name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+  fun_name = (char * )xmalloc (strlen(name) + 6);
+  if (initp)
+    strcpy (fun_name, "_INIT_");
+  else
+    strcpy (fun_name, "_FINI_");
+  strcpy (fun_name + 6, name );
+  
+  fn_decl = build_fn_decl ( fun_name, fun_type);
+
+  input_location = DECL_SOURCE_LOCATION (decl);
+  push_function_context();
+  current_function_decl = fn_decl;
+
+  /* Result */
+  t = build_decl (RESULT_DECL, NULL_TREE, void_type_node);
+  DECL_ARTIFICIAL (t) = 1;
+  DECL_IGNORED_P (t) = 1;
+  DECL_RESULT (fn_decl) = t;
+
+  /* parm :DECL_ARGUMENTS (decl) */
+  t = build_decl (PARM_DECL, get_identifier ("omp_var"), type);
+  DECL_ARTIFICIAL (t) = 1;
+  DECL_ARG_TYPE (t) = type;
+  DECL_CONTEXT (t) = current_function_decl;
+  TREE_USED (t) = 1;
+  DECL_ARGUMENTS (fn_decl) = t;
+
+  allocate_struct_function ( fn_decl);
+
+  TREE_STATIC (fnstatic void 
+build_cxx_tp_init_function (tree decl, tree init, bool initp)
+{
+  tree fn_decl, list;
+  tree t, t1, body, type, fun_type;
+  char *fun_name, *name;
+
+  /* if init == NULL; we don't need generate a function here. 
+     Later when register a threadprivate, we need check this 
+     situation to emit NULL_TREE as ctor.*/
+  if (initp == 1 && !init)
+    return;
+  
+  /* the init function's type should be 
+	void (*init)(class_type omp_var) */
+  type = TREE_TYPE (decl);
+  fun_type = build_function_type_list (void_type_node, type, NULL);
+
+  name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+  fun_name = (char * )xmalloc (strlen(name) + 6);
+  if (initp)
+    strcpy (fun_name, "_INIT_");
+  else
+    strcpy (fun_name, "_FINI_");
+  strcpy (fun_name + 6, name );
+  
+  fn_decl = build_fn_decl ( fun_name, fun_type);
+
+  input_location = DECL_SOURCE_LOCATION (decl);
+  push_function_context();
+  current_function_decl = fn_decl;
+
+  /* Result */
+  t = build_decl (RESULT_DECL, NULL_TREE, void_type_node);
+  DECL_ARTIFICIAL (t) = 1;
+  DECL_IGNORED_P (t) = 1;
+  DECL_RESULT (fn_decl) = t;
+
+  /* parm :DECL_ARGUMENTS (decl) */
+  t = build_decl (PARM_DECL, get_identifier ("omp_var"), type);
+  DECL_ARTIFICIAL (t) = 1;
+  DECL_ARG_TYPE (t) = type;
+  DECL_CONTEXT (t) = current_function_decl;
+  TREE_USED (t) = 1;
+  DECL_ARGUMENTS (fn_decl) = t;
+
+  allocate_struct_function ( fn_decl);
+
+  TREE_STATIC (fn_decl) = 1;_decl) = 1;
+  TREE_USED (fn_decl) = 1;
+  DECL_ARTIFICIAL (fn_decl) = 1;
+  DECL_IGNORED_P (fn_decl) = 1;
+  TREE_PUBLIC (fn_decl) = 0;
+  DECL_EXTERNAL (fn_decl) = 0;
+  DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (fn_decl) = 1;
+  DECL_UNINLINABLE (fn_decl) = 1;
+
+  /* Do not allow globalization of this function name */
+  SET_DECL_ASSEMBLER_NAME (fn_decl, DECL_NAME (fn_decl));
+  DECL_SOURCE_LOCATION (fn_decl) = input_location;
+  cfun->function_end_locus = input_location;
+
+  /* enerate the parm variable and the function body.
+   void INIT_A (A *from_runtime_lib) {
+    _ZN1TC1Ei(from_runtime_lib, x);
+    goto EXIT;
+   }*/
+
+  /* Begin the statement tree for this function.  */
+  body = build3 (BIND_EXPR, void_type_node, NULL, NULL, NULL);
+  TREE_SIDE_EFFECTS (body) = 1;
+
+  if (initp == 1)
+    {
+      /* replace the orignal var by omp_var. */
+      gcc_assert (TREE_CODE (TREE_OPERAND ( TREE_OPERAND (init, 0), 1)) == TREE_LIST);
+      t = DECL_ARGUMENTS (fn_decl);
+      t = build_address (t);
+      t1 = TREE_CHAIN (TREE_OPERAND (TREE_OPERAND (init, 0), 1));
+      t = tree_cons (NULL_TREE, t, t1);
+      t1 = TREE_OPERAND (init, 0);
+      type = TREE_TYPE (t1);
+      t1 = TREE_OPERAND (t1, 0);
+      t1 = build3 (CALL_EXPR, type, t1, t, NULL_TREE);
+    }
+  else
+    {
+      if (TYPE_HAS_NONTRIVIAL_DESTRUCTOR (decl))
+	{
+          t1 = build_cleanup (decl);
+	}
+      else
+        {
+	  /* generate a empty function body. use a artificial_label to make sure it is not deleted. */
+	  tree label_decl = create_artificial_label ();
+	  list = push_stmt_list();
+	  t = build1 (GOTO_EXPR, void_type_node, label_decl);
+	  add_stmt (t);
+	  t = build1 (LABEL_EXPR, void_type_node, label_decl);
+	  add_stmt (t);
+	  t1 = pop_stmt_list (list);
+	}
+    }
+  /* we do not need a guard, libmtsk should gurantee that the var is 
+     only initialized once. */
+/*  list = push_stmt_list();
+  if (initp)
+    {
+      if (init)
+        finish_expr_stmt (t1);
+    }
+  else
+    finish_expr_stmt (build_cleanup (decl));
+  list = pop_stmt_list (list);
+ 
+  append_to_statement_list (list, &BIND_EXPR_BODY (body));
+*/
+  append_to_statement_list (t1, &BIND_EXPR_BODY (body));
+  DECL_SAVED_TREE (fn_decl) = body;
+  DECL_INITIAL (fn_decl) = make_node (BLOCK);
+  BLOCK_SUPERCONTEXT (DECL_INITIAL (fn_decl)) = fn_decl;
+  DECL_CONTEXT (DECL_RESULT (fn_decl)) = fn_decl;
+
+  /* I am not sure whether the following is needed.*/
+  cgraph_finalize_function (fn_decl, IR_FALSE);
+  struct cgraph_node *n = cgraph_node (fn_decl);
+  cgraph_mark_needed_node (n);
+  pop_function_context ();
 }
 
 #include "gt-cp-decl2.h"

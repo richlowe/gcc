@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* This file is part of the C++ front end.
    It contains routines to build C++ expressions given their operands,
@@ -2273,6 +2274,18 @@ finish_class_member_access_expr (tree object, tree name, bool template_p)
   if (template_p)
     check_template_keyword (member);
 
+  if (flag_tm_mode)
+    {
+      tree t = member;
+      if (BASELINK_P (t))
+        t = BASELINK_FUNCTIONS (t);
+      t = OVL_CURRENT (t);
+      if (t && TREE_CODE (t) == FUNCTION_DECL)
+        {
+          c_check_tm_calling_rules (t);
+        }
+    }
+    
   expr = build_class_member_access_expr (object, member, access_path,
 					 /*preserve_reference=*/false);
   if (processing_template_decl && expr != error_mark_node)
@@ -2537,7 +2550,7 @@ build_array_ref (tree array, tree idx)
 	}
 
       type = TREE_TYPE (TREE_TYPE (array));
-      rval = build4 (ARRAY_REF, type, array, idx, NULL_TREE, NULL_TREE);
+      rval = build5 (ARRAY_REF, type, array, idx, NULL_TREE, NULL_TREE, NULL_TREE);
       /* Array ref is const/volatile if the array elements are
 	 or if the array is..  */
       TREE_READONLY (rval)
@@ -3005,6 +3018,7 @@ build_x_binary_op (enum tree_code code, tree arg1, enum tree_code arg1_code,
 
   if (processing_template_decl)
     {
+      gcc_assert (TREE_CODE_LENGTH (code) == 2);
       if (type_dependent_expression_p (arg1)
 	  || type_dependent_expression_p (arg2))
 	return build_min_nt (code, arg1, arg2);

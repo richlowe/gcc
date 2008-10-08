@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2216,6 +2218,8 @@ get_expr_operands (tree stmt, tree *expr_p, int flags)
             get_expr_operands (stmt, &TREE_OPERAND (expr, 1), opf_use);
             get_expr_operands (stmt, &TREE_OPERAND (expr, 2), opf_use);
             get_expr_operands (stmt, &TREE_OPERAND (expr, 3), opf_use);
+            get_expr_operands (stmt, &TREE_OPERAND (expr, 4), opf_none);
+
 	  }
 
 	return;
@@ -2228,6 +2232,15 @@ get_expr_operands (tree stmt, tree *expr_p, int flags)
       get_expr_operands (stmt, &TREE_OPERAND (expr, 0), flags);
       return;
 
+    case NOP_EXPR:
+      if (TREE_CODE (TREE_OPERAND (expr, 0)) == CALL_EXPR)
+	    {
+          get_call_expr_operands (stmt, TREE_OPERAND (expr, 0));
+          return;
+	    }
+      else
+        goto do_unary;
+        
     case CALL_EXPR:
       get_call_expr_operands (stmt, expr);
       return;
@@ -2377,6 +2390,8 @@ get_expr_operands (tree stmt, tree *expr_p, int flags)
     case OMP_RETURN:
     case OMP_SECTION:
     case OMP_SECTIONS_SWITCH:
+    case OMP_TASK:
+    case OMP_TASKWAIT:
       /* Expressions that make no memory references.  */
       return;
 

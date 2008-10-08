@@ -1,5 +1,8 @@
 /* config.in.  Generated from configure.ac by autoheader.  */
 
+/* Modified by Sun Microsystems 2008 */
+/* TODO: change configure.ac */
+
 /* Define as the number of bits in a byte, if \`limits.h' doesn't. */
 #ifndef USED_FOR_TARGET
 #undef CHAR_BIT
@@ -812,6 +815,8 @@
 #undef HAVE_GAS_BALIGN_AND_P2ALIGN
 #endif
 
+/* Define 0/1 if GNU linker is used. */
+#undef USE_GNU_LD
 
 /* Define if your assembler uses the new HImode fild and fist notation. */
 #ifndef USED_FOR_TARGET

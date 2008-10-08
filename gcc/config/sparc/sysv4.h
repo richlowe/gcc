@@ -60,6 +60,7 @@ along with GCC; see the file COPYING3.  If not see
    assembler.  */
 
 #define STRING_ASM_OP		"\t.asciz\t"
+#undef ASM_OUTPUT_ASCII
 #define COMMON_ASM_OP		"\t.common\t"
 #define SKIP_ASM_OP		"\t.skip\t"
 #define PUSHSECTION_ASM_OP	"\t.pushsection\t"

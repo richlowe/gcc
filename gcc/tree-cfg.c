@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -483,9 +485,14 @@ make_edges (void)
 		 create abnormal edges to them.  */
 	      make_eh_edges (last);
 
-	      /* Some calls are known not to return.  */
-	      fallthru = !(call_expr_flags (last) & ECF_NORETURN);
-	      break;
+	      /* Some calls are known not to return. Dont
+                 mess with control flow if we are inside
+                 an openmp region. */
+          if (cur_region == NULL)
+            fallthru = !(call_expr_flags (last) & ECF_NORETURN);
+          else
+            fallthru = true;
+          break;
 
 	    case MODIFY_EXPR:
 	      gcc_unreachable ();
@@ -511,17 +518,24 @@ make_edges (void)
 	    case OMP_ORDERED:
 	    case OMP_CRITICAL:
 	    case OMP_SECTION:
+	    case OMP_TASK:
 	      cur_region = new_omp_region (bb, code, cur_region);
 	      fallthru = true;
 	      break;
 
 	    case OMP_SECTIONS:
 	      cur_region = new_omp_region (bb, code, cur_region);
-	      fallthru = true;
+	      if (flag_use_rtl_backend == 0)
+                fallthru = true;
+              else
+                fallthru = false;
 	      break;
 
 	    case OMP_SECTIONS_SWITCH:
-	      fallthru = false;
+	      if (flag_use_rtl_backend == 0)
+                fallthru = true;
+              else
+                fallthru = false;
 	      break;
 
 
@@ -535,7 +549,10 @@ make_edges (void)
 	      /* In the case of an OMP_SECTION, the edge will go somewhere
 		 other than the next block.  This will be created later.  */
 	      cur_region->exit = bb;
-	      fallthru = cur_region->type != OMP_SECTION;
+	      if (flag_use_rtl_backend == 0)
+                fallthru = true;
+              else
+                fallthru = cur_region->type != OMP_SECTION;
 	      cur_region = cur_region->outer;
 	      break;
 
@@ -2694,6 +2711,9 @@ last_and_only_stmt (basic_block bb)
 void
 set_bb_for_stmt (tree t, basic_block bb)
 {
+  if (flag_use_rtl_backend == 0 && bb == 0)
+    return;
+    
   if (TREE_CODE (t) == PHI_NODE)
     PHI_BB (t) = bb;
   else if (TREE_CODE (t) == STATEMENT_LIST)
@@ -3253,7 +3273,9 @@ verify_expr (tree *tp, int *walk_subtrees, void *data ATTRIBUTE_UNUSED)
 	   tree) and ensure that any variable used as a prefix is marked
 	   addressable.  */
 	for (x = TREE_OPERAND (t, 0);
-	     handled_component_p (x);
+	     handled_component_p (x)
+	     && (TREE_CODE (x) != ARRAY_REF 
+                 || TREE_CODE (TREE_TYPE (TREE_OPERAND (x, 0))) == ARRAY_TYPE);
 	     x = TREE_OPERAND (x, 0))
 	  ;
 
@@ -3321,6 +3343,8 @@ verify_expr (tree *tp, int *walk_subtrees, void *data ATTRIBUTE_UNUSED)
 		CHECK_OP (2, "invalid array lower bound");
 	      if (TREE_OPERAND (t, 3))
 		CHECK_OP (3, "invalid array stride");
+              if (TREE_CODE (t) == ARRAY_REF && TREE_OPERAND (t, 4))
+                CHECK_OP (4, "Invalid array max index.");
 	    }
 	  else if (TREE_CODE (t) == BIT_FIELD_REF)
 	    {

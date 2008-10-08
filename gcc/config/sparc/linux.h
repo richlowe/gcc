@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
@@ -102,7 +104,7 @@ along with GCC; see the file COPYING3.  If not see
 #define LIB_SPEC \
   "%{pthread:-lpthread} \
    %{shared:-lc} \
-   %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
+   %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc} -lcplxsupp}"
 
 /* Provide a LINK_SPEC appropriate for GNU/Linux.  Here we provide support
    for the special GCC options -static and -shared, which allow us to

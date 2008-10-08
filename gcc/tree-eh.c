@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1754,10 +1756,13 @@ make_eh_edge (struct eh_region *region, void *data)
   stmt = (tree) data;
   lab = get_eh_region_tree_label (region);
 
-  src = bb_for_stmt (stmt);
-  dst = label_to_block (lab);
+  if (flag_use_rtl_backend != 0)
+    {
+      src = bb_for_stmt (stmt);
+      dst = label_to_block (lab);
 
-  make_edge (src, dst, EDGE_ABNORMAL | EDGE_EH);
+      make_edge (src, dst, EDGE_ABNORMAL | EDGE_EH);
+    }
 }
 
 void
@@ -1920,6 +1925,7 @@ tree_could_trap_p (tree expr)
     case BIT_FIELD_REF:
     case VIEW_CONVERT_EXPR:
     case WITH_SIZE_EXPR:
+    case NOP_EXPR:
       expr = TREE_OPERAND (expr, 0);
       code = TREE_CODE (expr);
       goto restart;
@@ -2041,7 +2047,7 @@ tree_could_throw_p (tree t)
       t = GIMPLE_STMT_OPERAND (t, 1);
     }
 
-  if (TREE_CODE (t) == WITH_SIZE_EXPR)
+  if (TREE_CODE (t) == WITH_SIZE_EXPR || TREE_CODE (t) == NOP_EXPR)
     t = TREE_OPERAND (t, 0);
   if (TREE_CODE (t) == CALL_EXPR)
     return (call_expr_flags (t) & ECF_NOTHROW) == 0;

@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config/vxworks-dummy.h"
 
 /* Note that some other tm.h files include this one and then override
@@ -242,6 +244,19 @@ extern enum cmodel sparc_cmodel;
 #define TARGET_CPU_ultrasparc3	9
 #define TARGET_CPU_niagara	10
 #define TARGET_CPU_niagara2	11
+#define TARGET_CPU_ultrasparc2  12
+#define TARGET_CPU_ultrasparc2i 13
+#define TARGET_CPU_ultrasparc2e 14
+#define TARGET_CPU_gemini       15
+#define TARGET_CPU_ultrasparc3cu 16
+#define TARGET_CPU_ultrasparc3i 17
+#define TARGET_CPU_ultrasparc3iplus     18
+#define TARGET_CPU_ultrasparc4  19
+#define TARGET_CPU_ultrasparc4plus      20
+#define TARGET_CPU_ultraT1      21
+#define TARGET_CPU_ultraT2      22
+#define TARGET_CPU_sparc64vi      23
+#define TARGET_CPU_sparc64vii   24
 
 #if TARGET_CPU_DEFAULT == TARGET_CPU_v9 \
  || TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc \
@@ -506,6 +521,10 @@ extern enum cmodel sparc_cmodel;
 /* Mask of all CPU selection flags.  */
 #define MASK_ISA \
 (MASK_V8 + MASK_SPARCLITE + MASK_SPARCLET + MASK_V9 + MASK_DEPRECATED_V8_INSNS)
+
+/* Do not use integer ldd and std.  */
+#define MASK_NO_INTEGER_LDD_STD 0x10000000
+#define TARGET_INTEGER_LDD_STD (!(target_flags & MASK_NO_INTEGER_LDD_STD))
 
 /* TARGET_HARD_MUL: Use hardware multiply instructions but not %y.
    TARGET_HARD_MUL32: Use hardware multiply instructions with rd %y
@@ -1927,12 +1946,8 @@ do {									\
 #endif
 
 /* Should gcc use [%reg+%lo(xx)+offset] addresses?  */
-
-#ifdef HAVE_AS_OFFSETABLE_LO10
-#define USE_AS_OFFSETABLE_LO10 1
-#else
+#undef HAVE_AS_OFFSETABLE_LO10
 #define USE_AS_OFFSETABLE_LO10 0
-#endif
 
 /* GO_IF_LEGITIMATE_ADDRESS recognizes an RTL expression
    that is a valid memory address for an instruction.

@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* This file handles generation of all the assembler code
    *except* the instructions of a function.
@@ -30,6 +31,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+
+/*this is to workaround weakref issue on linux and cross gccfss.*/
+#if defined(__linux__) || defined(CROSS_COMPILE)
+#undef HAVE_GAS_WEAKREF
+#endif
+
 #include "tm.h"
 #include "rtl.h"
 #include "tree.h"
@@ -53,6 +60,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfglayout.h"
 #include "basic-block.h"
 #include "tree-iterator.h"
+#include "tree-ir.h"
+#include "c-common.h"
 
 #ifdef XCOFF_DEBUGGING_INFO
 #include "xcoffout.h"		/* Needed for external data
@@ -893,7 +902,8 @@ mergeable_string_section (tree decl ATTRIBUTE_UNUSED,
 {
   HOST_WIDE_INT len;
 
-  if (HAVE_GAS_SHF_MERGE && flag_merge_constants
+  if (0 /* such .s not yet recognized by cg*/
+      && HAVE_GAS_SHF_MERGE && flag_merge_constants
       && TREE_CODE (decl) == STRING_CST
       && TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE
       && align <= 256
@@ -949,7 +959,8 @@ mergeable_constant_section (enum machine_mode mode ATTRIBUTE_UNUSED,
 {
   unsigned int modesize = GET_MODE_BITSIZE (mode);
 
-  if (HAVE_GAS_SHF_MERGE && flag_merge_constants
+  if (0 /* such .s not yet recognized by cg*/
+      && HAVE_GAS_SHF_MERGE && flag_merge_constants
       && mode != VOIDmode
       && mode != BLKmode
       && modesize <= align
@@ -1558,7 +1569,7 @@ notice_global_symbol (tree decl)
   if (first_global_object_name
       || !TREE_PUBLIC (decl)
       || DECL_EXTERNAL (decl)
-      || !DECL_NAME (decl)
+      /* || !DECL_NAME (decl) ; gccfss needs to globalize unnamed structs or unions for xipo */
       || (TREE_CODE (decl) != FUNCTION_DECL
 	  && (TREE_CODE (decl) != VAR_DECL
 	      || (DECL_COMMON (decl)
@@ -2096,11 +2107,27 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       return;
     }
 
+  /* set vtable to public for xipo */ 
+  if (globalize_flag 
+      && TREE_STATIC (decl)
+      && !TREE_PUBLIC (decl)
+      && DECL_ASSEMBLER_NAME_SET_P (decl))
+    {
+      const char * result = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+      if (result = strchr (result, '.')) 
+        if (strstr (result, "_ZTV") == result + 1)
+          {
+             TREE_STATIC (decl) = 0;
+             TREE_PUBLIC (decl) = 1;
+             DECL_VISIBILITY (decl) = VISIBILITY_HIDDEN;
+          }
+    }
+  
   gcc_assert (MEM_P (decl_rtl));
   gcc_assert (GET_CODE (XEXP (decl_rtl, 0)) == SYMBOL_REF);
   symbol = XEXP (decl_rtl, 0);
   name = XSTR (symbol, 0);
-  if (TREE_PUBLIC (decl) && DECL_NAME (decl))
+  if (TREE_PUBLIC (decl) /*&& DECL_NAME (decl)*/)
     notice_global_symbol (decl);
 
   /* Compute the alignment of this data.  */
@@ -2117,9 +2144,13 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   /* First make the assembler name(s) global if appropriate.  */
   sect = get_variable_section (decl, false);
   if (TREE_PUBLIC (decl)
-      && DECL_NAME (decl)
+      /*&& DECL_NAME (decl)*/
       && (sect->common.flags & SECTION_COMMON) == 0)
-    globalize_decl (decl);
+    {
+      if (DECL_COMDAT (decl) && flag_comdat)
+        DECL_WEAK (decl) = 0;
+      globalize_decl (decl);
+    }
 
   /* Output any data that we will need to use the address of.  */
   if (DECL_INITIAL (decl) && DECL_INITIAL (decl) != error_mark_node)
@@ -2330,7 +2361,7 @@ mark_decl_referenced (tree decl)
    followed again, and return the ultimate target of the alias
    chain.  */
 
-static inline tree
+/*static*/ inline tree
 ultimate_transparent_alias_target (tree *alias)
 {
   tree target = *alias;
@@ -3124,15 +3155,23 @@ build_constant_desc (tree exp)
   labelno = const_labelno++;
   ASM_GENERATE_INTERNAL_LABEL (label, "LC", labelno);
 
-  /* We have a symbol name; construct the SYMBOL_REF and the MEM.  */
-  if (use_object_blocks_p ())
+  if (globalize_flag /* need to globalize constants for Sun backend with -xipo */
+      && !TREE_PUBLIC (exp))
     {
-      section *sect = get_constant_section (exp);
-      symbol = create_block_symbol (ggc_strdup (label),
-				    get_block_for_section (sect), -1);
+      const char * glob_label = make_global_name (targetm.strip_name_encoding (label), 
+                                                  cfun ? 1 : 0, current_function_decl);
+      symbol = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (glob_label));
     }
   else
-    symbol = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (label));
+    /* We have a symbol name; construct the SYMBOL_REF and the MEM.  */
+    if (use_object_blocks_p ())
+      {
+        section *sect = get_constant_section (exp);
+        symbol = create_block_symbol (ggc_strdup (label),
+                                      get_block_for_section (sect), -1);
+      }
+    else
+      symbol = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (label));
   SYMBOL_REF_FLAGS (symbol) |= SYMBOL_FLAG_LOCAL;
   SET_SYMBOL_REF_DECL (symbol, desc->value);
   TREE_CONSTANT_POOL_ADDRESS_P (symbol) = 1;
@@ -3237,6 +3276,9 @@ assemble_constant_contents (tree exp, const char *label, unsigned int align)
 
   size = get_constant_size (exp);
 
+  if (globalize_flag && !TREE_PUBLIC (exp)) /* gccfss support for -xipo */
+    targetm.asm_out.globalize_label (asm_out_file, label);
+  
   /* Do any machine/system dependent processing of the constant.  */
 #ifdef ASM_DECLARE_CONSTANT_NAME
   ASM_DECLARE_CONSTANT_NAME (asm_out_file, label, exp, size);
@@ -3500,7 +3542,7 @@ force_const_mem (enum machine_mode mode, rtx x)
   void **slot;
 
   /* If we're not allowed to drop X into the constant pool, don't.  */
-  if (targetm.cannot_force_const_mem (x))
+  if (!flag_constant_pools || targetm.cannot_force_const_mem (x))
     return NULL_RTX;
 
   /* Record that this function has used a constant pool entry.  */
@@ -5303,7 +5345,14 @@ finish_aliases_2 (void)
   alias_pair *p;
 
   for (i = 0; VEC_iterate (alias_pair, alias_pairs, i, p); i++)
-    do_assemble_alias (p->decl, p->target);
+    {
+      if (globalize_flag)
+        {
+          tree target_decl = find_decl_and_mark_needed (p->decl, p->target);
+          if (target_decl) p->target = DECL_ASSEMBLER_NAME (target_decl);
+        }
+      do_assemble_alias (p->decl, p->target);
+    }
 
   VEC_truncate (alias_pair, alias_pairs, 0);
 }
@@ -5373,6 +5422,11 @@ assemble_alias (tree decl, tree target)
   /* If the target has already been emitted, we don't have to queue the
      alias.  This saves a tad of memory.  */
   target_decl = find_decl_and_mark_needed (decl, target);
+
+  /* for -xipo make sure we output mangled names for aliases */
+  if (target_decl && globalize_flag)
+    target = DECL_ASSEMBLER_NAME (target_decl);
+  
   if (target_decl && TREE_ASM_WRITTEN (target_decl))
     do_assemble_alias (decl, target);
   else
@@ -5390,7 +5444,10 @@ void
 default_assemble_visibility (tree decl, int vis)
 {
   static const char * const visibility_types[] = {
-    NULL, "protected", "hidden", "internal"
+    NULL, 
+    "symbolic" /* sparc's equivalent of "protected". gccfss feature. */,
+    "hidden", 
+    "hidden" /* sparc doesn't have "internal". gccfss feature. */ 
   };
 
   const char *name, *type;
@@ -5398,13 +5455,20 @@ default_assemble_visibility (tree decl, int vis)
   name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
   type = visibility_types[vis];
 
-#ifdef HAVE_GAS_HIDDEN
+#if 0 // HAVE_GAS_HIDDEN
   fprintf (asm_out_file, "\t.%s\t", type);
   assemble_name (asm_out_file, name);
   fprintf (asm_out_file, "\n");
 #else
-  warning (OPT_Wattributes, "visibility attribute not supported "
-	   "in this configuration; ignored");
+  if (vis < 4)
+    {
+      fprintf (asm_out_file, "\t.%s\t", type);
+      assemble_name (asm_out_file, name);
+      fprintf (asm_out_file, "\n");
+    }
+  else
+    warning (OPT_Wattributes, "visibility attribute not supported "
+             "in this configuration; ignored");
 #endif
 }
 
@@ -5770,7 +5834,7 @@ default_select_section (tree decl, int reloc,
 	     || !TREE_CONSTANT (decl)))
 	return readonly_data_section;
     }
-  else if (TREE_CODE (decl) == STRING_CST)
+  else if (TREE_CODE (decl) == STRING_CST && !flag_writable_strings)
     return readonly_data_section;
   else if (! (flag_pic && reloc))
     return readonly_data_section;
@@ -5787,7 +5851,9 @@ categorize_decl_for_section (const_tree decl, int reloc)
     return SECCAT_TEXT;
   else if (TREE_CODE (decl) == STRING_CST)
     {
-      if (flag_mudflap) /* or !flag_merge_constants */
+      if (flag_writable_strings)
+        return SECCAT_DATA;
+      else if (flag_mudflap) /* or !flag_merge_constants */
         return SECCAT_RODATA;
       else
 	return SECCAT_RODATA_MERGE_STR;
@@ -5968,20 +6034,11 @@ default_unique_section (tree decl, int reloc)
       prefix = one_only ? ".gnu.linkonce.s2." : ".sdata2.";
       break;
     case SECCAT_DATA:
-      prefix = one_only ? ".gnu.linkonce.d." : ".data.";
-      break;
     case SECCAT_DATA_REL:
-      prefix = one_only ? ".gnu.linkonce.d.rel." : ".data.rel.";
-      break;
     case SECCAT_DATA_REL_LOCAL:
-      prefix = one_only ? ".gnu.linkonce.d.rel.local." : ".data.rel.local.";
-      break;
     case SECCAT_DATA_REL_RO:
-      prefix = one_only ? ".gnu.linkonce.d.rel.ro." : ".data.rel.ro.";
-      break;
     case SECCAT_DATA_REL_RO_LOCAL:
-      prefix = one_only ? ".gnu.linkonce.d.rel.ro.local."
-	       : ".data.rel.ro.local.";
+      prefix = one_only ? ".gnu.linkonce.d." : ".data.";
       break;
     case SECCAT_SDATA:
       prefix = one_only ? ".gnu.linkonce.s." : ".sdata.";

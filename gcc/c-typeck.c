@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* This file is part of the C front end.
    It contains routines to build C expressions given their operands,
@@ -2123,7 +2124,7 @@ build_array_ref (tree array, tree index)
 	}
 
       type = TREE_TYPE (TREE_TYPE (array));
-      rval = build4 (ARRAY_REF, type, array, index, NULL_TREE, NULL_TREE);
+      rval = build5 (ARRAY_REF, type, array, index, NULL_TREE, NULL_TREE, NULL_TREE);
       /* Array ref is const/volatile if the array elements are
 	 or if the array is.  */
       TREE_READONLY (rval)
@@ -2143,16 +2144,73 @@ build_array_ref (tree array, tree index)
     }
   else
     {
-      tree ar = default_conversion (array);
+      /* need to be very cautios here.
+         too aggresive arraylocs could lead to incorrect prefetch analysis in iropt */
+      if (TREE_CODE (array) != ARRAY_REF 
+          &&( TREE_CODE_CLASS (TREE_CODE (array)) == tcc_declaration
+		/* For more darrayloc. need to test and adjust more.*/
+		|| (flag_gen_more_array == 1 && TREE_CODE (array) == COMPONENT_REF))
+	  /* don't convert access through volatile pointers into array_refs,
+	     because volatile qualifier gets promoted to the whole array */
+	  && !TREE_THIS_VOLATILE (array))
+        {
+          tree rval, type;
+          tree ar = default_conversion (array);
+          tree t, value;
 
-      if (ar == error_mark_node)
-	return ar;
-
-      gcc_assert (TREE_CODE (TREE_TYPE (ar)) == POINTER_TYPE);
-      gcc_assert (TREE_CODE (TREE_TYPE (TREE_TYPE (ar))) != FUNCTION_TYPE);
-
-      return build_indirect_ref (build_binary_op (PLUS_EXPR, ar, index, 0),
+          if (ar == error_mark_node)
+	    return ar;
+         
+          /* build indirect_ref just to get through normal warnings/errors
+             fix for gcc.dg/pointer-arith-1.c */
+          t = build_indirect_ref (build_binary_op (PLUS_EXPR, ar, index, 0),
 				 "array indexing");
+
+          if (t == error_mark_node)
+	    return t;
+          
+          /* discard perfectly fine indirect_ref, build array_ref instead */
+	  
+          type = TREE_TYPE (TREE_TYPE (array));
+          if (TREE_CODE (type) != ARRAY_TYPE)
+            type = TYPE_MAIN_VARIANT (type);
+          rval = build5 (ARRAY_REF, type, array, index, NULL_TREE, NULL_TREE, NULL_TREE);
+	  
+          /* Array ref is const/volatile if the array elements are */
+          TREE_READONLY (rval) |= TYPE_READONLY (TREE_TYPE (TREE_TYPE (array)));
+          TREE_SIDE_EFFECTS (rval) |= TYPE_VOLATILE (TREE_TYPE (TREE_TYPE (array)));
+          TREE_THIS_VOLATILE (rval) |= TYPE_VOLATILE (TREE_TYPE (TREE_TYPE (array)));
+
+          /* still build indirect_ref when rtl backend used. */
+          if (flag_use_rtl_backend == 1)
+            value = /*require_complete_type*/ (fold (t));
+          else
+            value = /*require_complete_type*/ (fold (rval));
+          /*just like require_complete_type, but no error messages printed */
+          type = TREE_TYPE (value);
+
+          if (value == error_mark_node || type == error_mark_node)
+            return error_mark_node;
+
+          /* First, detect a valid value with a complete type.  */
+          if (COMPLETE_TYPE_P (type))
+            return value;
+
+          return error_mark_node;
+        }
+      else
+        {
+          tree ar = default_conversion (array);
+
+          if (ar == error_mark_node)
+            return ar;
+          
+          gcc_assert (TREE_CODE (TREE_TYPE (ar)) == POINTER_TYPE);
+          gcc_assert (TREE_CODE (TREE_TYPE (TREE_TYPE (ar))) != FUNCTION_TYPE);
+          
+          return build_indirect_ref (build_binary_op (PLUS_EXPR, ar, index, 0),
+                                     "array indexing");
+        }
     }
 }
 
@@ -2358,6 +2416,9 @@ build_function_call (tree function, tree params)
   /* Convert anything with function type to a pointer-to-function.  */
   if (TREE_CODE (function) == FUNCTION_DECL)
     {
+      if (flag_tm_mode)
+        c_check_tm_calling_rules (function);
+        
       /* Implement type-directed function overloading for builtins.
 	 resolve_overloaded_builtin and targetm.resolve_overloaded_builtin
 	 handle all the type checking.  The result is a complete expression
@@ -3149,13 +3210,16 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
       if (TREE_CODE (arg) == ARRAY_REF)
 	{
 	  tree op0 = TREE_OPERAND (arg, 0);
-	  if (!c_mark_addressable (op0))
+          if (TREE_CODE (TREE_TYPE (op0)) == ARRAY_TYPE
+	      && !c_mark_addressable (op0))
 	    return error_mark_node;
-	  return build_binary_op (PLUS_EXPR,
-				  (TREE_CODE (TREE_TYPE (op0)) == ARRAY_TYPE
-				   ? array_to_pointer_conversion (op0)
-				   : op0),
-				  TREE_OPERAND (arg, 1), 1);
+          /* For more darrayloc. */
+	  if (flag_field_array == 0 || check_field_array (arg, 0) == 0)
+              return build_binary_op (PLUS_EXPR,
+                                      (TREE_CODE (TREE_TYPE (op0)) == ARRAY_TYPE
+                                       ? array_to_pointer_conversion (op0)
+                                       : op0),
+                                      TREE_OPERAND (arg, 1), 1);
 	}
 
       /* Anything not already handled and not a true memory reference
@@ -3323,7 +3387,12 @@ c_mark_addressable (tree exp)
 	  }
 
 	/* ... fall through ...  */
-
+      case ARRAY_REF:
+        if (TREE_CODE (x) == ARRAY_REF 
+            && TREE_CODE (TREE_TYPE (TREE_OPERAND (x, 0))) != ARRAY_TYPE)
+          return true;
+	/* ... fall through ...  */
+        
       case ADDR_EXPR:
       case ARRAY_REF:
       case REALPART_EXPR:
@@ -7004,7 +7073,8 @@ build_asm_expr (tree string, tree outputs, tree inputs, tree clobbers,
      as volatile.  */
   ASM_INPUT_P (args) = simple;
   ASM_VOLATILE_P (args) = (noutputs == 0);
-
+  cfun->has_old_style_inline_asm = simple;
+  
   return args;
 }
 
@@ -7145,9 +7215,11 @@ c_finish_return (tree retval)
 	    case ADDR_EXPR:
 	      inner = TREE_OPERAND (inner, 0);
 
-	      while (REFERENCE_CLASS_P (inner)
-		     && TREE_CODE (inner) != INDIRECT_REF)
-		inner = TREE_OPERAND (inner, 0);
+              while (REFERENCE_CLASS_P (inner)
+	             && TREE_CODE (inner) != INDIRECT_REF
+                     && (TREE_CODE (inner) != ARRAY_REF 
+                         || TREE_CODE (TREE_TYPE (TREE_OPERAND (inner, 0))) == ARRAY_TYPE))
+                inner = TREE_OPERAND (inner, 0);
 
 	      if (DECL_P (inner)
 		  && !DECL_EXTERNAL (inner)
@@ -7391,7 +7463,7 @@ c_finish_if_stmt (location_t if_locus, tree cond, tree then_block,
 
 void
 c_finish_loop (location_t start_locus, tree cond, tree incr, tree body,
-	       tree blab, tree clab, bool cond_is_first)
+	       tree blab, tree clab, int cond_is_first)
 {
   tree entry = NULL, exit = NULL, t;
 
@@ -7416,21 +7488,40 @@ c_finish_loop (location_t start_locus, tree cond, tree incr, tree body,
 
       if (cond && !integer_nonzerop (cond))
 	{
-	  /* Canonicalize the loop condition to the end.  This means
-	     generating a branch to the loop condition.  Reuse the
-	     continue label, if possible.  */
-	  if (cond_is_first)
-	    {
-	      if (incr || !clab)
-		{
-		  entry = build1 (LABEL_EXPR, void_type_node, NULL_TREE);
-		  t = build_and_jump (&LABEL_EXPR_LABEL (entry));
-		}
-	      else
-		t = build1 (GOTO_EXPR, void_type_node, clab);
-	      SET_EXPR_LOCATION (t, start_locus);
-	      add_stmt (t);
-	    }
+          /* Canonicalize the loop condition to the end.  This means
+             generating a branch to the loop condition.  Reuse the
+             continue label, if possible.  */
+          if (cond_is_first)
+            {
+              if (cond_is_first == 2
+                  /* gcov tests are too sensitive if 'for' is represented 
+                     as bottom tested loop */
+                  && !flag_test_coverage)
+                {
+                  /* it's "for" loop. 
+                     Make it bottom test, single entry, single exit */
+	          t = build_and_jump (&blab);
+                  entry = build_and_jump (&LABEL_EXPR_LABEL (top));
+                  entry = build3 (COND_EXPR, void_type_node, cond, entry, t);
+                  entry = fold (entry);
+                  SET_EXPR_LOCATION (entry, start_locus);
+                  add_stmt (entry);
+                  entry = NULL;
+                }
+              else
+                {
+                  if (incr || !clab)
+                    {
+                      entry = build1 (LABEL_EXPR, void_type_node, NULL_TREE);
+                      t = build_and_jump (&LABEL_EXPR_LABEL (entry));
+                      
+                    }
+                  else
+                    t = build1 (GOTO_EXPR, void_type_node, clab);
+                  SET_EXPR_LOCATION (t, start_locus);
+                  add_stmt (t);
+                }
+            }
 
 	  t = build_and_jump (&blab);
 	  exit = fold_build3 (COND_EXPR, void_type_node, cond, exit, t);
@@ -7441,6 +7532,13 @@ c_finish_loop (location_t start_locus, tree cond, tree incr, tree body,
 	}
 
       add_stmt (top);
+      if (cond_is_first == 2) /* it's "for" loop */
+        {
+          /* add special marking to identify this label during IR gen */
+          TREE_LANG_FLAG_6 (top) = 1; 
+          /* set label source location to the first line of the loop */
+          DECL_SOURCE_LOCATION (LABEL_EXPR_LABEL (top)) = start_locus;
+        }
     }
 
   if (body)
@@ -7815,6 +7913,9 @@ c_end_compound_stmt (tree stmt, bool do_scope)
       block = pop_scope ();
     }
 
+  if (flag_tm_mode && block)
+    BLOCK_TM_ATOMIC (block) = STATEMENT_LIST_TM_ATOMIC (stmt);
+  
   stmt = pop_stmt_list (stmt);
   stmt = c_build_bind_expr (block, stmt);
 
@@ -8715,6 +8816,12 @@ c_finish_omp_clauses (tree clauses)
 
       switch (OMP_CLAUSE_CODE (c))
 	{
+        case OMP_CLAUSE_AUTO:
+          name = "__auto";
+          need_complete = true;
+	  need_implicitly_determined = true;
+	  goto check_dup_generic;
+          
 	case OMP_CLAUSE_SHARED:
 	  name = "shared";
 	  need_implicitly_determined = true;
@@ -8781,7 +8888,7 @@ c_finish_omp_clauses (tree clauses)
 	case OMP_CLAUSE_COPYIN:
 	  name = "copyin";
 	  t = OMP_CLAUSE_DECL (c);
-	  if (TREE_CODE (t) != VAR_DECL || !DECL_THREAD_LOCAL_P (t))
+	  if (TREE_CODE (t) != VAR_DECL || !C_DECL_THREADPRIVATE_P (t))
 	    {
 	      error ("%qE must be %<threadprivate%> for %<copyin%>", t);
 	      remove = true;
@@ -8852,6 +8959,8 @@ c_finish_omp_clauses (tree clauses)
 	case OMP_CLAUSE_NOWAIT:
 	case OMP_CLAUSE_ORDERED:
 	case OMP_CLAUSE_DEFAULT:
+        case OMP_CLAUSE_UNTIED:
+        case OMP_CLAUSE_COLLAPSE:
 	  pc = &OMP_CLAUSE_CHAIN (c);
 	  continue;
 
@@ -8874,7 +8983,7 @@ c_finish_omp_clauses (tree clauses)
 	    {
 	      const char *share_name = NULL;
 
-	      if (TREE_CODE (t) == VAR_DECL && DECL_THREAD_LOCAL_P (t))
+	      if (TREE_CODE (t) == VAR_DECL && C_DECL_THREADPRIVATE_P (t))
 		share_name = "threadprivate";
 	      else switch (c_omp_predetermined_sharing (t))
 		{

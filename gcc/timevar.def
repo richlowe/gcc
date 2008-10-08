@@ -20,6 +20,8 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This file contains timing variable definitions, used by timevar.h
    and timevar.c.
 
@@ -191,6 +193,7 @@ DEFTIMEVAR (TV_FINAL                 , "final")
 DEFTIMEVAR (TV_SYMOUT                , "symout")
 DEFTIMEVAR (TV_VAR_TRACKING          , "variable tracking")
 DEFTIMEVAR (TV_TREE_IFCOMBINE        , "tree if-combine")
+DEFTIMEVAR (TV_REST_OF_GENIR         , "rest of generate ir")
 
 /* Everything else in rest_of_compilation not included above.  */
 DEFTIMEVAR (TV_REST_OF_COMPILATION   , "rest of compilation")

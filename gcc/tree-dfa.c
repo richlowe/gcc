@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -210,7 +212,8 @@ make_rename_temp (tree type, const char *prefix)
   if (gimple_referenced_vars (cfun))
     {
       add_referenced_var (t);
-      mark_sym_for_renaming (t);
+      if (flag_use_rtl_backend != 1) /* don't do this for complex lowering */
+        mark_sym_for_renaming (t);
     }
 
   return t;

@@ -15,6 +15,8 @@
    along with this program; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_DEBUG_H
 #define GCC_DEBUG_H
 
@@ -150,6 +152,8 @@ extern const struct gcc_debug_hooks sdb_debug_hooks;
 extern const struct gcc_debug_hooks xcoff_debug_hooks;
 extern const struct gcc_debug_hooks dwarf2_debug_hooks;
 extern const struct gcc_debug_hooks vmsdbg_debug_hooks;
+extern const struct gcc_debug_hooks dbg_gen_debug_hooks;
+extern const struct gcc_debug_hooks trivial_dbg_gen_debug_hooks;
 
 /* Dwarf2 frame information.  */
 

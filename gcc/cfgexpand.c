@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1034,15 +1036,20 @@ account_used_vars_for_block (tree block, bool toplevel)
 
 /* Prepare for expanding variables.  */
 static void 
-init_vars_expansion (void)
+init_vars_expansion (int for_rtl_backend)
 {
   tree t;
   /* Set TREE_USED on all variables in the unexpanded_var_list.  */
   for (t = cfun->unexpanded_var_list; t; t = TREE_CHAIN (t))
     TREE_USED (TREE_VALUE (t)) = 1;
 
-  /* Clear TREE_USED on all variables associated with a block scope.  */
-  clear_tree_used (DECL_INITIAL (current_function_decl));
+  /* Clear TREE_USED on all variables associated with a block scope.
+     This should only be done for RTL backend because some used variables
+     will be set as used in RTL backend.  For Solaris IR backend, the IR
+     backend has already walked the tree, and the used flag should not be
+     reset here. */
+  if (for_rtl_backend)
+    clear_tree_used (DECL_INITIAL (current_function_decl));
 
   /* Initialize local stack smashing state.  */
   has_protected_decls = false;
@@ -1068,7 +1075,7 @@ estimated_stack_frame_size (void)
   HOST_WIDE_INT size = 0;
   tree t, outer_block = DECL_INITIAL (current_function_decl);
 
-  init_vars_expansion ();
+  init_vars_expansion (0);
 
   /* At this point all variables on the unexpanded_var_list with TREE_USED
      set are not associated with any block scope.  Lay them out.  */
@@ -1108,7 +1115,7 @@ estimated_stack_frame_size (void)
 /* Expand all variables used in the function.  */
 
 static void
-expand_used_vars (void)
+expand_used_vars (int for_rtl_backend)
 {
   tree t, outer_block = DECL_INITIAL (current_function_decl);
 
@@ -1119,7 +1126,7 @@ expand_used_vars (void)
     frame_phase = off ? align - off : 0;
   }
 
-  init_vars_expansion ();
+  init_vars_expansion (for_rtl_backend);
 
   /* At this point all variables on the unexpanded_var_list with TREE_USED
      set are not associated with any block scope.  Lay them out.  */
@@ -1856,6 +1863,17 @@ tree_expand_cfg (void)
   sbitmap blocks;
   edge_iterator ei;
   edge e;
+  
+  if (errorcount && !flag_use_rtl_backend)
+    {
+      /* did not generate IR due to compilation error
+         avoid duplicated error message by skipping RTL phase */
+      if (cfun->function_end_locus.file)
+        input_location = cfun->function_end_locus;
+      DECL_DEFER_OUTPUT (current_function_decl) = 0;
+      TREE_ASM_WRITTEN (current_function_decl) = 1;
+      return 0;
+    }
 
   /* Some backends want to know that we are expanding to RTL.  */
   currently_expanding_to_rtl = 1;
@@ -1877,7 +1895,7 @@ tree_expand_cfg (void)
   targetm.expand_to_rtl_hook ();
 
   /* Expand the variables recorded during gimple lowering.  */
-  expand_used_vars ();
+  expand_used_vars (1);
 
   /* Honor stack protection warnings.  */
   if (warn_stack_protect)
@@ -1993,7 +2011,7 @@ tree_expand_cfg (void)
 struct tree_opt_pass pass_expand =
 {
   "expand",				/* name */
-  NULL,                                 /* gate */
+  gate_generate_rtl,        /* gate */
   tree_expand_cfg,			/* execute */
   NULL,                                 /* sub */
   NULL,                                 /* next */
@@ -2007,3 +2025,39 @@ struct tree_opt_pass pass_expand =
   TODO_dump_func,                       /* todo_flags_finish */
   'r'					/* letter */
 };
+
+static unsigned int
+execute_rest_of_genir (void)
+{
+  if (errorcount == 0) 
+    {
+      currently_expanding_to_rtl = 1;
+      reset_block_changes ();     /* initialize arrays for RTL block */
+      expand_used_vars (0);
+      currently_expanding_to_rtl = 0;
+      output_function_exception_table ();
+    }
+  if (cfun->function_end_locus.file)
+    input_location = cfun->function_end_locus;
+  DECL_DEFER_OUTPUT (current_function_decl) = 0;
+  TREE_ASM_WRITTEN (current_function_decl) = 1;
+  return 0;
+}
+
+struct tree_opt_pass pass_rest_of_genir =
+{
+  "rest_of_genir",		        /* name */
+  gate_generate_ir,		        /* gate */
+  execute_rest_of_genir,	        /* execute */
+  NULL,                                 /* sub */
+  NULL,                                 /* next */
+  0,                                    /* static_pass_number */
+  TV_REST_OF_GENIR,		        /* tv_id */
+  0,				        /* properties_required */
+  0,                                    /* properties_provided */
+  PROP_rtl,                             /* properties_destroyed */
+  0,                                    /* todo_flags_start */
+  TODO_ggc_collect,			/* todo_flags_finish */
+  0					/* letter */
+};
+

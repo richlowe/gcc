@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This file handles the generation of rtl code from tree structure
    above the level of expressions, using subroutines in exp*.c and emit-rtl.c.
    The functions whose names start with `expand_' are called by the
@@ -136,6 +138,8 @@ label_rtx (tree label)
   if (!DECL_RTL_SET_P (label))
     {
       rtx r = gen_label_rtx ();
+      if (!flag_use_rtl_backend)
+        CODE_LABEL_NUMBER (r) = DECL_UID (label) + UID_IR_OFFSET;
       SET_DECL_RTL (label, r);
       if (FORCED_LABEL (label) || DECL_NONLOCAL (label))
 	LABEL_PRESERVE_P (r) = 1;

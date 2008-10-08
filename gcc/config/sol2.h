@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* We use stabs-in-elf for debugging, because that is what the native
    toolchain uses.  */
 #undef PREFERRED_DEBUGGING_TYPE
@@ -47,6 +49,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC "\
 %{pthreads|pthread:-D_REENTRANT -D_PTHREADS} \
+%{Zmt|xautopar:-D_REENTRANT} \
 %{!pthreads:%{!pthread:%{threads:-D_REENTRANT -D_SOLARIS_THREADS}}} \
 %{compat-bsd:-iwithprefixbefore ucbinclude -I/usr/ucbinclude} \
 "
@@ -82,7 +85,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef ASM_SPEC
 #define ASM_SPEC "\
 %{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Wa,*:%*} -s \
-%{fpic|fpie|fPIC|fPIE:-K PIC} \
+%{fpic|fpie|fPIC|fPIE|xcode=pic13|xcode=pic32:-K PIC} \
 %(asm_cpu) \
 "
 
@@ -94,7 +97,7 @@ along with GCC; see the file COPYING3.  If not see
      %{!symbolic:\
        %{pthreads|pthread:-lpthread} \
        %{!pthreads:%{!pthread:%{threads:-lthread}}} \
-       %{p|pg:-ldl} -lc}}"
+       %{p|pg:-ldl} -lcplxsupp -lc}}"
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC "crtend.o%s crtn.o%s"
@@ -122,13 +125,33 @@ along with GCC; see the file COPYING3.  If not see
   "%{G:-G} \
    %{YP,*} \
    %{R*} \
+   %{!shared: %{!xcode=pic32: %{!xcode=pic12: \
+               %{xmemalign=1i | xmemalign=2i | xmemalign=4i | \
+                 xmemalign=8i | xmemalign=16i | \
+                 xmemalign=1f | xmemalign=2f | xmemalign=4f | \
+                 xmemalign=8f | xmemalign=16f: %J/misalign.o } } } }\
    %{compat-bsd: \
      %{!YP,*:%{p|pg:-Y P,/usr/ucblib:/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/usr/lib} \
              %{!p:%{!pg:-Y P,/usr/ucblib:/usr/ccs/lib:/usr/lib}}} \
-             -R /usr/ucblib} \
+             %{!norpath:%{!nodefaultlibs:%{!nostdlib:-R /usr/ucblib}}}} \
    %{!compat-bsd: \
-     %{!YP,*:%{p|pg:-Y P,/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/usr/lib} \
-             %{!p:%{!pg:-Y P,/usr/ccs/lib:/usr/lib}}}}"
+     %{!YP,*:%{p|pg :%{mcpu=ultrasparc|Zarchm32=v8plusa:-Y P,%J/v8plusa:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       mcpu=ultrasparc3|Zarchm32=v8plusb:-Y P,%J/v8plusb:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8plus:-Y P,%J/v8plus:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8plusc:-Y P,%J/v8plusc:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8plusd:-Y P,%J/v8plusd:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8:-Y P,%J/v8:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                                :-Y P,%J/v8plus:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib } } \
+             %{!p:%{!pg:%{mcpu=ultrasparc|Zarchm32=v8plusa:-Y P,%J/v8plusa:%J:/usr/ccs/lib:/usr/lib ; \
+                          mcpu=ultrasparc3|Zarchm32=v8plusb:-Y P,%J/v8plusb:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8plus:-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8plusc:-Y P,%J/v8plusc:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8plusd:-Y P,%J/v8plusd:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8:-Y P,%J/v8:%J:/usr/ccs/lib:/usr/lib ; \
+                                :-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib}}} \
+             } \
+     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}}} \
+    } "
 
 #undef LINK_ARCH32_SPEC
 #define LINK_ARCH32_SPEC LINK_ARCH32_SPEC_BASE
@@ -242,3 +265,5 @@ extern GTY(()) tree solaris_pending_finis;
 
 /* Allow macro expansion in #pragma pack.  */
 #define HANDLE_PRAGMA_PACK_WITH_EXPANSION
+
+#include "target-option-table.h"

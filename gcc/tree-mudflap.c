@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 #include "config.h"
 #include "system.h"
@@ -585,9 +586,9 @@ mf_build_check_statement_for (tree base, tree limit,
   t = build2 (BIT_AND_EXPR, mf_uintptr_type, t,
               flag_mudflap_threads ? mf_cache_mask_decl
 	       : mf_cache_mask_decl_l);
-  t = build4 (ARRAY_REF,
+  t = build5 (ARRAY_REF,
               TREE_TYPE (TREE_TYPE (mf_cache_array_decl)),
-              mf_cache_array_decl, t, NULL_TREE, NULL_TREE);
+              mf_cache_array_decl, t, NULL_TREE, NULL_TREE, NULL_TREE);
   t = build1 (ADDR_EXPR, mf_cache_structptr_type, t);
   t = build_gimple_modify_stmt (mf_elem, t);
   SET_EXPR_LOCUS (t, locus);

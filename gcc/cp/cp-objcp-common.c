@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -32,6 +34,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "debug.h"
 #include "cxx-pretty-print.h"
 #include "cp-objcp-common.h"
+#include "flags.h"
 
 /* Special routine to get the alias set for C++.  */
 
@@ -41,7 +44,7 @@ cxx_get_alias_set (tree t)
   if (IS_FAKE_BASE_TYPE (t))
     /* The base variant of a type must be in the same alias set as the
        complete type.  */
-    return get_alias_set (TYPE_CONTEXT (t));
+    return get_alias_set (TYPE_CONTEXT (t));s
 
   /* Punt on PMFs until we canonicalize functions properly.  */
   if (TYPE_PTRMEMFUNC_P (t)
@@ -99,7 +102,8 @@ cp_expr_size (const_tree exp)
 	     initialization of the temporary, and then copy
 	     the result.  Since the "s" subobject is never
 	     constructed, this is a valid transformation.  */
-	  || CP_AGGREGATE_TYPE_P (type))
+	  || CP_AGGREGATE_TYPE_P (type)
+          || flag_use_rtl_backend == 0)
 	/* This would be wrong for a type with virtual bases.  */
 	return (is_empty_class (type)
 		? size_zero_node

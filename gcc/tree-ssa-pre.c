@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -2165,7 +2167,7 @@ create_component_ref_by_pieces (basic_block block, tree expr, tree stmts)
     case ARRAY_REF:
       {
 	tree op0;
-	tree op1, op2, op3;
+	tree op1, op2, op3, op4;
 	op0 = create_component_ref_by_pieces (block,
 					      TREE_OPERAND (genop, 0),
 					      stmts);
@@ -2178,8 +2180,11 @@ create_component_ref_by_pieces (basic_block block, tree expr, tree stmts)
 	op3 = TREE_OPERAND (genop, 3);
 	if (op3 && TREE_CODE (op3) == VALUE_HANDLE)
 	  op3 = find_or_generate_expression (block, op3, stmts);
-	folded = build4 (ARRAY_REF, TREE_TYPE (genop), op0, op1,
-			      op2, op3);
+        op4 = TREE_OPERAND (genop, 4);
+	if (op4 && TREE_CODE (op4) == VALUE_HANDLE)
+	  op4 = find_or_generate_expression (block, op4, stmts);
+	folded = build5 (ARRAY_REF, TREE_TYPE (genop), op0, op1,
+		         op2, op3, op4);
 	return folded;
       }
     case COMPONENT_REF:
@@ -3998,7 +4003,7 @@ do_pre (void)
 static bool
 gate_pre (void)
 {
-  return flag_tree_pre != 0;
+  return flag_tree_pre != 0 && flag_preir_tree_optimizations != 0;
 }
 
 struct tree_opt_pass pass_pre =
@@ -4033,7 +4038,7 @@ execute_fre (void)
 static bool
 gate_fre (void)
 {
-  return flag_tree_fre != 0;
+  return flag_tree_fre != 0 && flag_preir_tree_optimizations != 0;
 }
 
 struct tree_opt_pass pass_fre =

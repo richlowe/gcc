@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -46,6 +48,9 @@ alloc_stmt_list (void)
   else
     list = make_node (STATEMENT_LIST);
   TREE_TYPE (list) = void_type_node;
+  STATEMENT_LIST_TM_ATOMIC (list) = 0;
+  STATEMENT_LIST_TM_ABORT_OK (list) = 0;
+  STATEMENT_LIST_TM_WAIVER (list) = 0;
   return list;
 }
 

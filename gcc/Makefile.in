@@ -21,6 +21,8 @@
 #along with GCC; see the file COPYING3.  If not see
 #<http://www.gnu.org/licenses/>.
 
+#Modified by Sun Microsystems 2008
+
 # The targets for external use include:
 # all, doc, proto, install, install-cross, install-cross-rest,
 # uninstall, TAGS, mostlyclean, clean, distclean, maintainer-clean.
@@ -472,7 +474,8 @@ libexecdir = @libexecdir@
 # --------
 # UNSORTED
 # --------
-
+# default path to sparc backend
+scgfss_lib_dir = ${SUNW_SCGFSS_PATH}/$(version)/prod/lib
 # Directory in which the compiler finds libraries etc.
 libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(version)
 # Directory in which the compiler finds executables
@@ -745,6 +748,7 @@ TCONFIG_H = tconfig.h $(xm_file_list)
 TM_P_H    = tm_p.h    $(tm_p_file_list)
 GTM_H     = tm.h      $(tm_file_list)
 TM_H      = $(GTM_H) insn-constants.h insn-flags.h options.h
+OPTTABLE_H = $(srcdir)/config/target-option-table.h
 
 # Variables for version information.
 BASEVER     := $(srcdir)/BASE-VER  # 4.x.y
@@ -771,7 +775,9 @@ version     := $(BASEVER_c)
 # comma in the $(if ...) constructs is significant - do not remove it.
 BASEVER_s   := "\"$(BASEVER_c)\""
 DEVPHASE_s  := "\"$(if $(DEVPHASE_c), ($(DEVPHASE_c)))\""
-DATESTAMP_s := "\"$(if $(DEVPHASE_c), $(DATESTAMP_c))\""
+# for GCCFSS we always want the datestamp info
+#DATESTAMP_s  := "\"$(if $(DEVPHASE_c), ($(DATESTAMP_c)))\""
+DATESTAMP_s := "\" ($(DATESTAMP_c))\""
 PKGVERSION_s:= "\"@PKGVERSION@\""
 BUGURL_s    := "\"@REPORT_BUGS_TO@\""
 
@@ -1229,7 +1235,7 @@ OBJS-common = \
 	tree-vect-patterns.o \
 	tree-vect-transform.o \
 	tree-vectorizer.o \
-	tree-vn.o \
+	tree-vn.o \f
 	tree-vrp.o \
 	tree.o \
 	value-prof.o \
@@ -1240,7 +1246,13 @@ OBJS-common = \
 	version.o \
 	vmsdbgout.o \
 	web.o \
-	xcoffout.o
+	xcoffout.o \
+    tree-ir.o \
+    tree-ir-types.o \
+    tree-ir-code.o \
+    tree-ir-debug.o \
+    tree-ir-alloc.o  \
+    tree-ir-print.o
 
 # Target object files.
 OBJS-md = $(out_object_file)
@@ -1511,10 +1523,10 @@ quickstrap: all
 
 all.internal: start.encap rest.encap doc
 # This is what to compile if making a cross-compiler.
-all.cross: native gcc-cross$(exeext) cpp$(exeext) specs \
+all.cross: native gcc-cross$(exeext) cpp$(exeext) specs drdr\
 	libgcc-support lang.all.cross doc @GENINSRC@ srcextra
 # This is what must be made before installing GCC and converting libraries.
-start.encap: native xgcc$(exeext) cpp$(exeext) specs \
+start.encap: native xgcc$(exeext) cpp$(exeext) specs drdr\
 	libgcc-support lang.start.encap @GENINSRC@ srcextra
 # These can't be made until after GCC can run.
 rest.encap: $(STMP_FIXPROTO) lang.rest.encap
@@ -1542,6 +1554,12 @@ libbackend.a: $(OBJS@onestep@)
 	-rm -rf libbackend.a
 	$(AR) $(AR_FLAGS) libbackend.a $(OBJS@onestep@)
 	-$(RANLIB) $(RANLIB_FLAGS) libbackend.a
+	
+drdr: driverdriver.o prefix.o errors.o $(LIBS)
+	$(CC) -o drdr $(LDFLAGS) driverdriver.o prefix.o errors.o $(LIBS)
+
+driverdriver.o: driverdriver.c $(CONFIG_H) $(SYSTEM_H) multilib.h $(TM_H) $(BCONFIG_H)
+	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(srcdir)/driverdriver.c
 
 # We call this executable `xgcc' rather than `gcc'
 # to avoid confusion if the current directory is in the path
@@ -1573,8 +1591,18 @@ gcc-cross$(exeext): xgcc$(exeext)
 dummy-checksum.o : dummy-checksum.c
 
 cc1-dummy$(exeext): $(C_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
+    if [ "x${SUNW_SCGFSS_PATH}" = x ] ; then \
+	  echo You must set SUNW_SCGFSS_PATH to point to sparc backend package >&2; \
+	  false; \
+	elif test ! -d ${SUNW_SCGFSS_PATH}; then \
+	  echo The directory that should contain sparc backend does not exist >&2; \
+	  false; \
+	else \
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(C_OBJS) dummy-checksum.o \
-	  $(BACKEND) $(LIBS) $(GMPLIBS)
+	  $(BACKEND) $(LIBS) $(GMPLIBS) -l_I_dbg_gen -llni -lsunir \
+	    -L $(scgfss_lib_dir) \
+		-L $(scgfss_lib_dir)/sys; \
+	fi
 
 cc1-checksum.c : cc1-dummy$(exeext) build/genchecksum$(build_exeext)
 	build/genchecksum$(build_exeext) cc1-dummy$(exeext) > $@
@@ -1582,8 +1610,18 @@ cc1-checksum.c : cc1-dummy$(exeext) build/genchecksum$(build_exeext)
 cc1-checksum.o : cc1-checksum.c
 
 cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS)
+    if [ "x${SUNW_SCGFSS_PATH}" = x ] ; then \
+	  echo You must set SUNW_SCGFSS_PATH to point to sparc backend package >&2; \
+	  false; \
+	elif test ! -d ${SUNW_SCGFSS_PATH}; then \
+	  echo The directory that should contain sparc backend does not exist >&2; \
+	  false; \
+	else \
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(C_OBJS) cc1-checksum.o \
-	  $(BACKEND) $(LIBS) $(GMPLIBS)
+	  $(BACKEND) $(LIBS) $(GMPLIBS) -l_I_dbg_gen -llni -lsunir \
+	    -L $(scgfss_lib_dir) \
+		-L $(scgfss_lib_dir)/sys; \
+	fi
 
 #
 # Build libgcc.a.
@@ -1877,20 +1915,20 @@ DRIVER_DEFINES = \
   `test "X$${SHLIB_LINK}" = "X" || test "@enable_shared@" != "yes" || echo "-DENABLE_SHARED_LIBGCC"`
 
 gcc.o: gcc.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) intl.h multilib.h \
-    Makefile $(lang_specs_files) specs.h prefix.h $(GCC_H) $(FLAGS_H) \
+    Makefile $(lang_specs_files) specs.h prefix.h $(GCC_H) $(FLAGS_H) $(OPTTABLE_H) \
     configargs.h $(OBSTACK_H) opts.h
 	(SHLIB_LINK='$(SHLIB_LINK)'; \
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) \
   $(DRIVER_DEFINES) \
   -c $(srcdir)/gcc.c $(OUTPUT_OPTION))
 
-gccspec.o: gccspec.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H)
+gccspec.o: gccspec.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) $(OPTTABLE_H)
 	(SHLIB_LINK='$(SHLIB_LINK)'; \
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) \
   $(DRIVER_DEFINES) \
   -c $(srcdir)/gccspec.c $(OUTPUT_OPTION))
 
-cppspec.o: cppspec.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H)
+cppspec.o: cppspec.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) $(OPTTABLE_H)
 
 gencheck.h : s-gencheck ; @true
 s-gencheck : Makefile
@@ -2120,6 +2158,34 @@ rtl-factoring.o : rtl-factoring.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) \
    coretypes.h $(TM_H) $(BASIC_BLOCK_H) $(GGC_H) $(REGS_H) $(PARAMS_H) $(EXPR_H) \
    addresses.h $(TM_P_H) tree-pass.h $(TREE_FLOW_H) $(TIMEVAR_H) output.h \
    $(DF_H)
+tree-ir.o : tree-ir.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
+   $(RTL_H) $(TREE_H) $(TM_P_H) $(EXPR_H) $(GGC_H) $(FLAGS_H) output.h \
+   diagnostic.h errors.h function.h $(TIMEVAR_H) $(TM_H) coretypes.h \
+   $(TREE_DUMP_H) except.h langhooks.h $(CFGLOOP_H) tree-pass.h \
+   $(CFGLAYOUT_H) real.h tree-ir.h ir/ir_common.h
+tree-ir-print.o : tree-ir-print.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
+   $(TREE_H) $(TM_P_H) $(GGC_H) $(FLAGS_H) \
+   diagnostic.h errors.h $(TIMEVAR_H) $(TM_H) coretypes.h \
+   real.h tree-ir.h ir/ir_common.h
+tree-ir-alloc.o : tree-ir-alloc.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
+   $(TREE_H) $(TM_P_H) $(GGC_H) $(FLAGS_H) \
+   diagnostic.h errors.h $(TIMEVAR_H) $(TM_H) coretypes.h \
+   real.h tree-ir.h ir/ir_common.h
+tree-ir-debug.o : tree-ir-debug.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
+   $(RTL_H) $(TREE_H) $(TM_P_H) $(EXPR_H) $(GGC_H) $(FLAGS_H) output.h \
+   diagnostic.h errors.h function.h $(TIMEVAR_H) $(TM_H) coretypes.h \
+   $(TREE_DUMP_H) except.h langhooks.h $(CFGLOOP_H) tree-pass.h \
+   $(CFGLAYOUT_H) real.h tree-ir.h ir/ir_common.h
+tree-ir-code.o : tree-ir-code.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
+   $(RTL_H) $(TREE_H) $(TM_P_H) $(EXPR_H) $(GGC_H) $(FLAGS_H) output.h \
+   diagnostic.h errors.h function.h $(TIMEVAR_H) $(TM_H) coretypes.h \
+   $(TREE_DUMP_H) except.h langhooks.h $(CFGLOOP_H) tree-pass.h \
+   $(CFGLAYOUT_H) real.h tree-ir.h ir/ir_common.h
+tree-ir-types.o : tree-ir-types.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
+   $(RTL_H) $(TREE_H) $(TM_P_H) $(EXPR_H) $(GGC_H) $(FLAGS_H) output.h \
+   diagnostic.h errors.h function.h $(TIMEVAR_H) $(TM_H) coretypes.h \
+   $(TREE_DUMP_H) except.h langhooks.h $(CFGLOOP_H) tree-pass.h \
+   $(CFGLAYOUT_H) real.h tree-ir.h ir/ir_common.h
 tree-tailcall.o : tree-tailcall.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
    $(RTL_H) $(TREE_H) $(TM_P_H) $(FUNCTION_H) $(TM_H) coretypes.h \
    $(TREE_DUMP_H) $(DIAGNOSTIC_H) except.h tree-pass.h $(FLAGS_H) langhooks.h \
@@ -2401,13 +2467,14 @@ stmt.o : stmt.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
    $(TREE_H) $(FLAGS_H) $(FUNCTION_H) insn-config.h hard-reg-set.h $(EXPR_H) \
    libfuncs.h except.h $(RECOG_H) toplev.h output.h $(GGC_H) $(TM_P_H) \
    langhooks.h $(PREDICT_H) $(OPTABS_H) $(TARGET_H) $(MACHMODE_H) \
-   $(REGS_H) alloc-pool.h
+   $(REGS_H) alloc-pool.hasm.c
 except.o : except.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
    $(TREE_H) $(FLAGS_H) except.h $(FUNCTION_H) $(EXPR_H) libfuncs.h \
    langhooks.h insn-config.h hard-reg-set.h $(BASIC_BLOCK_H) output.h \
    dwarf2asm.h dwarf2out.h toplev.h $(HASHTAB_H) intl.h $(GGC_H) \
    gt-except.h $(CGRAPH_H) $(INTEGRATE_H) $(DIAGNOSTIC_H) dwarf2.h \
-   $(TARGET_H) $(TM_P_H) tree-pass.h $(TIMEVAR_H)
+   $(TARGET_H) $(TM_P_H) tree-pass.h $(TIMEVAR_H) \
+   real.h tree-ir.h tree-dump.h c-common.h
 expr.o : expr.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
    $(TREE_H) $(FLAGS_H) $(FUNCTION_H) $(REGS_H) $(EXPR_H) $(OPTABS_H) \
    libfuncs.h $(INSN_ATTR_H) insn-config.h $(RECOG_H) output.h \
@@ -3123,7 +3190,7 @@ GTFILES = $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/profile.c $(srcdir)/regclass.c \
   $(srcdir)/reg-stack.c $(srcdir)/cfglayout.c $(srcdir)/cfglayout.h \
   $(srcdir)/sdbout.c $(srcdir)/stor-layout.c \
-  $(srcdir)/stringpool.c $(srcdir)/tree.c $(srcdir)/varasm.c \
+  $(srcdir)/stringpool.c $(srcdir)/tree.c $(srcdir)/varasm.c $(srcdir)/tree-ir-debug.c \
   $(srcdir)/tree-mudflap.c $(srcdir)/tree-flow.h $(srcdir)/tree-scalar-evolution.c \
   $(srcdir)/tree-ssanames.c $(srcdir)/tree-eh.c $(srcdir)/tree-ssa-address.c \
   $(srcdir)/tree-phinodes.c $(srcdir)/tree-cfg.c \
@@ -3135,7 +3202,8 @@ GTFILES = $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/ipa-reference.c $(srcdir)/tree-ssa-structalias.h \
   $(srcdir)/tree-ssa-structalias.c $(srcdir)/tree-parloops.c \
   $(srcdir)/omp-low.c $(srcdir)/varpool.c \
-  $(srcdir)/targhooks.c $(out_file) $(srcdir)/passes.c $(srcdir)/cgraphunit.c \
+  $(srcdir)/targhooks.c $(out_file) $(srcdir)/passes.c \
+  $(srcdir)/cgraphunit.c $(srcdir)/tree-ir.c\
   @all_gtfiles@
 
 GTFILES_H = $(subst /,-, $(patsubst $(srcdir)/%,gt-%, $(patsubst %.c,%.h, \

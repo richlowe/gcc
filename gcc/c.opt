@@ -21,6 +21,8 @@
 
 ; Please try to keep this file in ASCII collating order.
 
+; Modified by Sun Microsystems 2008
+
 Language
 C
 
@@ -511,6 +513,10 @@ fcheck-new
 C++ ObjC++
 Check the return value of new
 
+fcomdat
+C ObjC C++ ObjC++
+Emit common-like symbols as comdat symbols
+
 fcond-mismatch
 C ObjC C++ ObjC++
 Allow the arguments of the '?' operator to have different types
@@ -697,6 +703,10 @@ fpreprocessed
 C ObjC C++ ObjC++
 Treat the input file as already preprocessed
 
+fnonconst-ref-to-temp-object
+C++
+Enable non-constant references bound to temporary objects
+
 freplace-objc-classes
 ObjC ObjC++
 Used in Fix-and-Continue mode to indicate that object files may be swapped in at runtime
@@ -704,6 +714,14 @@ Used in Fix-and-Continue mode to indicate that object files may be swapped in at
 frepo
 C++ ObjC++
 Enable automatic template instantiation
+
+frtl-backend=
+C ObjC C++ ObjC++ Joined RejectNegative
+-frtl-backend=n1,n2	Use RTL backend for function number n1 to n2
+
+frtl-backend
+C ObjC C++ ObjC++ RejectNegative
+-frtl-backend	Use RTL backend
 
 frtti
 C++ ObjC++ Optimization
@@ -728,6 +746,10 @@ When \"signed\" or \"unsigned\" is not given make the bitfield signed
 fsigned-char
 C ObjC C++ ObjC++
 Make \"char\" signed by default
+
+fsigned-enums
+C ObjC C++ ObjC++
+Use signed integer type for enumeration types
 
 fsquangle
 C++ ObjC++

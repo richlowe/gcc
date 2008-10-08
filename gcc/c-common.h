@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_C_COMMON_H
 #define GCC_C_COMMON_H
 
@@ -73,6 +75,8 @@ enum rid
   RID_TYPES_COMPATIBLE_P,
   RID_DFLOAT32, RID_DFLOAT64, RID_DFLOAT128,
   RID_FRACT, RID_ACCUM,
+  
+  RID_TM_ATOMIC,  RID_TM_ABORT_OK, RID_TM_WAIVER,
 
   /* Too many ways of getting the name of a function as a string */
   RID_FUNCTION_NAME, RID_PRETTY_FUNCTION_NAME, RID_C99_FUNCTION_NAME,
@@ -567,6 +571,12 @@ extern int flag_new_for_scope;
 
 extern int flag_weak;
 
+/* Nonzero if we want to emit defined symbols with common-like linkage as
+   comdat symbols where possible, in order to conform to C++ semantics.
+   Otherwise, emit them as weak or local symbols, depending on flag_weak.  */
+
+extern int flag_comdat;
+
 /* 0 means we want the preprocessor to not emit line directives for
    the current working directory.  1 means we want it to do it.  -1
    means we should decide depending on whether debugging information
@@ -588,6 +598,12 @@ extern int flag_use_cxa_get_exception_ptr;
    The value of this flag is ignored if -pedantic is specified.  */
 
 extern int flag_permissive;
+
+/* Nonzero means to allow C++ non-constant references bound to
+   temporary objects.  This mode is only used to compile some legacy
+   code and should not be used to compile with standard C++ libraries. */
+
+extern int flag_nonconst_ref_to_temp_object;
 
 /* Nonzero means to implement standard semantics for exception
    specifications, calling unexpected if an exception is thrown that
@@ -797,6 +813,8 @@ extern tree build_unary_op (enum tree_code, tree, int);
 extern tree build_binary_op (enum tree_code, tree, tree, int);
 extern tree perform_integral_promotions (tree);
 
+extern void c_check_tm_calling_rules (tree);
+
 /* These functions must be defined by each front-end which implements
    a variant of the C language.  They are used by port files.  */
 
@@ -992,10 +1010,11 @@ extern tree c_finish_omp_critical (tree, tree);
 extern tree c_finish_omp_ordered (tree);
 extern void c_finish_omp_barrier (void);
 extern tree c_finish_omp_atomic (enum tree_code, tree, tree);
-extern void c_finish_omp_flush (void);
+extern void c_finish_omp_flush (tree);
 extern tree c_finish_omp_for (location_t, tree, tree, tree, tree, tree, tree);
 extern void c_split_parallel_clauses (tree, tree *, tree *);
 extern enum omp_clause_default_kind c_omp_predetermined_sharing (tree);
+extern void c_finish_omp_taskwait (void);
 
 /* Not in c-omp.c; provided by the front end.  */
 extern bool c_omp_sharing_predetermined (tree);

@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -226,10 +228,16 @@ tree_nrv (void)
   return 0;
 }
 
+static bool
+gate_nrv (void)
+{
+  return flag_preir_tree_optimizations != 0;
+}
+
 struct tree_opt_pass pass_nrv = 
 {
   "nrv",				/* name */
-  NULL,					/* gate */
+  gate_nrv,					/* gate */
   tree_nrv,				/* execute */
   NULL,					/* sub */
   NULL,					/* next */

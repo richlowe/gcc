@@ -8,7 +8,7 @@
 This file is part of GCC.
 
 GCC is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
+under the terms of the GNU General Public License as published by theF
 Free Software Foundation; either version 3, or (at your option) any
 later version.
 
@@ -20,6 +20,8 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+/* Modified by Sun Microsystems 2008 */
 
 #include "config.h"
 #include "system.h"
@@ -807,7 +809,7 @@ sra_walk_expr (tree *expr_p, block_stmt_iterator *bsi, bool is_output,
 	  }
 	/* ??? Are we assured that non-constant bounds and stride will have
 	   the same value everywhere?  I don't think Fortran will...  */
-	if (TREE_OPERAND (inner, 2) || TREE_OPERAND (inner, 3))
+	if (TREE_OPERAND (inner, 2) || TREE_OPERAND (inner, 3) || TREE_OPERAND (inner, 4))
 	  goto use_all;
 	inner = TREE_OPERAND (inner, 0);
 	break;
@@ -2080,10 +2082,10 @@ generate_one_element_ref (struct sra_elt *elt, tree base)
 
     case ARRAY_TYPE:
       if (TREE_CODE (elt->element) == RANGE_EXPR)
-	return build4 (ARRAY_RANGE_REF, elt->type, base,
-		       TREE_OPERAND (elt->element, 0), NULL, NULL);
+	return build5 (ARRAY_RANGE_REF, elt->type, base,
+		       TREE_OPERAND (elt->element, 0), NULL, NULL, NULL);
       else
-	return build4 (ARRAY_REF, elt->type, base, elt->element, NULL, NULL);
+	return build5 (ARRAY_REF, elt->type, base, elt->element, NULL, NULL, NULL);
 
     case COMPLEX_TYPE:
       if (elt->element == integer_zero_node)

@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 struct function;
 
@@ -97,6 +98,20 @@ extern int get_eh_region_number (struct eh_region *);
 extern bool get_eh_region_may_contain_throw (struct eh_region *);
 extern tree get_eh_region_tree_label (struct eh_region *);
 extern void set_eh_region_tree_label (struct eh_region *, tree);
+
+extern int has_eh_region (struct eh_status*);
+extern struct eh_status *save_cfun_eh_status (void);
+extern void restore_cfun_eh_status (struct eh_status *tmp);
+extern int  get_action_number (struct eh_region*);
+extern int  get_landing_label (struct eh_region*);
+extern struct eh_region *find_eh_region (tree);
+extern int  in_must_not_throw_region (tree);
+extern void generate_cfun_eh_filters (void);
+extern void generate_cfun_landing_pads (int exit_label);
+extern void generate_special_landing_pads (int exit_label, int region_number);
+extern void dump_ir_resx_expr (tree);
+extern int eh_region_type_may_throw (struct eh_region*);
+extern void *build_eh_leaf (int action_num);
 
 extern void foreach_reachable_handler (int, bool,
 				       void (*) (struct eh_region *, void *),

@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This is the final pass of the compiler.
    It looks at the rtl code for a function and outputs assembler code.
 
@@ -3410,7 +3412,10 @@ output_addr_const (FILE *file, rtx x)
       x = XEXP (x, 0);
       /* Fall through.  */
     case CODE_LABEL:
-      ASM_GENERATE_INTERNAL_LABEL (buf, "L", CODE_LABEL_NUMBER (x));
+      if (!flag_use_rtl_backend)
+        ASM_GENERATE_INTERNAL_LABEL (buf, "", CODE_LABEL_NUMBER (x));
+      else
+        ASM_GENERATE_INTERNAL_LABEL (buf, "L", CODE_LABEL_NUMBER (x));
 #ifdef ASM_OUTPUT_LABEL_REF
       ASM_OUTPUT_LABEL_REF (file, buf);
 #else

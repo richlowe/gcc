@@ -22,6 +22,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 #define GCOV_LINKAGE
 
@@ -439,8 +440,8 @@ tree_coverage_counter_ref (unsigned counter, unsigned no)
   no += prg_n_ctrs[counter] + fn_b_ctrs[counter];
 
   /* "no" here is an array index, scaled to bytes later.  */
-  return build4 (ARRAY_REF, gcov_type_node, tree_ctr_tables[counter],
-		 build_int_cst (NULL_TREE, no), NULL, NULL);
+  return build5 (ARRAY_REF, gcov_type_node, tree_ctr_tables[counter],
+		         build_int_cst (NULL_TREE, no), NULL, NULL, NULL);
 }
 
 /* Generate a checksum for a string.  CHKSUM is the current

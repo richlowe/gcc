@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -448,6 +450,12 @@ int flag_use_cxa_get_exception_ptr = 2;
 
 int flag_permissive;
 
+/* Nonzero means to allow C++ non-constant references bound to
+   temporary objects.  This mode is only used to compile some legacy
+   code and should not be used to compile with standard C++ libraries. */
+
+int flag_nonconst_ref_to_temp_object;
+
 /* Nonzero means to implement standard semantics for exception
    specifications, calling unexpected if an exception is thrown that
    doesn't match the specification.  Zero means to treat them as
@@ -509,6 +517,11 @@ static bool check_case_bounds (tree, tree, tree *, tree *);
 static tree handle_packed_attribute (tree *, tree, tree, int, bool *);
 static tree handle_nocommon_attribute (tree *, tree, tree, int, bool *);
 static tree handle_common_attribute (tree *, tree, tree, int, bool *);
+static tree handle_rtl_backend_attribute (tree *, tree, tree, int, bool *);
+static tree handle_tm_atomic_attribute (tree *, tree, tree, int, bool *);
+static tree handle_tm_callable_attribute (tree *, tree, tree, int, bool *);
+static tree handle_tm_abort_ok_attribute (tree *, tree, tree, int, bool *);
+static tree handle_tm_pure_attribute (tree *, tree, tree, int, bool *);
 static tree handle_noreturn_attribute (tree *, tree, tree, int, bool *);
 static tree handle_hot_attribute (tree *, tree, tree, int, bool *);
 static tree handle_cold_attribute (tree *, tree, tree, int, bool *);
@@ -575,6 +588,16 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_nocommon_attribute },
   { "common",                 0, 0, true,  false, false,
 			      handle_common_attribute },
+  { "rtl_backend",            0, 0, true,  false, false,
+			      handle_rtl_backend_attribute },
+  { "tm_atomic",              0, 0, true,  false, false,
+			      handle_tm_atomic_attribute },
+  { "tm_callable",            0, 0, true,  false, false,
+			      handle_tm_callable_attribute },
+  { "tm_abort_ok",            0, 0, true,  false, false,
+			      handle_tm_abort_ok_attribute },
+  { "tm_pure",                0, 0, true,  false, false,
+			      handle_tm_pure_attribute },
   /* FIXME: logically, noreturn attributes should be listed as
      "false, true, true" and apply to function types.  But implementing this
      would require all the places in the compiler that use TREE_THIS_VOLATILE
@@ -2811,7 +2834,7 @@ shorten_compare (tree *op0_ptr, tree *op1_ptr, tree *restype_ptr,
 	      break;
 	    }
 
-	  if (value != 0)
+	  if (value != 0 && flag_optimize_unsigned_comparison)
 	    {
 	      /* Don't forget to evaluate PRIMOP0 if it has side effects.  */
 	      if (TREE_SIDE_EFFECTS (primop0))
@@ -2888,35 +2911,87 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
     {
       enum tree_code subcode = resultcode;
       tree int_type = TREE_TYPE (intop);
+      tree intop0, intop1;
+      
+      /* case of: ptrop +- ((intop, 0) +- (intop, 1)) 
+                       ^^ resultcode
+         (intop, 0) == int_type (ex. int variable)
+         (intop, 1) == const */
       if (TREE_CODE (intop) == MINUS_EXPR)
-	subcode = (subcode == PLUS_EXPR ? MINUS_EXPR : PLUS_EXPR);
+        subcode = (subcode == PLUS_EXPR ? MINUS_EXPR : PLUS_EXPR);
+	
+	  /* gcc style:
+        ptrop +- (intop, 1) +- (intop, 0)
+        
+        ptrop + ((intop, 0) + (intop, 1)) -> ptrop + (intop, 1) + (intop, 0))
+        ptrop - ((intop, 0) + (intop, 1)) -> ptrop - (intop, 1) - (intop, 0))
+        ptrop + ((intop, 0) - (intop, 1)) -> ptrop - (intop, 1) + (intop, 0))
+        ptrop - ((intop, 0) - (intop, 1)) -> ptrop + (intop, 1) - (intop, 0))
+                                                   ^^ subcode   ^^ resultcode */
       /* Convert both subexpression types to the type of intop,
-	 because weird cases involving pointer arithmetic
-	 can result in a sum or difference with different type args.  */
+	     because weird cases involving pointer arithmetic
+	     can result in a sum or difference with different type args.  */
+#ifdef GCC_STYLE      
+      /* gcc style */
       ptrop = build_binary_op (subcode, ptrop,
 			       convert (int_type, TREE_OPERAND (intop, 1)), 1);
       intop = convert (int_type, TREE_OPERAND (intop, 0));
+#else
+      intop0 = convert (int_type, TREE_OPERAND (intop, 0));
+      if (TYPE_PRECISION (TREE_TYPE (intop0)) != TYPE_PRECISION (sizetype))
+        intop0 = convert (c_common_type_for_size (TYPE_PRECISION (sizetype),
+                                                  TYPE_UNSIGNED (sizetype)), intop0);
+      intop0 = build_binary_op (MULT_EXPR, intop0,
+                                convert (TREE_TYPE (intop0), size_exp), 1);
+      
+      intop1 = convert (int_type, TREE_OPERAND (intop, 1));
+      if (TYPE_PRECISION (TREE_TYPE (intop1)) != TYPE_PRECISION (sizetype))
+        intop1 = convert (c_common_type_for_size (TYPE_PRECISION (sizetype),
+                                                  TYPE_UNSIGNED (sizetype)), intop1);
+      intop1 = build_binary_op (MULT_EXPR, intop1,
+                                convert (TREE_TYPE (intop1), size_exp), 1);
+      
+      /* adding intop0 and intop1 in opposite order allows
+         extra folding of constants like intop1 to happen, 
+         but we don't want to fold at all to make sure that no extra
+         type conversion is added by fold() or order of '&addr + var*cnst + cnst'
+         is changed.
+         ptrop = fold (build2 (subcode, result_type, ptrop, intop1));
+         return fold (build2 (resultcode, result_type, ptrop, intop0)); */
+      ptrop = /*do not fold*/ (build2 (resultcode, result_type, ptrop, intop0));
+      ret = /*do not fold*/ (build2 (subcode, result_type, ptrop, intop1));
+      if (TREE_CONSTANT (ret))
+        ret = fold (ret);
+      fold_undefer_and_ignore_overflow_warnings ();
+      return ret;
+#endif
     }
 
   /* Convert the integer argument to a type the same size as sizetype
      so the multiply won't overflow spuriously.  */
-  if (TYPE_PRECISION (TREE_TYPE (intop)) != TYPE_PRECISION (sizetype)
-      || TYPE_UNSIGNED (TREE_TYPE (intop)) != TYPE_UNSIGNED (sizetype))
+  if (TYPE_PRECISION (TREE_TYPE (intop)) != TYPE_PRECISION (sizetype))
+      /* ignore sign of intop
+      || TYPE_UNSIGNED (TREE_TYPE (intop)) != TYPE_UNSIGNED (sizetype))*/
     intop = convert (c_common_type_for_size (TYPE_PRECISION (sizetype),
 					     TYPE_UNSIGNED (sizetype)), intop);
 
   /* Replace the integer argument with a suitable product by the object size.
      Do this multiplication as signed, then convert to the appropriate
      type for the pointer operation.  */
-  intop = convert (sizetype,
+  /*intop = convert (sizetype,
 		   build_binary_op (MULT_EXPR, intop,
-				    convert (TREE_TYPE (intop), size_exp), 1));
-
+				    convert (TREE_TYPE (intop), size_exp), 1));*/
+				    
+  /* do not convert to ptr type. ptr + int = ptr in SunIR */
+  intop = build_binary_op (MULT_EXPR, intop, convert (TREE_TYPE (intop), size_exp), 1);
   /* Create the sum or difference.  */
   if (resultcode == MINUS_EXPR)
     intop = fold_build1 (NEGATE_EXPR, sizetype, intop);
-
+    
   ret = fold_build2 (POINTER_PLUS_EXPR, result_type, ptrop, intop);
+  
+  if (TREE_CONSTANT (ret))
+    ret = fold (ret);
 
   fold_undefer_and_ignore_overflow_warnings ();
 
@@ -3986,7 +4061,7 @@ typedef struct disabled_builtin
 } disabled_builtin;
 static disabled_builtin *disabled_builtins = NULL;
 
-static bool builtin_function_disabled_p (const char *);
+/*static*/ bool builtin_function_disabled_p (const char *);
 
 /* Disable a built-in function specified by -fno-builtin-NAME.  If NAME
    begins with "__builtin_", give an error.  */
@@ -4009,7 +4084,7 @@ disable_builtin_function (const char *name)
 /* Return true if the built-in function NAME has been disabled, false
    otherwise.  */
 
-static bool
+/*static*/ bool
 builtin_function_disabled_p (const char *name)
 {
   disabled_builtin *p;
@@ -4700,6 +4775,189 @@ handle_common_attribute (tree *node, tree name, tree ARG_UNUSED (args),
       *no_add_attrs = true;
     }
 
+  return NULL_TREE;
+}
+
+/* Handle a "rtl_backend" attribute. */
+
+static tree
+handle_rtl_backend_attribute (tree *node, tree name, tree ARG_UNUSED (args),
+			      int ARG_UNUSED (flags), bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) != FUNCTION_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+    }
+  return NULL_TREE;
+}
+
+/* check calling rules on transactional memory. c++ parser calls it also. */
+void
+c_check_tm_calling_rules (tree function)
+{
+  tree name = DECL_NAME (function);
+
+  if (strcmp (IDENTIFIER_POINTER (name), "__tm_abort") == 0
+      || DECL_IS_TM_ABORT_OK_P (function))
+    {
+      if (!DECL_IS_TM_ABORT_OK_P (current_function_decl)
+          && !STATEMENT_LIST_TM_ABORT_OK (cur_stmt_list))
+        error ("__tm_abort can only be called from within a __tm_abort_ok section.");
+    }
+  else if (DECL_IS_TM_ATOMIC_P (current_function_decl)
+           || DECL_IS_TM_CALLABLE_P (current_function_decl))
+    {
+      if (!DECL_IS_TM_CALLABLE_P (function)
+          && !DECL_IS_TM_PURE_P (function)
+          && !STATEMENT_LIST_TM_WAIVER (cur_stmt_list))
+        error ("Only functions labeled either tm_callable or tm_pure can be called from within an atomic or callable section.");
+    }
+  else if (STATEMENT_LIST_TM_WAIVER (cur_stmt_list))
+    {
+      if (!(DECL_IS_TM_PURE_P (current_function_decl)
+            || DECL_IS_TM_ABORT_OK_P (current_function_decl)))
+        error ("__tm_waiver error.");
+    }
+  else if (DECL_IS_TM_ABORT_OK_P (current_function_decl))
+    {
+      if (!DECL_IS_TM_PURE_P (function)
+          && !DECL_IS_TM_ABORT_OK_P (function))
+        error ("bad call in tm_abort_ok function.");
+    }
+}
+
+void
+c_handle_tm_atomic_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) != FUNCTION_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return;
+    }
+  else
+    {
+      DECL_IS_TM_ATOMIC_P (*node) = 1;
+      if (DECL_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    }
+
+  return;
+}
+
+static tree
+handle_tm_atomic_attribute (tree *node, tree name, tree ARG_UNUSED (args),
+                              int ARG_UNUSED (flags), bool * no_add_attrs)
+{
+  if (flag_tm_mode == 0)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+  lang_hooks.handle_tm_atomic_attribute (node, name, no_add_attrs);
+  return NULL_TREE;
+}
+
+void
+c_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) != FUNCTION_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return;
+    }
+  else
+    {
+      DECL_IS_TM_CALLABLE_P (*node) = 1;
+      if (DECL_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    }
+
+  return;
+}
+
+static tree
+handle_tm_callable_attribute (tree *node, tree name, tree ARG_UNUSED (args),
+                              int ARG_UNUSED (flags), bool * no_add_attrs)
+{
+  if (flag_tm_mode == 0)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+  lang_hooks.handle_tm_callable_attribute (node, name, no_add_attrs);
+  return NULL_TREE;
+}
+
+void
+c_handle_tm_abort_ok_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) != FUNCTION_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return;
+    }
+  else
+    {
+      DECL_IS_TM_ABORT_OK_P (*node) = 1;
+      if (DECL_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    }
+
+  return;
+}
+
+static tree
+handle_tm_abort_ok_attribute (tree *node, tree name, tree ARG_UNUSED (args),
+                              int ARG_UNUSED (flags), bool * no_add_attrs)
+{
+  if (flag_tm_mode == 0)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+  lang_hooks.handle_tm_abort_ok_attribute (node, name, no_add_attrs);
+  return NULL_TREE;
+}
+
+void
+c_handle_tm_pure_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) != FUNCTION_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return;
+    }
+  else
+    {
+      DECL_IS_TM_PURE_P (*node) = 1;
+      if (DECL_IS_TM_ATOMIC_P (*node) 
+          || DECL_IS_TM_CALLABLE_P (*node)
+          || DECL_IS_TM_ABORT_OK_P (*node))
+        error ("%qE attribute can't combine with tm_atomic, tm_callable or tm_abort_ok", name);
+    }
+
+  return;
+}
+
+static tree
+handle_tm_pure_attribute (tree *node, tree name, tree ARG_UNUSED (args),
+                              int ARG_UNUSED (flags), bool * no_add_attrs)
+{
+  if (flag_tm_mode == 0)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+  lang_hooks.handle_tm_pure_attribute (node, name, no_add_attrs);
   return NULL_TREE;
 }
 
@@ -5472,6 +5730,8 @@ handle_aligned_attribute (tree *node, tree ARG_UNUSED (name), tree args,
 	  TYPE_NAME (*type) = decl;
 	  TREE_USED (*type) = TREE_USED (decl);
 	  TREE_TYPE (decl) = *type;
+	  if (TYPE_IR_TAGNODE (tt) == NULL_TREE)
+            TYPE_IR_TAGNODE (tt) = *type;
 	}
       else if (!(flags & (int) ATTR_FLAG_TYPE_IN_PLACE))
 	*type = build_variant_type_copy (*type);

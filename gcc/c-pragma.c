@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -925,18 +927,20 @@ init_pragma (void)
     {
       struct omp_pragma_def { const char *name; unsigned int id; };
       static const struct omp_pragma_def omp_pragmas[] = {
-	{ "atomic", PRAGMA_OMP_ATOMIC },
-	{ "barrier", PRAGMA_OMP_BARRIER },
-	{ "critical", PRAGMA_OMP_CRITICAL },
-	{ "flush", PRAGMA_OMP_FLUSH },
-	{ "for", PRAGMA_OMP_FOR },
-	{ "master", PRAGMA_OMP_MASTER },
-	{ "ordered", PRAGMA_OMP_ORDERED },
-	{ "parallel", PRAGMA_OMP_PARALLEL },
-	{ "section", PRAGMA_OMP_SECTION },
-	{ "sections", PRAGMA_OMP_SECTIONS },
-	{ "single", PRAGMA_OMP_SINGLE },
-	{ "threadprivate", PRAGMA_OMP_THREADPRIVATE }
+	    { "atomic", PRAGMA_OMP_ATOMIC },
+            { "barrier", PRAGMA_OMP_BARRIER },
+	    { "critical", PRAGMA_OMP_CRITICAL },
+	    { "flush", PRAGMA_OMP_FLUSH },
+	    { "for", PRAGMA_OMP_FOR },
+	    { "master", PRAGMA_OMP_MASTER },
+	    { "ordered", PRAGMA_OMP_ORDERED },
+	    { "parallel", PRAGMA_OMP_PARALLEL },
+	    { "section", PRAGMA_OMP_SECTION },
+	    { "sections", PRAGMA_OMP_SECTIONS },
+	    { "single", PRAGMA_OMP_SINGLE },
+	    { "threadprivate", PRAGMA_OMP_THREADPRIVATE },
+            { "task", PRAGMA_OMP_TASK },
+            { "taskwait", PRAGMA_OMP_TASKWAIT }
       };
 
       const int n_omp_pragmas = sizeof (omp_pragmas) / sizeof (*omp_pragmas);

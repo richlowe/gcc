@@ -22,6 +22,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* Build tables of static constructors and destructors and run ld.  */
 
@@ -953,6 +954,25 @@ main (int argc, char **argv)
      for `ld' (if native linking) or `TARGET-ld' (if cross).  */
   if (ld_file_name == 0)
     ld_file_name = find_a_file (&path, full_ld_suffix);
+    
+  /* When -ldpath is found, use its operand as the ld_file_name.
+     The operand is assumed to be a full path name. */
+  {
+    int i,k;
+    for (i=1; i<argc; i++) 
+      {
+        if (!strcmp ("--ld-filename",argv[i]) && i+1 < argc) 
+          {
+            ld_file_name = argv[i+1];
+            for (k=i; k<argc-2; k++)
+              argv[k] = argv[k+2];
+            argc -= 2;
+            argv[argc] = NULL;
+            break;
+          }
+      }
+  }
+
 
 #ifdef REAL_NM_FILE_NAME
   nm_file_name = find_a_file (&path, REAL_NM_FILE_NAME);

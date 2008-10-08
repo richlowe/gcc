@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -79,6 +81,13 @@ c_finish_omp_barrier (void)
   add_stmt (x);
 }
 
+/* Complete a #pragma omp taskwait construct.  */
+
+void
+c_finish_omp_taskwait (void)
+{
+  add_stmt (make_node (OMP_TASKWAIT));
+}
 
 /* Complete a #pragma omp atomic construct.  The expression to be 
    implemented atomically is LHS code= RHS.  The value returned is
@@ -144,12 +153,12 @@ c_finish_omp_atomic (enum tree_code code, tree lhs, tree rhs)
    variable list that the syntax allows.  */
 
 void
-c_finish_omp_flush (void)
+c_finish_omp_flush (tree args)
 {
   tree x;
 
   x = built_in_decls[BUILT_IN_SYNCHRONIZE];
-  x = build_call_expr (x, 0);
+  x = build_call_expr (x, args);
   add_stmt (x);
 }
 
@@ -205,7 +214,7 @@ check_omp_for_incr_expr (tree exp, tree decl)
 
 tree
 c_finish_omp_for (location_t locus, tree decl, tree init, tree cond,
-		  tree incr, tree body, tree pre_body)
+		  tree incr, tree body, tree pre_body, tree post_body)
 {
   location_t elocus = locus;
   bool fail = false;
@@ -214,13 +223,15 @@ c_finish_omp_for (location_t locus, tree decl, tree init, tree cond,
     elocus = EXPR_LOCATION (init);
 
   /* Validate the iteration variable.  */
-  if (!INTEGRAL_TYPE_P (TREE_TYPE (decl)))
+  if (!INTEGRAL_TYPE_P (TREE_TYPE (decl))
+      && !POINTER_TYPE_P (TREE_TYPE (decl)))
     {
       error ("%Hinvalid type for iteration variable %qE", &elocus, decl);
       fail = true;
     }
+  /* OpenMP 3.0 allow unsigned interger as iterator.
   if (TYPE_UNSIGNED (TREE_TYPE (decl)))
-    warning (0, "%Hiteration variable %qE is unsigned", &elocus, decl);
+    warning (0, "%Hiteration variable %qE is unsigned", &elocus, decl);*/
 
   /* In the case of "for (int i = 0...)", init will be a decl.  It should
      have a DECL_INITIAL that we can turn into an assignment.  */
@@ -368,7 +379,7 @@ c_finish_omp_for (location_t locus, tree decl, tree init, tree cond,
     return NULL;
   else
     {
-      tree t = make_node (OMP_FOR);
+      tree ret, t = make_node (OMP_FOR);
 
       TREE_TYPE (t) = void_type_node;
       OMP_FOR_INIT (t) = init;
@@ -378,7 +389,19 @@ c_finish_omp_for (location_t locus, tree decl, tree init, tree cond,
       OMP_FOR_PRE_BODY (t) = pre_body;
 
       SET_EXPR_LOCATION (t, locus);
-      return add_stmt (t);
+      //ret = add_stmt (t);
+      if (post_body)
+        {
+          if (TREE_CODE (post_body) == STATEMENT_LIST)
+            {
+              tree_stmt_iterator tsi;
+              for (tsi = tsi_start (post_body); !tsi_end_p (tsi); tsi_next (&tsi))
+                add_stmt (tsi_stmt (tsi));
+            }
+          else
+            add_stmt (post_body);
+         }
+       return ret;
     }
 }
 
@@ -411,12 +434,14 @@ c_split_parallel_clauses (tree clauses, tree *par_clauses, tree *ws_clauses)
 	case OMP_CLAUSE_IF:
 	case OMP_CLAUSE_NUM_THREADS:
 	case OMP_CLAUSE_DEFAULT:
+	case OMP_CLAUSE_AUTO:
 	  OMP_CLAUSE_CHAIN (clauses) = *par_clauses;
 	  *par_clauses = clauses;
 	  break;
 
 	case OMP_CLAUSE_SCHEDULE:
 	case OMP_CLAUSE_ORDERED:
+	case OMP_CLAUSE_COLLAPSE:
 	  OMP_CLAUSE_CHAIN (clauses) = *ws_clauses;
 	  *ws_clauses = clauses;
 	  break;

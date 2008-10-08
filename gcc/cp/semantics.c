@@ -24,6 +24,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -46,9 +48,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-iterator.h"
 #include "vec.h"
 #include "target.h"
+#include "tree-ir.h"
+#include "tree-gimple.h"
 
 /* There routines provide a modular interface to perform many parsing
-   operations.  They may therefore be used during actual parsing, or
+   operations.  They domay therefore be used during actual parsing, or
    during template instantiation, which may be regarded as a
    degenerate form of parsing.  */
 
@@ -449,7 +453,10 @@ do_poplevel (tree stmt_list)
 
   if (stmts_are_full_exprs_p ())
     block = poplevel (kept_level_p (), 1, 0);
-
+    
+  if (flag_tm_mode && block)
+    BLOCK_TM_ATOMIC (block) = STATEMENT_LIST_TM_ATOMIC (stmt_list);
+    
   stmt_list = pop_stmt_list (stmt_list);
 
   if (!processing_template_decl)
@@ -1657,8 +1664,12 @@ finish_qualified_id_expr (tree qualifying_class,
    finish_stmt_expr.  */
 
 tree
-begin_stmt_expr (void)
+begin_stmt_expr (bool do_scope)
 {
+  /* TM mode need scoping statement list. */
+  if (flag_tm_mode && do_scope)
+    return do_pushlevel (sk_block);
+    
   return push_stmt_list ();
 }
 
@@ -1730,7 +1741,7 @@ finish_stmt_expr_expr (tree expr, tree stmt_expr)
    representing the statement-expression.  */
 
 tree
-finish_stmt_expr (tree stmt_expr, bool has_no_scope)
+finish_stmt_expr (tree stmt_expr, bool do_scope, bool has_no_scope)
 {
   tree type;
   tree result;
@@ -1744,7 +1755,13 @@ finish_stmt_expr (tree stmt_expr, bool has_no_scope)
   gcc_assert (TREE_CODE (stmt_expr) == STATEMENT_LIST);
 
   type = TREE_TYPE (stmt_expr);
-  result = pop_stmt_list (stmt_expr);
+  if (flag_tm_mode && do_scope)
+  /* FIXME: BIND_EXPR forcely generated might cause potential issues 
+     in c++ parser. */
+    result = do_poplevel (stmt_expr);
+  else 
+    result = pop_stmt_list (stmt_expr);
+    
   TREE_TYPE (result) = type;
 
   if (processing_template_decl)
@@ -1851,6 +1868,9 @@ finish_call_expr (tree fn, tree args, bool disallow_virtual, bool koenig_p)
   orig_fn = fn;
   orig_args = args;
 
+  if (flag_tm_mode && TREE_CODE (fn) == FUNCTION_DECL)
+    c_check_tm_calling_rules (fn);
+    
   if (processing_template_decl)
     {
       if (type_dependent_expression_p (fn)
@@ -2261,7 +2281,11 @@ begin_class_definition (tree t, tree attributes)
   pushclass (t);
   TYPE_BEING_DEFINED (t) = 1;
 
-  cplus_decl_attributes (&t, attributes, (int) ATTR_FLAG_TYPE_IN_PLACE);
+  if (flag_tm_mode)
+    cplus_decl_attributes (&t, attributes, ((int) ATTR_FLAG_TYPE_IN_PLACE 
+                                            | (int) ATTR_FLAG_TYPE_TM_ATTR));
+  else
+    cplus_decl_attributes (&t, attributes, (int) ATTR_FLAG_TYPE_IN_PLACE);
 
   if (flag_pack_struct)
     {
@@ -3098,6 +3122,7 @@ simplify_aggr_init_expr (tree *tp)
 	 expand_call{,_inline}.  */
       cxx_mark_addressable (slot);
       CALL_EXPR_RETURN_SLOT_OPT (call_expr) = true;
+      TREE_PUBLIC (call_expr) = true; /* internal convention for gen IR */
       call_expr = build2 (MODIFY_EXPR, TREE_TYPE (call_expr), slot, call_expr);
     }
   else if (style == pcc)
@@ -3325,6 +3350,117 @@ finalize_nrv (tree *tp, tree var, tree result)
   cp_walk_tree (tp, finalize_nrv_r, &data, 0);
   htab_delete (data.visited);
 }
+
+static GTY((param1_is (tree), param2_is (tree)))
+  splay_tree type_default_copy_ctor;
+
+tree
+generate_default_copy_ctor_function (tree decl)
+{
+  tree fn_decl, fun_type, body, type, ptr_type;
+  tree t, t2, arg1, arg2;
+  char fun_name[128], *ch;
+  location_t saved_input_location;
+  splay_tree_node st;
+  struct cgraph_node *n;
+
+  type = TREE_TYPE (decl);
+  while (TREE_CODE (type) == ARRAY_TYPE)
+    type = TREE_TYPE (type);
+
+  if (!CLASS_TYPE_P (type))
+    return NULL;
+
+  if (!type_default_copy_ctor)
+    type_default_copy_ctor 
+      = splay_tree_new_ggc (splay_tree_compare_pointers);
+  
+  st = splay_tree_lookup (type_default_copy_ctor, (splay_tree_key) type);
+  if (st)
+    return (tree) st->value;
+
+  ptr_type = build_pointer_type (type);
+
+  sprintf(fun_name, "PCG_used_copy_ctor_%s", IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (type))));
+
+  /* replace '<' or '>' in fun_name with '9' */
+  for (ch = fun_name; *ch && (ch = strchr (ch, '<')); ch ++)
+    *ch = '9';
+  for (ch = fun_name; *ch && (ch = strchr (ch, '>')); ch ++)
+    *ch = '9';
+
+  fun_type = build_function_type_list (void_type_node, ptr_type, ptr_type, NULL);
+  fn_decl = build_decl (FUNCTION_DECL,  get_identifier (fun_name), fun_type);
+
+  saved_input_location = input_location;
+  input_location = DECL_SOURCE_LOCATION (decl);
+  push_function_context();
+  current_function_decl = fn_decl;
+
+  /* Result */
+  t = build_decl (RESULT_DECL, NULL_TREE, void_type_node);
+  DECL_ARTIFICIAL (t) = 1;
+  DECL_IGNORED_P (t) = 1;
+  DECL_RESULT (fn_decl) = t;
+
+  /* parm :DECL_ARGUMENTS (fn_decl) */
+  arg2 = build_decl (PARM_DECL, get_identifier ("original"), ptr_type);
+  DECL_ARTIFICIAL (arg2) = 1;
+  DECL_ARG_TYPE (arg2) = ptr_type;
+  DECL_CONTEXT (arg2) = current_function_decl;
+  TREE_USED (arg2) = 1;
+
+  arg1 = build_decl (PARM_DECL, get_identifier ("this"), ptr_type);
+  DECL_ARTIFICIAL (arg1) = 1;
+  DECL_ARG_TYPE (arg1) = ptr_type;
+  DECL_CONTEXT (arg1) = current_function_decl;
+  TREE_USED (arg1) = 1;
+  TREE_CHAIN (arg1) = arg2;
+  DECL_ARGUMENTS (fn_decl) = arg1;
+
+  allocate_struct_function (fn_decl, false);
+
+  TREE_STATIC (fn_decl) = 1;
+  TREE_USED (fn_decl) = 1;
+  DECL_ARTIFICIAL (fn_decl) = 1;
+  DECL_IGNORED_P (fn_decl) = 1;
+  TREE_PUBLIC (fn_decl) = 0;
+  DECL_EXTERNAL (fn_decl) = 0;
+  DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (fn_decl) = 1;
+  DECL_UNINLINABLE (fn_decl) = 1;
+
+  DECL_SOURCE_LOCATION (fn_decl) = input_location;
+  cfun->function_end_locus = input_location;
+
+  /* generate the parm variable and the function body.
+   void PCG_used_copy_ctor_##TYPENAME (A * this, A * original) {
+     *(this) = *(original);
+   }*/
+
+  /* Begin the statement tree for this function.  */
+  body = build3 (BIND_EXPR, void_type_node, NULL, NULL, NULL);
+  TREE_SIDE_EFFECTS (body) = 1;
+
+  t = build1 (INDIRECT_REF, type, arg1);
+  t2 = build1 (INDIRECT_REF, type, arg2);
+  t = build2 (MODIFY_EXPR, type, t, t2);
+  
+  append_to_statement_list (t, &BIND_EXPR_BODY (body));
+  DECL_SAVED_TREE (fn_decl) = body;
+  DECL_INITIAL (fn_decl) = make_node (BLOCK);
+
+  /* I am not sure whether the following is needed.*/
+  cgraph_finalize_function (fn_decl, IR_FALSE);
+  n = cgraph_node (fn_decl);
+  cgraph_mark_needed_node (n);
+  pop_function_context ();
+  input_location = saved_input_location;
+
+  splay_tree_insert (type_default_copy_ctor, (splay_tree_key) type,
+                             (splay_tree_value) fn_decl);
+
+  return fn_decl;
+}
 
 /* Return the declaration for the function called by CALL_EXPR T,
    TYPE is the class type of the clause decl.  */
@@ -3387,6 +3523,10 @@ finish_omp_clauses (tree clauses)
 	case OMP_CLAUSE_COPYIN:
 	  name = "copyin";
 	  goto check_dup_generic;
+	case OMP_CLAUSE_AUTO:
+          name = "__auto";
+          goto check_dup_generic;
+          
 	check_dup_generic:
 	  t = OMP_CLAUSE_DECL (c);
 	  if (TREE_CODE (t) != VAR_DECL && TREE_CODE (t) != PARM_DECL)
@@ -3491,8 +3631,21 @@ finish_omp_clauses (tree clauses)
 	case OMP_CLAUSE_NOWAIT:
 	case OMP_CLAUSE_ORDERED:
 	case OMP_CLAUSE_DEFAULT:
+	case OMP_CLAUSE_UNTIED:
 	  break;
 
+        case OMP_CLAUSE_COLLAPSE:
+	  t = OMP_CLAUSE_COLLAPSE_EXPR (c);
+	  if (t == error_mark_node)
+	    remove = true;
+	  else if (!INTEGRAL_TYPE_P (TREE_TYPE (t))
+		   && !type_dependent_expression_p (t))
+	    {
+	      error ("collapse expression must be integral");
+	      remove = true;
+	    }
+	  break;
+	  
 	default:
 	  gcc_unreachable ();
 	}
@@ -3520,6 +3673,16 @@ finish_omp_clauses (tree clauses)
 	  name = "shared";
 	  need_implicitly_determined = true;
 	  break;
+	case OMP_CLAUSE_AUTO:
+          name = "__auto";
+          /* Not sure if we need everything as it
+             may be scoped as anything */
+          need_complete_non_reference = true;
+	  need_implicitly_determined = true;
+          need_default_ctor = true;
+          need_copy_ctor = true;
+          need_copy_assignment = true;
+          break;
 	case OMP_CLAUSE_PRIVATE:
 	  name = "private";
 	  need_complete_non_reference = true;
@@ -3567,7 +3730,7 @@ finish_omp_clauses (tree clauses)
 	{
 	case OMP_CLAUSE_LASTPRIVATE:
 	  if (!bitmap_bit_p (&firstprivate_head, DECL_UID (t)))
-	    need_default_ctor = true;
+              need_default_ctor = true;
 	  break;
 
 	case OMP_CLAUSE_REDUCTION:
@@ -3595,7 +3758,9 @@ finish_omp_clauses (tree clauses)
 	  break;
 
 	case OMP_CLAUSE_COPYIN:
-	  if (TREE_CODE (t) != VAR_DECL || !DECL_THREAD_LOCAL_P (t))
+	  if (TREE_CODE (t) != VAR_DECL 
+	      || DECL_LANG_SPECIFIC (t) == NULL
+              || !CP_DECL_THREADPRIVATE_P (t))
 	    {
 	      error ("%qE must be %<threadprivate%> for %<copyin%>", t);
 	      remove = true;
@@ -3621,7 +3786,8 @@ finish_omp_clauses (tree clauses)
 	{
 	  const char *share_name = NULL;
 
-	  if (TREE_CODE (t) == VAR_DECL && DECL_THREAD_LOCAL_P (t))
+	  if (TREE_CODE (t) == VAR_DECL 
+	      && (DECL_LANG_SPECIFIC (t) && CP_DECL_THREADPRIVATE_P (t)))
 	    share_name = "threadprivate";
 	  else switch (cxx_omp_predetermined_sharing (t))
 	    {
@@ -3657,6 +3823,7 @@ finish_omp_clauses (tree clauses)
 	  && !type_dependent_expression_p (t))
 	{
 	  int save_errorcount = errorcount;
+	  tree orig_t = t;
 	  tree info;
 
 	  /* Always allocate 3 elements for simplicity.  These are the
@@ -3669,36 +3836,66 @@ finish_omp_clauses (tree clauses)
 
 	  if (need_default_ctor
 	      || (need_copy_ctor
-		  && !TYPE_HAS_TRIVIAL_INIT_REF (inner_type)))
+                  && (flag_use_rtl_backend == 0 /* pcg needs it in misc_list */ 
+                      || !TYPE_HAS_TRIVIAL_INIT_REF (inner_type))))
 	    {
+              tree wrap, vecs;
 	      if (need_default_ctor)
-		t = NULL;
+                {
+                  t = build_special_member_call (NULL_TREE,
+                                                 complete_ctor_identifier,
+                                                 NULL, inner_type, LOOKUP_NORMAL);
+	          t = get_callee_fndecl (t);
+		}
 	      else
 		{
-		  t = build_int_cst (build_pointer_type (inner_type), 0);
+                  t = build1 (ADDR_EXPR, build_pointer_type (inner_type), t);
+		  t = build1 (NOP_EXPR, build_pointer_type (inner_type), t);
 		  t = build1 (INDIRECT_REF, inner_type, t);
-		  t = build_tree_list (NULL, t);
+	          t = build_special_member_call (t,
+                                                 complete_ctor_identifier,
+                                                 build_tree_list (NULL, t), 
+                                                 inner_type, LOOKUP_NORMAL);
+                  if (TREE_CODE (t) == CALL_EXPR)
+                    t = get_callee_fndecl (t);
+	          else
+                  /* we probably have no copy ctor at hand. define one. */
+                    t = generate_default_copy_ctor_function (orig_t);
 		}
-	      t = build_special_member_call (NULL_TREE,
-					     complete_ctor_identifier,
-					     t, inner_type, LOOKUP_NORMAL);
 
-	      if (targetm.cxx.cdtor_returns_this () || errorcount)
-		/* Because constructors and destructors return this,
-		   the call will have been cast to "void".  Remove the
-		   cast here.  We would like to use STRIP_NOPS, but it
-		   wouldn't work here because TYPE_MODE (t) and
-		   TYPE_MODE (TREE_OPERAND (t, 0)) are different.
-		   They are VOIDmode and Pmode, respectively.  */
-		if (TREE_CODE (t) == NOP_EXPR)
-		  t = TREE_OPERAND (t, 0);
-
-	      TREE_VEC_ELT (info, 0) = get_callee_fndecl (t);
+              vecs = make_tree_vec (2); 
+              TREE_VEC_ELT (vecs, 0) = t; 
+              TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
+              if (need_default_ctor)
+                wrap =
+                    cxx_omp_constructor_wrapper_for_irgen (vecs,
+                                                           DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 1);
+              else if (TREE_CODE (orig_t) == VAR_DECL 
+                       && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
+                wrap =
+                    cxx_omp_constructor_wrapper_for_irgen (vecs,
+                                                           DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 2);
+              else
+                wrap = t;
+              
+	      TREE_VEC_ELT (info, 0) = wrap;
+              if (flag_use_rtl_backend == 0
+                  && ((errorcount <= 0 && sorrycount <= 0)
+                      || global_dc->abort_on_error) 
+                  /* _t_ may be NULL if we are processing a template. */
+                  && t)
+                {
+                  /* Force generation of the body for IR */
+                  struct cgraph_node *node  = cgraph_node (t);
+                  node->needed = 1;
+                  cgraph_mark_reachable_node (node);
+                }
 	    }
 
 	  if ((need_default_ctor || need_copy_ctor)
 	      && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (inner_type))
 	    {
+              tree wrap, vecs;
 	      t = build_int_cst (build_pointer_type (inner_type), 0);
 	      t = build1 (INDIRECT_REF, inner_type, t);
 	      t = build_special_member_call (t, complete_dtor_identifier,
@@ -3714,12 +3911,30 @@ finish_omp_clauses (tree clauses)
 		if (TREE_CODE (t) == NOP_EXPR)
 		  t = TREE_OPERAND (t, 0);
 
-	      TREE_VEC_ELT (info, 1) = omp_clause_info_fndecl (t, inner_type);
+	      t = get_callee_fndecl (t);
+	      vecs = make_tree_vec (2); 
+              TREE_VEC_ELT (vecs, 0) = t; 
+              TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
+              wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 0);
+
+	      TREE_VEC_ELT (info, 1) = wrap;
+              if (flag_use_rtl_backend == 0
+                  && ((errorcount <= 0 && sorrycount <= 0)
+                      || global_dc->abort_on_error)
+                  && t)
+                {
+                  /* Force generation of the body for IR */
+                  struct cgraph_node *node  = cgraph_node (t);
+                  node->needed = 1;
+                  cgraph_mark_reachable_node (node);
+                }
 	    }
 
 	  if (need_copy_assignment
-	      && !TYPE_HAS_TRIVIAL_ASSIGN_REF (inner_type))
+	      && (flag_use_rtl_backend == 0 
+                  || !TYPE_HAS_TRIVIAL_ASSIGN_REF (inner_type)))
 	    {
+              tree wrap, vecs;
 	      t = build_int_cst (build_pointer_type (inner_type), 0);
 	      t = build1 (INDIRECT_REF, inner_type, t);
 	      t = build_special_member_call (t, ansi_assopname (NOP_EXPR),
@@ -3732,7 +3947,33 @@ finish_omp_clauses (tree clauses)
 	      if (TREE_CODE (t) == INDIRECT_REF)
 		t = TREE_OPERAND (t, 0);
 
-	      TREE_VEC_ELT (info, 2) = omp_clause_info_fndecl (t, inner_type);
+	      if (TREE_CODE (t) == CALL_EXPR)
+	        t = get_callee_fndecl (t);
+              else
+                /* no copy assignment at hand. define one. 
+                   default copy assignment acts like default copy constructor. */
+                t = generate_default_copy_ctor_function (orig_t);
+
+              vecs = make_tree_vec (2); 
+              TREE_VEC_ELT (vecs, 0) = t; 
+              TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
+
+              wrap = t;
+              if (TREE_CODE (orig_t) == VAR_DECL
+                  && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
+                wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 3);
+
+	      TREE_VEC_ELT (info, 2) = wrap;
+              if (flag_use_rtl_backend == 0
+                  && ((errorcount <= 0 && sorrycount <= 0)
+                      || global_dc->abort_on_error)
+                  && t)
+                {
+                  /* Force generation of the body for IR */
+                  struct cgraph_node *node  = cgraph_node (t);
+                  node->needed = 1;
+                  cgraph_mark_reachable_node (node);
+                }
 	    }
 
 	  if (errorcount != save_errorcount)
@@ -3768,7 +4009,9 @@ finish_omp_threadprivate (tree vars)
 	       "or block scope variable", v);
       /* If V had already been marked threadprivate, it doesn't matter
 	 whether it had been used prior to this point.  */
-      else if (TREE_USED (v)
+      if (TREE_USED (v)
+          && !TYPE_HAS_USER_CONSTRUCTOR (TREE_TYPE (v))
+          && !TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (v))
 	  && (DECL_LANG_SPECIFIC (v) == NULL
 	      || !CP_DECL_THREADPRIVATE_P (v)))
 	error ("%qE declared %<threadprivate%> after first use", v);
@@ -3792,7 +4035,7 @@ finish_omp_threadprivate (tree vars)
 		DECL_LANG_SPECIFIC (v)->decl_flags.u2sel = 1;
 	    }
 
-	  if (! DECL_THREAD_LOCAL_P (v))
+	  if (!DECL_THREAD_LOCAL_P (v) && flag_use_rtl_backend != 0)
 	    {
 	      DECL_TLS_MODEL (v) = decl_default_tls_model (v);
 	      /* If rtl has been already set for this var, call
@@ -3802,6 +4045,10 @@ finish_omp_threadprivate (tree vars)
 		make_decl_rtl (v);
 	    }
 	  CP_DECL_THREADPRIVATE_P (v) = 1;
+          if (flag_new_tp )
+            cxx_new_register_omp_threadprivate_init (v);
+          else
+            cxx_register_omp_threadprivate_init (v);
 	}
     }
 }
@@ -3830,7 +4077,7 @@ begin_omp_parallel (void)
 }
 
 tree
-finish_omp_parallel (tree clauses, tree body)
+finish_omp_parallel (location_t locus, tree clauses, tree body)
 {
   tree stmt;
 
@@ -3840,9 +4087,625 @@ finish_omp_parallel (tree clauses, tree body)
   TREE_TYPE (stmt) = void_type_node;
   OMP_PARALLEL_CLAUSES (stmt) = clauses;
   OMP_PARALLEL_BODY (stmt) = body;
-
+  SET_EXPR_LOCATION (stmt, locus);
   return add_stmt (stmt);
 }
+
+/* Pattern 1: it ++; ++ it; it --; -- it; */
+static void
+cp_convert_omp_for_incr_pattern_1 (tree *incr_p, tree iter_i)
+{
+  tree tmp;
+  const char *operstring;
+  enum tree_code arith_code = ERROR_MARK;
+
+  tmp = TREE_OPERAND (TREE_OPERAND (TREE_OPERAND (*incr_p, 1), 0), 0);
+  operstring = IDENTIFIER_POINTER (DECL_NAME (tmp));
+  if (operstring
+      && strncmp (operstring, "operator", 8) == 0)
+    {
+      operstring += 8;
+
+      switch (*operstring)
+        {
+        case '+':
+          arith_code = PLUS_EXPR;
+          break;
+        case '-':
+          arith_code = MINUS_EXPR;
+          break;
+        default:
+          break;
+        }
+      tmp = build2 (arith_code, TREE_TYPE (iter_i), iter_i, integer_one_node);
+      *incr_p = build2 (MODIFY_EXPR, TREE_TYPE (tmp), iter_i, tmp);
+    }
+}
+
+/* Pattern 2: it += 1; it -= 1;
+   note, the function f1 in for-5.C would generate "indirect_ref
+   + call_expr" for all kinds of increments. */
+static void
+cp_convert_omp_for_incr_pattern_2 (tree *incr_p, tree iter_i)
+{
+  tree tmp, step;
+  const char *operstring;
+  enum tree_code arith_code = ERROR_MARK;
+
+  step = NULL_TREE;
+  tmp = TREE_OPERAND (TREE_OPERAND (TREE_OPERAND (*incr_p, 0), 0), 0);
+  operstring = IDENTIFIER_POINTER (DECL_NAME (tmp));
+  if (operstring
+      && strncmp (operstring, "operator", 8) == 0)
+    {
+      operstring += 8;
+
+      switch (*operstring)
+        {
+        case '+':
+          arith_code = PLUS_EXPR;
+          if (*(operstring + 1) == '+')
+            step = integer_one_node;
+          break;
+        case '-':
+          arith_code = MINUS_EXPR;
+          if (*(operstring + 1) == '-')
+            step = integer_one_node;
+          break;
+        case '=':
+          tmp = TREE_VALUE (TREE_CHAIN (TREE_OPERAND (TREE_OPERAND (*incr_p, 0), 1)));
+          STRIP_NOPS (tmp);
+          step = TARGET_EXPR_INITIAL (TREE_OPERAND (tmp, 0));
+          tmp = TREE_OPERAND (TREE_OPERAND (step, 0), 0);
+          if (strcmp (IDENTIFIER_POINTER (DECL_NAME (tmp)), "operator+") == 0)
+            arith_code = PLUS_EXPR;
+          else
+            arith_code = MINUS_EXPR;
+          step = TREE_OPERAND (step, 1);
+          if (TREE_CODE (TREE_VALUE (step)) == INTEGER_CST)
+            step = TREE_VALUE (step);
+          else
+            step = TREE_VALUE (TREE_CHAIN (step));
+          break;
+        default:
+          break;
+        }
+
+      if (step == NULL_TREE)
+        {
+          step = TREE_VALUE (TREE_CHAIN (TREE_OPERAND (TREE_OPERAND (*incr_p, 0), 1)));
+          STRIP_NOPS (step);
+          step = TARGET_EXPR_INITIAL (TREE_OPERAND (step, 0));
+        }
+      tmp = build2 (arith_code, TREE_TYPE (iter_i), iter_i, step);
+      *incr_p = build2 (MODIFY_EXPR, TREE_TYPE (tmp), iter_i, tmp);
+    }
+}
+
+/* Pattern 3: it = it +/- 1; it = 1 +/- it; */
+static void
+cp_convert_omp_for_incr_pattern_3 (tree *incr_p, tree iter_i)
+{
+  tree tmp, step;
+  const char *operstring;
+  enum tree_code arith_code = ERROR_MARK;
+
+  tmp = TREE_OPERAND (TREE_OPERAND (*incr_p, 1), 0);
+  STRIP_NOPS (tmp);
+  tmp = TARGET_EXPR_INITIAL (TREE_OPERAND (tmp, 0));
+  step = TREE_OPERAND (tmp, 1);
+  if (TREE_CODE (TREE_VALUE (step)) == INTEGER_CST)
+    /* it = 1 +/- it; */
+    step = TREE_VALUE (step);
+  else
+    /* it = it +/- 1; */
+    {
+      step = TREE_VALUE (TREE_CHAIN (step));
+      STRIP_NOPS (step);
+      if (TREE_CODE (step) == ADDR_EXPR)
+        step = TREE_OPERAND (step, 0);
+      if (TREE_CODE (step) == TARGET_EXPR)
+        step = TARGET_EXPR_INITIAL (step);
+    }
+
+  tmp = TREE_OPERAND (TREE_OPERAND (tmp, 0), 0);
+  operstring = IDENTIFIER_POINTER (DECL_NAME (tmp));
+  if (operstring
+      && strncmp (operstring, "operator", 8) == 0)
+    {
+      operstring += 8;
+      switch (*operstring)
+        {
+        case '+':
+          arith_code = PLUS_EXPR;
+          break;
+        case '-':
+          arith_code = MINUS_EXPR;
+          break;
+        default:
+          break;
+        }
+      tmp = build2 (arith_code, TREE_TYPE (iter_i), iter_i, step);
+      *incr_p = build2 (MODIFY_EXPR, TREE_TYPE (tmp), iter_i, tmp);
+    }
+}
+
+static tree
+check_and_cvt_omp_for_incr_expr (tree exp, tree decl, tree iter_i)
+{
+  tree t;
+
+  if (exp == decl)
+    {
+      /* catch the iterator and throw iter_i. */
+      return iter_i;
+    }
+  if (CONSTANT_CLASS_P (exp))
+    {
+      return exp;
+    }
+
+  switch (TREE_CODE (exp))
+    {
+    case NOP_EXPR:
+      t = check_and_cvt_omp_for_incr_expr (TREE_OPERAND (exp, 0), 
+                                           decl, iter_i);
+      if (t != error_mark_node)
+        return fold_convert (TREE_TYPE (exp), t);
+      break;
+    case MINUS_EXPR:
+      t = check_and_cvt_omp_for_incr_expr (TREE_OPERAND (exp, 0), 
+                                           decl, iter_i);
+      if (t != error_mark_node)
+          return fold_build2 (MINUS_EXPR, TREE_TYPE (t), t, 
+                            check_and_cvt_omp_for_incr_expr (TREE_OPERAND (exp, 1), 
+                                                             decl, iter_i));
+      break;
+    case PLUS_EXPR:
+      t = check_and_cvt_omp_for_incr_expr (TREE_OPERAND (exp, 0), 
+                                           decl, iter_i);
+      if (t != error_mark_node)
+        return fold_build2 (PLUS_EXPR, TREE_TYPE (t), t, 
+                            check_and_cvt_omp_for_incr_expr (TREE_OPERAND (exp, 1), 
+                                                             decl, iter_i));
+      t = check_and_cvt_omp_for_incr_expr (TREE_OPERAND (exp, 1), 
+                                           decl, iter_i);
+      if (t != error_mark_node)
+        return fold_build2 (PLUS_EXPR, TREE_TYPE (t), TREE_OPERAND (exp, 0), t);
+      break;
+    default:
+      break;
+    }
+
+  return error_mark_node;
+}
+
+static void
+cp_convert_omp_for_incr_pattern_4 (tree *incr_p, tree iter, tree iter_i)
+{
+  tree tmp, step;
+  enum tree_code arith_code = TREE_CODE (TREE_OPERAND (*incr_p, 1));
+
+  if (arith_code == NOP_EXPR)
+    {
+      tmp = TREE_OPERAND (*incr_p, 2);
+      arith_code = TREE_CODE (tmp);
+
+      if (TREE_OPERAND (tmp, 0) == iter)
+        /* case 1: it = it +/- 1; */
+        step = TREE_OPERAND (tmp, 1);
+      else if (TREE_OPERAND (tmp, 1) == iter)
+        /* case 2: it = 1 +/- it; */
+        step = TREE_OPERAND (tmp, 0);
+      else
+        {
+          /* more complicated case like "it = it + 9 - 8;" */
+          tmp = check_and_cvt_omp_for_incr_expr (tmp, iter, iter_i);
+          if (tmp == error_mark_node)
+            return;
+          arith_code = TREE_CODE (tmp);
+          if (TREE_OPERAND (tmp, 0) == iter_i)
+            step = TREE_OPERAND (tmp, 1);
+          else if (TREE_OPERAND (tmp, 1) == iter_i)
+            step = TREE_OPERAND (tmp, 0);
+        }
+    }
+  else
+    {
+      /* case 3: it += 1; it -= 1*/
+      step = TREE_OPERAND (*incr_p, 2);
+    }
+
+  tmp = build2 (arith_code, TREE_TYPE (iter_i), iter_i, step);
+  *incr_p = build2 (MODIFY_EXPR, TREE_TYPE (tmp), iter_i, tmp);
+}
+
+static void
+cp_convert_omp_for_incr_pattern_5 (tree *incr_p, tree iter_i)
+{
+  enum tree_code arith_code = TREE_CODE (*incr_p);
+
+  *incr_p = build2 (arith_code, TREE_TYPE (iter_i), iter_i, NULL);
+}
+
+static void
+cp_convert_omp_for_incr_pattern_6 (tree *incr_p, tree iter, tree iter_i)
+{
+  tree tmp, step;
+  enum tree_code arith_code;
+
+  tmp = TREE_OPERAND (*incr_p, 1);
+  arith_code = TREE_CODE (tmp);
+
+  tmp = check_and_cvt_omp_for_incr_expr (tmp, iter, iter_i);
+  if (tmp == error_mark_node)
+    return;
+  arith_code = TREE_CODE (tmp);
+  if (TREE_OPERAND (tmp, 0) == iter_i)
+    step = TREE_OPERAND (tmp, 1);
+  else if (TREE_OPERAND (tmp, 1) == iter_i)
+    step = TREE_OPERAND (tmp, 0);
+
+  tmp = build2 (arith_code, TREE_TYPE (iter_i), iter_i, step);
+  *incr_p = build2 (MODIFY_EXPR, TREE_TYPE (tmp), iter_i, tmp);
+}
+
+static void
+cp_convert_omp_for_incr (tree *incr_p, tree iter, tree iter_i)
+{
+  if (iter == NULL_TREE)
+    return;
+
+  if (TREE_CODE (*incr_p) == TARGET_EXPR
+      && TREE_CODE (TREE_OPERAND (*incr_p, 1)) == CALL_EXPR)
+    {
+      /* Pattern 1: it ++; */
+      cp_convert_omp_for_incr_pattern_1 (incr_p, iter_i);
+    }
+  else if (TREE_CODE (*incr_p) == INDIRECT_REF
+           && TREE_CODE (TREE_OPERAND (*incr_p, 0)) == CALL_EXPR)
+    {
+      /* Pattern 2: it += 1; */
+      cp_convert_omp_for_incr_pattern_2 (incr_p, iter_i);
+    }
+ else if (TREE_CODE (*incr_p) == MODIFY_EXPR
+          && TREE_CODE (TREE_OPERAND (*incr_p, 1)) == INDIRECT_REF)
+   {
+     /* Pattern 3: it = it + 1; */
+     cp_convert_omp_for_incr_pattern_3 (incr_p, iter_i);
+   }
+ /* Pattern 4, 5: when we are processing templates. */
+ else if (TREE_CODE (*incr_p) == MODOP_EXPR)
+   {
+     cp_convert_omp_for_incr_pattern_4 (incr_p, iter, iter_i);
+   }
+ else if (TREE_CODE (*incr_p) == POSTINCREMENT_EXPR
+          || TREE_CODE (*incr_p) == POSTDECREMENT_EXPR
+          || TREE_CODE (*incr_p) == PREINCREMENT_EXPR
+          || TREE_CODE (*incr_p) == PREDECREMENT_EXPR)
+   {
+     cp_convert_omp_for_incr_pattern_5 (incr_p, iter_i);
+   }
+ else if (TREE_CODE (*incr_p) == MODIFY_EXPR
+          && (TREE_CODE (TREE_OPERAND (*incr_p, 1)) == PLUS_EXPR
+              || TREE_CODE (TREE_OPERAND (*incr_p, 1)) == MINUS_EXPR))
+   {
+     /* Pattern 6: it = it + 1; generated in tsubst_expr. */
+     cp_convert_omp_for_incr_pattern_6 (incr_p, iter, iter_i);
+   }
+ else
+   {
+      /* leave for c_finish_omp_for to possibly report error
+                  of "invalid increment expression". */
+     return;
+   }
+}
+
+static void
+cp_convert_omp_for_cond_pattern_1 (tree *cond_p, tree iter, tree iter_i, 
+                                   tree lower, tree *pre_body_p)
+{
+  tree tmp, iter_type, distance, upper, list;
+  enum tree_code cond_code;
+  bool at_left = false;
+
+  iter_type = TREE_TYPE (iter);
+  /* condition operator already known. */
+  cond_code = TREE_CODE (*cond_p);
+
+  if (TREE_OPERAND (*cond_p, 0) == iter)
+    {
+      at_left = true;
+      tmp = TREE_OPERAND (*cond_p, 1);
+    }
+  else
+    {
+      tmp = TREE_OPERAND (*cond_p, 0);
+    }
+  upper = create_temporary_var (iter_type);
+  /* We must call pushdecl, since the gimplifier complains if the
+     variable has not been declared via a BIND_EXPR.  */
+  pushdecl (upper);
+  /* tell gimplifier scope _upper_ as shared. */
+  DECL_REFER_SCOPED_SHARED (upper) = 1;
+  tmp = build_x_modify_expr (upper, NOP_EXPR, tmp);
+  list = push_stmt_list ();
+  finish_expr_stmt (tmp);
+  list = pop_stmt_list (list);
+  append_to_statement_list_force (list, pre_body_p);
+
+  tmp = build_x_binary_op (MINUS_EXPR, upper, TREE_CODE(upper),
+                           lower, TREE_CODE(upper), 0);
+  distance = create_tmp_var (integer_type_node, NULL);
+  tmp = build_x_modify_expr (distance, NOP_EXPR, tmp);
+  list = push_stmt_list ();
+  finish_expr_stmt (tmp);
+  list = pop_stmt_list (list);
+  append_to_statement_list_force (list, pre_body_p);
+  if (at_left)
+    *cond_p = build2 (cond_code, boolean_type_node, iter_i, distance);
+  else
+    *cond_p = build2 (cond_code, boolean_type_node, distance, iter_i);
+}
+
+static void
+cp_convert_omp_for_cond_pattern_2 (tree *cond_p, tree iter, tree iter_i,  
+                                   tree lower, tree *pre_body_p)
+{
+  tree tmp, iter_type, distance, upper, list;
+  const char* operstring;
+  enum tree_code cond_code;
+  bool at_left = false;
+
+  iter_type = TREE_TYPE (iter);
+
+  /* get the condition operator. */
+  operstring = IDENTIFIER_POINTER (DECL_NAME (TREE_OPERAND (TREE_OPERAND (*cond_p, 0), 0)));
+  if (operstring && strncmp (operstring, "operator", 8) == 0)
+    {
+      operstring += 8;
+      switch (*operstring)
+        {
+        case '<':
+          if (*(operstring+1) == '=')
+            cond_code = LE_EXPR;
+          else
+            cond_code = LT_EXPR;
+          break;
+        case '>':
+          if (*(operstring+1) == '=')
+            cond_code = GE_EXPR;
+          else
+            cond_code = GT_EXPR;
+          break;
+        case '=':
+          if (*(operstring+1) == '=')
+            cond_code = EQ_EXPR;
+          break;
+        case '!':
+          if (*(operstring+1) == '=')
+            cond_code = NE_EXPR;
+          break;
+        default:
+          break;
+        }
+    }
+
+  tmp = TREE_VALUE (TREE_OPERAND (*cond_p, 1));
+  STRIP_NOPS (tmp);
+  tmp = TREE_OPERAND (tmp, 0);
+  if (tmp == iter)
+    {
+      at_left = true;
+      tmp = TREE_VALUE (TREE_CHAIN (TREE_OPERAND (*cond_p, 1)));
+    }
+  else
+    {
+      tmp = TREE_VALUE (TREE_OPERAND (*cond_p, 1));
+    }
+  STRIP_NOPS (tmp);
+  upper = create_temporary_var (iter_type);
+  /* We must call pushdecl, since the gimplifier complains if the
+     variable has not been declared via a BIND_EXPR.  */
+  pushdecl (upper);
+  /* tell gimplifier scope _upper_ as shared. */
+  DECL_REFER_SCOPED_SHARED (upper) = 1;
+  tmp = build_x_indirect_ref (tmp, "unary *");
+  tmp = build_x_modify_expr (upper, NOP_EXPR, tmp);
+  list = push_stmt_list ();
+  finish_expr_stmt (tmp);
+  list = pop_stmt_list (list);
+  append_to_statement_list_force (list, pre_body_p);
+
+  tmp = build_x_binary_op (MINUS_EXPR, upper, TREE_CODE(upper),
+                           lower, TREE_CODE(lower), 0);
+  distance = create_tmp_var (integer_type_node, NULL);
+  tmp = build_x_modify_expr (distance, NOP_EXPR, tmp);
+  list = push_stmt_list ();
+  finish_expr_stmt (tmp);
+  list = pop_stmt_list (list);
+  append_to_statement_list_force (list, pre_body_p);
+
+  if (at_left)
+    *cond_p = build2 (cond_code, boolean_type_node, iter_i, distance);
+  else
+    *cond_p = build2 (cond_code, boolean_type_node, distance, iter_i);
+}
+
+static void
+cp_convert_omp_for_cond (tree *cond_p, tree iter, tree iter_i, 
+                         tree lower, tree *pre_body_p)
+{
+  if (iter == NULL_TREE)
+    return;
+
+  if (TREE_CODE_CLASS (TREE_CODE (*cond_p)) == tcc_comparison)
+    /* when we are processing templates. */
+    cp_convert_omp_for_cond_pattern_1 (cond_p, iter, iter_i, lower, pre_body_p);
+  else if (TREE_CODE (*cond_p) == CALL_EXPR)
+    cp_convert_omp_for_cond_pattern_2 (cond_p, iter, iter_i, lower, pre_body_p);
+  else
+    {
+      /* leave for c_finish_omp_for to report error
+         of "invalid controlling predicate". */
+      return;
+    }
+}
+
+static tree 
+cp_check_omp_clause (tree *clauses_p, tree *par_clauses_p, 
+                     enum tree_code code, tree decl)
+{
+  tree c = par_clauses_p ? *par_clauses_p : *clauses_p;
+
+  for (; c ; c = OMP_CLAUSE_CHAIN (c))
+    if (OMP_CLAUSE_CODE (c) == code  
+        && OMP_CLAUSE_DECL (c) == decl)
+      return c;
+
+  return NULL;
+}
+
+static void
+cp_convert_omp_for_init (tree *init_p, tree *decl_p, tree *iter_p, 
+                         tree *iter_i_p, tree *lower_p, tree* pre_body_p, 
+                         tree *clauses_p, tree *par_clauses_p)
+{
+  tree c, tmp, list;
+  bool need_privatize = true;
+
+  *iter_p = *iter_i_p = NULL;
+  if (! IS_RANDOM_ACCESS_ITER (*decl_p))
+   return;
+
+  *lower_p = create_temporary_var (TREE_TYPE (*decl_p));
+  /* We must call pushdecl, since the gimplifier complains if the
+     variable has not been declared via a BIND_EXPR.  */
+  pushdecl (*lower_p);
+
+  /* tell gimplifier scope _lower_ as shared. */
+  DECL_REFER_SCOPED_SHARED (*lower_p) = 1;
+
+  /* going to build statements like:
+       lower = INITIAL_VALUE_OF_ITERATOR; */
+  tmp = build_x_modify_expr (*lower_p, NOP_EXPR, *init_p);
+  list = push_stmt_list ();
+  finish_expr_stmt (tmp);
+  TREE_SIDE_EFFECTS (list) = 0;
+  *pre_body_p = pop_stmt_list (list);
+
+  *iter_p = *decl_p;
+  *decl_p = *iter_i_p = create_tmp_var (integer_type_node, NULL);
+  *init_p = integer_zero_node;
+
+  /* correct omp clauses. */
+  if ((c = cp_check_omp_clause (clauses_p, par_clauses_p, 
+                                OMP_CLAUSE_LASTPRIVATE, *iter_p)))
+    {
+      tree orig_c = c;
+      DECL_HAS_SCOPED_LASTPRIVATE_P (*iter_p) = 1;
+
+      need_privatize = false;
+
+      /* since gccfss doesn't combine omp_par and omp_for, generate
+           #pragma omp parallel shared(i)
+              #pragma omp for lastprivate(i)
+       */
+      if (par_clauses_p)
+        {
+          OMP_CLAUSE_CODE (c) = OMP_CLAUSE_SHARED;
+
+          c = build_omp_clause (OMP_CLAUSE_PRIVATE);
+          OMP_CLAUSE_DECL (c) = *iter_p; 
+          CP_OMP_CLAUSE_INFO (c) = CP_OMP_CLAUSE_INFO (orig_c);
+          OMP_CLAUSE_CHAIN (c) = *clauses_p;
+          *clauses_p = c;
+        }
+      else 
+        {
+          OMP_CLAUSE_CODE (c) = OMP_CLAUSE_PRIVATE;
+        }
+      c = build_omp_clause (OMP_CLAUSE_LASTPRIVATE);
+      OMP_CLAUSE_DECL (c) = *iter_i_p;
+      OMP_CLAUSE_CHAIN (c) = *clauses_p;
+      *clauses_p = c;
+    }
+
+  if (need_privatize
+      && ! cp_check_omp_clause (clauses_p, par_clauses_p, OMP_CLAUSE_PRIVATE, *iter_p))
+    {
+      /* since gccfss doesn't combine omp_par and omp_for, generate
+         private clause for "#pragma omp for".  */
+      tree *p = clauses_p;
+      c = build_omp_clause (OMP_CLAUSE_PRIVATE);
+      OMP_CLAUSE_DECL (c) = *iter_p;
+      OMP_CLAUSE_CHAIN (c) = *p;
+      *p = c;
+    }
+}
+          
+static void
+cp_convert_omp_for_body (tree iter, tree iter_i, tree lower, 
+                         tree *body_p, tree *post_body_p)
+{
+  tree tmp, list;
+  tree_stmt_iterator tsi;
+  location_t locus;
+
+  if (iter == NULL_TREE)
+    return;
+
+  if (TREE_CODE (*body_p) == STATEMENT_LIST)
+     locus = EXPR_LOCATION (tsi_stmt (tsi_start (*body_p)));
+  else
+     locus = EXPR_LOCATION (*body_p);
+
+  list = push_stmt_list ();
+  /* going to build statements like below:
+       iter = lower;
+       operator+=(&iter, &iter_i); */
+  tmp = build_x_modify_expr (iter, NOP_EXPR, lower);
+  SET_EXPR_LOCATION (tmp, locus);
+  finish_expr_stmt (tmp);
+  tmp = build_x_modify_expr (iter, PLUS_EXPR, iter_i);
+  SET_EXPR_LOCATION (tmp, locus);
+  finish_expr_stmt (tmp);
+  list = pop_stmt_list (list);
+
+  /* insert list statements before body. */
+  if (TREE_CODE (*body_p) == STATEMENT_LIST)
+    {
+      for (tsi = tsi_start (*body_p); !tsi_end_p (tsi); tsi_next (&tsi))
+        append_to_statement_list_force (tsi_stmt (tsi), &list);
+    }
+  else
+    append_to_statement_list_force (*body_p, &list);
+
+  *body_p = list;
+
+  if (DECL_HAS_SCOPED_LASTPRIVATE_P (iter) == 0)
+    return;
+
+  for (tsi = tsi_start (*body_p); !tsi_end_p (tsi); tsi_next (&tsi))
+    locus = EXPR_LOCATION (tsi_stmt (tsi));
+
+  list = push_stmt_list ();
+  /* going to build statements like below:
+       iter = lower;
+       operator+=(&iter, &iter_i); 
+       OMP_BARRIER */
+  tmp = build_x_modify_expr (iter, NOP_EXPR, lower);
+  SET_EXPR_LOCATION (tmp, locus);
+  finish_expr_stmt (tmp);
+  tmp = build_x_modify_expr (iter, PLUS_EXPR, iter_i);
+  SET_EXPR_LOCATION (tmp, locus);
+  finish_expr_stmt (tmp);
+  c_finish_omp_barrier ();
+  *post_body_p = pop_stmt_list (list);
+
+  DECL_HAS_SCOPED_LASTPRIVATE_P (iter) = 0;
+}
+
 
 /* Build and validate an OMP_FOR statement.  CLAUSES, BODY, COND, INCR
    are directly for their associated operands in the statement.  DECL
@@ -3853,10 +4716,12 @@ finish_omp_parallel (tree clauses, tree body)
 
 tree
 finish_omp_for (location_t locus, tree decl, tree init, tree cond,
-		tree incr, tree body, tree pre_body)
+		tree incr, tree body, tree pre_body, 
+                tree *ws_clauses_p, tree *par_clauses_p)
 {
   tree omp_for = NULL;
-
+  tree iter, iter_i, lower, post_body = NULL;
+  
   if (decl == NULL)
     {
       if (init != NULL)
@@ -3871,6 +4736,21 @@ finish_omp_for (location_t locus, tree decl, tree init, tree cond,
 	      {
 		decl = TREE_OPERAND (init, 0);
 		init = TREE_OPERAND (init, 2);
+	      }
+	    break;
+          case INDIRECT_REF:
+	    if (TREE_CODE (TREE_OPERAND (init, 0)) == CALL_EXPR)
+	      {
+                tree tmp = TREE_OPERAND (TREE_OPERAND (init, 0), 1);
+		decl = TREE_VALUE (tmp);
+                if (TREE_CODE (decl) == ADDR_EXPR)
+                  decl = TREE_OPERAND (decl, 0);
+		init = TREE_VALUE (TREE_CHAIN (tmp));
+                STRIP_NOPS (init);
+                if (TREE_CODE (init) == ADDR_EXPR)
+                  init = TREE_OPERAND (init, 0);
+                else if (TREE_CODE (init) == CONVERT_EXPR)
+                  init = TREE_OPERAND (init, 0);
 	      }
 	    break;
 	  default:
@@ -3927,6 +4807,22 @@ finish_omp_for (location_t locus, tree decl, tree init, tree cond,
       return NULL;
     }
 
+  if (flag_cpp_iter) 
+    { 
+      location_t saved_location = input_location;
+      if (incr && (TREE_CODE (incr) == MODOP_EXPR))
+        incr = build_modify_expr (TREE_OPERAND (incr, 0),
+                                 TREE_CODE (TREE_OPERAND (incr, 1)),
+                                 TREE_OPERAND (incr, 2));
+
+      input_location = locus;
+      cp_convert_omp_for_init (&init, &decl, &iter, &iter_i, &lower, &pre_body, ws_clauses_p, par_clauses_p);
+      cp_convert_omp_for_cond (&cond, iter, iter_i, lower, &pre_body);
+      cp_convert_omp_for_incr (&incr, iter, iter_i);
+      input_location = saved_location;
+      cp_convert_omp_for_body (iter, iter_i, lower, &body, &post_body);
+    }
+  
   if (!INTEGRAL_TYPE_P (TREE_TYPE (decl)))
     {
       location_t elocus = locus;
@@ -3958,7 +4854,11 @@ finish_omp_for (location_t locus, tree decl, tree init, tree cond,
 	  = fold_build_cleanup_point_expr (TREE_TYPE (t), t);
     }
   if (decl != error_mark_node && init != error_mark_node)
-    omp_for = c_finish_omp_for (locus, decl, init, cond, incr, body, pre_body);
+    omp_for = c_finish_omp_for (locus, decl, init, cond, incr, body,
+                                pre_body, post_body);
+  if (flag_cpp_iter && par_clauses_p && iter) 
+    OMP_FOR_NOT_COMBINED (omp_for) = 1; 
+
   if (omp_for != NULL
       && TREE_CODE (OMP_FOR_INCR (omp_for)) == MODIFY_EXPR
       && TREE_SIDE_EFFECTS (TREE_OPERAND (OMP_FOR_INCR (omp_for), 1))
@@ -4026,6 +4926,12 @@ finish_omp_flush (void)
   tree fn = built_in_decls[BUILT_IN_SYNCHRONIZE];
   tree stmt = finish_call_expr (fn, NULL, false, false);
   finish_expr_stmt (stmt);
+}
+
+void
+finish_omp_taskwait (void)
+{
+    add_stmt(make_node(OMP_TASKWAIT));
 }
 
 /* True if OpenMP sharing attribute of DECL is predetermined.  */

@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -261,6 +263,28 @@ c_common_init_options (unsigned int argc, const char **argv)
     }
 
   return result;
+}
+
+/* Use RTL backend for function number n1 to n2.  */
+static void
+use_rtl_backend (const char *arg)
+{
+  if (arg) 
+    {
+      /* TODO: verify input n1 and n2 */
+      unsigned n1, n2;
+      sscanf (arg, "%u,%u", &n1, &n2);
+      first_rtl_backend = n1;
+      last_rtl_backend = n2;
+    }
+  else
+    {
+      first_rtl_backend = 1; 
+      last_rtl_backend = ~(0U);
+      flag_use_dbg_gen = false;
+      /* enable optimizations that are disabled for Sun backend */
+      /*flag_preir_tree_optimizations = 1;*/
+    }
 }
 
 /* Handle switch SCODE with argument ARG.  VALUE is true, unless no-
@@ -655,6 +679,10 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       flag_signed_char = value;
       break;
 
+    case OPT_fsigned_enums:
+      flag_signed_enums = value;
+      break;
+
     case OPT_funsigned_bitfields:
       flag_signed_bitfields = !value;
       break;
@@ -760,6 +788,10 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       flag_permissive = value;
       break;
 
+    case OPT_fnonconst_ref_to_temp_object:
+      flag_nonconst_ref_to_temp_object = value;
+      break;
+
     case OPT_fpreprocessed:
       cpp_opts->preprocessed = value;
       break;
@@ -824,12 +856,24 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       flag_weak = value;
       break;
 
+    case OPT_fcomdat:
+      flag_comdat = value;
+      break;
+      
     case OPT_fthreadsafe_statics:
       flag_threadsafe_statics = value;
       break;
 
     case OPT_fzero_link:
       flag_zero_link = value;
+      break;
+
+    case OPT_frtl_backend_:
+      use_rtl_backend (arg);
+      break;
+
+    case OPT_frtl_backend:
+      use_rtl_backend (NULL);
       break;
 
     case OPT_gen_decls:

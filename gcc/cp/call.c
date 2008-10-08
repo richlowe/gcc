@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* High-level class interface.  */
 
@@ -40,6 +41,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "target.h"
 #include "convert.h"
 #include "langhooks.h"
+#include "tree-ir.h"
 
 /* The various kinds of conversion.  */
 
@@ -1105,6 +1107,7 @@ reference_binding (tree rto, tree rfrom, tree expr, bool c_cast_p, int flags)
   tree tfrom;
   bool related_p;
   bool compatible_p;
+  bool allow_non_const;
   cp_lvalue_kind lvalue_p = clk_none;
 
   if (TREE_CODE (to) == FUNCTION_TYPE && expr && type_unknown_p (expr))
@@ -1239,7 +1242,14 @@ reference_binding (tree rto, tree rfrom, tree expr, bool c_cast_p, int flags)
      Otherwise, the reference shall be to a non-volatile const type.
 
      Under C++0x, [8.5.3/5 dcl.init.ref] it may also be an rvalue reference */
-  if (!CP_TYPE_CONST_NON_VOLATILE_P (to) && !TYPE_REF_IS_RVALUE (rto))
+  /* With -fnonconst-ref-to-temp-object, allow binding of non-const 
+     references to temporary objects. */
+  allow_non_const = flag_nonconst_ref_to_temp_object 
+      && !(TYPE_QUALS (to) & TYPE_QUAL_CONST)
+      && !real_lvalue_p (expr);
+  
+  if (!CP_TYPE_CONST_NON_VOLATILE_P (to)
+      && !(allow_non_const && !CP_TYPE_VOLATILE_P (to)))
     return NULL;
 
   /* [dcl.init.ref]
@@ -1261,6 +1271,9 @@ reference_binding (tree rto, tree rfrom, tree expr, bool c_cast_p, int flags)
 			      flags);
   if (!conv)
     return NULL;
+
+  if (!CP_TYPE_CONST_NON_VOLATILE_P (to))
+    return NULL;   /* do not create temporary */
 
   conv = build_conv (ck_ref_bind, rto, conv);
   /* This reference binding, unlike those above, requires the
@@ -6723,6 +6736,11 @@ make_temporary_var_for_ref_to_temp (tree decl, tree type)
       TREE_STATIC (var) = 1;
       name = mangle_ref_init_variable (decl);
       DECL_NAME (var) = name;
+      if (globalize_flag && !TREE_PUBLIC (decl)) /* gccfss support for xipo */
+        {
+          TREE_PUBLIC (var) = 1;
+          DECL_VISIBILITY (var) = VISIBILITY_HIDDEN;
+        }
       SET_DECL_ASSEMBLER_NAME (var, name);
       var = pushdecl_top_level (var);
     }

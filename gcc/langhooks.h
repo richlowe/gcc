@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_LANG_HOOKS_H
 #define GCC_LANG_HOOKS_H
 
@@ -235,6 +237,13 @@ struct lang_hooks_for_decls
   /* Build and return code destructing DECL.  Return NULL if nothing
      to be done.  */
   tree (*omp_clause_dtor) (tree clause, tree decl);
+  
+  /* True if this decl is global namespace decl.  */
+  bool (*global_namespace_decl_p) (tree);
+
+  /* Return the equivalent IR decl created for the threadprivate
+     #pragma omp threadprivate */
+  tree (*omp_threadprivate_decl) (tree);
 };
 
 /* Language-specific hooks.  See langhooks-def.h for defaults.  */
@@ -368,6 +377,11 @@ struct lang_hooks
      information that might be interesting, such as function parameter
      types in C++.  */
   const char *(*decl_printable_name) (tree decl, int verbosity);
+  
+  void *(*handle_tm_atomic_attribute) (tree *, tree, bool *);
+  void *(*handle_tm_callable_attribute) (tree *, tree, bool *);
+  void *(*handle_tm_abort_ok_attribute) (tree *, tree, bool *);
+  void *(*handle_tm_pure_attribute) (tree *, tree, bool *);
 
   /* Computes the dwarf-2/3 name for a tree.  VERBOSITY determines what
      information will be printed: 0: DECL_NAME, demangled as

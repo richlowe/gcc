@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 #include "config.h"
 #include "system.h"
@@ -688,7 +689,7 @@ dw2_asm_output_delta_sleb128 (const char *lab1 ATTRIBUTE_UNUSED,
 }
 #endif /* 0 */
 
-static rtx dw2_force_const_mem (rtx, bool);
+/*static*/ rtx dw2_force_const_mem (rtx, bool);
 static int dw2_output_indirect_constant_1 (splay_tree_node, void *);
 
 static GTY((param1_is (char *), param2_is (tree))) splay_tree indirect_pool;
@@ -732,7 +733,7 @@ splay_tree_compare_strings (splay_tree_key k1, splay_tree_key k2)
    "near" the function in any interesting sense.  PUBLIC controls whether
    the symbol can be shared across the entire application (or DSO).  */
 
-static rtx
+/*static*/ rtx
 dw2_force_const_mem (rtx x, bool public)
 {
   splay_tree_node node;

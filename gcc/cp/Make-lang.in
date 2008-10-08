@@ -19,6 +19,8 @@
 # along with GCC; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
 
+#Modified by Sun Microsystems 2008
+
 # This file provides the language dependent support in the main Makefile.
 # Each language makefile fragment must provide the following targets:
 #
@@ -52,7 +54,7 @@ c++: cc1plus$(exeext)
 # Tell GNU make to ignore these if they exist.
 .PHONY: c++
 
-g++spec.o: $(srcdir)/cp/g++spec.c $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) $(CONFIG_H)
+g++spec.o: $(srcdir)/cp/g++spec.c $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) $(CONFIG_H) $(OPTTABLE_H)
 	(SHLIB_LINK='$(SHLIB_LINK)'; \
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(DRIVER_DEFINES) \
 		$(INCLUDES) $(srcdir)/cp/g++spec.c)
@@ -91,7 +93,9 @@ cp-warn = $(STRICT_WARN) $(CXX_COMPAT_WARN)
 
 cc1plus-dummy$(exeext): $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
-	      $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBS) $(GMPLIBS)
+	      $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBS) $(GMPLIBS) -l_I_dbg_gen -llni -lsunir \
+		-L $(scgfss_lib_dir) \
+		-L $(scgfss_lib_dir)/sys
 
 cc1plus-checksum.c : cc1plus-dummy$(exeext) build/genchecksum$(build_exeext)
 	build/genchecksum$(build_exeext) cc1plus-dummy$(exeext) > $@
@@ -100,12 +104,15 @@ cc1plus-checksum.o : cc1plus-checksum.c
 
 cc1plus$(exeext): $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
-	      $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBS) $(GMPLIBS)
+	      $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBS) $(GMPLIBS) -l_I_dbg_gen -llni -lsunir \
+		-L $(scgfss_lib_dir) \
+		-L $(scgfss_lib_dir)/sys
 
 # Special build rules.
-$(srcdir)/cp/cfns.h: $(srcdir)/cp/cfns.gperf
-	gperf -o -C -E -k '1-6,$$' -j1 -D -N 'libc_name_p' -L ANSI-C \
-		$(srcdir)/cp/cfns.gperf > $(srcdir)/cp/cfns.h
+# Do not recreate cfns.h for gccfss
+#$(srcdir)/cp/cfns.h: $(srcdir)/cp/cfns.gperf
+#	gperf -o -C -E -k '1-6,$$' -j1 -D -N 'libc_name_p' -L ANSI-C \
+#		$(srcdir)/cp/cfns.gperf > $(srcdir)/cp/cfns.h
 
 #
 # Build hooks:
@@ -288,11 +295,11 @@ cp/optimize.o: cp/optimize.c $(CXX_TREE_H) $(TM_H) rtl.h $(INTEGRATE_H) \
   insn-config.h input.h $(PARAMS_H) debug.h $(TREE_INLINE_H) $(TREE_GIMPLE_H) \
   $(TARGET_H)
 cp/mangle.o: cp/mangle.c $(CXX_TREE_H) $(TM_H) toplev.h $(REAL_H) \
-  gt-cp-mangle.h $(TARGET_H) $(TM_P_H)
+  gt-cp-mangle.h $(TARGET_H) $(TM_P_H) tree-ir.h
 cp/parser.o: cp/parser.c $(CXX_TREE_H) $(TM_H) $(DIAGNOSTIC_H) gt-cp-parser.h \
   output.h $(TARGET_H)
 cp/cp-gimplify.o: cp/cp-gimplify.c $(CXX_TREE_H) toplev.h $(C_COMMON_H) \
-	$(TM_H) coretypes.h pointer-set.h
+	$(TM_H) coretypes.h pointer-set.h 
 
 cp/name-lookup.o: cp/name-lookup.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
 	$(TM_H) $(CXX_TREE_H) $(TIMEVAR_H) gt-cp-name-lookup.h toplev.h \

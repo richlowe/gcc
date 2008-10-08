@@ -42,6 +42,7 @@ gcc [@option{-c}|@option{-S}|@option{-E}] [@option{-std=}@var{standard}]
     [@option{-I}@var{dir}@dots{}] [@option{-L}@var{dir}@dots{}]
     [@option{-D}@var{macro}[=@var{defn}]@dots{}] [@option{-U}@var{macro}]
     [@option{-f}@var{option}@dots{}] [@option{-m}@var{machine-option}@dots{}]
+    [@option{-x}@var{option}@dots{}]
     [@option{-o} @var{outfile}] [@@@var{file}] @var{infile}@dots{}
 
 Only the most useful options are listed here; see below for the
@@ -54,8 +55,7 @@ and the Info entries for @file{gcc}, @file{cpp}, @file{as},
 @file{ld}, @file{binutils} and @file{gdb}.
 @c man end
 @c man begin BUGS
-For instructions on reporting bugs, see
-@w{@value{BUGURL}}.
+Send bug resports using the CoolTools forum at http://forum.java.sun.com/forum.jspa?forumID=905.
 @c man end
 @c man begin AUTHOR
 See the Info entry for @command{gcc}, or
@@ -175,7 +175,8 @@ in the following sections.
 -trigraphs  -no-integrated-cpp  -traditional  -traditional-cpp @gol
 -fallow-single-precision  -fcond-mismatch -flax-vector-conversions @gol
 -fsigned-bitfields  -fsigned-char @gol
--funsigned-bitfields  -funsigned-char}
+-funsigned-bitfields  -funsigned-char @gol
+-Xc -xc99@r{[=}@var{version}@r{]} }}
 
 @item C++ Language Options
 @xref{C++ Dialect Options,,Options Controlling C++ Dialect}.
@@ -190,7 +191,8 @@ in the following sections.
 -fno-nonansi-builtins  -fno-operator-names @gol
 -fno-optional-diags  -fpermissive @gol
 -frepo  -fno-rtti  -fstats  -ftemplate-depth-@var{n} @gol
--fno-threadsafe-statics -fuse-cxa-atexit  -fno-weak  -nostdinc++ @gol
+-fno-threadsafe-statics -fuse-cxa-atexit  -fno-weak  @gol
+-fno-comdat -nostdinc++ @gol
 -fno-default-inline  -fvisibility-inlines-hidden @gol
 -fvisibility-ms-compat @gol
 -Wabi  -Wctor-dtor-privacy @gol
@@ -299,6 +301,7 @@ Objective-C and Objective-C++ Dialects}.
 -feliminate-dwarf2-dups -feliminate-unused-debug-types @gol
 -feliminate-unused-debug-symbols -femit-class-debug-always @gol
 -fmem-report -fpre-ipa-mem-report -fpost-ipa-mem-report -fprofile-arcs @gol
+-fdwarf2-indirect-strings @gol
 -frandom-seed=@var{string} -fsched-verbose=@var{n} @gol
 -ftest-coverage  -ftime-report -fvar-tracking @gol
 -g  -g@var{level}  -gcoff -gdwarf-2 @gol
@@ -387,6 +390,7 @@ Objective-C and Objective-C++ Dialects}.
 @xref{Link Options,,Options for Linking}.
 @gccoptlist{@var{object-file-name}  -l@var{library} @gol
 -nostartfiles  -nodefaultlibs  -nostdlib -pie -rdynamic @gol
+-R@var{colondirlist} @gol
 -s  -static  -static-libgcc  -shared  -shared-libgcc  -symbolic @gol
 -Wl,@var{option}  -Xlinker @var{option} @gol
 -u @var{symbol}}
@@ -571,13 +575,33 @@ Objective-C and Objective-C++ Dialects}.
 -minline-sqrt-min-latency -minline-sqrt-max-throughput @gol
 -mno-dwarf2-asm -mearly-stop-bits @gol
 -mfixed-range=@var{register-range} -mtls-size=@var{tls-size} @gol
--mtune=@var{cpu-type} -mt -pthread -milp32 -mlp64 @gol
+-mtune=@var{cpu-type} -milp32 -mlp64 @gol
 -mno-sched-br-data-spec -msched-ar-data-spec -mno-sched-control-spec @gol
 -msched-br-in-data-spec -msched-ar-in-data-spec -msched-in-control-spec @gol
 -msched-ldc -mno-sched-control-ldc -mno-sched-spec-verbose @gol
 -mno-sched-prefer-non-data-spec-insns @gol
 -mno-sched-prefer-non-control-spec-insns @gol
--mno-sched-count-spec-in-critical-path}
+-mno-sched-count-spec-in-critical-path @gol
+-minteger-ldd-std  -mno-integer-ldd-std @gol
+-mt -threads -pthreads -pthread @gol
+-dalign -fno-got @gol
+-fast -fns -fnonstd -fsimple -ftrap @gol
+-KPIC -Kpic @gol
+-xalias_level=@var{level} -xhwcprof@gol 
+-xannotate@r{=@var{value}}@gol
+-xtarget=@var{target} xarch=@var{arch} -xcache=@var{cacheinfo} -xchip=@var{chip} @gol
+-xautopar -xexplicitpar-xloopinfo -xparallel -xreduction @gol
+-xbinopt=prepare -xlinkopt=@var{value} @gol
+-xchar=@var{value} @gol
+-xdepend -xlibmil -xmemalign=@var{alignment} @gol
+-xinline=@r{[}@var{f}@r{]} @gol
+-xipo@r{[=}@var{value}@r{]} @gol
+-xipo_archive=@r{[}@var{value}@r{]} -xjobs=@var{value} @gol
+-xcode=@var{code} -xpec @gol
+-xprefetch=@var{value} -xprefetch_auto_type=@var{value} -xprefetch_level=@var{value} @gol
+-xprofile=collect@r{[:}@var{name}@r{]} -xprofile=use@r{[:}@var{name}@r{]} @gol
+-xpagesize=@var{value} -xregs=@var{values} -xrestrict@r{[=}@var{funcs}@r{]} -xsafe=mem -xsafe=unboundsym@gol
+-xspace -xunroll=@var{value} -xthreadvar -xvector -xvis}
 
 @emph{M32R/D Options}
 @gccoptlist{-m32r2 -m32rx -m32r @gol
@@ -816,7 +840,7 @@ See S/390 and zSeries Options.
 -finstrument-functions-exclude-file-list=@var{file},@var{file},@dots{} @gol
 -fno-common  -fno-ident @gol
 -fpcc-struct-return  -fpic  -fPIC -fpie -fPIE @gol
--fno-jump-tables @gol
+-fno-jump-tables -fno-constant-pools @gol
 -frecord-gcc-switches @gol
 -freg-struct-return  -fshort-enums @gol
 -fshort-double  -fshort-wchar @gol
@@ -1894,6 +1918,14 @@ violation of the ODR to define types with the same name differently.
 @opindex fno-weak
 Do not use weak symbol support, even if it is provided by the linker.
 By default, G++ will use weak symbols if they are available.  This
+option exists only for testing, and should not be used by end-users;
+it will result in inferior code and has no benefits.  This option may
+be removed in a future release of G++.
+
+@item -fno-comdat
+@opindex fno-comdat
+Do not use comdat symbol support, even if it is provided by the linker.
+By default, G++ will use comdat symbols if they are available.  This
 option exists only for testing, and should not be used by end-users;
 it will result in inferior code and has no benefits.  This option may
 be removed in a future release of G++.
@@ -4279,6 +4311,14 @@ on by default.
 @opindex fdebug-prefix-map
 When compiling files in directory @file{@var{old}}, record debugging
 information describing them as in @file{@var{new}} instead.
+
+@item -fdwarf2-indirect-strings
+@opindex fdwarf2-indirect-strings
+Enable use of @code{DW_FORM_strp} for strings in DWARF2 debugging
+information.  This is on by default.  To output strings using
+@code{DW_FORM_string} only, use
+@option{-fno-dwarf2-indirect-strings}.  This option only makes sense
+when generating DWARF2 debugging information with @option{-gdwarf-2}.
 
 @cindex @command{prof}
 @item -p
@@ -14296,6 +14336,14 @@ mode for all SPARC-V9 processors.
 @opindex mno-vis
 With @option{-mvis}, GCC generates code that takes advantage of the UltraSPARC
 Visual Instruction Set extensions.  The default is @option{-mno-vis}.
+@item -minteger-ldd-std
+@itemx -mno-integer-ldd-std
+@opindex minteger-ldd-std
+@opindex mno-integer-ldd-std
+With @option{-mno-integer-ldd-std}, GCC does not use the @code{ldd}
+and @code{std} instructions for integer operands in 32-bit mode.  This
+is for use with legacy code using 64-bit quantities which are not
+64-bit aligned.  The default is @option{-minteger-ldd-std}.
 @end table
 
 These @samp{-m} options are supported in addition to the above
@@ -15014,6 +15062,16 @@ of use in conjunction with @option{-fpic} or @option{-fPIC} for
 building code which forms part of a dynamic linker and cannot
 reference the address of a jump table.  On some targets, jump tables
 do not require a GOT and this option is not needed.
+
+@item -fno-constant-pools
+@opindex fno-constant-pools
+Do not put constants other than user-declared constant variables in
+pools in read-only memory even if this requires constants to be built
+up in registers and spilled to the stack.  This option is of use in
+conjunction with @option{-fpic} or @option{-fPIC} for building code
+which forms part of a dynamic linker and cannot reference the address
+of a constant pool.  It may not work reliably for all code or on all
+targets.
 
 @item -ffixed-@var{reg}
 @opindex ffixed

@@ -21,6 +21,8 @@
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
 
+;; Modified by Sun Microsystems 2008
+
 ;;- See file "rtl.def" for documentation on define_insn, match_*, et. al.
 
 (define_constants
@@ -1917,7 +1919,7 @@
 				"=o,T,U,o,r,r,r,?T,?f,?f,?o,?f")
         (match_operand:DI 1 "input_operand"
 				" J,U,T,r,o,i,r, f, T, o, f, f"))]
-  "! TARGET_V9
+  "! TARGET_V9 && TARGET_INTEGER_LDD_STD
    && (register_operand (operands[0], DImode)
        || register_or_zero_operand (operands[1], DImode))"
   "@
@@ -1936,12 +1938,63 @@
   [(set_attr "type" "store,store,load,*,*,*,*,fpstore,fpload,*,*,*")
    (set_attr "length" "2,*,*,2,2,2,2,*,*,2,2,2")])
 
+(define_insn "*movdi_insn_sp32_nolddstd"
+  [(set (match_operand:DI 0 "nonimmediate_operand"
+				"=o,T,U,o,r,r,r,?T,?f,?f,?o,?f")
+        (match_operand:DI 1 "input_operand"
+				" J,U,T,r,o,i,r, f, T, o, f, f"))]
+  "! TARGET_ARCH64 && ! TARGET_INTEGER_LDD_STD
+   && (register_operand (operands[0], DImode)
+       || register_operand (operands[1], DImode))"
+  "@
+   #
+   #
+   #
+   #
+   #
+   #
+   #
+   std\t%1, %0
+   ldd\t%1, %0
+   #
+   #
+   #"
+  [(set_attr "type" "store,store,load,*,*,*,*,fpstore,fpload,*,*,*")
+   (set_attr "length" "2,2,2,2,2,2,2,*,*,2,2,2")])
+
+(define_insn "*movdi_insn_sp32_v9_nolddstd"
+  [(set (match_operand:DI 0 "nonimmediate_operand"
+					"=T,o,T,U,o,r,r,r,?T,?f,?f,?o,?e,?e,?W")
+        (match_operand:DI 1 "input_operand"
+					" J,J,U,T,r,o,i,r, f, T, o, f, e, W, e"))]
+  "! TARGET_ARCH64 && TARGET_V9 && ! TARGET_INTEGER_LDD_STD
+   && (GET_CODE (operands[0]) != MEM || GET_CODE (operands[1]) != MEM)"
+  "@
+   stx\t%%g0, %0
+   #
+   #
+   #
+   #
+   #
+   #
+   #
+   std\t%1, %0
+   ldd\t%1, %0
+   #
+   #
+   fmovd\\t%1, %0
+   ldd\\t%1, %0
+   std\\t%1, %0"
+  [(set_attr "type" "store,store,store,load,*,*,*,*,fpstore,fpload,*,*,fpmove,fpload,fpstore")
+   (set_attr "length" "*,2,2,2,2,2,2,2,*,*,2,2,*,*,*")
+   (set_attr "fptype" "*,*,*,*,*,*,*,*,*,*,*,*,double,*,*")])
+      
 (define_insn "*movdi_insn_sp32_v9"
   [(set (match_operand:DI 0 "nonimmediate_operand"
 					"=T,o,T,U,o,r,r,r,?T,?f,?f,?o,?e,?e,?W")
         (match_operand:DI 1 "input_operand"
 					" J,J,U,T,r,o,i,r, f, T, o, f, e, W, e"))]
-  "! TARGET_ARCH64
+  "! TARGET_ARCH64 && TARGET_INTEGER_LDD_STD
    && TARGET_V9
    && (register_operand (operands[0], DImode)
        || register_or_zero_operand (operands[1], DImode))"
@@ -7385,7 +7438,7 @@
       (const_int 0))
    (set (match_operand:SI 1 "memory_operand" "")
       (const_int 0))]
-  "TARGET_V9
+  "TARGET_V9 && TARGET_INTEGER_LDD_STD
    && mems_ok_for_ldd_peep (operands[0], operands[1], NULL_RTX)"
   [(set (match_dup 0)
        (const_int 0))]
@@ -7396,7 +7449,7 @@
       (const_int 0))
    (set (match_operand:SI 1 "memory_operand" "")
       (const_int 0))]
-  "TARGET_V9
+  "TARGET_V9 && TARGET_INTEGER_LDD_STD
    && mems_ok_for_ldd_peep (operands[1], operands[0], NULL_RTX)"
   [(set (match_dup 1)
        (const_int 0))]
@@ -7407,7 +7460,8 @@
         (match_operand:SI 1 "memory_operand" ""))
    (set (match_operand:SI 2 "register_operand" "")
         (match_operand:SI 3 "memory_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[0], operands[2]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[0], operands[2]) 
    && mems_ok_for_ldd_peep (operands[1], operands[3], operands[0])" 
   [(set (match_dup 0)
 	(match_dup 1))]
@@ -7419,7 +7473,8 @@
         (match_operand:SI 1 "register_operand" ""))
    (set (match_operand:SI 2 "memory_operand" "")
         (match_operand:SI 3 "register_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[1], operands[3]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[1], operands[3]) 
    && mems_ok_for_ldd_peep (operands[0], operands[2], NULL_RTX)"
   [(set (match_dup 0)
 	(match_dup 1))]
@@ -7431,7 +7486,8 @@
         (match_operand:SF 1 "memory_operand" ""))
    (set (match_operand:SF 2 "register_operand" "")
         (match_operand:SF 3 "memory_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[0], operands[2]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[0], operands[2]) 
    && mems_ok_for_ldd_peep (operands[1], operands[3], operands[0])"
   [(set (match_dup 0)
 	(match_dup 1))]
@@ -7443,7 +7499,8 @@
         (match_operand:SF 1 "register_operand" ""))
    (set (match_operand:SF 2 "memory_operand" "")
         (match_operand:SF 3 "register_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[1], operands[3]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[1], operands[3]) 
   && mems_ok_for_ldd_peep (operands[0], operands[2], NULL_RTX)"
   [(set (match_dup 0)
 	(match_dup 1))]
@@ -7455,7 +7512,8 @@
         (match_operand:SI 1 "memory_operand" ""))
    (set (match_operand:SI 2 "register_operand" "")
         (match_operand:SI 3 "memory_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[2], operands[0]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[2], operands[0]) 
   && mems_ok_for_ldd_peep (operands[3], operands[1], operands[0])"
   [(set (match_dup 2)
 	(match_dup 3))]
@@ -7467,7 +7525,8 @@
         (match_operand:SI 1 "register_operand" ""))
    (set (match_operand:SI 2 "memory_operand" "")
         (match_operand:SI 3 "register_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[3], operands[1]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[3], operands[1]) 
   && mems_ok_for_ldd_peep (operands[2], operands[0], NULL_RTX)" 
   [(set (match_dup 2)
 	(match_dup 3))]
@@ -7480,7 +7539,8 @@
         (match_operand:SF 1 "memory_operand" ""))
    (set (match_operand:SF 2 "register_operand" "")
         (match_operand:SF 3 "memory_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[2], operands[0]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[2], operands[0]) 
   && mems_ok_for_ldd_peep (operands[3], operands[1], operands[0])"
   [(set (match_dup 2)
 	(match_dup 3))]
@@ -7492,7 +7552,8 @@
         (match_operand:SF 1 "register_operand" ""))
    (set (match_operand:SF 2 "memory_operand" "")
         (match_operand:SF 3 "register_operand" ""))]
-  "registers_ok_for_ldd_peep (operands[3], operands[1]) 
+  "TARGET_INTEGER_LDD_STD
+   && registers_ok_for_ldd_peep (operands[3], operands[1]) 
   && mems_ok_for_ldd_peep (operands[2], operands[0], NULL_RTX)"
   [(set (match_dup 2)
 	(match_dup 3))]

@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -114,12 +116,33 @@ build_cgraph_edges (void)
   struct cgraph_node *node = cgraph_node (current_function_decl);
   struct pointer_set_t *visited_nodes = pointer_set_create ();
   block_stmt_iterator bsi;
+  tree_stmt_iterator tsi;
   tree step;
   int entry_freq = ENTRY_BLOCK_PTR->frequency;
 
   if (!entry_freq)
     entry_freq = 1;
 
+  if (flag_use_rtl_backend == 0)
+    for (tsi = tsi_start (DECL_SAVED_TREE (body)); !tsi_end_p (tsi); tsi_next (&tsi))
+      {
+	tree stmt = tsi_stmt (tsi);
+	tree call = get_call_expr_in (stmt);
+	tree decl;
+
+	if (call && (decl = get_callee_fndecl (call)))
+	  {
+	    cgraph_create_edge (node, cgraph_node (decl), stmt, 0, 0);
+	    walk_tree (&TREE_OPERAND (call, 1),
+		       record_reference, node, visited_nodes);
+	    if (TREE_CODE (stmt) == MODIFY_EXPR)
+	      walk_tree (&TREE_OPERAND (stmt, 0),
+			 record_reference, node, visited_nodes);
+	  }
+	else
+	  walk_tree (tsi_stmt_ptr (tsi), record_reference, node, visited_nodes);
+      }
+  else
   /* Create the callgraph edges and record the nodes referenced by the function.
      body.  */
   FOR_EACH_BB (bb)

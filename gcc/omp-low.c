@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -43,6 +45,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "splay-tree.h"
 #include "optabs.h"
 #include "cfgloop.h"
+#include "tree-ir.h"
 
 /* Lowering of OpenMP parallel and workshare constructs proceeds in two 
    phases.  The first phase scans the function looking for OMP statements
@@ -4254,7 +4257,9 @@ execute_expand_omp (void)
 static bool
 gate_expand_omp_ssa (void)
 {
-  return flag_openmp_ssa && flag_openmp != 0 && errorcount == 0;
+  /* Not for gccfss
+     return flag_openmp_ssa && flag_openmp != 0 && errorcount == 0; */
+  return 0;
 }
 
 struct tree_opt_pass pass_expand_omp_ssa = 
@@ -4279,8 +4284,13 @@ struct tree_opt_pass pass_expand_omp_ssa =
 static bool
 gate_expand_omp (void)
 {
-  return ((!flag_openmp_ssa || !optimize)
-	  && flag_openmp != 0 && errorcount == 0);
+  /* Create a new option to expand omp constructs
+     in order to use gcc's implementation.
+     flag_openmp != 0 && errorcount == 0 */
+    
+  return 0;
+  /*  return ((!flag_openmp_ssa || !optimize)
+      && flag_openmp != 0 && errorcount == 0);*/
 }
 
 struct tree_opt_pass pass_expand_omp = 
@@ -5140,7 +5150,11 @@ execute_lower_omp (void)
 static bool
 gate_lower_omp (void)
 {
-  return flag_openmp != 0;
+  /* Create a new option to allow lowering of omp
+     in order to use gcc's implementation.
+     flag_openmp != 0 */
+    
+  return 0;
 }
 
 struct tree_opt_pass pass_lower_omp = 
@@ -5211,16 +5225,71 @@ static tree
 diagnose_sb_1 (tree *tp, int *walk_subtrees, void *data)
 {
   struct walk_stmt_info *wi = data;
-  tree context = (tree) wi->info;
+  omp_context *ctx, *prev_ctx;
+  tree context;
   tree inner_context;
   tree t = *tp;
 
+  prev_ctx = (omp_context *) wi->info;
+  if (prev_ctx)
+    context = prev_ctx->record_type;
+  else
+    context = NULL_TREE;
+
+  ctx = NULL;
+  
+  if (EXPR_HAS_LOCATION (t))
+    input_location = EXPR_LOCATION (t);
+    
+  /* Check the OpenMP nesting restrictions.  */
+  if (flag_use_rtl_backend == 0 && prev_ctx != NULL)
+    {
+      if (OMP_DIRECTIVE_P (t))
+        check_omp_nesting_restrictions (t, prev_ctx);
+      else if (TREE_CODE(t) == CALL_EXPR)
+        {
+          if (TREE_CODE (TREE_OPERAND (t, 0)) == ADDR_EXPR
+              && (TREE_CODE (TREE_OPERAND (TREE_OPERAND (t, 0), 0))
+                  == FUNCTION_DECL)
+              && DECL_BUILT_IN (TREE_OPERAND (TREE_OPERAND (t, 0), 0)))
+            {
+              tree fndecl = get_callee_fndecl (t);  
+              enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
+              if (fcode == BUILT_IN_GOMP_BARRIER)
+                {
+                    /* check for nesting of barrier. This is not
+                       currently done by check_omp_nesting_restrictions. */
+                    for (ctx = prev_ctx; ctx != NULL; ctx = ctx->outer)
+                      switch (TREE_CODE (ctx->stmt))
+                        {
+                        case OMP_FOR:
+                        case OMP_SECTIONS:
+                        case OMP_SINGLE:
+                        case OMP_ORDERED:
+                        case OMP_MASTER:
+                        case OMP_CRITICAL:
+                          warning (0, "barrier are not permitted in the dynamic extent "
+                                   "of DO/for, ordered, sections, single, master, and "
+                                   "critical regions.");
+                          break;
+                        default:
+                          break;
+                        }
+                }
+            }
+        }
+    }
+  
   *walk_subtrees = 0;
   switch (TREE_CODE (t))
     {
     case OMP_PARALLEL:
     case OMP_SECTIONS:
     case OMP_SINGLE:
+    case OMP_TASK:
+      ctx = new_omp_context (t, prev_ctx);
+      ctx->record_type = context;
+      wi->info = ctx;
       walk_tree (&OMP_CLAUSES (t), diagnose_sb_1, wi, NULL);
       /* FALLTHRU */
     case OMP_SECTION:
@@ -5229,21 +5298,26 @@ diagnose_sb_1 (tree *tp, int *walk_subtrees, void *data)
     case OMP_CRITICAL:
       /* The minimal context here is just a tree of statements.  */
       inner_context = tree_cons (NULL, t, context);
-      wi->info = inner_context;
+      if (ctx == NULL)
+        ctx = new_omp_context (t, prev_ctx);
+      ctx->record_type = inner_context;      
+      wi->info = ctx;
       walk_stmts (wi, &OMP_BODY (t));
-      wi->info = context;
+      wi->info = prev_context;
       break;
 
     case OMP_FOR:
       walk_tree (&OMP_FOR_CLAUSES (t), diagnose_sb_1, wi, NULL);
       inner_context = tree_cons (NULL, t, context);
-      wi->info = inner_context;
+      ctx = new_omp_context (t, prev_ctx);
+      ctx->record_type = inner_context;
+      wi->info = ctx;
       walk_tree (&OMP_FOR_INIT (t), diagnose_sb_1, wi, NULL);
       walk_tree (&OMP_FOR_COND (t), diagnose_sb_1, wi, NULL);
       walk_tree (&OMP_FOR_INCR (t), diagnose_sb_1, wi, NULL);
       walk_stmts (wi, &OMP_FOR_PRE_BODY (t));
       walk_stmts (wi, &OMP_FOR_BODY (t));
-      wi->info = context;
+      wi->info = prev_ctx;
       break;
 
     case LABEL_EXPR:
@@ -5275,6 +5349,7 @@ diagnose_sb_2 (tree *tp, int *walk_subtrees, void *data)
     case OMP_PARALLEL:
     case OMP_SECTIONS:
     case OMP_SINGLE:
+    case OMP_TASK:
       walk_tree (&OMP_CLAUSES (t), diagnose_sb_2, wi, NULL);
       /* FALLTHRU */
     case OMP_SECTION:
@@ -5338,15 +5413,24 @@ diagnose_omp_structured_block_errors (tree fndecl)
 {
   tree save_current = current_function_decl;
   struct walk_stmt_info wi;
-
+  location_t saved_location = input_location;
+  
   current_function_decl = fndecl;
 
   all_labels = splay_tree_new (splay_tree_compare_pointers, 0, 0);
-
+  all_contexts = splay_tree_new (splay_tree_compare_pointers, 0,
+				 delete_omp_context);
+  
   memset (&wi, 0, sizeof (wi));
   wi.callback = diagnose_sb_1;
   walk_stmts (&wi, &DECL_SAVED_TREE (fndecl));
 
+  if (all_contexts)
+    {
+      splay_tree_delete (all_contexts);
+      all_contexts = NULL;
+    }
+  
   memset (&wi, 0, sizeof (wi));
   wi.callback = diagnose_sb_2;
   wi.want_locations = true;
@@ -5356,6 +5440,7 @@ diagnose_omp_structured_block_errors (tree fndecl)
   splay_tree_delete (all_labels);
   all_labels = NULL;
 
+  input_location = saved_location;
   current_function_decl = save_current;
 }
 

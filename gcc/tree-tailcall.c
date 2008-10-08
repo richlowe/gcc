@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -399,7 +401,7 @@ find_tail_calls (basic_block bb, struct tailcall **ret)
 	{
 	  ass_var = GIMPLE_STMT_OPERAND (stmt, 0);
 	  call = GIMPLE_STMT_OPERAND (stmt, 1);
-	  if (TREE_CODE (call) == WITH_SIZE_EXPR)
+	  if (TREE_CODE (call) == WITH_SIZE_EXPR || TREE_CODE (call) == NOP_EXPR)
 	    call = TREE_OPERAND (call, 0);
 	}
       else
@@ -1008,7 +1010,7 @@ execute_tail_recursion (void)
 static bool
 gate_tail_calls (void)
 {
-  return flag_optimize_sibling_calls != 0 && dbg_cnt (tail_call);
+  return flag_optimize_sibling_calls != 0 && dbg_cnt (tail_call) && flag_preir_tree_optimizations != 0;
 }
 
 static unsigned int
@@ -1017,10 +1019,18 @@ execute_tail_calls (void)
   return tree_optimize_tail_calls_1 (true);
 }
 
+static bool
+gate_tail_recursion (void)
+{
+  return 1; /* cannot disable it, otherwise some warnings will be missed. 
+             * see gcc.dg/noreturn-7.c
+             * flag_preir_tree_optimizations != 0; */
+}
+
 struct tree_opt_pass pass_tail_recursion = 
 {
   "tailr",				/* name */
-  gate_tail_calls,			/* gate */
+  gate_tail_recursion,			/* gate */
   execute_tail_recursion,		/* execute */
   NULL,					/* sub */
   NULL,					/* next */

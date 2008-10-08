@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -4177,6 +4179,15 @@ expand_assignment (tree to, tree from, bool nontemporal)
 
       to_rtx = expand_normal (tem);
 
+      /* GCCFSS keeps 'a[i]' for array_ref even if a is a pointer variable. 
+         As array_ref, to_rtx actually represents a[0] which is the first 
+         element of array. Need to generate memory access RTL to get it. */
+      if (TREE_CODE (to) == ARRAY_REF 
+          && POINTER_TYPE_P (TREE_TYPE (tem)))
+        {
+           to_rtx = gen_rtx_MEM (DECL_MODE (tem), to_rtx);
+        }
+        
       if (offset != 0)
 	{
 	  rtx offset_rtx;
@@ -6125,7 +6136,11 @@ array_ref_element_size (tree exp)
 tree
 array_ref_low_bound (tree exp)
 {
-  tree domain_type = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (exp, 0)));
+  tree domain_type;
+  if (TREE_CODE (TREE_TYPE (TREE_OPERAND (exp, 0))) == ARRAY_TYPE)
+    domain_type = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (exp, 0)));
+  else
+    domain_type = NULL_TREE;
 
   /* If a lower bound is specified in EXP, use it.  */
   if (TREE_OPERAND (exp, 2))
@@ -6146,7 +6161,11 @@ array_ref_low_bound (tree exp)
 tree
 array_ref_up_bound (tree exp)
 {
-  tree domain_type = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (exp, 0)));
+  tree domain_type;
+  if (TREE_CODE (TREE_TYPE (TREE_OPERAND (exp, 0))) == ARRAY_TYPE)
+    domain_type = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (exp, 0)));
+  else
+    domain_type = NULL_TREE;
 
   /* If there is a domain type and it has an upper bound, use it, substituting
      for a PLACEHOLDER_EXPR as needed.  */
@@ -6858,6 +6877,12 @@ expand_expr_addr_expr_1 (tree exp, rtx target, enum machine_mode tmode,
 
   subtarget = offset || bitpos ? NULL_RTX : target;
   result = expand_expr_addr_expr_1 (inner, subtarget, tmode, modifier);
+  
+  if (TREE_CODE (exp) == ARRAY_REF
+      && POINTER_TYPE_P (TREE_TYPE (inner)))
+    {
+      result = gen_rtx_MEM (DECL_MODE (inner), result);
+    }
 
   if (offset)
     {
@@ -7791,6 +7816,12 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 			  || modifier == EXPAND_STACK_PARM)
 			 ? modifier : EXPAND_NORMAL);
 
+    if (TREE_CODE (exp) == ARRAY_REF
+        && POINTER_TYPE_P (TREE_TYPE (tem)))
+      {
+        orig_op0 = op0 = gen_rtx_MEM (DECL_MODE (tem), op0);
+      }
+           
 	/* If this is a constant, put it into a register if it is a legitimate
 	   constant, OFFSET is 0, and we won't try to extract outside the
 	   register (in case we were passed a partially uninitialized object

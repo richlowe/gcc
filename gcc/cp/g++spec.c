@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -62,6 +64,9 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
      0  means we should link in libstdc++ if it is needed
      1  means libstdc++ is needed and should be linked in.  */
   int library = 0;
+  
+  /* Do we need to add pec_dummy.cc ? */
+  int add_pecdummy = 0;
 
   /* The number of arguments being added to what's in argv, other than
      libraries.  We use this to track the number of times we've inserted
@@ -79,6 +84,9 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
      command line.  Used to avoid adding our own -xc++ if the user
      already gave a language for the file.  */
   int saw_speclang = 0;
+
+  /* "xlibmopt" if it appears on the command line.  */
+  const char *saw_mopt = 0;
 
   /* "-lm" or "-lmath" if it appears on the command line.  */
   const char *saw_math = 0;
@@ -148,23 +156,38 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
 	    saw_verbose_flag = 1;
 	  else if (strncmp (argv[i], "-x", 2) == 0)
 	    {
-	      const char * arg;
-	      if (argv[i][2] != '\0')
-		arg = argv[i]+2;
-	      else if ((argv[i+1]) != NULL)
-		/* We need to swallow arg on next loop.  */
-		quote = arg = argv[i+1];
-  	      else  /* Error condition, message will be printed later.  */
-		arg = "";
-	      if (library == 0
-		  && (strcmp (arg, "c++") == 0
-		      || strcmp (arg, "c++-cpp-output") == 0
-		      || strcmp (arg, "objective-c++") == 0
-		      || strcmp (arg, "objective-c++-cpp-output") == 0))
-		library = 1;
-		
-	      saw_speclang = 1;
-	    }
+              /* need to distinguish between the -x<lang> and the other -x<whatever>
+                 options.  Here we want to handle only the -x<lang> */
+              if (strcmp(argv[i], "-xc++") == 0
+                  || strcmp(argv[i], "-xc++-cpp-output") == 0
+                  || strcmp(argv[i], "-xc++-header") == 0
+                  || strcmp(argv[i], "-xassembler-with-cpp") == 0
+                  || strcmp(argv[i], "-xc") == 0
+                  || strcmp(argv[i], "-xnone") == 0)
+	        {
+                  const char * arg;
+                  if (argv[i][2] != '\0')
+                    arg = argv[i]+2;
+                  else if ((argv[i+1]) != NULL)
+                    /* We need to swallow arg on next loop.  */
+                    quote = arg = argv[i+1];
+                  else  /* Error condition, message will be printed later.  */
+                    arg = "";
+                  if (library == 0
+                      && (strcmp (arg, "c++") == 0
+                          || strcmp (arg, "c++-cpp-output") == 0
+                          || strcmp (arg, "objective-c++") == 0
+                          || strcmp (arg, "objective-c++-cpp-output") == 0))
+                    library = 1;		
+                  saw_speclang = 1;
+                }
+              else /* -x<whaterver> options */
+               {
+                 if (!saw_mopt && !strcmp(argv[i], "-xlibmopt") )
+                   saw_mopt = "-lmopt";
+                 continue;
+               }
+            }
 	  else if (strcmp (argv[i], "-ObjC++") == 0)
 	    {
 	      if (library == 0)
@@ -179,6 +202,11 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
 	      if (library == 0)
 		library = 1;
 	    }
+	  else if (strncmp (argv[i], "-Zpec=", 6) == 0) 
+	    {
+              add_pecdummy = 1;
+	      library = (library == 0) ? 1 : library;
+            }
 	  else if (strncmp (argv[i], "-Wl,", 4) == 0)
 	    library = (library == 0) ? 1 : library;
 	  /* Unrecognized libraries (e.g. -lfoo) may require libstdc++.  */
@@ -257,7 +285,7 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
 #endif
 
   /* Make sure to have room for the trailing NULL argument.  */
-  num_args = argc + added + need_math + shared_libgcc + (library > 0) + 1;
+  num_args = argc + added + need_math + shared_libgcc + 2*(library > 0) + 1 + add_pecdummy;
   arglist = XNEWVEC (const char *, num_args);
 
   i = 0;
@@ -315,6 +343,9 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
   /* Add `-lstdc++' if we haven't already done so.  */
   if (library > 0)
     {
+      /* in order to make sure user's mallocs can be found */
+      arglist[j] = "-umalloc"; 
+      j++;
       arglist[j] = saw_profile_flag ? LIBSTDCXX_PROFILE : LIBSTDCXX;
       if (arglist[j][0] != '-' || arglist[j][1] == 'l')
 	added_libraries++;
@@ -324,6 +355,12 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
     arglist[j++] = saw_math;
   else if (library > 0 && need_math)
     {
+      if (saw_mopt)
+        {
+          arglist[j] = saw_mopt;
+          j++;
+          added_libraries++;
+        }
       arglist[j] = saw_profile_flag ? MATH_LIBRARY_PROFILE : MATH_LIBRARY;
       if (arglist[j][0] != '-' || arglist[j][1] == 'l')
 	added_libraries++;
@@ -334,6 +371,9 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
   if (shared_libgcc)
     arglist[j++] = "-shared-libgcc";
 
+  if (add_pecdummy)
+    arglist[j++] = "-Zpecdummycc";
+    
   arglist[j] = NULL;
 
   *in_argc = j;
@@ -349,3 +389,37 @@ int lang_specific_pre_link (void)  /* Not used for C++.  */
 
 /* Number of extra output files that lang_specific_pre_link may generate.  */
 int lang_specific_extra_outfiles = 0;  /* Not used for C++.  */
+
+#ifdef TARGET_OPTION_TRANSLATE_TABLE
+/* for now doe not expand -fast to include -xmemalign=8s */
+const struct {
+  const char *const option_found;
+  const char *const replacements;
+} target_option_translations[] =
+#ifndef __linux__
+{
+  { "-fast", "-Zfast -xtarget=native -Zfns=yes -ffast-math -Zfsimple=2 -Zftrap=%none -xbuiltin=%all -xlibmil -xlibmopt -Zalias_level=basic -xdepend=yes -xprefetch=auto,explicit -xprefetch_level=2" },
+  { "-xinstrument=datarace", "-xinstrument=datarace -g"},
+  { "-O1", "-O1 -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  { "-O", "-O -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=no"}, \
+  { "-O2", "-O2 -Zalias_level=basic -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-O3", "-O3 -Zalias_level=layout -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-Os", "-O2 -Zalias_level=basic -xspace -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  TARGET_OPTION_TRANSLATE_TABLE,
+  { 0, 0 }
+};
+#else
+{
+  { "-fast", "-Zfast -xtarget=native -Zfns=yes -ffast-math -Zfsimple=2 -Zftrap=%none -xbuiltin=%all -Zalias_level=basic -xdepend=yes -xprefetch=auto,explicit -xprefetch_level=1" },
+  { "-xinstrument=datarace", "-xinstrument=datarace -g"},
+  { "-O1", "-O1 -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  { "-O", "-O -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=no"}, \
+  { "-O2", "-O2 -Zalias_level=basic -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-O3", "-O3 -Zalias_level=layout -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-Os", "-O2 -Zalias_level=basic -xspace -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  TARGET_OPTION_TRANSLATE_TABLE,
+  { 0, 0 }
+};
+#endif
+#endif
+

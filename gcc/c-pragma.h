@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_C_PRAGMA_H
 #define GCC_C_PRAGMA_H
 
@@ -42,7 +44,9 @@ typedef enum pragma_kind {
   PRAGMA_OMP_SECTIONS,
   PRAGMA_OMP_SINGLE,
   PRAGMA_OMP_THREADPRIVATE,
-
+  PRAGMA_OMP_TASK,
+  PRAGMA_OMP_TASKWAIT,
+  
   PRAGMA_GCC_PCH_PREPROCESS,
 
   PRAGMA_FIRST_EXTERNAL
@@ -66,7 +70,14 @@ typedef enum pragma_omp_clause {
   PRAGMA_OMP_CLAUSE_PRIVATE,
   PRAGMA_OMP_CLAUSE_REDUCTION,
   PRAGMA_OMP_CLAUSE_SCHEDULE,
-  PRAGMA_OMP_CLAUSE_SHARED
+  PRAGMA_OMP_CLAUSE_SHARED,
+
+  /* Sun extension for autoscoping */
+  PRAGMA_OMP_CLAUSE_AUTO,
+
+  /* OpenMP 3.0 TaskQ */
+  PRAGMA_OMP_CLAUSE_UNTIED,
+  PRAGMA_OMP_CLAUSE_COLLAPSE
 } pragma_omp_clause;
 
 extern struct cpp_reader* parse_in;

@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /*  Inlining decision heuristics
 
     We separate inlining decisions from the inliner itself and store it
@@ -411,7 +413,7 @@ cgraph_default_inline_p (struct cgraph_node *n, const char **reason)
       return false;
     }
 
-  if (!DECL_STRUCT_FUNCTION (decl)->cfg)
+  if (!DECL_STRUCT_FUNCTION (decl)->cfg && flag_use_rtl_backend)
     {
       if (reason)
 	*reason = N_("function body not available");

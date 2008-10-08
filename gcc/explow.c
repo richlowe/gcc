@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 #include "config.h"
 #include "system.h"
@@ -1050,8 +1051,8 @@ update_nonlocal_goto_save_area (void)
      first one is used for the frame pointer save; the rest are sized by
      STACK_SAVEAREA_MODE.  Create a reference to array index 1, the first
      of the stack save area slots.  */
-  t_save = build4 (ARRAY_REF, ptr_type_node, cfun->nonlocal_goto_save_area,
-		   integer_one_node, NULL_TREE, NULL_TREE);
+  t_save = build5 (ARRAY_REF, ptr_type_node, cfun->nonlocal_goto_save_area,
+		   integer_one_node, NULL_TREE, NULL_TREE, NULL_TREE);
   r_save = expand_expr (t_save, NULL_RTX, VOIDmode, EXPAND_WRITE);
 
   emit_stack_save (SAVE_NONLOCAL, &r_save, NULL_RTX);

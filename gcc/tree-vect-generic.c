@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -527,6 +529,23 @@ expand_vector_operations (void)
   return 0;
 }
 
+static unsigned int
+expand_vector_operations_nocfg (void)
+{
+  tree_stmt_iterator tsi;
+  block_stmt_iterator bsi;
+
+  bsi.bb = 0;
+  for (tsi = tsi_start (DECL_SAVED_TREE (current_function_decl)); 
+       !tsi_end_p (tsi); tsi_next (&tsi))
+    {
+      bsi.tsi = tsi;
+      expand_vector_operations_1 (&bsi);
+      update_stmt_if_modified (tsi_stmt (tsi));
+    }
+  return 0;
+}
+
 struct tree_opt_pass pass_lower_vector = 
 {
   "veclower",				/* name */
@@ -542,6 +561,24 @@ struct tree_opt_pass pass_lower_vector =
   0,					/* todo_flags_start */
   TODO_dump_func | TODO_ggc_collect
     | TODO_verify_stmts,		/* todo_flags_finish */
+  0					/* letter */
+};
+
+struct tree_opt_pass pass_lower_vector_nocfg = 
+{
+  "veclower_nocfg",				/* name */
+  0,					/* gate */
+  expand_vector_operations_nocfg,		/* execute */
+  NULL,					/* sub */
+  NULL,					/* next */
+  0,					/* static_pass_number */
+  0,					/* tv_id */
+  PROP_gimple_leh,			/* properties_required */
+  0,                    		/* properties_provided */
+  0,					/* properties_destroyed */
+  0,					/* todo_flags_start */
+  TODO_dump_func | TODO_ggc_collect
+    /*| TODO_verify_stmts*/,		/* todo_flags_finish */
   0					/* letter */
 };
 

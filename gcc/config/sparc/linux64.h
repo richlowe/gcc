@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #define TARGET_OS_CPP_BUILTINS()			\
   do							\
     {							\
@@ -119,6 +121,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC "\
 %{posix:-D_POSIX_SOURCE} \
+%{Zmt|xautopar:-D_REENTRANT} \
 %{pthread:-D_REENTRANT} \
 "
 
@@ -126,7 +129,7 @@ along with GCC; see the file COPYING3.  If not see
 #define LIB_SPEC \
   "%{pthread:-lpthread} \
    %{shared:-lc} \
-   %{!shared: %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
+   %{!shared: %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc} -lcplxsupp}"
 
 /* Provide a LINK_SPEC appropriate for GNU/Linux.  Here we provide support
    for the special GCC options -static and -shared, which allow us to
@@ -167,7 +170,16 @@ along with GCC; see the file COPYING3.  If not see
   { "link_arch_default", LINK_ARCH_DEFAULT_SPEC },	  \
   { "link_arch",	 LINK_ARCH_SPEC },
 
-#define LINK_ARCH32_SPEC "-m elf32_sparc -Y P,/usr/lib %{shared:-shared} \
+/* old style -Y P,/usr/lib */
+#define LINK_ARCH32_SPEC "-m elf32_sparc \
+  %{mcpu=ultrasparc|Zarchm32=v8plusa:-Y P,%J/v8plusa:%J:/usr/lib ; \
+    mcpu=ultrasparc3|Zarchm32=v8plusb:-Y P,%J/v8plusb:%J:/usr/lib ; \
+    Zarchm32=v8plus:-Y P,%J/v8plus:%J:/usr/lib ; \
+    Zarchm32=v8:-Y P,%J/v8:%J:/usr/lib ; \
+                    :-Y P,%J/v8plus:%J:/usr/lib} \
+  %{shared:-shared} \
+  %{R*} \
+  %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -rpath %H}}}} \
   %{!shared: \
     %{!ibcs: \
       %{!static: \
@@ -176,7 +188,15 @@ along with GCC; see the file COPYING3.  If not see
         %{static:-static}}} \
 "
 
-#define LINK_ARCH64_SPEC "-m elf64_sparc -Y P,/usr/lib64 %{shared:-shared} \
+/* old style  -Y P,/usr/lib64  */
+#define LINK_ARCH64_SPEC "-m elf64_sparc \
+  %{mcpu=v9|Zarchm64=v9:-Y P,%J/v9:/usr/lib64 ; \
+    mcpu=ultrasparc3|Zarchm64=v9b:-Y P,%J/v9b:%J/v9:/usr/lib64 ; \
+    Zarchm64=v9a:-Y P,%J/v9a:%J/v9:/usr/lib64 ; \
+                    :-Y P,%J/v9a:%J:/usr/lib64} \
+  %{shared:-shared} \
+  %{R*} \
+  %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -rpath %H/64}}}} \
   %{!shared: \
     %{!ibcs: \
       %{!static: \
@@ -210,8 +230,8 @@ along with GCC; see the file COPYING3.  If not see
 %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
 %{m32:%{m64:%emay not use both -m32 and -m64}} \
 %{m64:-mptr64 -mstack-bias -mlong-double-128 \
-  %{!mcpu*:%{!mcypress:%{!msparclite:%{!mf930:%{!mf934:%{!mv8:%{!msupersparc:-mcpu=ultrasparc}}}}}}} \
-  %{!mno-vis:%{!mcpu=v9:-mvis}}} \
+  %{!mcpu*:%{!mcypress:%{!msparclite:%{!mf930:%{!mf934:%{!mv8:%{!msupersparc:-mcpu=v9}}}}}}} \
+  } \
 "
 #else
 #define CC1_SPEC "\
@@ -222,8 +242,8 @@ along with GCC; see the file COPYING3.  If not see
 %{m32:%{m64:%emay not use both -m32 and -m64}} \
 %{m32:-mptr32 -mno-stack-bias %{!mlong-double-128:-mlong-double-64} \
   %{!mcpu*:%{!mcypress:%{!msparclite:%{!mf930:%{!mf934:%{!mv8:%{!msupersparc:-mcpu=cypress}}}}}}}} \
-%{!m32:%{!mcpu*:-mcpu=ultrasparc}} \
-%{!mno-vis:%{!m32:%{!mcpu=v9:-mvis}}} \
+%{!m32:%{!mcpu*:-mcpu=v9}} \
+\
 "
 #endif
 
@@ -281,7 +301,7 @@ along with GCC; see the file COPYING3.  If not see
 %{T} \
 %{Ym,*} \
 %{Wa,*:%*} \
--s %{fpic|fPIC|fpie|fPIE:-K PIC} \
+-s %{fpic|fPIC|fpie|fPIE|xcode=pic13|xcode=pic32:-K PIC} \
 %{mlittle-endian:-EL} \
 %(asm_cpu) %(asm_arch) %(asm_relax)"
 
@@ -380,3 +400,5 @@ do {									\
 
 /* Define if long doubles should be mangled as 'g'.  */
 #define TARGET_ALTERNATE_LONG_DOUBLE_MANGLING
+#include "../target-option-table.h"
+

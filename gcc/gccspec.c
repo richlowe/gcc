@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -40,6 +42,10 @@ lang_specific_driver (int *in_argc ATTRIBUTE_UNUSED,
 
   /* True if we should add -shared-libgcc to the command-line.  */
   int shared_libgcc = 0;
+  int forget_shared_libgcc = 0;
+
+  /* True if we should add -Zpedummy to the command-line. */
+  int add_pecdummy = 0;
 
   /* The total number of arguments with the new stuff.  */
   int argc;
@@ -56,7 +62,9 @@ lang_specific_driver (int *in_argc ATTRIBUTE_UNUSED,
 	{
 	  if (strcmp (argv[i], "-static-libgcc") == 0
 	      || strcmp (argv[i], "-static") == 0)
-	    return;
+	    forget_shared_libgcc = 1;
+          else if (strncmp(argv[i], "-Zpec=", 6) == 0)
+            add_pecdummy = 1;
 	}
       else
 	{
@@ -67,15 +75,15 @@ lang_specific_driver (int *in_argc ATTRIBUTE_UNUSED,
 	  len = strlen (argv[i]);
 	  if ((len > 2 && argv[i][len - 2] == '.' && argv[i][len - 1] == 'm')
 	      ||  (len > 3 && argv[i][len - 3] == '.' && argv[i][len - 2] == 'm'
-		   && argv[i][len - 1] == 'i'))
+		   && argv[i][len - 1] == 'i') && (forget_shared_libgcc == 0))
 	    shared_libgcc = 1;
 	}
     }
 
-  if  (shared_libgcc)
+  if  ((shared_libgcc && (forget_shared_libgcc == 0))|| add_pecdummy)
     {
       /* Make sure to have room for the trailing NULL argument.  */
-      arglist = XNEWVEC (const char *, argc + 2);
+      arglist = XNEWVEC (const char *, argc + 1 + shared_libgcc + add_pecdummy);
 
       i = 0;
       do
@@ -85,7 +93,11 @@ lang_specific_driver (int *in_argc ATTRIBUTE_UNUSED,
 	}
       while (i < argc);
 
-      arglist[i++] = "-shared-libgcc";
+       if (shared_libgcc) 
+        arglist[i++] = "-shared-libgcc";
+
+      if (add_pecdummy)
+        arglist[i++] = "-Zpecdummyc";
 
       arglist[i] = NULL;
 
@@ -104,3 +116,41 @@ lang_specific_pre_link (void)
 
 /* Number of extra output files that lang_specific_pre_link may generate.  */
 int lang_specific_extra_outfiles = 0;  /* Not used for C.  */
+
+#ifdef TARGET_OPTION_TRANSLATE_TABLE
+/* for now -fast does not expand with -xmemalign=8s */
+const struct {
+  const char *const option_found;
+  const char *const replacements;
+} target_option_translations[] =
+#ifndef __linux__
+{
+  { "-fast", "-Zfast -xtarget=native -Zfns=yes -ffast-math -Zfsimple=2 -Zftrap=%none -xbuiltin=%all -xlibmil -xlibmopt -Zalias_level=basic -xdepend=yes -xprefetch=auto,explicit -xprefetch_level=2" },
+  { "-Zpecdummy", "-Zpecdummyc" },
+  { "-xautopar", "-xautopar -xdepend=yes"},
+  { "-xinstrument=datarace", "-xinstrument=datarace -g"},
+  { "-O1", "-O1 -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  { "-O", "-O -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=no"}, \
+  { "-O2", "-O2 -Zalias_level=basic -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-O3", "-O3 -Zalias_level=std -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-Os", "-O2 -Zalias_level=basic -xspace -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  TARGET_OPTION_TRANSLATE_TABLE,
+  { 0, 0 }
+};
+#else
+{
+  { "-fast", "-Zfast -xtarget=native -Zfns=yes -ffast-math -Zfsimple=2 -Zftrap=%none -xbuiltin=%all -Zalias_level=basic -xdepend=yes -xprefetch=auto,explicit -xprefetch_level=1" },
+  { "-Zpecdummy", "-Zpecdummyc" },
+  { "-xautopar", "-xautopar -xdepend=yes"},
+  { "-xinstrument=datarace", "-xinstrument=datarace -g"},
+  { "-O1", "-O1 -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  { "-O", "-O -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=no"}, \
+  { "-O2", "-O2 -Zalias_level=basic -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-O3", "-O3 -Zalias_level=std -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-Os", "-O2 -Zalias_level=basic -xspace -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  TARGET_OPTION_TRANSLATE_TABLE,
+  { 0, 0 }
+};
+#endif
+#endif
+

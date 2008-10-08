@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -31,7 +33,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "tree-ssa-propagate.h"
 #include "diagnostic.h"
-
+#include "c-tree.h"
 
 /* For each complex ssa name, a lattice value.  We're interested in finding
    out whether a complex number is degenerate in some way, having only real
@@ -1574,11 +1576,55 @@ tree_lower_complex_O0 (void)
   return 0;
 }
 
+/* need to run 2nd pass of gimplifier before build_cfg to gimplify
+   all expressions to the form that lower_complex, into-ssa and all 
+   other phases will tolerate */
+static unsigned int
+tree_regimple (void)
+{
+  tree_stmt_iterator tsi;
+  
+  push_gimplify_context ();
+  tsi = tsi_start (DECL_SAVED_TREE (current_function_decl));
+  while (!tsi_end_p (tsi))
+    {
+      tree t;
+      tree * stmt = tsi_stmt_ptr (tsi);
+
+      /* reverse a[i] to *(a+i) for better comprehension of optimization passes on RTL. */ 
+      if (*stmt != NULL_TREE 
+          && TREE_CODE (*stmt) == MODIFY_EXPR
+          && TREE_CODE (TREE_OPERAND (*stmt, 0)) == ARRAY_REF
+          && TREE_CODE (TREE_TYPE (TREE_OPERAND (TREE_OPERAND (*stmt, 0), 0))) == POINTER_TYPE) 
+        {
+           tree arrref = TREE_OPERAND (*stmt, 0);
+           TREE_OPERAND (*stmt, 0) = build_array_ref (TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1));  
+        }
+
+      gimplify_stmt (stmt);
+
+      t = tsi_stmt (tsi);
+      if (t == NULL)
+        tsi_delink (&tsi);
+      else if (TREE_CODE (t) == STATEMENT_LIST)
+        {
+          tsi_link_before (&tsi, t, TSI_SAME_STMT);
+          tsi_delink (&tsi);
+        }
+      else
+        tsi_next (&tsi);
+    }
+  pop_gimplify_context (0);
+  
+  return 0;
+}
+
 static bool
 gate_no_optimization (void)
 {
   /* With errors, normal optimization passes are not run.  If we don't
      lower complex operations at all, rtl expansion will abort.  */
+  /* No need to lower complex operations for IR gen */
   return optimize == 0 || sorrycount || errorcount;
 }
 
@@ -1599,3 +1645,22 @@ struct tree_opt_pass pass_lower_complex_O0 =
     | TODO_verify_stmts,		/* todo_flags_finish */
   0					/* letter */
 };
+
+struct tree_opt_pass pass_regimple = 
+{
+  "regmpl",     			/* name */
+  NULL,                         	/* gate */
+  tree_regimple,                	/* execute */
+  NULL,					/* sub */
+  NULL,					/* next */
+  0,					/* static_pass_number */
+  0,					/* tv_id */
+  0,	        			/* properties_required */
+  0,					/* properties_provided */
+  0,					/* properties_destroyed */
+  0,					/* todo_flags_start */
+  TODO_dump_func | TODO_ggc_collect
+    /*| TODO_verify_stmts*/,		/* todo_flags_finish */
+  0					/* letter */
+};
+

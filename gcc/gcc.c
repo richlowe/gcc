@@ -22,6 +22,8 @@ along with GCC; see the file COPYING3.  If not see
 This paragraph is here to try to keep Sun CC from dying.
 The number of chars here seems crucial!!!!  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This program is the user interface to the C compiler and possibly to
 other compilers.  It is used because compilation is a complicated procedure
 which involves running several programs and passing temporary files between
@@ -365,7 +367,27 @@ static const char *replace_outfile_spec_function (int, const char **);
 static const char *version_compare_spec_function (int, const char **);
 static const char *include_spec_function (int, const char **);
 static const char *print_asm_header_spec_function (int, const char **);
-
+
+static char *make_absolute_from_Y(const char *, const char *);
+static char *debug_driver = NULL;
+/* values for debug_driver_val and what you will see
+   0x01 - show what is happening with command line options
+   0x02 - values of variables containing location of files
+   0x04 - multilib_dir
+   0x08 - input_basename
+   0x10 - do_spec_path  
+   0x20 - add-prefix (startfile prefix)
+   0x40 - -isystem from include prefix */
+static long debug_driver_val = 0;
+static void delete_duplicate_options (int *, char ***);
+static int translate_native_options (int *, char ***);
+static const char *find_executable_file (const char *);
+static void warning (const char *, ...) ATTRIBUTE_PRINTF_1;
+static void add_iropt_option (const char *, int);
+static void add_sscg_option (const char *, int);
+static void add_ipo_option (const char *, int);
+static void add_postopt_option (const char *, int);
+
 /* The Specs Language
 
 Specs are strings containing lines, each of which (if not blank)
@@ -427,6 +449,10 @@ or with constant text in a single argument.
         substitutes .SUFFIX for the suffixes of a matched switch's args when
         it is subsequently output with %*. SUFFIX is terminated by the next
         space or %.
+ %+SUFFIX
+        appends .SUFFIX to the matched switch's args when
+        it is subsequently output with %*. SUFFIX is terminated by the next
+        space or %.
  %d	marks the argument containing or following the %d as a
 	temporary file name, so that that file will be deleted if CC exits
 	successfully.  Unlike %g, this contributes no text to the argument.
@@ -452,16 +478,27 @@ or with constant text in a single argument.
 	except that %g, %u, and %U do not currently support additional
 	SUFFIX characters following %O as they would following, for
 	example, `.o'.
+ %q     Add -I<include directories> from the cross compiler environment variable
  %I	Substitute any of -iprefix (made from GCC_EXEC_PREFIX), -isysroot
 	(made from TARGET_SYSTEM_ROOT), -isystem (made from COMPILER_PATH
 	and -B options) and -imultilib as necessary.
+ %H     Substitute the directory STANDARD_STARTFILE_PREFIX for libstdc++
+ %F     Substitute the directory STANDARD_STARTFILE_PREFIX for gccbuiltins.il
+ %J     Substitute the directory STUDIOPRODDIR_LIB
+ %K     Use alternate directory or standard directory for SunStudio 
+        processes
  %s     current argument is the name of a library or startup file of some sort.
         Search for that file in a standard list of directories
 	and substitute the full name found.
  %eSTR  Print STR as an error message.  STR is terminated by a newline.
         Use this when inconsistent options are detected.
  %nSTR  Print STR as a notice.  STR is terminated by a newline.
+ %NSTR  Print STR as a warning.  STR is terminated by a newline.
  %x{OPTION}	Accumulate an option for %X.
+ %M	Output the accumulated postopt options specified by compilations.
+ %P	Output the accumulated ipo options specified by compilations.
+ %Q	Output the accumulated iropt options specified by compilations.
+ %T	Output the accumulated Sun cg options specified by compilations. 
  %X	Output the accumulated linker options specified by compilations.
  %Y	Output the accumulated assembler options specified by compilations.
  %Z	Output the accumulated preprocessor options specified by compilations.
@@ -709,6 +746,76 @@ proper position among the other output files.  */
 #endif
 #endif
 
+#ifdef __linux__
+#define LINKER_PATH "/usr/bin/ld "
+#else
+#define LINKER_PATH "/usr/ccs/bin/ld "
+#endif
+
+#ifndef __linux__
+#define LINK_COMMAND_LIB  "\
+    %{!xlibmopt: %{O3: -lmopt } }\
+    %{xautopar: -lmtsk -lthread} %{Zmt: -lthread}\
+    %{!shared: %{xprofile=collect* : \
+       %{m64 : %J/v9/prof_lib.o %J/v9/prof_tsd.o \
+                     -M %J/v9/prof_lib.map -M %J/v9/prof_tsd.map ; \
+        m32 :  %J/prof_lib.o %J/prof_tsd.o -M %J/prof_lib.map -M %J/prof_tsd.map ; \
+            : %J/prof_lib.o %J/prof_tsd.o -M %J/prof_lib.map -M %J/prof_tsd.map } \
+         -Bdynamic -ldl } } \
+"
+#else
+#define LINK_COMMAND_LIB "\
+    %{xautopar: -lmtsk -lpthread} %{Zmt: -lpthread}\
+    %{!shared: %{xprofile=collect* : \
+       %{m64 : %J/v9/prof_lib.o %J/v9/prof_tsd.o \
+                        --version-script=%J/v9/prof.map ; \
+        m32 : %J/prof_lib.o %J/prof_tsd.o --version-script=%J/prof.map ; \
+            : %J/prof_lib.o %J/prof_tsd.o --version-script=%J/prof.map } \
+         -Bdynamic -ldl -lm -lpthread} } \
+"
+#endif
+
+/* Moved out guts of LINK_COMMAND_SPEC since it needs to be shared with
+   ipo phase 2 */
+#ifndef LINK_COMMAND_GUTS
+#define LINK_COMMAND_GUTS "\
+    %{!A:%{!nostdlib:%{!nostartfiles:%S}}} %l \
+    " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %{e*} %{m} %{N} %{n} %{r}\
+    %{s} %{t} %{u*} %{x} %{z} %{Z} \
+    %{static:} %{L*} %(mfwrap) %(link_libgcc) %o %(mflib)\
+    %{xlibmopt: -lmopt }\
+    %{Zfprofile-arcs|Zfprofile-generate:-lgcov}\
+    %{!nostdlib:%{!nodefaultlibs:%(link_gcc_c_sequence)}}\
+    %{R*} \
+    %{xpagesize* : %{m64: %J/v9/pagesize.o ; \
+                     m32: %J/pagesize.o ; \
+                        : %J/pagesize.o} } \
+    %{xinstrument=datarace : %{m64: %J/v9/libtha.so.1; \
+                               m32: %J/libtha.so.1; \
+                                  : %J/libtha.so.1} }\
+    %{fopenmp|xopenmp|xopenmp=noopt|xopenmp=parallel: -lmtsk} \
+    %{xvector: -lmvec} %{xvector=yes: -lmvec} \
+    %{xgccdriver=*:}\
+" LINK_COMMAND_LIB
+#endif
+#ifndef LINK_COMMAND_GUTS2
+#define LINK_COMMAND_GUTS2 "\
+    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} \
+"
+#endif
+
+#ifdef __linux__
+#define LINK_ANNOTATE_GCCFSS ""
+#else
+#define LINK_ANNOTATE_GCCFSS \
+"  %{xannotate=no: ; \
+     xannotate=yes: \
+	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/v9/libld_annotate.so ; \
+     !xannotate=*: \
+	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/v9/libld_annotate.so  \
+}"
+#endif
+
 /* -u* was put back because both BSD and SysV seem to support it.  */
 /* %{static:} simply prevents an error message if the target machine
    doesn't handle -static.  */
@@ -718,13 +825,31 @@ proper position among the other output files.  */
 #ifndef LINK_COMMAND_SPEC
 #define LINK_COMMAND_SPEC "\
 %{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %(linker) %l " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %{e*} %{m} %{N} %{n} %{r}\
-    %{s} %{t} %{u*} %{x} %{z} %{Z} %{!A:%{!nostdlib:%{!nostartfiles:%S}}}\
-    %{static:} %{L*} %(mfwrap) %(link_libgcc) %o\
-    %{fopenmp|ftree-parallelize-loops=*:%:include(libgomp.spec)%(link_gomp)} %(mflib)\
-    %{fprofile-arcs|fprofile-generate|coverage:-lgcov}\
-    %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %(link_gcc_c_sequence)}}\
-    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} }}}}}}"
+    %{xpec|Zpec=*: %(invoke_ipo2) ; \
+      xipo=1|xipo=2: %{!xprofile=collect*: %(invoke_ipo2)} } \
+    %{xlinkopt: |\n collect2 --ld-filename %Kpostopt \
+                %{v} -optlevel=1  %{save-temps: -keeptmp}\
+		%(ssbe_xarch) \
+                -startldline " LINKER_PATH LINK_COMMAND_GUTS "\
+                      %{xpec: %{save-temps: %b.pec} %{!save-temps: %d%U.pec} } \
+                            " LINK_COMMAND_GUTS2 " -stopldline %M; \
+      xlinkopt=*: |\n collect2 --ld-filename %Kpostopt \
+                %{v} -optlevel=%*  %{save-temps: -keeptmp}\
+		%(ssbe_xarch) \
+                -startldline " LINKER_PATH LINK_COMMAND_GUTS " \
+                      %{xpec: %{save-temps: %b.pec} %{!save-temps: %d%U.pec} } \
+                             " LINK_COMMAND_GUTS2 " -stopldline %M ; \
+      xbinopt=prepare: |\n collect2 --ld-filename %Kpostopt \
+                %{v} -optlevel=0  %{save-temps: -keeptmp}\
+		%(ssbe_xarch) \
+                -xbinopt=prepare \
+                -startldline " LINKER_PATH LINK_COMMAND_GUTS " \
+                      %{xpec: %{save-temps: %b.pec} %{!save-temps: %d%U.pec} } \
+                             " LINK_COMMAND_GUTS2 " -stopldline %M ; \
+              : |\n %(linker) " LINK_COMMAND_GUTS " \
+                      %{xpec: %{save-temps: %b.pec} %{!save-temps: %d%U.pec} } \
+                      " LINK_ANNOTATE_GCCFSS LINK_COMMAND_GUTS2 " } \
+}}}}}}"
 #endif
 
 #ifndef LINK_LIBGCC_SPEC
@@ -790,7 +915,7 @@ static const char *trad_capable_cpp =
    file that happens to exist is up-to-date.  */
 static const char *cpp_unique_options =
 "%{C|CC:%{!E:%eGCC does not support -C or -CC without -E}}\
- %{!Q:-quiet} %{nostdinc*} %{C} %{CC} %{v} %{I*&F*} %{P} %I\
+ %{!Q:-quiet} %{nostdinc*} %{C} %{CC} %{v} %q %{I*&F*} %{P} %I\
  %{MD:-MD %{!o:%b.d}%{o*:%.d%*}}\
  %{MMD:-MMD %{!o:%b.d}%{o*:%.d%*}}\
  %{M} %{MM} %{MF*} %{MG} %{MP} %{MQ*} %{MT*}\
@@ -799,7 +924,11 @@ static const char *cpp_unique_options =
  %{H} %C %{D*&U*&A*} %{i*} %Z %i\
  %{fmudflap:-D_MUDFLAP -include mf-runtime.h}\
  %{fmudflapth:-D_MUDFLAP -D_MUDFLAPTH -include mf-runtime.h}\
- %{E|M|MM:%W{o*}}";
+ %{E|M|MM:%W{o*}} \
+ %{m32: %{Zarchm32=v8plusc: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
+        %{Zarchm32=v8plusd: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
+   m64: %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
+        %{Zarchm64=v9d: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } } \";
 
 /* This contains cpp options which are common with cc1_options and are passed
    only when preprocessing only to avoid duplication.  We pass the cc1 spec
@@ -809,26 +938,134 @@ static const char *cpp_unique_options =
 static const char *cpp_options =
 "%(cpp_unique_options) %1 %{m*} %{std*&ansi&trigraphs} %{W*&pedantic*} %{w}\
  %{f*} %{g*:%{!g0:%{!fno-working-directory:-fworking-directory}}} %{O*}\
- %{undef} %{save-temps:-fpch-preprocess}";
+ %{undef} %{save-temps:-fpch-preprocess} %{xopenmp*}";
 
 /* This contains cpp options which are not passed when the preprocessor
    output will be used by another program.  */
 static const char *cpp_debug_options = "%{d*}";
 
-/* NB: This is shared amongst all front-ends.  */
-static const char *cc1_options =
+/* These are options not supported by cross compiler on x86 */
+#ifdef CROSS_COMPILE
+#define UNSUPPORTED_OPTIONS_SPEC \
+"%{xlinkopt: %e-xlinkopt not supported by cross compiler } \
+"
+#else
+#define UNSUPPORTED_OPTIONS_SPEC
+#endif
+
+#define COMMON_CC1_OPTIONS_SPEC \
 "%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}}\
  %1 %{!Q:-quiet} -dumpbase %B %{d*} %{m*} %{a*}\
  %{c|S:%{o*:-auxbase-strip %*}%{!o*:-auxbase %b}}%{!c:%{!S:-auxbase %b}}\
  %{g*} %{O*} %{W*&pedantic*} %{w} %{std*&ansi&trigraphs}\
- %{v:-version} %{pg:-p} %{p} %{f*} %{undef}\
+ %{v:-version} %{pg:-p} %{p} \
+ %{fstrict-aliasing: %{Zalias_level=*: %<Zalias_level=*  -xalias_level=basic} \
+        %{!Zalias_level=*: -xalias_level=basic} \
+        %{xalias_level=*: %<xalias_level=* %Nboth -fstrict-aliasing and -xalias_level can not be specified, -xalias_level ignored} }\
+ %{fno-strict-aliasing: %{Zalias_level=*: %<Zalias_level=* -xalias_level=any} \
+        %{!Zalias_level=*: -xalias_level=any } \
+        %{xalias_level=*: %<xalias_level=* %Nboth -fno-strict-aliasing and -xalias_level can not be specified, -xalias_level ignored} }\
+ %{f*} \
+ %{g*:-cmdline %:print-orig-cmdline()} \
+ %{Zsunir-backend: %:verify-sunir-backend()} \
+ %{Zignore: }\
+ %{Zfprofile-generate: %{frtl-backend: -fprofile-generate}}  \
+ %{Zfprofile-use: %{frtl-backend: -fprofile-use}  }\
+ %{Zfprofile-arcs: %{frtl-backend: -fprofile-arcs}}  \
+ %{Zfprofile-values: %{frtl-backend: -fprofile-values}}  \
+ %{Zfbranch-probabilities: %{frtl-backend: -fbranch-probabilities}}  \
+ %{Zfvpt: %{frtl-backend: -fvpt}}  \
+ %{undef}\
  %{Qn:-fno-ident} %{--help:--help}\
  %{--target-help:--target-help}\
- %{--help=*:--help=%(VALUE)}\
- %{!fsyntax-only:%{S:%W{o*}%{!o*:-o %b.s}}}\
+
  %{fsyntax-only:-o %j} %{-param*}\
- %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants}\
- %{coverage:-fprofile-arcs -ftest-coverage}";
+ %{xcode=pic13: -fpic} \
+ %{xcode=pic32: -fPIC} \
+ %{xhwcprof | xhwcprof=enable: -g} \
+ %{Zfast: -O3} \
+ %{xrestrict*} \
+ %{xinline=@auto*: -xinline=%%auto%*; \
+   xinline=@none : ; \
+   xinline=* : -xinline=%*} \
+ %{xmemalign=4s: -mno-integer-ldd-std} \
+ %{xarch=*: %Ninvalid value for -xarch, option is ignored}\
+ %{xO0: %N`-xO0' is not a valid option, option is ignored}\
+ %{xO1: %N`-xO1' is not a valid option, option is ignored}\
+ %{xO2: %N`-xO2' is not a valid option, option is ignored}\
+ %{xO3: %N`-xO3' is not a valid option, option is ignored}\
+ %{xO4: %N`-xO4' is not a valid option, option is ignored}\
+ %{xO5: %N`-xO5' is not a valid option, option is ignored}\
+ %{xipo=1|xipo=2: \
+     %{O    : %<xipo* %N`-xipo' requires `-O3' or `-fast', option is ignored;\
+       O0   : %<xipo* %N`-xipo' requires `-O3' or `-fast', option is ignored;\
+       O1   : %<xipo* %N`-xipo' requires `-O3' or `-fast', option is ignored;\
+       O2   : %<xipo* %N`-xipo' requires `-O3' or `-fast', option is ignored;\
+       Os   : %<xipo* %N`-xipo' requires `-O3' or `-fast', option is ignored;\
+       O3   : ; \
+       O*   : ; \
+       Zfast: ; \
+         : %<xipo* %N`-xipo' requires `-O3' or `-fast', option is ignored} }\
+ %{xautopar: \
+     %{O    : %<xautopar %N`-xautopar' requires `-O2', `-O3' or `-fast', option is ignored;\
+       O0   : %<xautopar %N`-xautopar' requires `-O2', `-O3' or `-fast', option is ignored;\
+       O1   : %<xautopar %N`-xautopar' requires `-O2', `-O3' or `-fast', option is ignored;\
+       O2   : ; \
+       Os   : ; \
+       O3   : ; \
+       O*   : ; \
+       Zfast: ; \
+         : %<xautopar %N`-xautopar' requires `-O2', `-O3' or `-fast', option is ignored} }\
+ %{xopenmp} \
+ %{xopenmp=parallel} \
+ %{xopenmp=noopt} \
+ %{xopenmp=none} \
+ %{tm_mode} \
+ %{tm_mode=none} \
+ %{tm_mode=htm} \
+ %{tm_mode=phtm} \
+ %{tm_mode=stm} \
+ %{xexplicitpar:} \
+ %{ftest-coverage: %{xipo*: %<xipo* %e`-ftest-coverage' and `-xipo' are incompatible}}\
+ %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants}"
+
+/* NB: This is shared amongst all front-ends.  */
+static const char *cc1_options =
+ UNSUPPORTED_OPTIONS_SPEC
+ COMMON_CC1_OPTIONS_SPEC
+"%{xipo=1|xipo=2: -ftree-ir-crossfile} \
+ %{Zfsimple*: } \
+ %{xalias_level=*} \
+ %{Zalias_level=*: -xalias_level=%* }\
+ %{xdebugformat=dwarf: %{g*:-gdwarf-2}} \
+ %{xpagesize=*: -xpagesize_heap=%* -xpagesize_stack=%* }\
+ %{xpagesize_heap=*} %{xpagesize_stack=*} \
+ %{m32: -m32 %{Zarchm32=v8plusc: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
+   m64: -m64 %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
+      : -m32 } \
+ %{Zpec=*: %:is-it-pec_dummy() }\
+ %{xpec|Zpec=*: -ftree-ir-crossfile } \
+ %{!fsyntax-only:  \
+              %{frtl-backend: %{S: %{!o*: -o %b.s; : %{o*}} ; : -o %U.s }; \
+                            : -o %U.s}\
+              -r %{save-temps:%b.ir} %{!save-temps: %d%U.ir} }\
+ %{xautopar: -fno-tree-ir-regalloc} \
+ %{xreduction: %{!xautopar: %e-xreduction requires -xautopar } }\
+ %r \
+";
+
+/* the .ir file in this situation is really equivalent to /dev/null 
+   but the file needs to be writable */
+static const char *oldstyle_cc1_options =
+ COMMON_CC1_OPTIONS_SPEC
+"-r %d%U.ir %{!fsyntax-only:%{S:%W{o*}%{!o*:-o %b.s}}}"; 
+
+static const char *asm_name =
+#ifdef __linux__
+"%{xfbe: fbe; xas: as; : as}";
+#else
+"%{xfbe: fbe; xas: as; : fbe}";
+#endif
 
 static const char *asm_options =
 "%{--target-help:%:print-asm-header()} "
@@ -839,12 +1076,393 @@ static const char *asm_options =
 #endif
 "%a %Y %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c:-o %d%w%u%O}";
 
+static const char *cc1_unique_options =
+" %{Xc: %{xc99: -std=c99 ; \
+          xc99=all : -std=c99 ; \
+          xc99=none : -std=iso9899:199409 ; \
+              : -std=iso9899:199409 } }\
+";
+
+/* used in config/sparc/sol-bi.h for assembler */
+/* match on Zarch, Zarchm32, Zarchm64 to prevent warning about not using it */
+static const char *ssbe_xarch =
+"%{m32: %{Zarchm32=v8plusd: -xarch=sparcima ; \
+          Zarchm32=*: -xarch=%* ; \
+                    : -xarch=v8plus} ;\
+   m64: %{Zarchm64=v9d: -xarch=sparcima ;\
+          Zarchm64=*: -xarch=%* ; \
+                    : -xarch=v9} ;\
+      : %{Zarchm32=v8plusd: -xarch=sparcima ; \
+          Zarchm32=*: -xarch=%*; \
+                    : -xarch=v8plus} } \
+ %{Zarch=*: } %{Zarchm32=*: } %{Zarchm64=*: }";
+
+/* The following two variables are defined in the language specific 
+   spec files.  They hold language specific flags passed to iropt and cg */
+/* for C */
+const char *ssiropt_lang_spec = 
+"%{fexceptions: -h_exception=gcc} \
+";
+const char *sscg_lang_spec =
+"%{fexceptions: -h_exception=gcc} \
+";           
+
+/* for C++ */
+const char *ssiropt_lang_spec_gxx = 
+"-Rclone \
+%{ fexceptions: -h_exception=gpp; \
+    fno-exceptions: ; \
+               : -h_exception=gpp } \
+";
+
+const char *sscg_lang_spec_gxx =
+"%{ fexceptions: -h_exception=gpp; \
+    fno-exceptions: ; \
+               : -h_exception=gpp } \
+";
+
+/* for Fortran */
+const char *ssiropt_lang_spec_fortran = 
+"";
+const char *sscg_lang_spec_fortran =
+"";           
+
+
 static const char *invoke_as =
 #ifdef AS_NEEDS_DASH_FOR_PIPED_INPUT
-"%{!S:-o %|.s |\n as %(asm_options) %|.s %A }";
+"%{!S: |\n %(asm_name) %(asm_options)  \
+     %{xforceas: %U.s; \
+       frtl-backend: %U.s ; \
+               :%|.s} %A }";
 #else
-"%{!S:-o %|.s |\n as %(asm_options) %m.s %A }";
+"%{!S: |\n %(asm_name) %(asm_options)  \
+     %{xforceas: %U.s ; \
+       frtl-backend: %U.s ; \
+               :%m.s} %A }";
 #endif
+
+static const char *ssbe_xarch_xchip =
+"%(ssbe_xarch) \
+ %{xchip=*: -xchip=%* ; \
+          : -xchip=generic } \
+ %{xprefetch=* : -xprefetch=%* } \
+ %{xprefetch_level=* : -xprefetch_level=%* }";
+
+/* like ssbe_xarch_xchip but with special handling for ultraT2 for cg */
+static const char *sscg_xarch_xchip =
+"%(ssbe_xarch) \
+ %{xchip=ultraT2: -xchip=rock ; \
+   xchip=*: -xchip=%* ; \
+          : -xchip=generic } \
+ %{xprefetch=* : -xprefetch=%* } \
+ %{xprefetch_level=* : -xprefetch_level=%* }";
+
+static const char *ssbe_optlevel =
+"%{O:-O3;\
+   O0:-OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 -gen_loclist_gcc=0;\
+   O1:-O3;\
+   O2:-O3;\
+   O3:-O5;\
+   Os:-O3; \
+   O*:-O5; \
+   Zfast:-O5 ;\
+     :-OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 -gen_loclist_gcc=0} ";
+
+/* some slightly different stuff for iropt */
+static const char *ssiropt_optlevel =
+"%{O:-O3 %{xinline=*: -I} ;\
+   O0:-O1 %{xinline=*: -I} ;\
+   O1:-O3 %{xinline=*: -I} ;\
+   O2:-O3 %{xinline=*: -I} ;\
+   O3:-O5 %{xinline=@auto*: ; \
+            xinline=*: -I} ;\
+   Os:-O3 %{xinline=*: -I} ; \
+   O*:-O5 %{xinline=@auto*: ; \
+            xinline=*: -I} ; \
+   Zfast: -O5 %{xinline=@auto*: ; \
+                xinline=*: -I} ;\
+     :-O1 %{xinline=*: -I} } ";
+
+static const char *xtarget =
+"%{xtarget=*: %einvalid value of <target> in -xtarget=<target>}";
+
+static const char *iropt_ipo_options =
+" %(ssbe_xarch_xchip) %(xtarget) %(ssiropt_optlevel) \
+ %{m64} \
+ %{xprofile=use=* : -u %b.o %+profile%* } \
+ %{Zprofile=use=* : -u2 %+profile%* } \
+ %{xprofile=collect=*: -s }\
+ %{Zfprofile-arcs: \
+	%{Zfprofile-values: ; \
+	  Zfvpt: ; \
+              : -Rvp -Ricall_opt } } \
+ %{xsafe=mem} %{xsafe=unboundsym}\
+ %{!xvector=*: -xvector=no }\
+ %{xvector=*: -xvector=%* }\
+ %{xbuiltin=*: -xbuiltin=%*; :  -xbuiltin=%%none} \
+ %{xautopar : -xautopar -mt %{xreduction: -reduction} }\
+ %{xexplicitpar : -xexplicitpar -mt }\
+ %{xopenmp|xopenmp=parallel|xopenmp=noopt|xexplicitpar|fopenmp : \
+              -xexplicitpar -mt \
+              %{O | O1 | O2 | O3  | Zfast | Os: ;\
+                O0: -xopenmp=noopt ;\
+                O*: ; \
+                  : -xopenmp=noopt} } \
+ %{tm_mode: -tm_mode } \
+ %{tm_mode=none: -tm_mode=none } \
+ %{tm_mode=htm: -tm_mode=htm } \
+ %{tm_mode=phtm: -tm_mode=phtm } \
+ %{tm_mode=stm: -tm_mode=stm } \
+ %{xloopinfo: -looptable}\
+ %{Zmt: -mt} \
+ %{g0: ; g*:-g} \
+ %{Zfsimple=*: -fsimple=%*}  %{Zfsimple:-fsimple} %{Zftrap=* : -ftrap=%* }\
+ %{xlibmopt: -xlibmopt } \
+ %{Zfns=yes: -fns } %{Zfns=no: } \
+ %{xalias_level=*} %{Zalias_level=*: -xalias_level=%*}\
+ %{fstrict-aliasing: -xalias_level=basic }\
+ %{fno-strict-aliasing: -xalias_level=any }\
+ %{xdepend=yes: -depend ; \
+   xdepend=no: }\
+ %{xcache=* : -xcache=%* ; \
+            : -xcache=generic }\
+ %{xcode=pic32:-k} %{xcode=pic13: -k}\
+ %{xhwcprof=enable: -xhwcprof} %{xhwcprof} \
+ %{xsafe=unboundsym} \
+ %{xspace} \
+ %{xinstrument=datarace} \
+ %{xprefetch_auto_type=* } \
+ -Qy -h_gcc \
+ %{Zquietdriver: } \
+ %{fwrapv: -xwrap_int }\
+";
+
+static const char *mvis_il =
+"%{mvis: %{xarch=v8plusa: -il %J/v8plusa/vis.il } \
+         %{xarch=v8plusb: -il %J/v8plusb/vis.il } \
+         %{xarch=v8plusc: -il %J/v8plusc/vis.il } \
+         %{xarch=v8plusd: -il %J/v8plusd/vis.il } \
+         %{xarch=v9: -il %J/v9/vis.il } \
+         %{xarch=v9a: -il %J/v9a/vis.il } \
+         %{xarch=v9b: -il %J/v9b/vis.il } \
+         %{xarch=v9c: -il %J/v9c/vis.il } \
+         %{xarch=v9d: -il %J/v9d/vis.il } \
+         %{xarch=v7: %e-mvis and -xarch=v7 are incompatable}\
+         %{xarch=v8: %e-mvis and -xarch=v8 are incompatable}\
+         %{xarch=v8plus: %e-mvis and -xarch=v8plus are incompatable}\
+         %{xarch=sparcima: \
+              %{m64: -il %J/sparcima/64/vis.il ; \
+                   : -il %J/sparcima/vis.il } } \
+         %{!xarch=*: %{m64: -il %J/v9a/vis.il ; \
+                             : -il %J/v8plusa/vis.il } } }";
+#ifdef __linux__
+#define CG_IPO_OPTIONS \
+" %{xannotate*: %N-xannotate is not supported}"
+#else // sparc
+#define CG_IPO_OPTIONS \
+" %{xannotate=yes: -xannotate=yes; \
+    xannotate=no: ; \
+    !xannotate: -xannotate=yes} "
+#endif
+
+static const char *cg_ipo_options =
+ CG_IPO_OPTIONS
+"-Qy %(sscg_xarch_xchip) %(xtarget) \
+ %{m32} %{m64} \
+ %{g0: ; g*:-g -gen_loclist_gcc=1} \
+ %(ssbe_optlevel) \
+ %{xcode=*} \
+ %{!xcode=*: %{mcmodel=medlow: -xcode=abs32; \
+                   : %{m64: -xcode=abs44 ; \
+                       m32: -xcode=abs32 ; \
+                          : -xcode=abs32 } }}\
+ %{xcache=* : -xcache=%* ; \
+            : -xcache=generic }\
+ %{xcheck : -xcheck=%%all } %{xcheck=*} \
+ %{xsafe=mem} \
+ %{xspace} \
+ %{p} %{pg} \
+ %{xmemalign=* : -xmemalign=%* } \
+ %{!xmemalign=*: \
+      %{mno-integer-ldd-std: %{m64: -xmemalign=8s; \
+                               m32: -xmemalign=4s; \
+                                  : -xmemalign=4s} ; \
+                           : %{m64: -xmemalign=8s ; \
+                               m32: -xmemalign=8i ;\
+                                   : -xmemalign=8i }}} \
+ %{m64 : -il %F/"
+ #ifdef __linux__
+  "64"
+ #else
+  "sparcv9"
+ #endif
+  "/gccbuiltins.il ;\
+   m32 : -il %F/gccbuiltins.il ;\
+       : -il %F/gccbuiltins.il } \
+ %{Zfma=*: -fma=%* } \
+ %{xlibmil: \
+    %{m64: %{Zarchm64=v9: -il %J/v9/libm.il;\
+             Zarchm64=v9a: -il %J/v9a/libm.il; \
+             Zarchm64=v9b: -il %J/v9b/libm.il; \
+             Zarchm64=v9c: -il %J/v9c/libm.il; \
+             Zarchm64=v9d: -il %J/v9d/libm.il; \
+                         : -il %J/v9/libm.il} ; \
+      m32: %{Zarchm32=v7: -il %J/v7/libm.il;\
+             Zarchm32=v8: -il %J/v8/libm.il;\
+             Zarchm32=v8plus: -il %J/v8plus/libm.il;\
+             Zarchm32=v8plusa: -il %J/v8plusa/libm.il;\
+             Zarchm32=v8plusb: -il %J/v8plusb/libm.il;\
+             Zarchm32=v8plusc: -il %J/v8plusc/libm.il;\
+             Zarchm32=v8plusd: -il %J/v8plusd/libm.il;\
+                        : -il %J/libm.il};\
+         : %{Zarch=v7: -il %J/v7/libm.il;\
+             Zarch=v8: -il %J/v8/libm.il;\
+             Zarch=v8plus: -il %J/v8plus/libm.il;\
+             Zarch=v8plusa: -il %J/v8plusa/libm.il;\
+             Zarch=v8plusb: -il %J/v8plusb/libm.il;\
+             Zarch=v8plusc: -il %J/v8plusc/libm.il;\
+             Zarch=v8plusd: -il %J/v8plusd/libm.il;\
+                          : -il %J/libm.il} } }\
+ %(mvis_il) \
+ %{xvector*} %{!xvector* : -xvector=no } \
+ %{xthreadvar*} \
+ %{!xthreadvar* : %{xcode=pic32|xcode=pic13 : -xthreadvar=dynamic ; \
+                                            : -xthreadvar=no%%dynamic }} \
+ %{xbuiltin=* : -xbuiltin=%* ; : -xbuiltin=%%none} \
+ %{xlibmopt: -xlibmopt } \
+ %{Zfsimple*: -fsimple%*} \
+ %{Zfns=yes: -fns }\
+ %{xautopar|fopenmp|xopenmp|xopenmp=parallel|xopenmp=noopt|Zmt : -mt }\
+ %{fno-jump-tables: -Qiselect-sw_table=0}\
+ %{xprefetch_auto_type=* } \
+ %{xlinkopt} %{xlinkopt=*}\
+ %{xbinopt=noprepare: } \
+ %{xbinopt=prepare} \
+ %{xprofile=use*: -ip } \
+ %{xprofile=collect=*: -oe %+profile%* -op %b%O }\
+ %{xhwcprof} %{xhwcprof=enable: -xhwcprof}\
+ %{xunroll=*} \
+ %{xsafe=unboundsym} \
+ %{fno-got: -Qiselect-gd_enable=0} \
+ %{xregs=*} \
+ %{mapp-regs: -xregs=appl} \
+ %{mno-app-regs: -xregs=no%%appl} \
+ %{mfpu: -xregs=float} \
+ %{mno-fpu: -xregs=no%%float} \
+ %{fno-unit-at-a-time: -Qassembler-ounrefsym=0; \
+   funit-at-a-time: ;\
+                  : %{O: -Qassembler-ounrefsym=0; \
+		      O0: -Qassembler-ounrefsym=0; \
+                      O1: -Qassembler-ounrefsym=0; \
+                      O*:  ; \
+                      Zfast: ; \
+                        : -Qassembler-ounrefsym=0} }\
+ %{foptimize-sibling-calls: -Qiselect-T1; \
+   fno-optimize-sibling-calls: -Qiselect-T0; \
+                  : %{O: -Qiselect-T0; \
+		      O0: -Qiselect-T0; \
+                      O1: -Qiselect-T0; \
+                      O*: -Qiselect-T1; \
+                      Zfast: -Qiselect-T1; \
+                        : -Qiselect-T0} }\
+ -Qassembler-I -Qassembler-U \
+ "
+#if USE_GNU_LD
+ " -h_gcc"
+#else
+ " -comdat -h_gcc"
+#endif
+ ;
+
+/* the namelist file which is the -N option to iropt and -n option to ipo
+   is not created by the sgcc front end so use /dev/null */
+static const char *invoke_iropt =
+"|\n iropt -F %(iropt_ipo_options) \
+ -o %{save-temps: %b.ircg} %{!save-temps: %d%u.ircg} \
+  %{save-temps:%b.ir} %{!save-temps:%d%U.ir} \
+ -N/dev/null \
+ -is %U.s \
+ %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: %{Zipo_fast_phase_1: -O0 } } } ";
+
+static const char *invoke_cg = 
+"|\n cg %:add-user-il-routines() %(cg_ipo_options) \
+ -is %U.s \
+ -ir %{save-temps:%b.ircg} %{!save-temps:%d%U.ircg} \
+ %{!xforceas: \
+     %{!S: %{c:%{!o*:-oo %w%b%O}%W{o*:-oo %*}}%{!c: %{Zpec=*: -oo %d%w%U%O; :-oo %d%w%u%O} }} \
+     %{S: %W{s*} %{!o*:-os %w%b.s} %{o*:-os %*} } }\
+ %{xforceas: \
+     %{!S: %{!o*: -os %w%u.s} %{o*: -os %w%u.s} } \
+     %{S: %W{s*} %{!o*:-os %w%b.s} %{o*:-os %*} } }\
+ %{xlinkopt: -xlinkopt=1 ; \
+   xlinkopt=*: -xlinkopt=%* } \
+ %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: -xcrossfile=1 %{Zipo_fast_phase_1: -OO0} } } ";
+
+static const char *invoke_ipo1 = 
+"|\n ipo -phase1 %{v: -#} %{save-temps: -keeptmp}\
+ %{xprofile=collect=*:-level=0 ; \
+   xipo=1:-level=1 ; \
+   xipo=2:-level=2 ; \
+         :-level=0 } \
+ %{xjob=*:-j %* }\
+ %{Ztime: -xtime=1 } \
+ %{xpec:-pec -cmdline %:print-orig-cmdline() %i}\
+ %{!S: %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c: -o %d%U%O}} \
+ -a %U.s \
+ -ir %d%U.ir \
+ -n /dev/null \
+ -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec) %Q -ipo_iroptoption_end \
+ -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec) %T -ipo_cgoption_end %P\
+ ";
+
+static const char *invoke_fortranipo1 = 
+"|\n ipo -phase1 %{v: -#} %{save-temps: -keeptmp}\
+ %{xprofile=collect=*:-level=0 ; \
+   xipo=1:-level=1 ; \
+   xipo=2:-level=2 ; \
+         :-level=0 } \
+ %{xjob=*:-j %* }\
+ %{Ztime: -xtime=1 } \
+ %{xpec:-pec -cmdline %:print-orig-cmdline() %i}\
+ %{!S: %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c: -o %d%U%O}} \
+ -a %U.s \
+ -ir %d%U.ir \
+ -n /dev/null \
+ -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec_fortran) %Q -ipo_iroptoption_end \
+ -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec_fortran) %T -ipo_cgoption_end %P\
+ ";
+
+static const char *invoke_cppipo1 = 
+"|\n ipo -phase1 %{v: -#} %{save-temps: -keeptmp}\
+ %{xipo=1:-level=1 ; \
+   xipo=2:-level=2 ; \
+         :-level=0 } \
+ %{xpec:-pec -cmdline %:print-orig-cmdline() %i}\
+ %{!S: %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c: -o %d%U%O}} \
+ -a %U.s \
+ -ir %d%U.ir \
+ -n /dev/null \
+ -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec_gxx) %Q -ipo_iroptoption_end \
+ -ipo_cgoption_start -xcrossfile=1  %(cg_ipo_options) %(sscg_spec_gxx) %T -ipo_cgoption_end %P\
+ ";
+
+static const char *invoke_ipo2 = 
+"|\n ipo -phase2 %{v: -#} %{save-temps: -keeptmp}\
+ %{xprofile=collect=*:-level=0 ; \
+   xipo=1:-level=1 ; \
+   xipo=2:-level=2 ; \
+         :-level=0 } \
+ %{xjobs=*:-j %* } \
+ %{Ztime: -xtime=1 } \
+ %{xpec:-pec -cmdline %:print-orig-cmdline() X \
+        -temp %{save-temps: %w%b.pec} %{!save-temps: %w%d%U.pec} } \
+ %{Zpec=*:-i %* -cmdline %:print-orig-cmdline() X \
+          -temp %{save-temps: %w%U%O} %{!save-temps: %w%d%U%O} } \
+ %{xipo_archive=readonly} %{xipo_archive=writeback} \
+ -iroptpath %Kiropt -cgpath %Kcg \
+ -ipo_ldarg_start " LINKER_PATH LINK_COMMAND_GUTS LINK_COMMAND_GUTS2 " -ipo_ldarg_end %P\
+ ";
+
 
 /* Some compilers have limits on line lengths, and the multilib_select
    and/or multilib_matches strings can be very long, so we build them at
@@ -988,16 +1606,34 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i} \n\
 		    cc1 -fpreprocessed %{save-temps:%b.i} %{!save-temps:%g.i} \
-			%(cc1_options)}\
+			%(cc1_options) %(cc1_unique_options)}}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options)}}}\
-          %{!fsyntax-only:%(invoke_as)}} \
+		cc1 %(cpp_unique_options) %(cc1_options)  %(cc1_unique_options)}}}\
+          %{!fsyntax-only: \
+             %{frtl-backend: %(invoke_as) ; \
+               : %(invoke_iropt) %(ssiropt_spec) %Q \
+                 %(invoke_cg) %(sscg_spec) %T } \
+                %{!S: \
+                  %{!frtl-backend: %{xforceas : %(invoke_as)}} \
+                  %{Zpec=*: %(invoke_ipo1) ; \
+                    xpec: %(invoke_ipo1); \
+                    xipo=1|xipo=2:%{!xprofile=collect*:%(invoke_ipo1) } } } }\
+           } \
       %{combine:\
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i}}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options)}}\
-                %{!fsyntax-only:%(invoke_as)}}}}}}", 0, 1, 1},
+		cc1 %(cpp_unique_options) %(cc1_options)  %(cc1_unique_options)}}\
+                %{!fsyntax-only:\
+                   %{frtl-backend: %(invoke_as) ;\
+                     : %(invoke_iropt) %(ssiropt_spec) %Q \
+                       %(invoke_cg) %(sscg_spec) %T }\
+			%{!S: \
+                          %{!frtl-backend: %{xforceas: %(invoke_as)}} \
+                          %{Zpec=*: %(invoke_ipo1) ; \
+                            xpec: %(invoke_ipo1); \
+                            xipo=1|xipo=2:%{!xprofile=collect*:%(invoke_ipo1) } } }\
+           }}}}}}", 0, 1, 1},
   {"-",
    "%{!E:%e-E or -x required when input is from standard input}\
     %(trad_capable_cpp) %(cpp_options) %(cpp_debug_options)", 0, 0, 0},
@@ -1010,19 +1646,29 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i} \n\
 		    cc1 -fpreprocessed %{save-temps:%b.i} %{!save-temps:%g.i} \
-			%(cc1_options)\
+			%(oldstyle_cc1_options)\
                         -o %g.s %{!o*:--output-pch=%i.gch}\
                         %W{o*:--output-pch=%*}%V}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options)\
+		cc1 %(cpp_unique_options) %(oldstyle_cc1_options)\
                     -o %g.s %{!o*:--output-pch=%i.gch}\
                     %W{o*:--output-pch=%*}%V}}}}}}", 0, 0, 0},
   {".i", "@cpp-output", 0, 1, 0},
   {"@cpp-output",
-   "%{!M:%{!MM:%{!E:cc1 -fpreprocessed %i %(cc1_options) %{!fsyntax-only:%(invoke_as)}}}}", 0, 1, 0},
+   "%{!M:%{!MM:%{!E:cc1 -fpreprocessed %i %(cc1_options) %(cc1_unique_options) \
+                %{!fsyntax-only:\
+                  %{frtl-backend: %(invoke_as) ; \
+                    : %(invoke_iropt) %(ssiropt_spec) %Q \
+                      %(invoke_cg) %(sscg_spec) %T }\
+		     %{!S: \
+                       %{!frtl-backend: %{xforceas: %(invoke_as)}} \
+                       %{Zpec=*: %(invoke_ipo1) ; \
+                         xpec: %(invoke_ipo1); \
+                         xipo=1|xipo=2:%{!xprofile=collect*:%(invoke_ipo1) } } }\
+               }}}}", 0, 1, 0},
   {".s", "@assembler", 0, 1, 0},
   {"@assembler",
-   "%{!M:%{!MM:%{!E:%{!S:as %(asm_debug) %(asm_options) %i %A }}}}", 0, 1, 0},
+   "%{!M:%{!MM:%{!E:%{!S:%(asm_name) %(asm_debug) %(asm_options) %i %A }}}}", 0, 1, 0},
   {".sx", "@assembler-with-cpp", 0, 1, 0},
   {".S", "@assembler-with-cpp", 0, 1, 0},
   {"@assembler-with-cpp",
@@ -1030,12 +1676,12 @@ static const struct compiler default_compilers[] =
    "%(trad_capable_cpp) -lang-asm %(cpp_options) -fno-directives-only\
       %{E|M|MM:%(cpp_debug_options)}\
       %{!M:%{!MM:%{!E:%{!S:-o %|.s |\n\
-       as %(asm_debug) %(asm_options) %|.s %A }}}}"
+       %(asm_name) %(asm_debug) %(asm_options) %|.s %A }}}}"
 #else
    "%(trad_capable_cpp) -lang-asm %(cpp_options) -fno-directives-only\
       %{E|M|MM:%(cpp_debug_options)}\
       %{!M:%{!MM:%{!E:%{!S:-o %|.s |\n\
-       as %(asm_debug) %(asm_options) %m.s %A }}}}"
+       %(asm_name) %(asm_debug) %(asm_options) %m.s %A }}}}"
 #endif
    , 0, 1, 0},
 
@@ -1048,17 +1694,69 @@ static const struct compiler default_compilers[] =
 
 static const int n_default_compilers = ARRAY_SIZE (default_compilers) - 1;
 
+/* the original command line */
+static char **orig_argv;
+static int orig_argc;
+static const char *print_orig_cmdline(int, const char **);
+
+/* verify backend really exists */
+static const char *verify_sunir_backend(int, const char **);
+
+static char *current_work_directory;
+static char *path_to_driver;
+
+static int directory_exists(const char *);
+static int valid_backend_version(const char *);
+
+static const char *add_user_il_routines(int, const char **);
+static int is_il_file(char * );
+
+/* if -Wd,-w then keep the driver quiet from warnings and notes */
+static int quiet_driver = 0;
+
+static const char *is_it_pec_dummy(int, const char **);
+
 /* A vector of options to give to the linker.
    These options are accumulated by %x,
    and substituted into the linker command with %X.  */
 static int n_linker_options;
 static char **linker_options;
 
+/* A vector of options to give to the front-end.
+   These options are accumulated by -W0,
+   and substituted into the assembler command with %r.  */
+static int n_frontend_options;
+static char **frontend_options;
+
 /* A vector of options to give to the assembler.
    These options are accumulated by -Wa,
    and substituted into the assembler command with %Y.  */
 static int n_assembler_options;
 static char **assembler_options;
+
+/* A vector of options to give to the sscg.
+   These options are accumulated by -Wc,
+   and substituted into the sscg command with %T.  */
+static int n_sscg_options;
+static char **sscg_options;
+
+/* A vector of options to give to the ipo.
+   These options are accumulated by -WO,
+   and substituted into the iropt command with %P.  */
+static int n_ipo_options;
+static char **ipo_options;
+
+/* A vector of options to give to the iropt.
+   These options are accumulated by -W2,
+   and substituted into the iropt command with %Q.  */
+static int n_iropt_options;
+static char **iropt_options;
+
+/* A vector of options to give to the postopt
+   These options are accumulated by -Wo,
+   and substituted into the iropt command with %M.  */
+static int n_postopt_options;
+static char **postopt_options;
 
 /* A vector of options to give to the preprocessor.
    These options are accumulated by -Wp,
@@ -1174,19 +1872,28 @@ static const struct option_map option_map[] =
    {"--warn-", "-W", "*j"},
    {"--write-dependencies", "-MD", 0},
    {"--write-user-dependencies", "-MMD", 0},
-   {"--", "-f", "*j"}
+   {"--", "-f", "*j"},
+   /* because specs can't match on ':' need to change to '=' */
+   {"-xprofile=collect:", "-xprofile=collect=", "*j"},
+   {"-xprofile=use:", "-xprofile=use=", "*j"},
+   /* because specs can't match on '%auto' */
+   {"-xinline=%auto", "-xinline=@auto", "*j"},
+   /* because TARGET_OPTION_TRANSLATION_TABLE can't handle complex stuff */
+   {"-fns", "-Zfns=", "*j"},
+   {"-ftrap", "-Zftrap=", "*j"},
+   {"-keeptmp", "-save-temps", 0},
+   {"-mt", "-Zmt", 0},
+   {"-Wd,-pec","-Zpec=", "*j"}
  };
 
 
 #ifdef TARGET_OPTION_TRANSLATE_TABLE
-static const struct {
+/* the definition of this structure has been 
+   moved to gccspec.c, g++spec.c, and cppspec */
+extern const struct {
   const char *const option_found;
   const char *const replacements;
-} target_option_translations[] =
-{
-  TARGET_OPTION_TRANSLATE_TABLE,
-  { 0, 0 }
-};
+} target_option_translations[];
 #endif
 
 /* Translate the options described by *ARGCP and *ARGVP.
@@ -1198,19 +1905,34 @@ translate_options (int *argcp, const char *const **argvp)
 {
   int i;
   int argc = *argcp;
-  const char *const *argv = *argvp;
-  int newvsize = (argc + 2) * 2 * sizeof (const char *);
+  char **argv = *argvp;
+  int newvsize = (argc + 3) * 2 * sizeof (const char *);
   const char **newv = xmalloc (newvsize);
   int newindex = 0;
 
   i = 0;
   newv[newindex++] = argv[i++];
+  argv[i] = xstrdup("-mcpu=v9"); /* the default */
+  newv[newindex++] = xstrdup("-Zsunir-backend"); /* the default */
 
   while (i < argc)
     {
 #ifdef TARGET_OPTION_TRANSLATE_TABLE
       int tott_idx;
 
+      /* make sure -O4, -O55 are mapped to -O3 as gcc does */
+      if (strncmp (argv[i], "-O", 2) == 0)
+        {
+          char level = argv[i][2];
+          if (level != 0
+              && level != '0'
+              && level != '1'
+              && level != '2'
+              && level != '3'
+              && level != 's')
+           argv[i] = "-O3";
+        }
+      
       for (tott_idx = 0;
 	   target_option_translations[tott_idx].option_found;
 	   tott_idx++)
@@ -1257,10 +1979,21 @@ translate_options (int *argcp, const char *const **argvp)
 	continue;
 #endif
 
-      /* Translate -- options.  */
-      if (argv[i][0] == '-' && argv[i][1] == '-')
+      /* Translate -- options.  and some SunStudio conflicts */
+      if (argv[i][0] == '-' &&
+          (argv[i][1] == '-'
+           || (argv[i][1] == 'x'
+               && strlen(argv[i])!=2)
+           || (argv[i][1] == 'm'
+               && strlen(argv[i])!=2)
+           || argv[i][1] == 'f'
+           || (strlen(argv[i])>4
+               && argv[i][1] == 'W'
+               && argv[i][2] == 'd'
+               && argv[i][3] == ',') ) )
 	{
 	  size_t j;
+          int prevnewindex = newindex;
 	  /* Find a mapping that applies to this option.  */
 	  for (j = 0; j < ARRAY_SIZE (option_map); j++)
 	    {
@@ -1354,6 +2087,8 @@ translate_options (int *argcp, const char *const **argvp)
 		  break;
 		}
 	    }
+          if (prevnewindex == newindex)
+             newv[newindex++] = argv[i]; 
 	  i++;
 	}
 
@@ -1397,11 +2132,1001 @@ translate_options (int *argcp, const char *const **argvp)
     }
 
   newv[newindex] = 0;
+  
+  if ((debug_driver_val & 0x01)) {
+     fprintf(stdout,"IN TRANSLATE_OPTIONS\n");
+     { int i;
+       for (i=0; i<argc; i++)
+        fprintf(stdout,"argv[%d]=%s\n",i,argv[i]);
+     }
 
+
+     { int i;
+       for (i=0; i<newindex; i++)
+        fprintf(stdout,"newv[%d]=%s\n",i,newv[i]);
+    }
+  }
+  
   *argvp = newv;
   *argcp = newindex;
 }
-
+
+static int xprefetch_auto = 1; /* 1=> xprefetch=auto 0=> xprefetch=no%auto */
+static int xprefetch_explicit = 1; /* likewise for explicit */
+static char *xprefetch_latx = NULL;
+
+static int
+crack_xprefetch (char * p)
+{
+   char *e, *p1;
+   int badval = 0;
+
+   /* find the various values on -xprefetch=.... 
+      start with the 11th char of the string to strip off -xprefetch= */
+   p1 = p;
+   p += 11;
+
+   while ((e = strchr (p, ','))) /* values are comma delimited */
+   {
+      if (strncmp( p, "auto", 4) == 0)
+        xprefetch_auto = 1;
+      else if (strncmp ( p, "no%auto", 7) == 0)
+        xprefetch_auto = 0;
+      else if (strncmp ( p, "explicit", 8) == 0)
+        xprefetch_explicit = 1;
+      else if (strncmp ( p, "no%explicit", 11) == 0)
+        xprefetch_explicit = 0;
+      else if (strncmp ( p, "latx:", 5) == 0) {
+        *e = 0; /* make it easier to duplicate string */
+        xprefetch_latx = xstrdup( p );
+      }
+      else {
+        *e = 0;
+        error ("%s is an invalid value for -xprefetch", p );
+        badval = 1;
+      }
+      p = e + 1; /* skip over "," */
+   }
+   if (strncmp( p, "auto", 4) == 0)
+     xprefetch_auto = 1;
+   else if (strncmp ( p, "no%auto", 7) == 0)
+     xprefetch_auto = 0;
+   else if (strncmp ( p, "explicit", 8) == 0)
+     xprefetch_explicit = 1;
+   else if (strncmp ( p, "no%explicit", 11) == 0)
+     xprefetch_explicit = 0;
+   else if (strncmp ( p, "latx:", 5) == 0) 
+     xprefetch_latx  = xstrdup( p );
+   else {
+     error ("%s is an invalid value for -xprefetch", p );
+     badval = 1;
+   }
+
+   if ((debug_driver_val & 0x01)) 
+      fprintf(stdout,"crack: %s xprefetch_auto=%d xpreftch_explicit=%d\n",
+              p1, xprefetch_auto, xprefetch_explicit);
+ 
+   return badval;   
+}
+
+static int xregs_appl = 1; /* 1=> xregs=appl 0=> xregs=no%appl */
+static int xregs_float = 1; /* likewise for float */
+static int xregs_syst = -1; /* -1=>neither syst nor no%syst  */
+
+static int 
+crack_xregs (char * p)
+{
+   char *e, *p1;
+   int badval = 0;
+
+   /* find the various values on -xregs=.... 
+      start with the 7th char of the string to strip off -xregs= */
+   p1 = p;
+   p += 7;
+
+   while ((e = strchr (p, ','))) /* values are comma delimited */
+   {
+      if (strncmp( p, "appl", 4) == 0)
+        xregs_appl = 1;
+      else if (strncmp ( p, "no%appl", 7) == 0)
+        xregs_appl = 0;
+      else if (strncmp ( p, "float", 5) == 0)
+        xregs_float = 1;
+      else if (strncmp ( p, "no%float", 8) == 0)
+        xregs_float = 0;
+      else if (strncmp ( p, "syst", 4) == 0)
+        xregs_syst = 1;
+      else if (strncmp ( p, "no%syst", 7) == 0)
+        xregs_syst = 0;
+      else {
+        *e = 0;
+        error ( "%s is an invalid value for -xregs", p );
+        badval = 1;
+      }
+      p = e + 1; /* skip over "," */
+   }
+   if (strncmp( p, "appl", 4) == 0)
+     xregs_appl = 1;
+   else if (strncmp ( p, "no%appl", 7) == 0)
+     xregs_appl = 0;
+   else if (strncmp ( p, "float", 5) == 0)
+     xregs_float = 1;
+   else if (strncmp ( p, "no%float", 8) == 0)
+     xregs_float = 0;
+   else if (strncmp ( p, "syst", 4) == 0)
+     xregs_syst = 1;
+   else if (strncmp ( p, "no%syst", 7) == 0)
+     xregs_syst = 0;
+   else {
+     error ( "%s is an invalid value for -xregs", p );
+     badval = 1;
+   }
+ 
+   return badval;
+}
+
+/* some options cause problems with duplicates, 
+   so delete the leftmost duplicates 
+   Also handle -Zquietdriver and multiple -xprofile=use 
+
+   The algorithm works by looping through the options,
+   1. for each option look through the remainder for a "match"
+   2. if a match is found then NULL out the original option
+   2a. for concatenating type option, replace the matching option
+       with the concatenated values.
+   3. continue with the outer loop (that is only look for ONE match for now)
+*/
+static void
+delete_duplicate_options (int *argcp, char ***argvp)
+{
+  int i,j;
+  int argc = *argcp;
+  int newc = *argcp;
+  char **argv = *argvp;
+  int have_previous_xprofile_use = 0;
+
+  i=0;
+  while (i < argc ) {
+    if (debug_driver_val & 0x01)
+        fprintf(stdout,"delete_duplicate_options: examine argv[%d]=%s\n",
+              i, argv[i] ? argv[i] : "==nothing==");
+    if (argv[i] && strncmp(argv[i], "-xprofile=collect", 17) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xprofile=", 10) == 0) {
+          have_previous_xprofile_use = 0; /* safe even if -xprofile=collect */
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xprofile=use", 13) == 0) {
+      have_previous_xprofile_use++;
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xprofile=collect", 17) == 0) {
+          have_previous_xprofile_use = 0;
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+      if (have_previous_xprofile_use > 1) {
+        /* 2nd, 3rd, .. -xprofile=use need -xprofile=use changed so 
+           -u2 can be passed to IROPT.  Replace this option with 
+           -Zprofile=use */
+        argv[i][1] = 'Z'; /* change the x to Z */
+	if ((debug_driver_val & 0x01)) 
+             fprintf(stdout,"setting argv[%d] to %s\n",i,argv[i]);
+      }
+    }
+    else if (argv[i] 
+             && (strncmp (argv[i], "-Zfast", 6) == 0 || strncmp (argv[i], "-O", 2) == 0))
+      {
+        j = i + 1;
+        while (j < argc)
+          {
+            if (argv[j]
+                && (strncmp (argv[j], "-O", 2) == 0 || strncmp (argv[j], "-Zfast", 6) == 0))
+              {
+                /* set the old one to NULL, and try another option */
+                argv[i] = NULL;
+                newc--;
+                goto NEXTI;
+              }
+            j++;
+          }
+      }
+    else if (argv[i] && strncmp(argv[i], "-frtl-backend", 13) == 0) {
+	/* this eliminates -xprofile=collect, -xprofile=use, 
+           and other -xprofile* */
+      j = 0; /* remove them all; so start at the beginning */
+      while (j < argc) {
+	if (argv[j] && strncmp(argv[j], "-xprofile", 9) == 0) {
+	  /* set it to NULL, and try another option */
+	  argv[j] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",j);
+	  newc--;
+	} /* if argv */
+	j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xipo=", 6) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xipo=", 6) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xtarget", 8) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xtarget", 8) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xchip", 6) == 0 ) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-xchip", 6) == 0 ||
+               strncmp(argv[j], "-xtarget", 8) == 0) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xcache", 7) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-xcache", 7) == 0 ||
+               strncmp(argv[j], "-xtarget", 8) == 0) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xarch", 6) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-xarch", 6) == 0 ||
+               strncmp(argv[j], "-xtarget", 8) == 0) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zm=32", 6) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-Zm=32", 6) == 0 ||
+               strncmp(argv[j], "-Zm=64", 6) == 0 ||
+               strncmp(argv[j], "-m64", 4) == 0 ||
+               strncmp(argv[j], "-m32", 4) == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+      /* have -Zm=32 and don't have -m32 or -m64
+         so convert it to -m32 */
+      if ((debug_driver_val & 0x01)) 
+              fprintf(stdout,"setting argv[%d] to -m32\n",i);
+      argv[i] = xstrdup("-m32");
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zm=64", 6) == 0) {
+      j = i + 1;
+      if ((debug_driver_val & 0x01)) 
+        fprintf(stdout,"Looking at argv[%d] = %s\n",i,argv[i]);
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-Zm=32", 6) == 0 ||
+               strncmp(argv[j], "-Zm=64", 6) == 0 ||
+               strncmp(argv[j], "-m64", 4) == 0 ||
+               strncmp(argv[j], "-m32", 4) == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+      /* have -Zm=64 and don't have -m32 or -m64
+         so convert it to -m64 */
+      if ((debug_driver_val & 0x01)) 
+              fprintf(stdout,"setting argv[%d] to -m64\n",i);
+      argv[i] = xstrdup("-m64");
+    }
+    else if (argv[i] && strncmp(argv[i], "-m32", 4) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-Zm=32", 6) == 0  ||
+               strncmp(argv[j], "-Zm=64", 6) == 0) ){
+          /* set the new one to NULL, and try another option */
+          argv[j] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",j);
+          newc--;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-m64", 4) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-Zm=32", 6) == 0  ||
+               strncmp(argv[j], "-Zm=64", 6) == 0 ) ){
+          /* set the new one to NULL, and try another option */
+          argv[j] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",j);
+          newc--;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zarch=", 7) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-Zarch=", 7) == 0 ) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mv8plus") == 0 ) ){
+          /* modify (possibly) the original , and try another option */
+          if (strcmp(argv[i], "-Zarch=v7") == 0 ||
+              strcmp(argv[i], "-Zarch=v8") == 0 ) {
+            argv[i] = xstrdup("-Zarch=v8plus");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarch=v8plus\n",i);
+          }
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mno-v8plus") == 0 ) ){
+          /* modify the original (possibly), and try another option */
+          if (strcmp(argv[i], "-Zarch=v8plus") == 0 ||
+              strcmp(argv[i], "-Zarch=v8plusa") == 0 ||
+              strcmp(argv[i], "-Zarch=v8plusb") == 0 ) {
+            argv[i] = xstrdup("-Zarch=v8");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarch=v8\n",i);
+          }
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mvis") == 0 ) ){
+          /* modify (possibly) the original , and try another option */
+          if (strcmp(argv[i], "-Zarch=v7") == 0 ||
+              strcmp(argv[i], "-Zarch=v8") == 0 ||
+              strcmp(argv[i], "-Zarch=v8plus") == 0) {
+            argv[i] = xstrdup("-Zarch=v8plusa");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarch=v8plusa\n",i);
+          } else if (strcmp(argv[i], "-Zarch=v9") == 0 ) {
+            argv[i] = xstrdup("-Zarch=v9a");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarch=v9a\n",i);
+          }
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mno-vis") == 0 ) ){
+          /* modify the original (possibly), and try another option */
+          if (strcmp(argv[i], "-Zarch=v8plusa") == 0 ||
+              strcmp(argv[i], "-Zarch=v8plusb") == 0 ) {
+            argv[i] = xstrdup("-Zarch=v8plus");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarch=v8plus\n",i);
+          }else if (strncmp(argv[i], "-Zarch=v9a", 10) == 0 ||
+              strncmp(argv[i], "-Zarch=v9b", 10) == 0 ) {
+            argv[i] = xstrdup("-Zarch=v9");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarch=v9\n",i);
+          }
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zarchm32", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-Zarchm32", 9) == 0 ) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mv8plus") == 0 ) ){
+          /* modify (possibly) the original, and try another option */
+          if (strcmp(argv[i], "-Zarchm32=v7") == 0 ||
+              strcmp(argv[i], "-Zarchm32=v8") == 0 ) {
+            argv[i] = xstrdup("-Zarchm32=v8plus");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarchm32=v8plus\n",i);
+          }
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mno-v8plus") == 0 ) ){
+          /* modify (possibly) the original , and try another option */
+          if (strcmp(argv[i], "-Zarchm32=v8plus") == 0 ||
+              strcmp(argv[i], "-Zarchm32=v8plusa") == 0 ||
+              strcmp(argv[i], "-Zarchm32=v8plusb") == 0 ) {
+            argv[i] = xstrdup("-Zarchm32=v8");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarchm32=v8\n",i);
+          }
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mvis") == 0 ) ){
+          /* modify (possibly) the original , and try another option */
+          if (strcmp(argv[i], "-Zarchm32=v7") == 0 ||
+              strcmp(argv[i], "-Zarchm32=v8") == 0 ||
+              strcmp(argv[i], "-Zarchm32=v8plus") == 0) {
+            argv[i] = xstrdup("-Zarchm32=v8plusa");
+	    if ((debug_driver_val & 0x01))
+                 fprintf(stdout,"setting argv[%d] to -Zarchm32=v8plusa\n",i);
+          }
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mno-vis") == 0 ) ){
+          /* modify the original (possibly), and try another option */
+          if (strcmp(argv[i], "-Zarchm32=v8plusa") == 0 ||
+              strcmp(argv[i], "-Zarchm32=v8plusb") == 0 ) {
+            argv[i] = xstrdup("-Zarchm32=v8plus");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarchm32=v8plus\n",i);
+          }
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zarchm64", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-Zarchm64", 9) == 0 ) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mvis") == 0 ) ){
+          /* modify (possibly) the original , and try another option */
+          if (strcmp(argv[i], "-Zarchm64=v9") == 0 ) {
+            argv[i] = xstrdup("-Zarchm64=v9a");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarchm64=v9a\n",i);
+          }
+        } else if (argv[j] && 
+              (strcmp(argv[j], "-mno-vis") == 0 ) ){
+          /* modify the original (possibly), and try another option */
+          if (strcmp(argv[i], "-Zarchm64=v9a") == 0 ||
+              strcmp(argv[i], "-Zarchm64=v9b") == 0 ) {
+            argv[i] = xstrdup("-Zarchm64=v9");
+	    if ((debug_driver_val & 0x01)) 
+                 fprintf(stdout,"setting argv[%d] to -Zarchm64=v9\n",i);
+          }
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-mcpu", 5) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && (strncmp(argv[j], "-mcpu", 5) == 0 ||
+                        strcmp(argv[j], "-mv8") == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strcmp(argv[i], "-mv8") == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && (strncmp(argv[j], "-mcpu", 5) == 0 ||
+                        strcmp(argv[j], "-mv8") == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-mv8plus", 8) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && (strncmp(argv[j], "-mcpu", 5) == 0 ||          
+                        strncmp(argv[j], "-xtarget", 8) == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xcheck", 7) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xcheck", 7) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-mno-vis", 8) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && (strncmp(argv[j], "-mcpu", 5) == 0 ||
+                        strncmp(argv[j], "-xtarget", 8) == 0 ||
+                        strncmp(argv[j], "-mvis", 5) == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-mvis", 5) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && (strncmp(argv[j], "-mcpu", 5) == 0 ||
+                        strncmp(argv[j], "-xtarget", 8) == 0 ||
+                        strncmp(argv[j], "-mno-vis", 8) == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xcode=", 7) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+               strncmp(argv[j], "-xcode=", 7) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xannotate=", 11) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xannotate=", 11) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zfns=", 6) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-Zfns=", 6) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zfsimple=", 10) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-Zfsimple=", 10) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zftrap", 7) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-Zftrap", 7) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xbuiltin", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xbuiltin", 9) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xinstrument", 12) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xinstrument", 12) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+          if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xopenmp", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xopenmp", 9) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-tm_mode", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-tm_mode", 9) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+          if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp (argv[i], "-xprefetch_level", 16) == 0) 
+      {
+        j = i + 1;
+        while (j < argc) 
+          {
+            if (argv[j] && strncmp (argv[j], "-xprefetch_level", 16) == 0) 
+              {
+                /* set the old one to NULL, and try another option */
+                argv[i] = NULL;
+                if (debug_driver_val & 0x01) 
+                  fprintf (stdout, "setting argv[%d] to NULL\n", i);
+                newc--;
+                goto NEXTI;
+              }
+            j++;
+          }
+      }
+    else if (argv[i] && strncmp (argv[i], "-xprefetch=", 11) == 0)
+      {
+        int badval = crack_xprefetch (argv[i]);
+
+        j = i + 1;
+        while (j < argc)
+          {
+            if (argv[j] && strncmp (argv[j], "-xprefetch=", 11) == 0) 
+              {
+                crack_xprefetch(argv[j]);
+                /* set the old one to NULL, replace with merged values
+                   and move on*/
+                argv[i] = NULL;
+                if (debug_driver_val & 0x01) 
+                  fprintf (stdout, "setting argv[%d] to NULL\n", i);
+                argv[j] = concat ("-xprefetch=",
+                                  xprefetch_auto == 1 ? "auto," : "no%auto,",
+                                  xprefetch_explicit == 1 ? "explicit" : "no%explicit",
+                                  xprefetch_latx != NULL ? "," : NULL,
+                                  xprefetch_latx != NULL ? xprefetch_latx : NULL,
+                                  NULL);
+                if (debug_driver_val & 0x01)
+                  fprintf (stdout, "setting argv[%d] to %s\n", j, argv[j]);
+                newc--;
+                goto NEXTI;
+              }
+            j++;
+          }
+        /* If we get here, there are no other -xprefetch */
+        if (badval) 
+          {
+            argv[i] = NULL;
+            newc--;
+            if (debug_driver_val & 0x01)
+              fprintf (stdout, "setting argv[%d] to NULL\n", i);
+          }
+        else 
+          {
+            argv[i] = concat ("-xprefetch=",
+                              xprefetch_auto == 1 ? "auto," : "no%auto,",
+                              xprefetch_explicit == 1 ? "explicit" : "no%explicit",
+                              xprefetch_latx != NULL ? "," : NULL,
+                              xprefetch_latx != NULL ? xprefetch_latx : NULL,
+                              NULL);
+            if (debug_driver_val & 0x01)
+              fprintf (stdout, "setting argv[%d] to %s\n", i, argv[i]);
+          }
+      }
+    else if (argv[i] && strncmp(argv[i], "-xregs=", 7) == 0) {
+      int badval = crack_xregs(argv[i]);
+
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xregs=", 7) == 0) {
+          crack_xregs(argv[j]);
+          /* set the old one to NULL, replace with merged values
+              and move on*/
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) 
+             fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          argv[j] = concat ( "-xregs=",
+                             xregs_appl == 1 ? "appl," : "no%appl,",
+                             xregs_float == 1 ? "float" : "no%float",
+                             xregs_syst == 1 ? ",syst" 
+                                             : (xregs_syst == 0 ? ",no%syst" : NULL),
+                             NULL);
+	  if ((debug_driver_val & 0x01)) 
+             fprintf(stdout,"setting argv[%d] to %s\n",j,argv[j]);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+      /* If we get here, there are no other -xregs */
+      if (badval)
+        {
+          argv[i] = NULL;
+          newc--;
+	  if ((debug_driver_val & 0x01)) 
+             fprintf(stdout,"setting argv[%d] to NULL\n",i);
+        }
+      else 
+        {
+          argv[i] = concat ( "-xregs=",
+                             xregs_appl == 1 ? "appl," : "no%appl,",
+                             xregs_float == 1 ? "float" : "no%float",
+                             xregs_syst == 1 ? ",syst" 
+                                             : (xregs_syst == 0 ? ",no%syst" : NULL),
+                             NULL);
+	  if ((debug_driver_val & 0x01)) 
+             fprintf(stdout,"setting argv[%d] to %s\n",i,argv[i]);
+        }
+    }
+    else if (argv[i] && strncmp(argv[i], "-xmemalign=", 11) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if ( (argv[j] && strncmp(argv[j], "-xmemalign=", 11) == 0) ||
+             (argv[j] && strncmp(argv[j], "-mno-integer-ldd-std", 20) == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-mno-integer-ldd-std", 20) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if ( (argv[j] && strncmp(argv[j], "-xmemalign=", 11) == 0) ||
+             (argv[j] && strncmp(argv[j], "-mno-integer-ldd-std", 20) == 0) ){
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xalias_level=", 14) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && (strncmp(argv[j], "-xalias_level=", 14) == 0 ||
+                        strncmp(argv[j], "-Zalias_level=", 14) == 0) ) {
+          /* if the new one is Zalias_level; change it to xalias_level */
+          argv[j][1] = 'x';
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zalias_level=", 14) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && (strncmp(argv[j], "-xalias_level=", 14) == 0 ||
+                        strncmp(argv[j], "-Zalias_level=", 14) ==0 ) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xdepend=", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xdepend=", 9) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xinline=", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-xinline=", 9) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-xhwcprof", 9) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-xhwcprof", 9) == 0 ) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((deb  ug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+            goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-frtl-backend", 13) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-frtl-backend", 13) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } 
+        else if (argv[j] && strncmp(argv[j], "-Zsunir-backend", 15) == 0 ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-Zsunir-backend", 15) == 0) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && strncmp(argv[j], "-Zsunir-backend", 15) == 0) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } 
+        else if (argv[j] && strncmp(argv[j], "-frtl-backend", 13) == 0 ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }        
+    else if (argv[i] && strncmp(argv[i], "-Zquietdriver", 13) == 0) {
+       quiet_driver++;
+    }
+NEXTI:
+    i++;
+  } /* while (i < argc) */
+
+  if (newc != argc) {
+    if ((debug_driver_val & 0x01)) fprintf(stdout,"COMPACTING ARGV\n");
+    /* need to compact argv */
+    for (i=0; i < newc; i++) {
+      if (argv[i] == NULL) {
+        /* find something to move to here */
+        for (j=i+1; j < argc; j++)
+          if (argv[j] != NULL) {
+            argv[i] = argv[j];
+	    if ((debug_driver_val & 0x01)) 
+              fprintf(stdout,"moving argv[%d] to arg[%d]\n",j,i);
+            argv[j] = NULL;
+	    if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",j);
+            break;
+          } /* argv[j] != NULL */
+      } /* argv[i] == NULL */
+    } /* for i */
+  } /* if newc != argc */
+
+  *argcp = newc;
+}
+
 static char *
 skip_whitespace (char *p)
 {
@@ -1445,6 +3170,10 @@ struct path_prefix
   const char *name;           /* Name of this list (used in config stuff) */
 };
 
+/* List of prefixes in PATH */
+
+static struct path_prefix PATH_prefixes = { 0, 0, "PATH"};
+
 /* List of prefixes to try when looking for executables.  */
 
 static struct path_prefix exec_prefixes = { 0, 0, "exec" };
@@ -1456,6 +3185,12 @@ static struct path_prefix startfile_prefixes = { 0, 0, "startfile" };
 /* List of prefixes to try when looking for include files.  */
 
 static struct path_prefix include_prefixes = { 0, 0, "include" };
+
+/* List of prefixes used by cross compiler when looking for include files
+   and specified with environment variable GCCFSS_LINUX_SPARC_INCLUDE or
+   GCCFSS_SOLARIS_SPARC_INCLUDE */
+
+static struct path_prefix cross_include_prefixes = { 0, 0, "include" };
 
 /* Suffix to attach to directories searched for commands.
    This looks like `MACHINE/VERSION/'.  */
@@ -1529,6 +3264,19 @@ static const char *const standard_startfile_prefix_2
    relative to the driver.  */
 static const char *const tooldir_base_prefix = TOOLDIR_BASE_PREFIX;
 
+static const char *studioproddir = NULL;
+static char *studioproddir_bin = NULL;
+static char *studioproddir_lib = NULL;
+static char *sunw_studio_path = NULL;
+static char *sunw_scgfss_path = NULL;
+
+static char *alternate_as = NULL;
+static char *alternate_iropt = NULL;
+static char *alternate_cg = NULL;
+static char *alternate_ipo = NULL;
+static char *alternate_postopt = NULL;
+static char *current_work_directory = NULL;
+
 /* Subdirectory to use for locating libraries.  Set by
    set_multilib_dir based on the compilation options.  */
 
@@ -1576,6 +3324,8 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("trad_capable_cpp",		&trad_capable_cpp),
   INIT_STATIC_SPEC ("cc1",			&cc1_spec),
   INIT_STATIC_SPEC ("cc1_options",		&cc1_options),
+  INIT_STATIC_SPEC ("cc1_unique_options",	&cc1_unique_options),
+  INIT_STATIC_SPEC ("oldstyle_cc1_options",	&oldstyle_cc1_options),
   INIT_STATIC_SPEC ("cc1plus",			&cc1plus_spec),
   INIT_STATIC_SPEC ("link_gcc_c_sequence",	&link_gcc_c_sequence_spec),
   INIT_STATIC_SPEC ("link_ssp",			&link_ssp_spec),
@@ -1605,6 +3355,28 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("sysroot_spec",             &sysroot_spec),
   INIT_STATIC_SPEC ("sysroot_suffix_spec",	&sysroot_suffix_spec),
   INIT_STATIC_SPEC ("sysroot_hdrs_suffix_spec",	&sysroot_hdrs_suffix_spec),
+  INIT_STATIC_SPEC ("invoke_iropt",		&invoke_iropt),
+  INIT_STATIC_SPEC ("invoke_cg",		&invoke_cg),
+  INIT_STATIC_SPEC ("ssbe_xarch",		&ssbe_xarch),
+  INIT_STATIC_SPEC ("ssbe_xarch_xchip",		&ssbe_xarch_xchip),
+  INIT_STATIC_SPEC ("sscg_xarch_xchip",		&sscg_xarch_xchip),
+  INIT_STATIC_SPEC ("ssiropt_optlevel",		&ssiropt_optlevel),
+  INIT_STATIC_SPEC ("ssbe_optlevel",		&ssbe_optlevel),
+  INIT_STATIC_SPEC ("ssiropt_spec_gxx",		&ssiropt_lang_spec_gxx),
+  INIT_STATIC_SPEC ("ssiropt_spec_fortran",	&ssiropt_lang_spec_fortran),
+  INIT_STATIC_SPEC ("sscg_spec_gxx",	        &sscg_lang_spec_gxx),
+  INIT_STATIC_SPEC ("sscg_spec_fortran",        &sscg_lang_spec_fortran),
+  INIT_STATIC_SPEC ("ssiropt_spec",		&ssiropt_lang_spec),
+  INIT_STATIC_SPEC ("sscg_spec",	        &sscg_lang_spec),
+  INIT_STATIC_SPEC ("xtarget",			&xtarget),
+  INIT_STATIC_SPEC ("invoke_ipo1",		&invoke_ipo1),
+  INIT_STATIC_SPEC ("invoke_fortranipo1",	&invoke_fortranipo1),
+  INIT_STATIC_SPEC ("invoke_cppipo1",		&invoke_cppipo1),
+  INIT_STATIC_SPEC ("invoke_ipo2",		&invoke_ipo2),
+  INIT_STATIC_SPEC ("iropt_ipo_options",        &iropt_ipo_options),
+  INIT_STATIC_SPEC ("cg_ipo_options",           &cg_ipo_options),
+  INIT_STATIC_SPEC ("mvis_il",                  &mvis_il),
+  INIT_STATIC_SPEC ("asm_name",			&asm_name),
 };
 
 #ifdef EXTRA_SPECS		/* additional specs needed */
@@ -1634,6 +3406,10 @@ static const struct spec_function static_spec_functions[] =
   { "replace-outfile",		replace_outfile_spec_function },
   { "version-compare",		version_compare_spec_function },
   { "include",			include_spec_function },
+  { "print-orig-cmdline",	print_orig_cmdline}, 
+  { "is-it-pec_dummy",		is_it_pec_dummy},
+  { "verify-sunir-backend",	verify_sunir_backend},
+  { "add-user-il-routines",	add_user_il_routines},
   { "print-asm-header",		print_asm_header_spec_function },
 #ifdef EXTRA_SPEC_FUNCTIONS
   EXTRA_SPEC_FUNCTIONS
@@ -2240,9 +4016,10 @@ read_specs (const char *filename, int main_p)
 	{
 	  if (in[0] == '\\' && in[1] == '\n')
 	    in += 2;
+          /* '#' is a normal character for SGCC specs.
 	  else if (in[0] == '#')
 	    while (*in && *in != '\n')
-	      in++;
+            in++; */
 
 	  else
 	    *out++ = *in++;
@@ -2452,6 +4229,12 @@ for_each_path (const struct path_prefix *paths,
   if (do_multi && multilib_os_dir && strcmp (multilib_os_dir, ".") != 0)
     multi_os_dir = concat (multilib_os_dir, dir_separator_str, NULL);
 
+  if (!multi_suffix)
+    multi_suffix = "";
+  
+  if (!just_multi_suffix)
+    just_multi_suffix = "";
+  
   while (1)
     {
       size_t multi_dir_len = 0;
@@ -2682,6 +4465,9 @@ file_at_path (char *path, void *data)
   memcpy (path + len, info->name, info->name_len);
   len += info->name_len;
 
+  if (debug_driver_val & 0x04)
+     fprintf(stdout,"file_at_path:%s\n",path);
+  
   /* Some systems have a suffix for executable files.
      So try appending that first.  */
   if (info->suffix_len)
@@ -2696,6 +4482,34 @@ file_at_path (char *path, void *data)
     return path;
 
   return NULL;
+}
+
+/* convert the directory, if necessary, to absolute, and append "name" */
+static char *make_absolute_from_Y(const char *path, const char *name) 
+{
+  char *p;
+
+    if(path[0] == '/') {
+      p = xmalloc(strlen(path) + strlen(name) + 2);
+      (void) strcpy(p, path);
+    } else {
+      if (current_work_directory == NULL) {
+        current_work_directory = xmalloc(MAXPATHLEN+1);
+        (void) getcwd(current_work_directory, MAXPATHLEN+1);
+      }
+      p = xmalloc(strlen(current_work_directory) + strlen(path) + 
+                 strlen(name) + 3);
+      (void) strcpy(p, current_work_directory);
+      (void) strcat(p, "/");
+      (void) strcat(p, path);
+    }
+
+    if (p[strlen(p) - 1] != '/')
+            (void) strcat(p, "/");
+
+    (void) strcat(p, name);
+
+    return (p);
 }
 
 /* Search for NAME using the prefix list PREFIXES.  MODE is passed to
@@ -2719,6 +4533,24 @@ find_a_file (const struct path_prefix *pprefix, const char *name, int mode,
     return xstrdup (DEFAULT_LINKER);
 #endif
 
+  if (!strcmp(name, "iropt") && alternate_iropt)
+    return xstrdup (alternate_iropt);
+
+  if (!strcmp(name, "cg") && alternate_cg)
+    return xstrdup (alternate_cg);
+
+  if (!strcmp(name, "ipo") && alternate_ipo)
+    return xstrdup (alternate_ipo);
+
+  if (!strcmp(name, "postopt") && alternate_postopt)
+    return xstrdup (alternate_postopt);
+
+  if (!strcmp (name, "as") && alternate_as)
+    return xstrdup (alternate_as);
+
+  if (!strcmp (name, "fbe") && alternate_as)
+    return xstrdup (alternate_as);
+  
   /* Determine the filename to execute (special case for absolute paths).  */
 
   if (IS_ABSOLUTE_PATH (name))
@@ -2966,6 +4798,10 @@ execute (void)
     }
 #endif
 
+  /* see if backend has been installed */
+  if (find_executable_file("iropt") == NULL)
+    fatal("SUNW0scgfss %s has not been installed\n",compiler_version);
+
   /* Run each piped subprocess.  */
 
   pex = pex_init (PEX_USE_PIPES | (report_times ? PEX_RECORD_TIMES : 0),
@@ -2978,7 +4814,38 @@ execute (void)
       const char *errmsg;
       int err;
       const char *string = commands[i].argv[0];
+      int is_frontend = 0;
+      char *ld_library_path = NULL;
+     
+      /* catch cc1 and cc1plus */
+      if (commands[i].prog[0] == 'c' && commands[i].prog[1] == 'c'
+	  && commands[i].prog[2] == '1')
+	is_frontend = 1;
+      else if (commands[i].prog[0] == 'f' && commands[i].prog[1] == '9'
+               && commands[i].prog[2] == '5' && commands[i].prog[3] == '1')
+	is_frontend = 1;
 
+      /* set ld_library_path for cc1 and cc1plus,
+         since they need several backend shared libraries to run */
+      if (is_frontend && studioproddir_lib)
+        {
+          char *ldpath;
+	  /* linux doesn't support _32 & _64 suffixes,
+	     but on Solaris LD_LIBRARY_PATH_32 environment variable 
+	     overrides LD_LIBRARY_PATH */
+#ifdef __linux__
+#define LD_LIB_PATH "LD_LIBRARY_PATH"
+#else
+#define LD_LIB_PATH "LD_LIBRARY_PATH_32"
+#endif
+          GET_ENVIRONMENT (ld_library_path, LD_LIB_PATH);
+          ldpath = concat (LD_LIB_PATH "=", studioproddir_lib, ":",
+                           studioproddir_lib, "/sys/:", ld_library_path, NULL);
+          putenv (ldpath);
+          if (debug_driver_val & 0x02) 
+            fprintf (stderr, "export %s\n", ldpath);
+        }
+      
       errmsg = pex_run (pex,
 			((i + 1 == n_commands ? PEX_LAST : 0)
 			 | (string == commands[i].prog ? PEX_SEARCH : 0)),
@@ -2995,6 +4862,19 @@ execute (void)
 	    }
 	}
 
+      if (is_frontend && studioproddir_lib)
+	{
+	  /* restore LD_LIBRARY_PATH */
+	  if (ld_library_path)
+	    {
+              char *ldpath;
+              ldpath = concat (LD_LIB_PATH "=", ld_library_path, NULL);
+              putenv (ldpath);
+	    }
+	  else
+	    unsetenv (LD_LIB_PATH);
+	}
+      
       if (string != commands[i].prog)
 	free (CONST_CAST (char *, string));
     }
@@ -3044,8 +4924,8 @@ execute (void)
 #endif
 	      fatal_ice ("\
 Internal error: %s (program %s)\n\
-Please submit a full bug report.\n\
-See %s for instructions.",
+Please submit a full bug report to\n\
+%s",
 		 	strsignal (WTERMSIG (status)), commands[i].prog,
 		 	bug_report_url);
 	  }
@@ -3127,6 +5007,10 @@ struct infile
 static struct infile *infiles;
 
 int n_infiles;
+
+/* likewise a vector of input .il files specified */
+static struct infile *ilfiles;
+int n_ilfiles;
 
 /* True if multiple input files are being compiled to a single
    assembly file.  */
@@ -3262,6 +5146,71 @@ display_help (void)
  other options on to these processes the -W<letter> options must be used.\n\
 "), programname);
 
+  printf (_("\
+\nAdditional options specific to GCC For SPARC(R) Systems:\n\
+") );
+  fputs (_("  -dalign                  Same as -xmemalign=8s\n"), stdout);
+  fputs (_("  -fast                    Starting point for maximum runtime performance\n"), stdout);
+  fputs (_("  -fns[={no|yes}]          Turn on nostandard floating point mode\n"), stdout);
+  fputs (_("  -fnonstd                 Same as -fns -ftrap=common\n"), stdout);
+  fputs (_("  -fsimple[=<val>]         Amount of floating point simplification\n"), stdout);
+  fputs (_("  -ftrap=<val>             Select floating-point trapping mode\n"), stdout);
+  fputs (_("  -KPIC                    Same as -xcode=pic32\n"), stdout);
+  fputs (_("  -Kpic                    Same as -xcode=pic13\n"), stdout);
+  fputs (_("  -mt                      Macro for -D_REENTRANT -lthread\n"), stdout);
+  fputs (_("  -native                  Same as -xtarget=native\n"), stdout);
+  fputs (_("  -xalias_level=<level>    Assumptions for type-based alias-analysis\n"), stdout);
+  fputs (_("  -xannotate[={no|yes}]    Turn on annotations (default is yes)\n"), stdout);
+  fputs (_("  -xarch=<arch>            Compile for architecture <arch>\n"), stdout);
+  fputs (_("  -xautopar                Autoparallize\n"), stdout);
+  fputs (_("  -xbinopt=prepare         Prepare binary for Binary Improvement Tools (bit)\n"), stdout);
+  fputs (_("  -xcache=<cache>          Compile for cache with <cache>\n"), stdout);
+  fputs (_("  -xchar=<c>               Same as -fsigned-char or -funsigned-char\n"), stdout);
+  fputs (_("  -xchip=<c>               Compile for chip <c>\n"), stdout);
+  fputs (_("  -xcode[=<val>]           Specify code address space\n"), stdout);
+  fputs (_("  -xc99                    (gcc only) Works with -Xc for c99 standard\n"), stdout);
+  fputs (_("  -xdepend                 Analyzes loops for inter-iteration data dependencies\n"), stdout);
+  fputs (_("  -xexplicitpar            Parallelize loops explicitly marked with directives\n"), stdout);
+  fputs (_("  -xhwcprof[=<eord>]       Hardware counter profiling\n"), stdout);
+  fputs (_("  -xinline=[<f>]           Control inlining\n"), stdout);
+  fputs (_("  -xipo[=0|1|2]            Invoke IPO at level 1 or 2\n"), stdout);
+  fputs (_("  -xipo_archive=[<a>]      Optimize files in library with IPO\n"), stdout);
+  fputs (_("  -xlibmil                 Inline some library routines\n"), stdout);
+  fputs (_("  -xlinkopt[=<level>]      Perform link-time optimizations\n"), stdout);
+  fputs (_("  -xloopinfo               Information about parallelization\n"), stdout);
+  fputs (_("  -xmemalign=<val>         Specify maximum assumed memory alignment\n"), stdout);
+  fputs (_("  -xopenmp[={noopt|parallel|none}] Enable OpenMP language extensions\n"), stdout);
+  fputs (_("  -tm_mode[={none|htm|phtm|stm}] Enable TM language extensions\n"), stdout);
+  fputs (_("  -xpagesize=<val>         Set the size of pages to <val>\n"), stdout);
+  fputs (_("  -xparallel               Equivalent to -xautopar -xdepend -xexplicitpar\n"), stdout);
+  fputs (_("  -xpec                    Generate portable executable code for automatic tuning\n"), stdout);
+  fputs (_("  -xprefetch=<val>         Enable prefetch instructions\n"), stdout);
+  fputs (_("  -xprefetch_auto_type=<val>   Control aggressiveness of prefetch insertion\n"), stdout);
+  fputs (_("  -xprefetch_level=<val>   Control aggressiveness of prefetch insertion\n"), stdout);
+  fputs (_("  -xprofile=collect[:<loc>] Compile for collecting profile information\n"), stdout);
+  fputs (_("  -xprofile=use[:<loc>]    Compile using profile information\n"), stdout);
+  fputs (_("  -xregs=<val>             Specifies the usage of registers for the generated code\n"), stdout);
+  fputs (_("  -xreduction              Autoparallize reductions (needs -xautopar too)\n"), stdout);
+  fputs (_("  -xrestrict[=<funcs>]     Treats pointer-valued function parameters as restricted pointers\n"), stdout);
+  fputs (_("  -xsafe=mem               Assume no memory-based traps occur\n"), stdout);
+  fputs (_("  -xspace                  Does no optimization or parallelization that increase code size\n"), stdout);
+  fputs (_("  -xtarget=<targ>          Compile for <targ>\n"), stdout);
+  fputs (_("  -xthreadvar              Control implementation of thread local variables\n"), stdout);
+  fputs (_("  -xunroll=<value>         Suggest unrolling <value> times\n"), stdout);
+  fputs (_("  -xvector                 Enable automatic generation of call to the vector library functions\n"), stdout);
+  fputs (_("  -xvis[=yes]              Same as -mvis\n"), stdout);
+  fputs (_("  -W0,<options>            Pass comma-separated <options> on to the frontend\n"), stdout);
+  fputs (_("  -W2,<options>            Pass comma-separated <options> on to the iropt\n"), stdout);
+  fputs (_("  -Wc,<options>            Pass comma-separated <options> on to the code generator\n"), stdout);
+  fputs (_("  -WO,<options>            Pass comma-separated <options> on to the ipo\n"), stdout);
+  fputs (_("  -Wo,<options>            Pass comma-separated <options> on to the postopt\n"), stdout);
+  fputs (_("  -Xc                      (gcc only) which C language standard \n"), stdout);
+  printf (_("\
+\nA forum for discussion about GCC For SPARC(R) Systems \
+\nis available at URL http://forum.java.sun.com/forum.jspa?forumID=905 .\
+\nAlso visit http://cooltools.sunsource.net for the various CoolTools\n\
+") );
+  
   /* The rest of the options are displayed by invocations of the various
      sub-processes.  */
 }
@@ -3279,6 +5228,76 @@ add_preprocessor_option (const char *option, int len)
 
   preprocessor_options [n_preprocessor_options - 1] =
     save_string (option, len);
+}
+
+static void
+add_frontend_option (const char *option, int len)
+{
+  n_frontend_options++;
+
+  if (! frontend_options)
+    frontend_options = xmalloc (n_frontend_options * sizeof (char *));
+  else
+    frontend_options = xrealloc (frontend_options,
+				  n_frontend_options * sizeof (char *));
+
+  frontend_options [n_frontend_options - 1] = save_string (option, len);
+}
+
+static void
+add_iropt_option (const char *option, int len)
+{
+  n_iropt_options++;
+
+  if (! iropt_options)
+    iropt_options = xmalloc (n_iropt_options * sizeof (char *));
+  else
+    iropt_options = xrealloc (iropt_options,
+				  n_iropt_options * sizeof (char *));
+
+  iropt_options [n_iropt_options - 1] = save_string (option, len);
+}
+
+static void
+add_sscg_option (const char *option, int len)
+{
+  n_sscg_options++;
+
+  if (! sscg_options)
+    sscg_options = xmalloc (n_sscg_options * sizeof (char *));
+  else
+    sscg_options = xrealloc (sscg_options,
+				  n_sscg_options * sizeof (char *));
+
+  sscg_options [n_sscg_options - 1] = save_string (option, len);
+}
+
+static void
+add_ipo_option (const char *option, int len)
+{
+  n_ipo_options++;
+
+  if (! ipo_options)
+    ipo_options = xmalloc (n_ipo_options * sizeof (char *));
+  else
+    ipo_options = xrealloc (ipo_options,
+				  n_ipo_options * sizeof (char *));
+
+  ipo_options [n_ipo_options - 1] = save_string (option, len);
+}
+
+static void
+add_postopt_option (const char *option, int len)
+{
+  n_postopt_options++;
+
+  if (! postopt_options)
+    postopt_options = xmalloc (n_postopt_options * sizeof (char *));
+  else
+    postopt_options = xrealloc (postopt_options,
+				  n_postopt_options * sizeof (char *));
+
+  postopt_options [n_postopt_options - 1] = save_string (option, len);
 }
 
 static void
@@ -3321,18 +5340,100 @@ process_command (int argc, const char **argv)
   const char *spec_lang = 0;
   int last_language_n_infiles;
   int lang_n_infiles = 0;
+  char *path_to_driver_wo_driver;
 #ifdef MODIFY_TARGET_NAME
   int is_modify_target_name;
   unsigned int j;
 #endif
   const char *tooldir_prefix;
+  
+  GET_ENVIRONMENT(debug_driver, "DEBUG_GCC_DRIVER");
+  if (debug_driver)
+    debug_driver_val = strtol(debug_driver, (char **)NULL, 10);
+
+  if (debug_driver)
+    fprintf(stdout,"DEBUG_DRIVER=%s DEBUG_DRIVER_VAL=%ld\n",debug_driver, debug_driver_val);
 
   GET_ENVIRONMENT (gcc_exec_prefix, "GCC_EXEC_PREFIX");
 
   n_switches = 0;
   n_infiles = 0;
   added_libraries = 0;
+  n_ilfiles = 0;
 
+  if (debug_driver_val & 0x01) 
+    fprintf (stdout, "argv[0]=%s\n", argv[0]);
+
+  /* if not /path or ./path or ../path */
+  if (!(argv[0][0] == '/'
+        || (argv[0][0] == '.' 
+            && (argv[0][1] == '/' 
+                || (argv[0][1] == '.' && argv[0][2] == '/')))))
+    {
+      /* determine how we found the driver */
+      GET_ENVIRONMENT (temp, "PATH");
+      if (temp)
+        {
+          const char *startp, *endp;
+          char *nstore = alloca (strlen (temp) + 3);
+
+          startp = endp = temp;
+          while (1)
+           {
+             if (*endp == PATH_SEPARATOR || *endp == 0)
+               {
+                 strncpy (nstore, startp, endp - startp);
+                 if (endp == startp)
+                   strcpy (nstore, concat (".", dir_separator_str, NULL));
+                 else if (!IS_DIR_SEPARATOR (endp[-1]))
+                   {
+                     nstore[endp - startp] = DIR_SEPARATOR;
+                     nstore[endp - startp + 1] = 0;
+                   }
+                 else
+                   nstore[endp - startp] = 0;
+                 add_prefix (&PATH_prefixes, nstore, 0,
+                             PREFIX_PRIORITY_LAST, 0, 0);
+                 if (*endp == 0)
+                   break;
+                 endp = startp = endp + 1;
+               }
+             else
+               endp++;
+           }
+        }
+
+      /* setup the starting points for the search path using the location of the
+         driver as the starting point if invoking from a install area */
+      path_to_driver = find_a_file (&PATH_prefixes, argv[0], X_OK, 0);
+    }
+  
+  if (path_to_driver == NULL) 
+    {
+      path_to_driver = xstrdup (argv[0]);
+    }
+
+  /* need to make path_to_driver absolute */
+  if (path_to_driver[0] != '/') 
+    {
+      char *p;
+      if (current_work_directory == NULL) 
+        {
+          current_work_directory = xmalloc (MAXPATHLEN+1);
+          (void) getcwd (current_work_directory, MAXPATHLEN+1);
+        }
+      p = xmalloc (strlen (current_work_directory) + strlen (path_to_driver) + 2);
+      (void) strcpy (p, current_work_directory);
+      (void) strcat (p, "/");
+      (void) strcat (p, path_to_driver);
+      path_to_driver = p;
+    }
+
+  /* canonicalize driver path */ 
+  path_to_driver = lrealpath (path_to_driver);
+  if (debug_driver_val & 0x01) 
+    fprintf (stdout, "path_to_driver=%s\n", path_to_driver);
+            
   /* Figure compiler version from version string.  */
 
   compiler_version = temp1 = xstrdup (version_string);
@@ -3405,6 +5506,67 @@ process_command (int argc, const char **argv)
       fatal ("couldn't run '%s': %s", new_argv0, xstrerror (errno));
     }
 
+#ifndef __linux__
+  else
+    {
+#include <sys/systeminfo.h>
+      /* don't use modified argv[0] for execvp below, but use 'path_to_driver',
+         since we want to look for solaris dependent driver in the real
+         location of the 'gcc' driver and not in symlinked dir */
+      const char *progname = path_to_driver;
+      int baselen;
+      
+      for (baselen = strlen (progname); baselen > 0; baselen--)
+        if (IS_DIR_SEPARATOR (progname[baselen-1]))
+          break;
+      
+      /* recursive check */
+      if (strncmp (progname + baselen, "sparc-sun-solaris2", 18) != 0)
+        {
+          char sysinfo_buf[32];
+          const char * new_machine;
+          char **new_argv;
+          char *new_argv0;
+
+          sysinfo_buf[0] = 0; /* init */
+          /* get Solaris version number.
+           * 5.9 -> solaris 2.9
+           * 5.10 -> solaris 2.10 */
+          sysinfo (SI_RELEASE, sysinfo_buf, 32); 
+
+          if (strlen (sysinfo_buf) <= 3) /* 5.7, 5.8, 5.9 */
+            new_machine = "sparc-sun-solaris2.9"; /* hardcoded triplet */
+          else
+            new_machine = "sparc-sun-solaris2.10";
+
+          new_argv0 = xmemdup (progname, baselen,
+                               baselen + concat_length (new_machine, "-", 
+                                                        progname + baselen, NULL) + 1);
+          strcpy (new_argv0 + baselen, new_machine);
+          strcat (new_argv0, "-");
+          strcat (new_argv0, progname + baselen);
+
+          new_argv = xmemdup (argv, (argc + 1) * sizeof (argv[0]),
+                              (argc + 1 + 1) * sizeof (argv[0]));
+          new_argv[0] = new_argv0;
+          new_argv[argc+1] = new_argv[argc];
+          new_argv[argc] = concat("-xgccdriver=",path_to_driver,NULL);
+
+          /* call new driver
+           * Ex. sparc-sun-solaris2.9-g++ */
+          execvp (new_argv0, new_argv);
+          /* fall through -> failed to execute new_argv0. Ok during the build. */
+          if (debug_driver_val & 0x01)
+            notice ("couldn't run '%s': %s\n", new_argv0, xstrerror (errno));
+        }
+    }        
+#endif
+
+  /* save off the original command line */
+  orig_argv = xmemdup (argv, argc * sizeof (argv[0]),
+			  argc * sizeof (argv[0]));
+  orig_argc = argc;
+  
   /* Set up the default search paths.  If there is no GCC_EXEC_PREFIX,
      see if we can create it from the pathname specified in argv[0].  */
 
@@ -3418,6 +5580,10 @@ process_command (int argc, const char **argv)
       gcc_libexec_prefix = make_relative_prefix (argv[0],
 						 standard_bindir_prefix,
 						 standard_libexec_prefix);
+      if ((debug_driver_val & 0x02)) {
+        fprintf(stdout,"GCC_EXEC_PREFIX(1)=%s\n",gcc_exec_prefix ? gcc_exec_prefix : "NULL");
+        fprintf(stdout,"GCC_LIBEXEC_PREFIX=%s\n", gcc_libexec_prefix ? gcc_libexec_prefix : "NULL");
+      }
       if (gcc_exec_prefix)
 	xputenv (concat ("GCC_EXEC_PREFIX=", gcc_exec_prefix, NULL));
     }
@@ -3437,9 +5603,27 @@ process_command (int argc, const char **argv)
 	gcc_libexec_prefix = standard_libexec_prefix;
 
       free (tmp_prefix);
+      if ((debug_driver_val & 0x02))
+        {
+          fprintf(stdout,"GCC_EXEC_PREFIX(2)=%s\n",
+                  gcc_exec_prefix ? gcc_exec_prefix : "NULL");
+          fprintf(stdout,"GCC_LIBEXEC_PREFIX=%s\n",
+                  gcc_libexec_prefix ? gcc_libexec_prefix : "NULL");
+        }
     }
 #else
 #endif
+
+  if ((debug_driver_val & 0x02))
+    {
+      fprintf(stdout,"GCC_EXEC_PREFIX(3)=%s\n",gcc_exec_prefix ? gcc_exec_prefix : "NULL");
+      fprintf(stdout,"GCC_LIBEXEC_PREFIX=%s\n", gcc_libexec_prefix ? gcc_libexec_prefix : "NULL");
+      fprintf(stdout,"STANDARD_STARTFILE_PREFIX=%s\n", 
+                     standard_startfile_prefix ? standard_startfile_prefix : "NULL");
+      fprintf(stdout,"STANDARD_EXEC_PREFIX=%s\n", 
+                     standard_exec_prefix ? standard_exec_prefix : "NULL");
+    }
+  
   /* From this point onward, gcc_exec_prefix is non-null if the toolchain
      is relocated. The toolchain was either relocated using GCC_EXEC_PREFIX
      or an automatically created GCC_EXEC_PREFIX from argv[0].  */
@@ -3466,6 +5650,214 @@ process_command (int argc, const char **argv)
 		  PREFIX_PRIORITY_LAST, 0, 0);
     }
 
+  /* add path_to_driver 
+     Needed for installing in /export and invoking via /net/mach/export */ 
+  if (path_to_driver) 
+    {
+      char *cp;
+
+      path_to_driver_wo_driver = xstrdup (path_to_driver);
+      cp = path_to_driver_wo_driver + strlen (path_to_driver_wo_driver) - 1;
+      while (*cp != '/') cp--;
+      cp++; /* keep the / */
+      *cp = 0;
+      if (debug_driver_val & 0x02)
+        fprintf (stdout,"PATH_TO_DRIVER_WO_DRIVER=%s\n", path_to_driver_wo_driver);
+      
+      add_prefix (&exec_prefixes, path_to_driver_wo_driver, "GCC",
+                  PREFIX_PRIORITY_LAST, 0, 0);
+      add_prefix (&startfile_prefixes, 
+                  concat(path_to_driver_wo_driver,"../lib/",NULL),
+                  "GCC", PREFIX_PRIORITY_LAST, 0, 1);
+      
+      if (debug_driver_val & 0x20) 
+          fprintf (stdout,"add_prefix(startfile)=%s\n",
+                   concat (path_to_driver_wo_driver, "../lib/", NULL));
+      
+      add_prefix (&exec_prefixes, 
+                  concat (path_to_driver_wo_driver, "../../SUNW0scgfss/",
+			  spec_version, "/prod/bin/", NULL), 
+		  "GCC", PREFIX_PRIORITY_LAST, 0, 0);
+      
+      if (debug_driver_val & 0x02)
+        fprintf (stdout,"PATH_TO_SS=%s\n",
+                 concat (path_to_driver_wo_driver, "../../SUNW0scgfss/",
+ 			spec_version, "/prod/lib/", NULL));
+
+      GET_ENVIRONMENT (sunw_studio_path, "SUNW_STUDIO_PATH");
+      GET_ENVIRONMENT (sunw_scgfss_path, "SUNW_SCGFSS_PATH");
+
+      /* check for where the backend is located 
+          and fixup, if needed, studioproddir */
+      if (studioproddir && directory_exists (studioproddir)) 
+        {
+        /* nothing to do */
+        }
+      else if (directory_exists (concat (path_to_driver_wo_driver,
+                                         "/../../SUNW0scgfss/", 
+                                         spec_version, "/prod", NULL) ) )
+        {
+           /* the usual place */
+           studioproddir = concat (path_to_driver_wo_driver, 
+                                   "/../../SUNW0scgfss/",
+                                   spec_version, "/prod", NULL);
+        } 
+      /* how about in /opt/SUNWspro ? */
+      else if (directory_exists ("/opt/SUNWspro")
+               && valid_backend_version ("/opt/SUNWspro/")) 
+        {
+           studioproddir = "/opt/SUNWspro/prod/";
+        } 
+      /* how about in ../../SUNWspro , ie with SUNWspro */
+      else if (directory_exists (concat (path_to_driver_wo_driver, 
+                                         "../../SUNWspro/",NULL)) 
+               && valid_backend_version (concat (path_to_driver_wo_driver, 
+						 "../../SUNWspro/", NULL))) 
+        {
+           studioproddir = concat (path_to_driver_wo_driver,
+                                   "../../SUNWspro/prod/", NULL);
+        } 
+      /* or where they hinted via the environment variable */
+      else if (directory_exists (sunw_studio_path)
+               && valid_backend_version (sunw_studio_path))
+        {
+           studioproddir = concat (sunw_studio_path, "/prod/", NULL);
+        } 
+      /* or where they hinted via the environment variable */
+      else if (directory_exists (sunw_scgfss_path))
+        {
+           studioproddir = concat (sunw_scgfss_path, "/", 
+                                   spec_version, "/prod/", NULL);
+        }
+    } 
+  /* want gcc_exec_prefix and studioproddir as places for library files but
+     after the places where gcc normally stashes them; ie. get the Studio 
+     libs after looking for the GCC libs */
+  if (gcc_exec_prefix) 
+    {
+      add_prefix (&startfile_prefixes, gcc_exec_prefix, "GCC",
+		  PREFIX_PRIORITY_LAST, 0, 0);
+      if (debug_driver_val & 0x20) 
+         fprintf (stdout, "add_prefix(startfile)=%s\n", gcc_exec_prefix);
+    }
+ 
+  if (studioproddir)
+    {
+      struct stat statbuf;
+      
+      studioproddir = lrealpath (studioproddir);
+      studioproddir_bin = concat (studioproddir, "/bin/", NULL);
+      studioproddir_lib = concat (studioproddir, "/lib", NULL);
+      /* add in usual location of iropt and cg */
+      add_prefix (&exec_prefixes, studioproddir_bin, "GCC",
+                    PREFIX_PRIORITY_LAST, 0, 0);
+
+      /* if g++ EH inlining is supported by the backend
+         enable EH table generation in SunIR instead of side-door file 
+         in front-end and pass extra flag to iropt to turn it on there */
+      if (stat (concat (studioproddir_lib, "/gxx_eh_supported", NULL), &statbuf) >= 0)
+        {
+          add_frontend_option ("-ftree-ir-eh", sizeof ("-ftree-ir-eh"));
+          add_iropt_option ("-h_gen_eh_table", sizeof ("-h_gen_eh_table"));
+        }
+#ifdef CROSS_COMPILE
+      if (!getenv ("LD_ALTEXEC"))
+      {
+        /* If LD_ALTEXEC is not already set, specify where to pick it from. */
+        char *solaris_ldpath = concat ("LD_ALTEXEC=", studioproddir, "/root_i386/usr/bin/ld", NULL);
+        putenv (solaris_ldpath);
+        if (debug_driver_val & 0x02)
+          fprintf (stderr, "cross compile solaris ld path %s\n", solaris_ldpath);
+      }
+#endif
+    }
+
+
+#ifdef CROSS_COMPILE
+  /* GCCFSS_SOLARIS_SPARC_INCLUDE, GCCFSS_SOLARIS_SPARC_LIB,
+     GCCFSS_LINUX_SPARC_INCLUDE and GCCFSS_LINUX_SPARC_LIB have values
+     that are lists of directory names with colons.  */
+
+  temp = NULL;
+  /* assumes if linux target then linux host
+     or if solaris target then solaris host */
+#ifdef __linux__
+  GET_ENVIRONMENT (temp, "GCCFSS_LINUX_SPARC_INCLUDE");
+#else
+  GET_ENVIRONMENT (temp, "GCCFSS_SOLARIS_SPARC_INCLUDE");
+#endif
+  if (temp)
+    {
+      const char *startp, *endp;
+      char *nstore = alloca (strlen (temp) + 3);
+
+      if ((debug_driver_val & 0x01)) 
+         fprintf(stdout,"GCCFSS_*_SPARC_INCLUDE=%s\n",temp);
+
+      startp = endp = temp;
+      while (1)
+	{
+	  if (*endp == PATH_SEPARATOR || *endp == 0)
+	    {
+	      strncpy (nstore, startp, endp - startp);
+	      if (endp == startp)
+		strcpy (nstore, concat (".", dir_separator_str, NULL));
+	      else if (!IS_DIR_SEPARATOR (endp[-1]))
+		{
+		  nstore[endp - startp] = DIR_SEPARATOR;
+		  nstore[endp - startp + 1] = 0;
+		}
+	      else
+		nstore[endp - startp] = 0;
+	      add_prefix (&cross_include_prefixes, nstore, 0,
+			  PREFIX_PRIORITY_LAST, 0, 0);
+	      if (*endp == 0)
+		break;
+	      endp = startp = endp + 1;
+	    }
+	  else
+	    endp++;
+	}
+    }
+
+  temp = NULL;
+#ifdef __linux__
+  GET_ENVIRONMENT (temp, "GCCFSS_LINUX_SPARC_LIB");
+#else
+  GET_ENVIRONMENT (temp, "GCCFSS_SOLARIS_SPARC_LIB");
+#endif
+  if (temp)
+    {
+      const char *startp, *endp;
+      char *nstore = alloca (strlen (temp) + 3);
+
+      startp = endp = temp;
+      while (1)
+	{
+	  if (*endp == PATH_SEPARATOR || *endp == 0)
+	    {
+	      strncpy (nstore, startp, endp - startp);
+	      if (endp == startp)
+		strcpy (nstore, concat (".", dir_separator_str, NULL));
+	      else if (!IS_DIR_SEPARATOR (endp[-1]))
+		{
+		  nstore[endp - startp] = DIR_SEPARATOR;
+		  nstore[endp - startp + 1] = 0;
+		}
+	      else
+		nstore[endp - startp] = 0;
+	      add_prefix (&startfile_prefixes, nstore, NULL,
+			  PREFIX_PRIORITY_LAST, 0, 1);
+	      if (*endp == 0)
+		break;
+	      endp = startp = endp + 1;
+	    }
+	  else
+	    endp++;
+	}
+    }
+#endif
+  
   /* COMPILER_PATH and LIBRARY_PATH have values
      that are lists of directory names with colons.  */
 
@@ -3571,9 +5963,57 @@ process_command (int argc, const char **argv)
   /* Convert new-style -- options to old-style.  */
   translate_options (&argc, (const char *const **) &argv);
 
+  if (translate_native_options (&argc, (char ***)&argv) != 0)
+    /* translated some native option and generated -xtarget */
+    translate_options (&argc, (const char *const **) &argv);
+
+  if (debug_driver_val & 0x01) 
+    {
+      int i;
+      fprintf (stdout, "AFTER TRANSLATE_NATIVE_OPTIONS\n");
+      for (i=0; i< argc; i++)
+        fprintf (stdout, "argv[%d]=%s\n", i, argv[i]);
+    }
+
+  /* Delete duplicate options that could cause problems 
+     and handle right-most wins (almost always) rule */
+  delete_duplicate_options (&argc, (char ***)&argv);
+  
   /* Do language-specific adjustment/addition of flags.  */
   lang_specific_driver (&argc, (const char *const **) &argv, &added_libraries);
 
+  if (debug_driver_val & 0x01) 
+    {
+      int i;
+      fprintf (stdout, "AFTER LANG_SPECIFIC_DRIVER\n");
+      for (i=0; i< argc; i++)
+        fprintf (stdout, "argv[%d]=%s\n", i, argv[i]);
+    }
+
+  /* Delete duplicate options that could cause problems
+     which were introduced by lang-specific-driver      */
+  delete_duplicate_options (&argc, (char ***)&argv);
+
+  /* At this point all -Zm= should either be eliminated to turned 
+     into -m32 or -m64  */
+
+  /* This is really language specific but want to avoid expanding
+     scope of some variables */
+  for (i = 1; i < argc; i++) 
+    {
+      if (strcmp (argv[i], "-Zpecdummyc") == 0)
+        argv[i] = concat (studioproddir_lib, "/ipo/pec_dummy.c", NULL);
+      else if (strcmp (argv[i], "-Zpecdummycc") == 0)
+        argv[i] = concat (studioproddir_lib, "/ipo/pec_dummy.cc", NULL);
+    }
+
+  if ((debug_driver_val & 0x01)) {
+    int i;
+    fprintf(stdout,"AFTER LANG_SPECIFIC_DRIVER and DELETE_DUPLICATE_OPTIONS\n");
+    for (i=0; i< argc; i++)
+      fprintf(stdout,"argv[%d]=%s\n",i,argv[i]);
+  }
+  
   /* Scan argv twice.  Here, the first time, just count how many switches
      there will be in their vector, and how many input files in theirs.
      Here we also parse the switches that cc itself uses (e.g. -v).  */
@@ -3689,6 +6129,91 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	  /* Record the part after the last comma.  */
 	  add_assembler_option (argv[i] + prev, j - prev);
 	}
+      else if (! strncmp (argv[i], "-W0,", 4))
+	{
+	  int prev, j;
+	  /* Pass the rest of this option to the frontend.  */
+
+	  /* Split the argument at commas.  */
+	  prev = 4;
+	  for (j = 4; argv[i][j]; j++)
+	    if (argv[i][j] == ',')
+	      {
+		add_frontend_option (argv[i] + prev, j - prev);
+		prev = j + 1;
+	      }
+
+	  /* Record the part after the last comma.  */
+	  add_frontend_option (argv[i] + prev, j - prev);
+	}
+      else if (! strncmp (argv[i], "-W2,", 4))
+	{
+	  int prev, j;
+	  /* Pass the rest of this option to the iropt.  */
+
+	  /* Split the argument at commas.  */
+	  prev = 4;
+	  for (j = 4; argv[i][j]; j++)
+	    if (argv[i][j] == ',')
+	      {
+		add_iropt_option (argv[i] + prev, j - prev);
+		prev = j + 1;
+	      }
+
+	  /* Record the part after the last comma.  */
+	  add_iropt_option (argv[i] + prev, j - prev);
+	}
+      else if (! strncmp (argv[i], "-Wo,", 4))
+	{
+	  int prev, j;
+	  /* Pass the rest of this option to the postopt.  */
+
+	  /* Split the argument at commas.  */
+	  prev = 4;
+	  for (j = 4; argv[i][j]; j++)
+	    if (argv[i][j] == ',')
+	      {
+		add_postopt_option (argv[i] + prev, j - prev);
+		prev = j + 1;
+	      }
+
+	  /* Record the part after the last comma.  */
+	  add_postopt_option (argv[i] + prev, j - prev);
+	}
+      else if (! strncmp (argv[i], "-Wc,", 4))
+	{
+	  int prev, j;
+	  /* Pass the rest of this option to the Sun cg.  */
+
+	  /* Split the argument at commas.  */
+	  prev = 4;
+	  for (j = 4; argv[i][j]; j++)
+	    if (argv[i][j] == ',')
+	      {
+		add_sscg_option (argv[i] + prev, j - prev);
+		prev = j + 1;
+	      }
+
+	  /* Record the part after the last comma.  */
+	  add_sscg_option (argv[i] + prev, j - prev);
+	}
+      else if (! strncmp (argv[i], "-WO,", 4))
+	{
+	  int prev, j;
+	  /* Pass the rest of this option to the Sun ipo.  */
+
+	  /* Split the argument at commas.  */
+	  prev = 4;
+	  for (j = 4; argv[i][j]; j++)
+	    if (argv[i][j] == ',')
+	      {
+		add_ipo_option (argv[i] + prev, j - prev);
+		prev = j + 1;
+	      }
+
+	  /* Record the part after the last comma.  */
+	  add_ipo_option (argv[i] + prev, j - prev);
+	}
       else if (! strncmp (argv[i], "-Wp,", 4))
 	{
 	  int prev, j;
@@ -3748,6 +6273,23 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	}
       else if (strncmp (argv[i], "-l", 2) == 0)
 	n_infiles++;
+#if USE_GNU_LD
+     /* for now do nothing to change the passing of -z flags */
+#else
+     /* only do this for Solaris ld 
+        Plain GCC only has position indepentent -z flags
+        Solaris has position dependent -z flags such as -z extractall */
+      else if (strcmp (argv[i], "-z") == 0)
+	{
+	  if (i + 1 == argc)
+	    fatal ("argument to '-z' is missing");
+
+	  n_infiles++;
+	  i++;
+	}
+      else if (strncmp (argv[i], "-z", 2) == 0)
+	n_infiles++;
+#endif
       else if (strcmp (argv[i], "-save-temps") == 0)
 	{
 	  save_temps_flag = 1;
@@ -3792,7 +6334,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	{
 	  /* -pipe has to go into the switches array as well as
 	     setting a flag.  */
-	  use_pipes = 1;
+	  use_pipes = 0;  /* permanently disable -pipe */
 	  n_switches++;
 	}
       else if (strcmp (argv[i], "-###") == 0)
@@ -3804,6 +6346,50 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	  verbose_only_flag++;
 	  verbose_flag++;
 	}
+      else if (! strncmp (argv[i], "-Y2,", 4))
+        {
+          alternate_iropt = make_absolute_from_Y(argv[i]+4, "iropt");
+        }
+      else if (! strncmp (argv[i], "-Ya,", 4))
+        {
+          alternate_as = make_absolute_from_Y(argv[i]+4, "as");
+        }
+      else if (! strncmp (argv[i], "-Yf,", 4))
+        {
+          alternate_as = make_absolute_from_Y(argv[i]+4, "fbe");
+        }
+      else if (! strncmp (argv[i], "-Yc,", 4))
+        {
+          alternate_cg = make_absolute_from_Y(argv[i]+4, "cg");
+        }
+      else if (! strncmp (argv[i], "-Yo,", 4))
+        {
+          alternate_postopt = make_absolute_from_Y(argv[i]+4, "postopt");
+        }
+      else if (! strncmp (argv[i], "-Yb,", 4))
+        {
+          alternate_postopt = make_absolute_from_Y(argv[i]+4, "postopt");
+        }
+      else if (! strncmp (argv[i], "-YO,", 4))
+        {
+          alternate_ipo = make_absolute_from_Y(argv[i]+4, "ipo");
+        }
+      else if (! strncmp (argv[i], "-xgccdriver=", 12))
+        {
+          int ii;
+
+          path_to_driver = xstrdup(argv[i]+12); 
+
+          /* get the driver name (gcc,g++,c++) from the path */
+          for (ii = strlen(path_to_driver) - 1; ii >= 0; ii--)
+             if (IS_DIR_SEPARATOR (path_to_driver[ii]) ||
+                 path_to_driver[ii] == '=')
+               break;
+          programname = xstrdup(path_to_driver+ii+1);
+          if (debug_driver_val & 0x40)
+             fprintf(stdout,"programname:%s\n", programname);
+        
+        }
       else if (argv[i][0] == '-' && argv[i][1] != 0)
 	{
 	  const char *p = &argv[i][1];
@@ -3969,9 +6555,17 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	}
       else
 	{
-	  n_infiles++;
-	  lang_n_infiles++;
-	}
+          /* is this an .il file or something else */
+          if ( is_il_file(argv[i]) )
+            {
+              n_ilfiles++;
+            }
+          else
+            {
+              n_infiles++;
+              lang_n_infiles++;
+            }
+        }
     }
 
   if (save_temps_flag && use_pipes)
@@ -4059,8 +6653,14 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 
   switches = XNEWVEC (struct switchstr, n_switches + 1);
   infiles = XNEWVEC (struct infile, n_infiles + 1);
+  ilfiles = XNEWVEC (struct infile, n_ilfiles + 1);
+
+  if ((debug_driver_val & 0x01)) 
+     fprintf(stdout,"ALLOCATING %d members of ilfiles\n", n_ilfiles);
+
   n_switches = 0;
   n_infiles = 0;
+  n_ilfiles = 0;
   last_language_n_infiles = -1;
 
   /* This, time, copy the text of each switch and store a pointer
@@ -4083,8 +6683,34 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 #endif
       if (! strncmp (argv[i], "-Wa,", 4))
 	;
+      else if (! strncmp (argv[i], "-W0,", 4))
+	;
+      else if (! strncmp (argv[i], "-W2,", 4))
+	;
+      else if (! strncmp (argv[i], "-Wc,", 4))
+	;      
       else if (! strncmp (argv[i], "-Wp,", 4))
 	;
+      else if (! strncmp (argv[i], "-Wo,", 4))
+	;
+      else if (! strncmp (argv[i], "-WO,", 4))
+	;
+      else if (! strncmp (argv[i], "-Y2,", 4))
+        ;
+      else if (! strncmp (argv[i], "-Ya,", 4))
+        ;
+      else if (! strncmp (argv[i], "-Yf,", 4))
+        ;
+      else if (! strncmp (argv[i], "-Yc,", 4))
+        ;
+      else if (! strncmp (argv[i], "-Yo,", 4))
+        ;
+      else if (! strncmp (argv[i], "-Yb,", 4))
+        ;
+      else if (! strncmp (argv[i], "-YO,", 4))
+        ;
+      else if (! strncmp (argv[i], "-xgccdriver=", 12))
+        ;      
       else if (! strcmp (argv[i], "-pass-exit-codes"))
 	;
       else if (! strcmp (argv[i], "-print-search-dirs"))
@@ -4160,6 +6786,25 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	  infiles[n_infiles].language = "*";
 	  infiles[n_infiles++].name = argv[i];
 	}
+#if USE_GNU_LD
+     /* for now do nothing to change the passing of -z flags */
+#else
+     /* only do this for Solaris ld 
+        Plain GCC only has position indepentent -z flags
+        Solaris has position dependent -z flags such as -z extractall */
+
+      else if (strcmp (argv[i], "-z") == 0)
+	{ /* POSIX allows separation of -z and the lib arg;
+	     canonicalize by concatenating -z with its arg */
+	  infiles[n_infiles].language = "*";
+	  infiles[n_infiles++].name = concat ("-z", argv[++i], NULL);
+	}
+      else if (strncmp (argv[i], "-z", 2) == 0)
+	{
+	  infiles[n_infiles].language = "*";
+	  infiles[n_infiles++].name = argv[i];
+	}
+#endif
       else if (strcmp (argv[i], "-specs") == 0)
 	i++;
       else if (strncmp (argv[i], "-specs=", 7) == 0)
@@ -4179,6 +6824,23 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 		fatal ("argument to '-x' is missing");
 	      if (p[1] == 0)
 		spec_lang = argv[++i];
+              else if (strcmp(argv[i], "-xc++") == 0
+                       || strcmp(argv[i], "-xc++-cpp-output") == 0
+                       || strcmp(argv[i], "-xc++-header") == 0
+                       || strcmp(argv[i], "-xassembler-with-cpp") == 0
+                       || strcmp(argv[i], "-xc") == 0
+                       || strcmp(argv[i], "-xnone") == 0)
+                spec_lang = p + 1;
+	      else if (p[1] != ' ')
+                {
+                  /* one of the Sun -x flags */
+                  switches[n_switches].part1 = &argv[i][1];
+                  switches[n_switches].args = 0;
+                  switches[n_switches].live_cond = SWITCH_OK;
+                  switches[n_switches].validated = 0;
+                  n_switches++;
+                  continue; /*it is one of the -x* options from Sun */
+                }
 	      else
 		spec_lang = p + 1;
 	      if (! strcmp (spec_lang, "none"))
@@ -4260,8 +6922,16 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	    }
 	  else
 	    {
-	      infiles[n_infiles].language = spec_lang;
-	      infiles[n_infiles++].name = argv[i];
+              /* handle .il files similarly but different as source files */
+              if ( is_il_file( argv[i] ) )
+                {
+                   ilfiles[n_ilfiles++].name = argv[i];
+                }
+              else
+                {
+                    infiles[n_infiles].language = spec_lang;
+                    infiles[n_infiles++].name = argv[i];
+                }
 	    }
 	}
     }
@@ -4384,12 +7054,21 @@ static int this_is_output_file;
    search dirs for it.  */
 static int this_is_library_file;
 
+/* Nonzero means %K has been seen; the next arg to be terminated
+   is the name of a executable file and we should try the standard
+   search dirs for it.  */
+static int this_is_executable_file;
+
 /* Nonzero means that the input of this command is coming from a pipe.  */
 static int input_from_pipe;
 
 /* Nonnull means substitute this for any suffix when outputting a switches
    arguments.  */
 static const char *suffix_subst;
+
+/* Nonnull means add this as a suffix when outputting a switches
+   arguments.  */
+static const char *suffix_add;
 
 /* If there is an argument being accumulated, terminate it and store it.  */
 
@@ -4404,6 +7083,8 @@ end_going_arg (void)
       string = XOBFINISH (&obstack, const char *);
       if (this_is_library_file)
 	string = find_file (string);
+      else if (this_is_executable_file)
+	string = find_executable_file (string);
       store_arg (string, delete_this_arg, this_is_output_file);
       if (this_is_output_file)
 	outfiles[input_file_number] = string;
@@ -4448,7 +7129,9 @@ do_spec_2 (const char *spec)
   this_is_output_file = 0;
   this_is_library_file = 0;
   input_from_pipe = 0;
+  this_is_executable_file = 0;
   suffix_subst = NULL;
+  suffix_add = NULL;
 
   result = do_spec_1 (spec, 0, NULL);
 
@@ -4561,6 +7244,11 @@ spec_path (char *path, void *data)
   size_t len = 0;
   char save = 0;
 
+  /* Used on systems which record the specified -L dirs
+     and use them to search for dynamic linking.  */
+  /* Relative directories always come from -B,
+     and it is better not to use them for searching
+     at run time.  In particular, stage1 loses.  */
   if (info->omit_relative && !IS_ABSOLUTE_PATH (path))
     return NULL;
 
@@ -4651,6 +7339,7 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	delete_this_arg = 0;
 	this_is_output_file = 0;
 	this_is_library_file = 0;
+        this_is_executable_file = 0;
 	input_from_pipe = 0;
 	break;
 
@@ -4664,14 +7353,43 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 
       case '\t':
       case ' ':
-	end_going_arg ();
+        if (arg_going)
+	  {
+	    obstack_1grow (&obstack, 0);
+	    string = XOBFINISH (&obstack, const char *);
+	    if (this_is_library_file)
+	      string = find_file (string);
+            else if (suffix_add) {
+              if (debug_driver_val & 0x40)
+                fprintf(stdout,"ADD_SUFFIX_1: string=%s,suffix=%s\n",
+                        string,suffix_add);
+              string = concat(string,suffix_add, NULL);
+              if (debug_driver_val & 0x40)
+                fprintf(stdout,"ADD_SUFFIX_1: string=%s\n",string);
+              suffix_add = NULL;
+            }
+            else if (this_is_executable_file)
+              string = find_executable_file (string);
+	    store_arg (string, delete_this_arg, this_is_output_file);
+	    if (this_is_output_file)
+	      outfiles[input_file_number] = string;
+	  }
 
 	/* Reinitialize for a new argument.  */
 	delete_this_arg = 0;
 	this_is_output_file = 0;
 	this_is_library_file = 0;
+        this_is_executable_file = 0;
 	break;
 
+      case '"': /* want to have a literal string with no processing */
+	/* obstack_1grow (&obstack, c);  starting double-quote */
+        while ((c = *p++) != '"') /* find the matching double-quote */
+	  obstack_1grow (&obstack, c);
+	/* obstack_1grow (&obstack, c);  ending double-quote */
+        arg_going = 1;
+        break;
+        
       case '%':
 	switch (c = *p++)
 	  {
@@ -4717,6 +7435,19 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	    }
 	    break;
 
+          case 'q':
+	    {
+	      struct spec_path_info info;
+
+	      info.option = "-I";
+	      info.append_len = 0;
+	      info.omit_relative = false;
+	      info.separate_options = false;
+
+	      for_each_path (&cross_include_prefixes, true, 0, spec_path, &info);
+	    }
+	    break;
+            
 	  case 'e':
 	    /* %efoo means report an error with `foo' as error message
 	       and don't execute any more commands for this file.  */
@@ -4732,6 +7463,23 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	      return -1;
 	    }
 	    break;
+
+	  case 'N':
+	    /* %Noo means report a warning with `foo' on stderr.  */
+	    {
+	      const char *q = p;
+	      char *buf;
+	      while (*p != 0 && *p != '\n')
+		p++;
+	      buf = alloca (p - q + 1);
+	      strncpy (buf, q, p - q);
+	      buf[p - q] = 0;
+	      warning ("%s\n", buf);
+	      if (*p)
+		p++;
+	    }
+	    break;
+            
 	  case 'n':
 	    /* %nfoo means report a notice with `foo' on stderr.  */
 	    {
@@ -5003,6 +7751,139 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	    }
 	    break;
 
+          case 'J':
+            if ((debug_driver_val & 0x02)) {
+               fprintf(stdout,"GCC_EXEC_PREFIX(6)=%s\n",gcc_exec_prefix ? gcc_exec_prefix : "NULL");
+               fprintf(stdout,"GCC_LIBEXEC_PREFIX(6)=%s\n", gcc_libexec_prefix ? gcc_libexec_prefix : "NULL");
+               fprintf(stdout,"STANDARD_STARTFILE_PREFIX(6)=%s\n", 
+                     standard_startfile_prefix ? standard_startfile_prefix : "NULL");
+               fprintf(stdout,"STANDARD_EXEC_PREFIX(6)=%s\n", 
+                     standard_exec_prefix ? standard_exec_prefix : "NULL");
+               fprintf(stdout,"MACHINE_SUFFIX(6)=%s\n",
+                     machine_suffix ? machine_suffix : "NULL");
+            }
+	    if (gcc_libexec_prefix) 
+	      {
+                char *pth = find_a_file(&startfile_prefixes, "libm.il",
+					R_OK, 0); 
+                if (pth) 
+		  {
+                    pth[strlen(pth)-7]=0;
+                    do_spec_1(pth, 1, NULL);
+                  }
+ 		else 
+		  do_spec_1(studioproddir_lib, 1, NULL);
+              } 
+	    else 
+              do_spec_1 (studioproddir_lib, 1, NULL);
+            break;
+
+          case 'H':
+            if ((debug_driver_val & 0x02)) {
+               fprintf(stdout,"GCC_EXEC_PREFIX(5)=%s\n",gcc_exec_prefix ? gcc_exec_prefix : "NULL");
+               fprintf(stdout,"GCC_LIBEXEC_PREFIX(5)=%s\n", gcc_libexec_prefix ? gcc_libexec_prefix : "NULL");
+               fprintf(stdout,"STANDARD_STARTFILE_PREFIX(5)=%s\n", 
+                     standard_startfile_prefix ? standard_startfile_prefix : "NULL");
+               fprintf(stdout,"STANDARD_EXEC_PREFIX(5)=%s\n", 
+                     standard_exec_prefix ? standard_exec_prefix : "NULL");
+               fprintf(stdout,"MACHINE_SUFFIX(5)=%s\n",
+                     machine_suffix ? machine_suffix : "NULL");
+            }
+            /* doesn't seem that standard_startfile_prefix can ever be something
+             * else than ../../..
+            if (IS_ABSOLUTE_PATH(standard_startfile_prefix))
+                do_spec_1 (standard_startfile_prefix, 1, NULL);
+            else 
+             */
+            if (gcc_libexec_prefix) 
+              {
+                char *pth = find_a_file (&startfile_prefixes, "libstdc++.so.6.0.9",
+					 R_OK, 0); 
+                if (pth) 
+                  {
+                    pth[strlen (pth) - 18] = 0;
+                    do_spec_1 (pth, 1, NULL);
+                  }
+                else
+                  {
+                    /* if no --enable-version-specific-runtime-libs given 
+                       do_spec_1 (concat (gcc_libexec_prefix, "../../lib", NULL), 
+                                  1, NULL);
+                     */
+                    do_spec_1 (concat (gcc_libexec_prefix, "../../lib/", 
+                                       machine_suffix, NULL), 
+                               1, NULL);
+                  }
+              }
+            else
+              { 
+                /* if no --enable-version-specific-runtime-libs given 
+                 * do_spec_1( standard_libdir_prefix, 1, NULL);
+                */
+#ifdef CROSS_COMPILE
+                /* libstdc++.so is located in different directory between local and cross compilers. 
+                   so we have to re-direct it to right path. 
+                   given 
+                     standard_exec_prefix : $INSTALL_DIR/lib/gcc 
+                     machine_suffix : sparc-sun-solaris2.10[9]/$GCC_VERSION
+                   we want the run path like:
+                     $INSTALL_DIR/sparc-sun-solaris2.10[9]/lib/ 
+                 */
+                char *pth, *mch;
+                int len;
+
+                pth = alloca (strlen (standard_exec_prefix) + 1);
+                if (pth == 0)
+                  return 0; 
+                strcpy (pth, standard_exec_prefix);
+                pth[strlen (pth) - 8] = 0;
+
+                mch = alloca (strlen (machine_suffix) + 1);
+                if (mch == 0) 
+                  return 0; 
+                len = strchr (machine_suffix, '/') - machine_suffix;
+                if (len <= 0) 
+                  return 0; 
+                strncpy (mch, machine_suffix, len);
+                strcat (mch, "/lib/");
+
+                do_spec_1 (concat (pth, mch, NULL), 1, NULL);
+#else
+                do_spec_1 (concat (standard_exec_prefix, machine_suffix, NULL), 1, NULL);
+#endif
+              }
+            break;
+          case 'F':
+            if (gcc_libexec_prefix) 
+              {
+                char *pth;
+                pth = find_a_file (&startfile_prefixes, "gccbuiltins.il", R_OK, 0);
+                if (pth) 
+                  {
+                    pth[strlen (pth) - 14] = 0;
+                    do_spec_1 (pth, 1, NULL);
+                  }
+                else
+                  {
+                    /* if no --enable-version-specific-runtime-libs given 
+                       do_spec_1 (concat (gcc_libexec_prefix, "../../lib", NULL), 
+                                  1, NULL);
+                     */
+                    do_spec_1 (concat (gcc_libexec_prefix, "../../lib/", 
+                                       machine_suffix, NULL), 
+                               1, NULL);
+                  }
+                
+              }
+            else
+              { 
+                /* if no --enable-version-specific-runtime-libs given 
+                   do_spec_1( standard_libdir_prefix, 1, NULL);
+                */
+                do_spec_1 (concat (standard_exec_prefix, machine_suffix, NULL), 1, NULL);
+              }
+            break;
+                 
 	  case 'o':
 	    {
 	      int max = n_infiles;
@@ -5062,9 +7943,16 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
                   record_temp_file (temp_file, !save_temps_flag, !save_temps_flag);
                 }
               else
-                for (i = 0; i < max; i++)
-	          if (outfiles[i])
-		    store_arg (outfiles[i], 0, 0);
+                {
+                  if ((debug_driver_val & 0x01))
+                    for (i=0; i < max; i++)
+                      if (outfiles[i])
+                        fprintf(stdout,"OUTFILE[%d]=%s\n",i,outfiles[i]);
+                  
+                  for (i = 0; i < max; i++)
+                    if (outfiles[i])
+                      store_arg (outfiles[i], 0, 0);
+                }
 	      break;
 	    }
 
@@ -5072,11 +7960,63 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	    obstack_grow (&obstack, TARGET_OBJECT_SUFFIX, strlen (TARGET_OBJECT_SUFFIX));
 	    arg_going = 1;
 	    break;
+            
+	  /* Dump out the options accumulated previously using -WO,.  */
+	  case 'P':
+	    for (i = 0; i < n_ipo_options; i++)
+	      {
+		do_spec_1 (ipo_options[i], 1, NULL);
+		/* Make each accumulated option a separate argument.  */
+		do_spec_1 (" ", 0, NULL);
+	      }
+	    break;
 
+	  /* Dump out the options accumulated previously using -W2,.  */
+	  case 'M':
+	    for (i = 0; i < n_postopt_options; i++)
+	      {
+		do_spec_1 (postopt_options[i], 1, NULL);
+		/* Make each accumulated option a separate argument.  */
+		do_spec_1 (" ", 0, NULL);
+	      }
+	    break;
+
+	  case 'Q':
+	    for (i = 0; i < n_iropt_options; i++)
+	      {
+		do_spec_1 (iropt_options[i], 1, NULL);
+		/* Make each accumulated option a separate argument.  */
+		do_spec_1 (" ", 0, NULL);
+	      }
+	    break;
+
+	  case 'r':
+	    for (i = 0; i < n_frontend_options; i++)
+	      {
+		do_spec_1 (frontend_options[i], 1, NULL);
+		/* Make each accumulated option a separate argument.  */
+		do_spec_1 (" ", 0, NULL);
+	      }
+	    break;
+
+	  /* Dump out the options accumulated previously using -Wc,.  */
+	  case 'T':
+	    for (i = 0; i < n_sscg_options; i++)
+	      {
+		do_spec_1 (sscg_options[i], 1, NULL);
+		/* Make each accumulated option a separate argument.  */
+		do_spec_1 (" ", 0, NULL);
+	      }
+	    break;
+            
 	  case 's':
 	    this_is_library_file = 1;
 	    break;
 
+ 	  case 'K':
+	    this_is_executable_file = 1;
+	    break;
+            
 	  case 'V':
 	    outfiles[input_file_number] = NULL;
 	    break;
@@ -5269,6 +8209,20 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	    }
 	   break;
 
+	  case '+':
+	    {
+	      unsigned len = 0;
+
+	      while (p[len] && p[len] != ' ' && p[len] != '%')
+		len++;
+              /* replace + by . */
+	      suffix_add = concat(".",save_string (p, len), NULL);
+              if (debug_driver_val & 0x40)
+                 fprintf(stdout,"ADD_SUFFIX_2: suffix_add=%s\n", suffix_add);
+	      p += len;
+	    }
+	   break;
+           
 	   /* Henceforth ignore the option(s) matching the pattern
 	      after the %<.  */
 	  case '<':
@@ -5451,8 +8405,9 @@ eval_spec_function (const char *func, const char *args)
   int save_this_is_output_file;
   int save_this_is_library_file;
   int save_input_from_pipe;
+  int save_this_is_executable_file;
   const char *save_suffix_subst;
-
+  const char *save_suffix_add;
 
   sf = lookup_spec_function (func);
   if (sf == NULL)
@@ -5469,6 +8424,8 @@ eval_spec_function (const char *func, const char *args)
   save_this_is_library_file = this_is_library_file;
   save_input_from_pipe = input_from_pipe;
   save_suffix_subst = suffix_subst;
+  save_this_is_executable_file = this_is_executable_file;
+  save_suffix_add = suffix_add;
 
   /* Create a new spec processing context, and build the function
      arguments.  */
@@ -5494,7 +8451,9 @@ eval_spec_function (const char *func, const char *args)
   this_is_library_file = save_this_is_library_file;
   input_from_pipe = save_input_from_pipe;
   suffix_subst = save_suffix_subst;
-
+  this_is_executable_file = save_this_is_executable_file;
+  suffix_add = save_suffix_add;
+  
   return funcval;
 }
 
@@ -6002,6 +8961,12 @@ give_switch (int switchnum, int omit_first_word)
 		(CONST_CAST(char *, arg))[length] = '.';
 	      do_spec_1 (suffix_subst, 1, NULL);
 	    }
+          else if (suffix_add)
+	    {
+              if(debug_driver_val & 0x40)
+                fprintf(stdout,"ADD_SUFFIX_3\n");
+	      do_spec_1 (concat(arg,suffix_add, NULL), 1, NULL);
+	    }
 	  else
 	    do_spec_1 (arg, 1, NULL);
 	}
@@ -6019,8 +8984,38 @@ static const char *
 find_file (const char *name)
 {
   char *newname = find_a_file (&startfile_prefixes, name, R_OK, true);
+  if (newname == NULL)
+    newname = find_a_file(&exec_prefixes, name, R_OK, 0);
+  
   return newname ? newname : name;
 }
+
+/* similar to find_file but for the executables for the iropt, etc */
+
+static const char *
+find_executable_file (const char *name)
+{
+  if (!strcmp(name, "iropt") && alternate_iropt)
+    return xstrdup (alternate_iropt);
+
+  if (!strcmp(name, "cg") && alternate_cg)
+    return xstrdup (alternate_cg);
+
+  if (!strcmp(name, "ipo") && alternate_ipo)
+    return xstrdup (alternate_ipo);
+
+  if (!strcmp(name, "postopt") && alternate_postopt)
+    return xstrdup (alternate_postopt);
+
+  if (!strcmp(name, "as") && alternate_as)
+    return xstrdup (alternate_as);
+
+  if (!strcmp(name, "fbe") && alternate_as)
+    return xstrdup (alternate_as);
+
+  return find_a_file(&exec_prefixes, name, X_OK, 0);
+
+}  
 
 /* Determine whether a directory exists.  If LINKER, return 0 for
    certain fixed names not needed by the linker.  */
@@ -6069,6 +9064,10 @@ set_input (const char *filename)
   input_filename = filename;
   input_filename_length = strlen (input_filename);
 
+  if (filename)
+    /* don't change input_basename when input file is an option like -lm */
+    if (filename[0] == '-') return; 
+  
   input_basename = input_filename;
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
   /* Skip drive name so 'x:foo' is handled properly.  */
@@ -6098,6 +9097,10 @@ set_input (const char *filename)
      we will need to do a stat on the input_filename.  The
      INPUT_STAT_SET signals that the stat is needed.  */
   input_stat_set = 0;
+
+  if (debug_driver_val & 0x08)
+    fprintf(stdout,"INPUT_BASENAME=%s\n",
+            input_basename ? input_basename : "NULL");
 }
 
 /* On fatal signals, delete all the temporary files.  */
@@ -6395,8 +9398,13 @@ main (int argc, char **argv)
 
   /* If we have a GCC_EXEC_PREFIX envvar, modify it for cpp's sake.  */
   if (gcc_exec_prefix)
-    gcc_exec_prefix = concat (gcc_exec_prefix, spec_machine, dir_separator_str,
-			      spec_version, dir_separator_str, NULL);
+    {
+      gcc_exec_prefix = concat (gcc_exec_prefix, spec_machine, dir_separator_str,
+                                spec_version, dir_separator_str, NULL);
+      if ((debug_driver_val & 0x02))
+        fprintf(stdout,"GCC_EXEC_PREFIX(4)=%s\n",
+                gcc_exec_prefix ? gcc_exec_prefix : "NULL");
+    }
 
   /* Now we have the specs.
      Set the `valid' bits for switches that match anything in any spec.  */
@@ -6485,7 +9493,7 @@ main (int argc, char **argv)
 
       if (! verbose_flag)
 	{
-	  printf (_("\nFor bug reporting instructions, please see:\n"));
+	  printf (_("Submit bugs to:\n"));
 	  printf ("%s.\n", bug_report_url);
 
 	  return (0);
@@ -6785,7 +9793,7 @@ main (int argc, char **argv)
 
   if (print_help_list)
     {
-      printf (("\nFor bug reporting instructions, please see:\n"));
+      printf (("\nSubmit bug reports to:\n"));
       printf ("%s\n", bug_report_url);
     }
 
@@ -6948,9 +9956,24 @@ error (const char *gmsgid, ...)
 }
 
 static void
+warning (const char *cmsgid, ...)
+{
+  va_list ap;
+
+  if (quiet_driver) return;
+
+  va_start (ap, cmsgid);
+  fprintf (stderr, "%s: warning: ", programname);
+  vfprintf (stderr, _(cmsgid), ap);
+  va_end (ap);
+}
+
+static void
 notice (const char *cmsgid, ...)
 {
   va_list ap;
+  
+  if (quiet_driver) return;
 
   va_start (ap, cmsgid);
   vfprintf (stderr, _(cmsgid), ap);
@@ -7020,8 +10043,9 @@ next_member:
 
   SKIP_WHITE ();
 
-  if (!suffix)
+  if (!suffix && len > 0)
     {
+      /* need len>0 so don't match on NULL : in switch "cascading if" */   
       /* Mark all matching switches as valid.  */
       for (i = 0; i < n_switches; i++)
 	if (!strncmp (switches[i].part1, atom, len)
@@ -7953,6 +10977,608 @@ include_spec_function (int argc, const char **argv)
   read_specs (file ? file : argv[0], FALSE);
 
   return NULL;
+}
+
+#ifdef CROSS_COMPILE
+/* Handle -xtarget=native and -xarch=native */
+/* Returns 0: no -xtarget/-xarch=native
+ *         1: saw -xtarget/-xarch=native
+ * Basically the above options are translated to generic
+ */
+static  int
+translate_native_options (int *argcp, char ***argvp)
+{
+  int argc = *argcp;
+  char **argv = *argvp;
+  int i;
+  int retval = 0;
+
+  i = 0;
+  while (i < argc)
+    {
+      if (strcmp(argv[i], "-xarch=native") == 0)
+        {
+          argv[i] = xstrdup("-xarch=generic");
+          retval = 1;
+        }
+      else if (strcmp(argv[i], "-xarch=native64") == 0)
+        {
+          argv[i] = xstrdup("-xarch=generic64");
+          retval = 1;
+        }
+      else if (strcmp(argv[i], "-xtarget=native64") == 0)
+        {
+          argv[i] = xstrdup("-xtarget=generic64");
+          retval = 1;
+        }
+      else if (strcmp(argv[i], "-xtarget=native") == 0)
+        {
+          argv[i] = xstrdup("-xtarget=generic");
+          retval = 1;
+        }
+      if ((debug_driver_val & 0x01))
+        {
+          fprintf(stdout, "TRANSLATE_NATIVE: argv[%d] = %s\n",i, argv[i]);
+          fflush(stdout);
+        }
+      i++;
+    }
+  
+  return retval;
+}
+#elif defined(__linux__)
+/* Handle -xtarget=native and -xarch=native */
+/* Returns 0: no -xtarget/-xarch=native
+ *         1: saw -xtarget/-xarch=native
+ */
+static  int
+translate_native_options (int *argcp, char ***argvp)
+{
+  int argc = *argcp;
+  char **argv = *argvp;
+  int i;
+  int retval = 0;
+  FILE* cpuinfo;
+  char* last = NULL;
+  char* prev = NULL;
+  char* processornickname = NULL;
+
+  i = 0;
+  while (i < argc) {
+    if (strcmp(argv[i], "-xtarget=native" ) == 0 ||
+        strcmp(argv[i], "-xtarget=native64") == 0 ||
+        strcmp(argv[i], "-xarch=native64") == 0 ||
+        strcmp(argv[i], "-xarch=native") == 0) {
+
+        /* the cpu information is buried in /proc/cpuinfo.
+         * Need to find a line that looks like:
+           cpu             : UltraSparc T1 (Niagara)
+         * Use the name inside ( ) to determine the native system 
+         * The actual values are not well defined so expect to add/modify
+         * the strcmp's that follow
+         */
+         cpuinfo = fopen("/proc/cpuinfo", "r");
+         if (!cpuinfo) {
+            processornickname = NULL;
+            goto CONT;
+         }
+         while ((!feof(cpuinfo)) && fscanf(cpuinfo, "%as", &last)) {
+	   if (strcmp(last,":") == 0 && strcmp(prev,"cpu") == 0) {
+	      /* seen    cpu      :     <something>
+	       * now want the name of processor in ( ) */
+	      while ((!feof(cpuinfo)) && fscanf(cpuinfo, "%as", &last)) {
+		if (strncmp(last,"(",1) == 0) {
+		   /* have the processor name: Niagara, Cheetah, etc */
+		   processornickname = xstrdup(last);
+                   goto MORETODO;
+	        }
+              }
+	      processornickname = NULL;
+            }
+            prev =last;
+         }
+MORETODO:
+         fclose(cpuinfo);
+CONT:
+         if(debug_driver_val & 0x01)
+             fprintf(stdout,"NATIVE: %s\n",
+		     processornickname ? processornickname : "NOT SPECIFIED");
+
+         if (strcmp(argv[i], "-xarch=native") == 0) {
+           /* for -xarch=target; only pass on -xarch  */
+	   if (processornickname == NULL)
+	     argv[i] = xstrdup("-xarch=v8plusa");
+	   else if (strcmp(processornickname, "(SpitFire)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusa");
+	   else if (strcmp(processornickname, "(BlackBird)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusa");
+	   else if (strcmp(processornickname, "(Sabre)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusa");
+	   else if (strcmp(processornickname, "(Hummingbird)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusa");
+	   else if (strcmp(processornickname, "(Cheetah)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusb");
+	   else if (strcmp(processornickname, "(Cheetah+)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusb");
+	   else if (strcmp(processornickname, "(Jalapeno)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusb");
+	   else if (strcmp(processornickname, "(Jaguar)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusb");
+	   else if (strcmp(processornickname, "(Panther)") == 0)
+               argv[i] = xstrdup("-xarch=v8plusb");
+	   else if (strcmp(processornickname, "(Serrano)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusb");
+	   else if (strcmp(processornickname, "(Niagara)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plus");
+	   else if (strcmp(processornickname, "(Niagara2)") == 0)
+	     argv[i] = xstrdup("-xarch=v8plusb");
+           retval = 1;
+         }
+         else if (strcmp(argv[i], "-xarch=native64") == 0) {
+           /* for -xarch=target; only pass on -xarch  */
+	   if (processornickname == NULL)
+ 	     argv[i] = xstrdup("-xarch=v9a");
+	   else if (strcmp(processornickname, "(SpitFire)") == 0)
+	     argv[i] = xstrdup("-xarch=v9a");
+	   else if (strcmp(processornickname, "(BlackBird)") == 0)
+	     argv[i] = xstrdup("-xarch=v9a");
+	   else if (strcmp(processornickname, "(Sabre)") == 0)
+	     argv[i] = xstrdup("-xarch=v9a");
+	   else if (strcmp(processornickname, "(Hummingbird)") == 0)
+	     argv[i] = xstrdup("-xarch=v9a");
+	   else if (strcmp(processornickname, "(Cheetah)") == 0)
+	     argv[i] = xstrdup("-xarch=v9b");
+	   else if (strcmp(processornickname, "(Cheetah+)") == 0)
+	     argv[i] = xstrdup("-xarch=v9b");
+	   else if (strcmp(processornickname, "(Jalapeno)") == 0)
+	     argv[i] = xstrdup("-xarch=v9b");
+	   else if (strcmp(processornickname, "(Jaguar)") == 0)
+	     argv[i] = xstrdup("-xarch=v9b");
+	   else if (strcmp(processornickname, "(Panther)") == 0)
+               argv[i] = xstrdup("-xarch=v9b");
+	   else if (strcmp(processornickname, "(Serrano)") == 0)
+	     argv[i] = xstrdup("-xarch=v9b");
+	   else if (strcmp(processornickname, "(Niagara)") == 0)
+	     argv[i] = xstrdup("-xarch=v9");
+	   else if (strcmp(processornickname, "(Niagara2)") == 0)
+	     argv[i] = xstrdup("-xarch=v9b");
+           retval = 1;
+         }
+         else {
+	   if (processornickname == NULL)
+	     argv[i] = xstrdup("-xtarget=generic");
+	   else if (strcmp(processornickname, "(SpitFire)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra");
+	   else if (strcmp(processornickname, "(BlackBird)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra2");
+	   else if (strcmp(processornickname, "(Sabre)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra2i");
+	   else if (strcmp(processornickname, "(Hummingbird)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra2e");
+	   else if (strcmp(processornickname, "(Cheetah)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra3");
+	   else if (strcmp(processornickname, "(Cheetah+)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra3cu");
+	   else if (strcmp(processornickname, "(Jalapeno)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra3i");
+	   else if (strcmp(processornickname, "(Jaguar)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra4");
+	   else if (strcmp(processornickname, "(Panther)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra4plus");
+	   else if (strcmp(processornickname, "(Serrano)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultra3iplus");
+	   else if (strcmp(processornickname, "(Niagara)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultraT1"); 
+	   else if (strcmp(processornickname, "(Niagara2)") == 0)
+	     argv[i] = xstrdup("-xtarget=ultraT2"); 
+         }
+         if ((debug_driver_val & 0x01)) {
+            fprintf(stdout, "TRANSLATE_NATIVE: argv[%d] = %s\n",i, argv[i]);
+            fflush(stdout);
+         }
+         retval = 1;
+      } 
+    i++;
+  } /* while (i < argc ) */
+  return retval;
+}
+#else /* Solaris */
+static  int
+translate_native_options (int *argcp, char ***argvp)
+{
+  int argc = *argcp;
+  char **argv = *argvp;
+  int i,k, enditall;
+  char xtarget_string[100];
+  char fpver[3][100] = {"fpversion", "-foption"};
+  int stdout_save = -1;
+  int redir_handle; 
+  FILE *redir_file;
+  int pid;
+  char *temp_filename;
+  char *errmsg_fmt, *errmsg_arg;
+  const char *string = xmalloc(sizeof(char *));
+  const char **newv = xmalloc(3*sizeof(char *));
+  int retval = 0;
+
+  i = 0;
+  while (i < argc) {
+    if (strcmp(argv[i], "-xtarget=native" ) == 0 ||
+        strcmp(argv[i], "-xtarget=native64") == 0 ||
+        strcmp(argv[i], "-xarch=native64") == 0 ||
+        strcmp(argv[i], "-xarch=native") == 0)
+      {
+        /* redirect stdout from fpversion */
+        fflush(stdout);
+        temp_filename = make_temp_file("fpversion"); 
+        record_temp_file(temp_filename, 1, 1);
+        string = find_a_file (&exec_prefixes, "fpversion", X_OK, 0);
+        if (string)
+          {
+            newv[0] = string;
+            newv[1] = xstrdup(fpver[1]);
+            newv[2] = NULL;
+            redir_handle = open(temp_filename, O_WRONLY | O_TRUNC | O_CREAT);
+            stdout_save = dup (STDOUT_FILENO);
+            dup2( redir_handle, STDOUT_FILENO); 
+            pid = pexecute (string, (char *const *)newv, string, NULL, 
+                            &errmsg_fmt, &errmsg_arg,
+                            (PEXECUTE_FIRST | PEXECUTE_LAST | PEXECUTE_SEARCH ) );
+            pid = pwait(pid, &k, 0);
+            close (redir_handle);
+            dup2( stdout_save, STDOUT_FILENO);
+            redir_file = fopen(temp_filename, "r");
+            if (redir_file == NULL)
+              fprintf(stderr,"cant open fpversion temp file\n");
+            fread(&xtarget_string[1], 99, 1, redir_file );
+            fclose(redir_file); 
+          }
+        else
+          {
+            if (strcmp(argv[i], "-xarch=native") == 0)
+              {
+                notice ("could not find fpversion, setting -xarch=generic \n");
+                argv[i] = xstrdup("-xarch=generic");
+              }
+            else if (strcmp(argv[i], "-xarch=native64") == 0)
+              {
+                notice ("could not find fpversion, setting -xarch=generic \n");
+                argv[i] = xstrdup("-xarch=generic64");
+              }
+            else
+              {
+	        notice ("could not find fpversion, setting -xtarget=generic \n");
+                argv[i] = xstrdup("-xtarget=generic");
+              }
+            retval = 1;
+            goto skipit;
+          }
+        xtarget_string[0] = '-';
+        k=1;
+         enditall = strlen(xtarget_string)+1 ;
+        enditall = enditall < 100 ? enditall : 100; /* min(enditall,100) */
+        while (k<enditall)
+          {
+            if (xtarget_string[k] == ' ')
+              {
+                xtarget_string[k] = '\0';
+                break;
+              }
+            k++; 
+          }
+        /* for -xarch=target; only pass on -xarch and not -xtarget */
+        if (strcmp(argv[i], "-xarch=native") == 0)
+          {
+            if (strcmp(xtarget_string,"-xtarget=ultra") == 0 ||
+                strcmp(xtarget_string,"-xtarget=ultra2") == 0 ||
+                strcmp(xtarget_string,"-xtarget=ultra2i") == 0 ||
+                strcmp(xtarget_string,"-xtarget=ultra2e") == 0 ||
+                strcmp(xtarget_string,"-xtarget=gemini") == 0 )
+              argv[i] = xstrdup("-xarch=v8plusa");
+            else if (strcmp(xtarget_string,"-xtarget=ultra3") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra3cu") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra3i") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra4") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra4plus") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra3iplus") == 0 )
+              argv[i] = xstrdup("-xarch=v8plusb");
+            else if (strcmp(xtarget_string,"-xtarget=ultraT1") == 0 )
+              argv[i] = xstrdup("-xarch=v8plus");
+            else if (strcmp(xtarget_string,"-xtarget=ultraT2") == 0 )
+              argv[i] = xstrdup("-xarch=v8plusb");
+            else if (strcmp(xtarget_string,"-xtarget=sparc64vii") == 0 )
+              argv[i] = xstrdup("-xarch=v8plusd");
+            else if (strcmp(xtarget_string,"-xtarget=sparc64vi") == 0 )
+              argv[i] = xstrdup("-xarch=v8plusc");
+            else
+              argv[i] = xstrdup("-xarch=v8plusa");
+            retval = 1;
+          }
+        else if (strcmp(argv[i], "-xarch=native64") == 0)
+          {
+            if (strcmp(xtarget_string,"-xtarget=ultra") == 0 ||
+                strcmp(xtarget_string,"-xtarget=ultra2") == 0 ||
+                strcmp(xtarget_string,"-xtarget=ultra2i") == 0 ||
+                strcmp(xtarget_string,"-xtarget=ultra2e") == 0 ||
+                strcmp(xtarget_string,"-xtarget=gemini") == 0 )
+              argv[i] = xstrdup("-xarch=v9a");
+            else if (strcmp(xtarget_string,"-xtarget=ultra3") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra3cu") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra3i") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra4") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra4plus") == 0 ||
+                     strcmp(xtarget_string,"-xtarget=ultra3iplus") == 0 )
+              argv[i] = xstrdup("-xarch=v9b");
+            else if (strcmp(xtarget_string,"-xtarget=ultraT1") == 0 )
+              argv[i] = xstrdup("-xarch=v9");
+            else if (strcmp(xtarget_string,"-xtarget=ultraT2") == 0 )
+              argv[i] = xstrdup("-xarch=v9b");
+            else if (strcmp(xtarget_string,"-xtarget=sparc64vii") == 0 )
+              argv[i] = xstrdup("-xarch=v9d");
+            else if (strcmp(xtarget_string,"-xtarget=sparc64vi") == 0 )
+              argv[i] = xstrdup("-xarch=v9c");
+            else
+              argv[i] = xstrdup("-xarch=v9a");
+            retval = 1;
+          }
+        else
+          {
+            argv[i] = xstrdup(xtarget_string);
+            retval = 1;
+          }
+
+skipit:
+        if ((debug_driver_val & 0x01))
+          {
+            fprintf(stdout, "TRANSLATE_NATIVE: argv[%d] = %s\n",i, argv[i]);
+            fflush(stdout);
+          }
+      }
+    i++;
+  } /* while (i < argc) */ 
+  
+  return retval;
+}
+#endif
+
+/* If we are compiling pec_dummy then add -w to turn off warnings */
+static const char *is_it_pec_dummy(int dummy __attribute__ ((unused)), 
+                           const char** dummy2 __attribute__ ((unused)) ) {
+   if (debug_driver_val & 0x08) 
+       fprintf(stdout,"BASENAME=%s\n",
+               input_basename ? input_basename : "NULL");
+   if ((strcmp(input_basename,"pec_dummy.c") == 0) ||
+       (strcmp(input_basename,"pec_dummy.cc") == 0) )
+          return "-w";
+   else return " ";
+}
+
+
+/* for -Wd,-pec and -Wd,-pec=<exe> we need the pass the original command line
+   as a string.  However, it needs some modification.  The source file name
+   is deleted and -c is added to the end */
+static const char *print_orig_cmdline(int dummy __attribute__ ((unused)), 
+                           const char** dummy2 __attribute__ ((unused)) ) {
+  int cmdlinelen = 6;
+  char *cmdlinestr;
+  int i;
+  char * p, * pn;
+  int length;
+
+  if (debug_driver_val & 0x01)
+    for (i=1; i<orig_argc; i++)
+      fprintf(stdout,"print_orig_cmdline: orig_argv[%d]=%s\n",
+              i, orig_argv[i]);
+
+  cmdlinelen += strlen(path_to_driver);
+  for (i=1; i<orig_argc; i++) cmdlinelen += strlen(orig_argv[i]);
+
+  cmdlinelen += orig_argc;
+
+  cmdlinestr = xmalloc(cmdlinelen);
+  cmdlinestr[0] = '"'; cmdlinestr[1] = 0;
+  (void)strcat(cmdlinestr,path_to_driver); /* invocation line */
+  (void)strcat(cmdlinestr," ");
+
+  for (i=1; i<orig_argc; i++) 
+    /* bring over the options except for the 
+       -o <filename>, -###, -v and -xgccdriver=<path> options */
+    if (orig_argv[i][0] == '-' && 
+        !(strcmp(orig_argv[i],"-o") == 0  ||
+          strcmp(orig_argv[i],"-v") == 0  ||
+          strcmp(orig_argv[i],"--verbose") == 0  ||
+          strncmp(orig_argv[i],"-###",4) == 0 ||
+          strncmp(orig_argv[i],"-xgccdriver=",12) == 0) ) {
+       /* '"' in argv shall be replaced by '\'' in case of cutting off whole argument. 
+          e.g. -DENV="ONE TWO THREE" is transformed to -DENV='ONE TWO THREE'. */
+      length = strlen (cmdlinestr);
+      pn = p = orig_argv[i];
+      while (pn = strchr (p, '"'))
+        {
+           (void)strncat (cmdlinestr, p, pn - p); 
+           length += pn - p;
+           cmdlinestr[length ++] = '\'';
+           p = pn + 1;
+        }
+      if (p != orig_argv[i])
+        cmdlinestr[length] = 0;
+      else /* no '"' be replaced. */
+        (void)strcat(cmdlinestr,orig_argv[i]);
+
+      (void)strcat(cmdlinestr," ");
+    }
+
+  (void)strcat(cmdlinestr, "-c"); 
+  i = strlen(cmdlinestr); cmdlinestr[i] = '"'; cmdlinestr[i+1] = 0;
+
+  if ((debug_driver_val & 0x01)) fprintf(stdout,"PRINT_ORIG_CMDLINE: %s\n",cmdlinestr);
+  return cmdlinestr;
+}
+
+/* valid_backend_version:
+   is this backend a version that can be used with gccfss?
+   argument is the pathname to a Studio "prod" directory and includes "prod" in the path name
+   1. use "version -v" to see what version it is
+   2. based on the return string return TRUE or FALSE
+ */
+#ifdef __linux__
+static  int
+valid_backend_version (const char *sunstudioproddir)
+{
+  return 0; /* for now Studio add-on is not possible for Linux */
+}
+#else /* Solaris */
+static  int
+valid_backend_version (const char *sunwspro_dir)
+{
+  char ss_string[1000];
+  int stdout_save = -1, stderr_save = -1;
+  int redir_handle, redir_handle1; 
+  FILE *redir_file;
+  int pid, k, numread;
+  char *temp_filename, *temp_filename1;
+  char *errmsg_fmt, *errmsg_arg;
+  const char **newv = xmalloc(3*sizeof(char *));
+  int retval = 0;
+  char *version_path;
+
+  version_path = concat(sunwspro_dir, "/prod/bin/version", NULL);
+  if (access_check(version_path, X_OK) == 0) 
+    {
+      /* redirect stdout/stderr from version */
+      fflush (stdout); fflush (stderr);
+      temp_filename = make_temp_file ("version"); 
+      temp_filename1 = make_temp_file ("version1"); 
+      record_temp_file (temp_filename, 1, 1);
+      record_temp_file (temp_filename1, 1, 1);
+      newv[0] = version_path;
+      newv[1] = "-V";
+      newv[2] = NULL;
+      redir_handle = open (temp_filename, O_WRONLY | O_TRUNC | O_CREAT);
+      stdout_save = dup (STDOUT_FILENO);
+      dup2 (redir_handle, STDOUT_FILENO); 
+      redir_handle1 = open (temp_filename1, O_WRONLY | O_TRUNC | O_CREAT);
+      stderr_save = dup (STDERR_FILENO);
+      dup2 (redir_handle1, STDERR_FILENO); 
+      pid = pexecute (version_path,
+                     (char *const *)newv, 
+                     version_path, NULL, 
+                     &errmsg_fmt, &errmsg_arg,
+                     (PEXECUTE_FIRST | PEXECUTE_LAST | PEXECUTE_SEARCH ) );
+      pid = pwait (pid, &k, 0);
+      close (redir_handle);
+      close (redir_handle1);
+      dup2 ( stdout_save, STDOUT_FILENO);
+      dup2 ( stderr_save, STDERR_FILENO);
+      redir_file = fopen (temp_filename1, "r");
+      if (redir_file == NULL) 
+        {
+          fclose (redir_file);
+          fprintf (stderr,"cant open version temp file\n");
+          return 0;
+        }
+      numread = fread (&ss_string, 1000, 1, redir_file );
+
+      fclose (redir_file);
+
+      retval = strstr (ss_string, "Sun Studio Ceres") != NULL ; 
+
+      if (debug_driver_val & 0x01)
+        {
+          fprintf (stdout, "VALID_BACKEND_VERSION: retval=%d\n", retval);
+          fprintf (stdout, "ss_string=%s\n", ss_string);
+          fflush (stdout);
+        }
+    } /* version exists and is executable */
+  else 
+    {
+      if (debug_driver_val & 0x01) 
+        fprintf (stdout, 
+                 "VALID_BACKEND_VERSION: executable version not found at %s\n",
+                 version_path);
+    }
+
+  return retval;
+}
+#endif
+
+static int
+directory_exists (const char *path)
+{
+  struct stat st;
+  int retval;
+
+  retval = (stat (path, &st) >= 0 && S_ISDIR (st.st_mode));
+
+  if ((debug_driver_val & 0x01)) 
+    {
+      fprintf(stdout, "DIRECTORY_EXISTS: %s retval=%d\n", 
+              path != NULL ? path : "NULL", retval);
+      fflush(stdout);
+    }
+  return retval;
+}
+
+/* before we start calling sunir backend, make sure we can find it.
+ * If we can't find iropt then fatal error
+ */
+static const char *verify_sunir_backend(int dummy __attribute__ ((unused)), 
+                           const char** dummy2 __attribute__ ((unused)) ) {
+
+  /* see if sunir backend has been installed */
+  if (find_executable_file("iropt") == NULL)
+    fatal("SUNW0scgfss %s has not been installed. Either install it or use -frtl-backend.\n",compiler_version);
+    
+  return NULL;
+
+}
+
+static const char *add_user_il_routines (int dummy __attribute__ ((unused)),
+                           const char** dummy2 __attribute__ ((unused)) )
+{
+  int i;
+  int slen = 2;
+  char *sret;
+
+  if ((debug_driver_val & 0x01)) 
+     fprintf(stdout,"IN ADD_USER_IL_ROUTINES with %d il files\n", n_ilfiles);
+  
+
+  for (i=0; i < n_ilfiles; i++)
+    {
+       slen += strlen(ilfiles[i].name) + 5;
+    }
+
+  sret = xmalloc(slen);
+  sret[0] = ' ';
+  sret[1] = 0;
+
+  for (i=0; i < n_ilfiles; i++)
+    {
+      sret = concat(sret, " -il ", ilfiles[i].name, NULL);
+    }
+
+  if ((debug_driver_val & 0x01)) 
+     fprintf(stdout,"IN ADD_USER_IL_ROUTINES returning %s\n", sret);
+
+  return sret;
+
+}
+
+static int is_il_file ( char * name )
+{
+  int val;
+
+  if (strlen(name) <= 3) val = 0; /* not .il suffix */
+  else if (strcmp(name + strlen(name) - 3, ".il") == 0)
+     val = 1;
+  else
+     val = 0;
+
+  if ((debug_driver_val & 0x01)) 
+     fprintf(stdout,"IN IS_IL_FILE with %s returning %d\n", name, val);
+
+  return val;
 }
 
 /* %:print-asm-header spec function.  Print a banner to say that the

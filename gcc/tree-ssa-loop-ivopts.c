@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This pass tries to find the optimal set of induction variables for the loop.
    It optimizes just the basic linear induction variables (although adding
    support for other types should not be too hard).  It includes the
@@ -634,6 +636,8 @@ idx_contains_abnormal_ssa_name_p (tree base, tree *index,
 	return false;
       if (abnormal_ssa_name_p (TREE_OPERAND (base, 3)))
 	return false;
+      if (abnormal_ssa_name_p (TREE_OPERAND (base, 4)))
+        return false;
     }
 
   return !abnormal_ssa_name_p (*index);
@@ -5106,6 +5110,10 @@ idx_remove_ssa_names (tree base, tree *idx,
       if (*op
 	  && TREE_CODE (*op) == SSA_NAME)
 	*op = SSA_NAME_VAR (*op);
+      op = &TREE_OPERAND (base, 4);
+      if (*op
+	  && TREE_CODE (*op) == SSA_NAME)
+        *op = SSA_NAME_VAR (*op);
     }
 
   return true;

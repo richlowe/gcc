@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -617,6 +619,8 @@ dequeue_and_dump (dump_info_p di)
       dump_child ("op 1", TREE_OPERAND (t, 1));
       dump_child ("op 2", TREE_OPERAND (t, 2));
       dump_child ("op 3", TREE_OPERAND (t, 3));
+      if (code == ARRAY_REF)
+        dump_child ("op 4", TREE_OPERAND (t, 4));
       break;
 
     case COND_EXPR:

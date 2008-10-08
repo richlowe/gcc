@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -219,7 +221,7 @@ cleanup_control_flow_bb (basic_block bb)
 
   /* Check for indirect calls that have been turned into
      noreturn calls.  */
-  else if (noreturn_call_p (stmt) && remove_fallthru_edge (bb->succs))
+  else if (!flag_openmp && noreturn_call_p (stmt) && remove_fallthru_edge (bb->succs))
     retval = true;
 
   return retval;

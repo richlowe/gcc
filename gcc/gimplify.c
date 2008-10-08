@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -49,7 +51,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "optabs.h"
 #include "pointer-set.h"
 #include "splay-tree.h"
-
+#include "tree-ir.h"
 
 enum gimplify_omp_var_data
 {
@@ -62,8 +64,10 @@ enum gimplify_omp_var_data
   GOVD_REDUCTION = 64,
   GOVD_LOCAL = 128,
   GOVD_DEBUG_PRIVATE = 256,
+  GOVD_AUTOSCOPE = 512,
   GOVD_DATA_SHARE_CLASS = (GOVD_SHARED | GOVD_PRIVATE | GOVD_FIRSTPRIVATE
-			   | GOVD_LASTPRIVATE | GOVD_REDUCTION | GOVD_LOCAL)
+			   | GOVD_LASTPRIVATE | GOVD_REDUCTION | GOVD_LOCAL
+                           | GOVD_AUTOSCOPE)
 };
 
 struct gimplify_omp_ctx
@@ -445,13 +449,12 @@ create_tmp_var_name (const char *prefix)
 
   if (prefix)
     {
-      char *preftmp = ASTRDUP (prefix);
-
-      remove_suffix (preftmp, strlen (preftmp));
-      prefix = preftmp;
+      /* cannot use "#tmp" here, because name of this temp var 
+         may appear in side door file */
+      prefix = "AUTO";
     }
 
-  ASM_FORMAT_PRIVATE_NAME (tmp_name, prefix ? prefix : "T", tmp_var_id_num++);
+  ASM_FORMAT_PRIVATE_NAME (tmp_name, prefix ? prefix : "AUTO", tmp_var_id_num++);
   return get_identifier (tmp_name);
 }
 
@@ -1636,9 +1639,9 @@ canonicalize_addr_expr (tree *expr_p)
     return;
 
   /* All checks succeeded.  Build a new node to merge the cast.  */
-  *expr_p = build4 (ARRAY_REF, ddatype, TREE_OPERAND (addr_expr, 0),
+  *expr_p = build5 (ARRAY_REF, ddatype, TREE_OPERAND (addr_expr, 0),
 		    TYPE_MIN_VALUE (TYPE_DOMAIN (datype)),
-		    NULL_TREE, NULL_TREE);
+		    NULL_TREE, NULL_TREE, NULL_TREE);
   *expr_p = build1 (ADDR_EXPR, pddatype, *expr_p);
 }
 
@@ -1842,6 +1845,29 @@ gimplify_compound_lval (tree *expr_p, tree *pre_p,
 		  ret = MIN (ret, tret);
 		}
 	    }
+
+          if (!TREE_OPERAND (t, 4) 
+              /* need to have (t, 4) for array_types, since IR gen will use it
+                 for variable sized arrays */
+              && TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE)
+	    {
+              tree domain = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (t, 0)));
+              if (domain)
+                {
+                  tree min = TYPE_MIN_VALUE (domain);
+                  tree max = TYPE_MAX_VALUE (domain);
+                  if (min && max && integer_zerop (min) && !host_integerp (max, 0))
+                    {
+	              if (!is_gimple_min_invariant (max))
+                        {
+	                  TREE_OPERAND (t, 4) = unshare_expr (max);
+		          tret = gimplify_expr (&TREE_OPERAND (t, 4), pre_p, post_p,
+		        		         is_gimple_formal_tmp_reg, fb_rvalue);
+		          ret = MIN (ret, tret);
+                        }
+                    }
+                }
+	    }
 	}
       else if (TREE_CODE (t) == COMPONENT_REF)
 	{
@@ -1890,11 +1916,16 @@ gimplify_compound_lval (tree *expr_p, tree *pre_p,
 	     expressions into a minimal gimple lvalue.  However, that
 	     exposes bugs in alias analysis.  The alias analyzer does
 	     not handle &PTR->FIELD very well.  Will fix after the
-	     branch is merged into mainline (dnovillo 2004-05-03).  */
+	     branch is merged into mainline (dnovillo 2004-05-03).
+             things like d = t[d]++; can cause issues if [d] is not
+             simplified with is_gimple_formal_tmp_reg() */
 	  if (!is_gimple_min_invariant (TREE_OPERAND (t, 1)))
 	    {
 	      tret = gimplify_expr (&TREE_OPERAND (t, 1), pre_p, post_p,
-				    is_gimple_formal_tmp_reg, fb_rvalue);
+				    is_gimple_val
+                                    /* was: is_gimple_formal_tmp_reg
+                                       which wouldn't allow ar[i+1] expr */
+                                    , fb_rvalue);
 	      ret = MIN (ret, tret);
 	    }
 	}
@@ -2009,9 +2040,19 @@ gimplify_self_mod_expr (tree *expr_p, tree *pre_p, tree *post_p,
 
   if (postfix)
     {
+      tree t2;
+      if (TREE_CODE (lhs) == ARRAY_REF)
+        {
+          t2 = get_initialized_tmp_var (TREE_OPERAND (lhs, 1), pre_p, post_p); /* store original index value */
+          t2 = build5 (ARRAY_REF, TREE_TYPE (*expr_p), TREE_OPERAND (lhs, 0), t2, NULL_TREE, NULL_TREE, NULL_TREE);
+          t1 = build2 (arith_code, TREE_TYPE (*expr_p), t2, rhs);
+          t1 = build2 (MODIFY_EXPR, TREE_TYPE (lvalue), t2, t1);
+          *expr_p = t2;
+        }
+      else
+          *expr_p = lhs;
       gimplify_and_add (t1, orig_post_p);
       append_to_statement_list (post, orig_post_p);
-      *expr_p = lhs;
       return GS_ALL_DONE;
     }
   else
@@ -2731,13 +2772,22 @@ gimplify_cond_expr (tree *expr_p, tree *pre_p, fallback_t fallback)
   ret = gimplify_expr (&TREE_OPERAND (expr, 0), pre_p, NULL,
 		       is_gimple_condexpr, fb_rvalue);
 
-  gimple_push_condition ();
+  if (flag_use_rtl_backend == 0) 
+    {
+      /* the 2nd pass of gimplify after gen SunIR failed will
+         see cond_expr, which were properly gimplified during 1st pass
+         and then/else branches have 'goto_expr' in them.
+         No need to gimplify them into stmt_list for 2nd pass,
+         but gimplify them during 1st pass */
 
-  gimplify_to_stmt_list (&TREE_OPERAND (expr, 1));
-  gimplify_to_stmt_list (&TREE_OPERAND (expr, 2));
-  recalculate_side_effects (expr);
+      gimple_push_condition ();
 
-  gimple_pop_condition (pre_p);
+      gimplify_to_stmt_list (&TREE_OPERAND (expr, 1));
+      gimplify_to_stmt_list (&TREE_OPERAND (expr, 2));
+      recalculate_side_effects (expr);
+      
+      gimple_pop_condition (pre_p);
+    }
 
   if (ret == GS_ERROR)
     ;
@@ -2980,8 +3030,8 @@ gimplify_init_ctor_eval_range (tree object, tree lower, tree upper,
 			    pre_p);
 
   /* Build the reference.  */
-  cref = build4 (ARRAY_REF, array_elt_type, unshare_expr (object),
-		 var, NULL_TREE, NULL_TREE);
+  cref = build5 (ARRAY_REF, array_elt_type, unshare_expr (object),
+		 var, NULL_TREE, NULL_TREE, NULL_TREE);
 
   /* If we are a constructor, just call gimplify_init_ctor_eval to do
      the store.  Otherwise just assign value to the reference.  */
@@ -3111,8 +3161,8 @@ gimplify_init_ctor_eval (tree object, VEC(constructor_elt,gc) *elts,
 	  if (TYPE_DOMAIN (TREE_TYPE (object)))
 	    purpose = fold_convert (TREE_TYPE (TYPE_DOMAIN (TREE_TYPE (object))),
 				    purpose);
-	  cref = build4 (ARRAY_REF, array_elt_type, unshare_expr (object),
-			 purpose, NULL_TREE, NULL_TREE);
+	  cref = build5 (ARRAY_REF, array_elt_type, unshare_expr (object),
+			 purpose, NULL_TREE, NULL_TREE, NULL_TREE);
 	}
       else
 	{
@@ -3206,7 +3256,8 @@ gimplify_init_constructor (tree *expr_p, tree *pre_p,
 	if (valid_const_initializer
 	    && num_nonzero_elements > 1
 	    && TREE_READONLY (object)
-	    && TREE_CODE (object) == VAR_DECL)
+	    && TREE_CODE (object) == VAR_DECL
+            && !globalize_flag /* do not promote to static when -xipo is on */)
 	  {
 	    if (notify_temp_creation)
 	      return GS_ERROR;
@@ -3500,7 +3551,7 @@ gimple_fold_indirect_ref (tree t)
          tree min_val = size_zero_node;
          if (type_domain && TYPE_MIN_VALUE (type_domain))
            min_val = TYPE_MIN_VALUE (type_domain);
-         return build4 (ARRAY_REF, type, op, min_val, NULL_TREE, NULL_TREE);
+         return build5 (ARRAY_REF, type, op, min_val, NULL_TREE, NULL_TREE, NULL_TREE);
        }
     }
 
@@ -3517,7 +3568,7 @@ gimple_fold_indirect_ref (tree t)
       type_domain = TYPE_DOMAIN (TREE_TYPE (sub));
       if (type_domain && TYPE_MIN_VALUE (type_domain))
         min_val = TYPE_MIN_VALUE (type_domain);
-      return build4 (ARRAY_REF, type, sub, min_val, NULL_TREE, NULL_TREE);
+      return build5 (ARRAY_REF, type, sub, min_val, NULL_TREE, NULL_TREE, NULL_TREE);
     }
 
   return NULL_TREE;
@@ -4774,7 +4825,9 @@ omp_add_variable (struct gimplify_omp_ctx *ctx, tree decl, unsigned int flags)
   splay_tree_node n;
   unsigned int nflags;
   tree t;
-
+  
+  STRIP_NOPS (decl);
+  
   if (decl == error_mark_node || TREE_TYPE (decl) == error_mark_node)
     return;
 
@@ -4810,6 +4863,11 @@ omp_add_variable (struct gimplify_omp_ctx *ctx, tree decl, unsigned int flags)
 	 copy into or out of the context.  */
       if (!(flags & GOVD_LOCAL))
 	{
+          /* fix for cr6681032 */
+	  if (flag_use_rtl_backend ==1)
+	    nflags = flags & GOVD_PRIVATE ? GOVD_PRIVATE : GOVD_FIRSTPRIVATE;
+	  else
+	    nflags = flags & GOVD_PRIVATE ? GOVD_PRIVATE : (flags & GOVD_SHARED ? GOVD_SHARED : GOVD_FIRSTPRIVATE);
 	  nflags = flags & GOVD_PRIVATE ? GOVD_PRIVATE : GOVD_FIRSTPRIVATE;
 	  nflags |= flags & GOVD_SEEN;
 	  t = DECL_VALUE_EXPR (decl);
@@ -4828,19 +4886,27 @@ omp_add_variable (struct gimplify_omp_ctx *ctx, tree decl, unsigned int flags)
       /* The variable-sized variable itself is never SHARED, only some form
 	 of PRIVATE.  The sharing would take place via the pointer variable
 	 which we remapped above.  */
-      if (flags & GOVD_SHARED)
-	flags = GOVD_PRIVATE | GOVD_DEBUG_PRIVATE
+      if (flag_use_rtl_backend == 1)
+	{
+          if (flags & GOVD_SHARED)
+            flags = GOVD_PRIVATE | GOVD_DEBUG_PRIVATE
 		| (flags & (GOVD_SEEN | GOVD_EXPLICIT));
 
-      /* We're going to make use of the TYPE_SIZE_UNIT at least in the 
-	 alloca statement we generate for the variable, so make sure it
-	 is available.  This isn't automatically needed for the SHARED
-	 case, since we won't be allocating local storage then.
-	 For local variables TYPE_SIZE_UNIT might not be gimplified yet,
-	 in this case omp_notice_variable will be called later
-	 on when it is gimplified.  */
-      else if (! (flags & GOVD_LOCAL))
-	omp_notice_variable (ctx, TYPE_SIZE_UNIT (TREE_TYPE (decl)), true);
+          /* We're going to make use of the TYPE_SIZE_UNIT at least in the 
+             alloca statement we generate for the variable, so make sure it
+             is available.  This isn't automatically needed for the SHARED
+             case, since we won't be allocating local storage then.
+             For local variables TYPE_SIZE_UNIT might not be gimplified yet,
+             in this case omp_notice_variable will be called later
+             on when it is gimplified.  */
+          else if (! (flags & GOVD_LOCAL))
+            omp_notice_variable (ctx, TYPE_SIZE_UNIT (TREE_TYPE (decl)), true);
+        }
+      else
+        {
+	  if ( !(flags & GOVD_SHARED) && !(flags & GOVD_LOCAL))
+	    omp_notice_variable (ctx, TYPE_SIZE_UNIT (TREE_TYPE (decl)), true);
+	}
     }
   else if (lang_hooks.decls.omp_privatize_by_reference (decl))
     {
@@ -4877,16 +4943,20 @@ omp_notice_variable (struct gimplify_omp_ctx *ctx, tree decl, bool in_code)
     return false;
 
   /* Threadprivate variables are predetermined.  */
-  if (is_global_var (decl))
+  if (DECL_P (decl) && is_global_var (decl))
     {
-      if (DECL_THREAD_LOCAL_P (decl))
-	return false;
-
+      if (DECL_THREAD_LOCAL_P (decl)
+          || lang_hooks.decls.omp_threadprivate_decl(decl) != NULL_TREE)
+        return false;
+ 
       if (DECL_HAS_VALUE_EXPR_P (decl))
 	{
 	  tree value = get_base_address (DECL_VALUE_EXPR (decl));
 
-	  if (value && DECL_P (value) && DECL_THREAD_LOCAL_P (value))
+	  if (value
+              && DECL_P (value)
+              && (DECL_THREAD_LOCAL_P (value)
+                  || lang_hooks.decls.omp_threadprivate_decl(decl) != NULL_TREE))
 	    return false;
 	}
     }
@@ -4910,15 +4980,21 @@ omp_notice_variable (struct gimplify_omp_ctx *ctx, tree decl, bool in_code)
       switch (default_kind)
 	{
 	case OMP_CLAUSE_DEFAULT_NONE:
-	  error ("%qs not specified in enclosing parallel",
-		 IDENTIFIER_POINTER (DECL_NAME (decl)));
-	  error ("%Henclosing parallel", &ctx->location);
-	  /* FALLTHRU */
+          if (!DECL_ARTIFICIAL (decl))
+            {                
+              error ("%qs not specified in enclosing parallel",
+                     IDENTIFIER_POINTER (DECL_NAME (decl)));
+              error ("%Henclosing parallel", &ctx->location);
+              /* FALLTHRU */
+            }
 	case OMP_CLAUSE_DEFAULT_SHARED:
 	  flags |= GOVD_SHARED;
 	  break;
 	case OMP_CLAUSE_DEFAULT_PRIVATE:
 	  flags |= GOVD_PRIVATE;
+	  break;
+        case OMP_CLAUSE_DEFAULT_AUTO:
+          flags |= GOVD_AUTOSCOPE;
 	  break;
 	default:
 	  gcc_unreachable ();
@@ -4943,7 +5019,7 @@ omp_notice_variable (struct gimplify_omp_ctx *ctx, tree decl, bool in_code)
  do_outer:
   /* If the variable is private in the current context, then we don't
      need to propagate anything to an outer context.  */
-  if (flags & GOVD_PRIVATE)
+  if (flags & (GOVD_PRIVATE | GOVD_AUTOSCOPE))
     return ret;
   if (ctx->outer_context
       && omp_notice_variable (ctx->outer_context, decl, in_code))
@@ -4959,6 +5035,15 @@ omp_is_private (struct gimplify_omp_ctx *ctx, tree decl)
 {
   splay_tree_node n;
 
+  if (ctx == gimplify_omp_ctxp)
+    {
+      if (lang_hooks.decls.omp_threadprivate_decl (decl) != NULL_TREE)
+        {
+          error ("iteration variable %qs is not allowed in threadprivate directive",
+                 IDENTIFIER_POINTER (DECL_NAME (decl)));
+        }
+    }
+  
   n = splay_tree_lookup (ctx->variables, (splay_tree_key)decl);
   if (n != NULL)
     {
@@ -5016,7 +5101,8 @@ omp_check_private (struct gimplify_omp_ctx *ctx, tree decl)
 
       n = splay_tree_lookup (ctx->variables, (splay_tree_key) decl);
       if (n != NULL)
-	return (n->value & GOVD_SHARED) == 0;
+        return (((n->value & GOVD_SHARED) == 0)
+                && ((n->value & GOVD_DEBUG_PRIVATE) == 0));
     }
   while (!ctx->is_parallel);
   return false;
@@ -5030,11 +5116,13 @@ gimplify_scan_omp_clauses (tree *list_p, tree *pre_p, bool in_parallel,
 			   bool in_combined_parallel)
 {
   struct gimplify_omp_ctx *ctx, *outer_ctx;
-  tree c;
+  tree c, nc;
+  tree *orig_listp, *mylistp;
 
   ctx = new_omp_context (in_parallel, in_combined_parallel);
   outer_ctx = ctx->outer_context;
-
+  orig_listp = list_p;
+  
   while ((c = *list_p) != NULL)
     {
       enum gimplify_status gs;
@@ -5052,6 +5140,9 @@ gimplify_scan_omp_clauses (tree *list_p, tree *pre_p, bool in_parallel,
 	  goto do_add;
 	case OMP_CLAUSE_SHARED:
 	  flags = GOVD_SHARED | GOVD_EXPLICIT;
+	  goto do_add;
+        case OMP_CLAUSE_AUTO:
+          flags = GOVD_AUTOSCOPE | GOVD_EXPLICIT;
 	  goto do_add;
 	case OMP_CLAUSE_FIRSTPRIVATE:
 	  flags = GOVD_FIRSTPRIVATE | GOVD_EXPLICIT;
@@ -5092,7 +5183,6 @@ gimplify_scan_omp_clauses (tree *list_p, tree *pre_p, bool in_parallel,
 	    goto do_notice;
 	  break;
 
-	case OMP_CLAUSE_COPYIN:
 	case OMP_CLAUSE_COPYPRIVATE:
 	  decl = OMP_CLAUSE_DECL (c);
 	  if (decl == error_mark_node || TREE_TYPE (decl) == error_mark_node)
@@ -5100,11 +5190,50 @@ gimplify_scan_omp_clauses (tree *list_p, tree *pre_p, bool in_parallel,
 	      remove = true;
 	      break;
 	    }
+          if (outer_ctx)
+	    omp_notice_variable (outer_ctx, decl, true);
+          if (!in_parallel
+	      && !omp_check_private (ctx, decl)
+              && !lang_hooks.decls.omp_privatize_by_reference (decl) /* For fortran */
+              && lang_hooks.decls.omp_threadprivate_decl(decl) == NULL_TREE)
+	    {
+              /* Fix 6611090. As we dont execute the omp-lowering for
+                 SunIR gen, we need additional checking for copyprivate.
+                 Fortran pointers may be privatized by reference, so
+                 dont error on this condition */
+	      error ("copyprivate variable %qs must be private in an enclosing context",
+		     IDENTIFIER_POINTER (DECL_NAME (decl)));
+	      remove = true;
+	    }
+          /* copyprivate should not be combined with nowait. This is
+             probably not the right place for the check, maybe better
+             done in the parser, however, doing it here handles all langs*/
+          mylistp = orig_listp;
+          while ((nc = *mylistp) != NULL)
+            {
+              if (OMP_CLAUSE_CODE (nc) == OMP_CLAUSE_NOWAIT)
+                {
+                  error ("copyprivate clause must not be used with the nowait clause");
+                  break;
+                }
+              mylistp = &OMP_CLAUSE_CHAIN (nc);
+            }
+	  break;
+          
+        case OMP_CLAUSE_COPYIN:
+          decl = OMP_CLAUSE_DECL (c);
+	  if (decl == error_mark_node || TREE_TYPE (decl) == error_mark_node)
+	    {
+	      remove = true;
+	      break;
+	    }
+          
 	do_notice:
 	  if (outer_ctx)
 	    omp_notice_variable (outer_ctx, decl, true);
 	  if (check_non_private
 	      && !in_parallel
+              && outer_ctx
 	      && omp_check_private (ctx, decl))
 	    {
 	      error ("%s variable %qs is private in outer context",
@@ -5120,6 +5249,7 @@ gimplify_scan_omp_clauses (tree *list_p, tree *pre_p, bool in_parallel,
 
 	case OMP_CLAUSE_SCHEDULE:
 	case OMP_CLAUSE_NUM_THREADS:
+        case OMP_CLAUSE_COLLAPSE:
 	  gs = gimplify_expr (&OMP_CLAUSE_OPERAND (c, 0), pre_p, NULL,
 			      is_gimple_val, fb_rvalue);
 	  if (gs == GS_ERROR)
@@ -5128,6 +5258,7 @@ gimplify_scan_omp_clauses (tree *list_p, tree *pre_p, bool in_parallel,
 
 	case OMP_CLAUSE_NOWAIT:
 	case OMP_CLAUSE_ORDERED:
+        case OMP_CLAUSE_UNTIED:
 	  break;
 
 	case OMP_CLAUSE_DEFAULT:
@@ -5160,7 +5291,7 @@ gimplify_adjust_omp_clauses_1 (splay_tree_node n, void *data)
   tree clause;
   bool private_debug;
 
-  if (flags & (GOVD_EXPLICIT | GOVD_LOCAL))
+  if (flags & GOVD_EXPLICIT)
     return 0;
   if ((flags & GOVD_SEEN) == 0)
     return 0;
@@ -5173,11 +5304,15 @@ gimplify_adjust_omp_clauses_1 (splay_tree_node n, void *data)
     private_debug
       = lang_hooks.decls.omp_private_debug_clause (decl,
 						   !!(flags & GOVD_SHARED));
-  if (private_debug)
+  /* cp_convert_omp_for_init told gimplifier to do this. */
+  if (TREE_CODE (decl) == VAR_DECL 
+      && DECL_REFER_SCOPED_SHARED (decl) == 1)
+    code = OMP_CLAUSE_SHARED;
+  else if (private_debug)
     code = OMP_CLAUSE_PRIVATE;
   else if (flags & GOVD_SHARED)
     {
-      if (is_global_var (decl))
+      if (flag_use_rtl_backend != 0 && is_global_var (decl))
 	{
 	  struct gimplify_omp_ctx *ctx = gimplify_omp_ctxp->outer_context;
 	  while (ctx != NULL)
@@ -5198,6 +5333,14 @@ gimplify_adjust_omp_clauses_1 (splay_tree_node n, void *data)
     code = OMP_CLAUSE_PRIVATE;
   else if (flags & GOVD_FIRSTPRIVATE)
     code = OMP_CLAUSE_FIRSTPRIVATE;
+  else if (flags & GOVD_AUTOSCOPE)
+    code = OMP_CLAUSE_AUTO;
+  else if (flags & GOVD_LOCAL)
+    {
+      if (DECL_ARTIFICIAL (decl))
+        return 0;
+      code = OMP_CLAUSE_PRIVATE;
+    }
   else
     gcc_unreachable ();
 
@@ -5208,6 +5351,9 @@ gimplify_adjust_omp_clauses_1 (splay_tree_node n, void *data)
     OMP_CLAUSE_PRIVATE_DEBUG (clause) = 1;
   *list_p = clause;
 
+  if (TREE_CODE (decl) == VAR_DECL)
+    DECL_HAS_SCOPED_CLAUSE_P (decl) = 1;
+  
   return 0;
 }
 
@@ -5227,6 +5373,7 @@ gimplify_adjust_omp_clauses (tree *list_p)
 	case OMP_CLAUSE_PRIVATE:
 	case OMP_CLAUSE_SHARED:
 	case OMP_CLAUSE_FIRSTPRIVATE:
+        case OMP_CLAUSE_AUTO:
 	  decl = OMP_CLAUSE_DECL (c);
 	  n = splay_tree_lookup (ctx->variables, (splay_tree_key) decl);
 	  remove = !(n->value & GOVD_SEEN);
@@ -5263,6 +5410,8 @@ gimplify_adjust_omp_clauses (tree *list_p)
 	case OMP_CLAUSE_NOWAIT:
 	case OMP_CLAUSE_ORDERED:
 	case OMP_CLAUSE_DEFAULT:
+        case OMP_CLAUSE_UNTIED:
+        case OMP_CLAUSE_COLLAPSE:
 	  break;
 
 	default:
@@ -5292,6 +5441,11 @@ gimplify_omp_parallel (tree *expr_p, tree *pre_p)
 {
   tree expr = *expr_p;
 
+  if (OMP_PARALLEL_BODY (expr) == NULL_TREE)
+    /* nothing to gimplify for 2nd pass. 1st pass of gimplifier took 
+       care of it and set it to NULL in lower_omp_directive() */
+    return GS_ALL_DONE;
+  
   gimplify_scan_omp_clauses (&OMP_PARALLEL_CLAUSES (expr), pre_p, true,
 			     OMP_PARALLEL_COMBINED (expr));
 
@@ -5327,7 +5481,8 @@ gimplify_omp_for (tree *expr_p, tree *pre_p)
 	      || TREE_CODE (t) == GIMPLE_MODIFY_STMT);
   decl = GENERIC_TREE_OPERAND (t, 0);
   gcc_assert (DECL_P (decl));
-  gcc_assert (INTEGRAL_TYPE_P (TREE_TYPE (decl)));
+  gcc_assert (INTEGRAL_TYPE_P (TREE_TYPE (decl))
+              || POINTER_TYPE_P (TREE_TYPE (decl)));
 
   /* Make sure the iteration variable is private.  */
   if (omp_is_private (gimplify_omp_ctxp, decl))
@@ -5374,7 +5529,11 @@ gimplify_omp_for (tree *expr_p, tree *pre_p)
     {
     case PREINCREMENT_EXPR:
     case POSTINCREMENT_EXPR:
-      t = build_int_cst (TREE_TYPE (decl), 1);
+      if (INTEGRAL_TYPE_P (TREE_TYPE (decl)))
+        t = build_int_cst (TREE_TYPE (decl), 1);
+      else
+	t = build_int_cst (integer_type_node,
+                           TREE_INT_CST_LOW (TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (decl)))));
       t = build2 (PLUS_EXPR, TREE_TYPE (decl), var, t);
       t = build_gimple_modify_stmt (var, t);
       OMP_FOR_INCR (for_stmt) = t;
@@ -5382,7 +5541,10 @@ gimplify_omp_for (tree *expr_p, tree *pre_p)
 
     case PREDECREMENT_EXPR:
     case POSTDECREMENT_EXPR:
-      t = build_int_cst (TREE_TYPE (decl), -1);
+      if (INTEGRAL_TYPE_P (TREE_TYPE (decl)))
+        t = build_int_cst (TREE_TYPE (decl), -1);
+      else
+	t = build_int_cst (integer_type_node, (-1) * TREE_INT_CST_LOW (TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (decl)))));
       t = build2 (PLUS_EXPR, TREE_TYPE (decl), var, t);
       t = build_gimple_modify_stmt (var, t);
       OMP_FOR_INCR (for_stmt) = t;
@@ -5785,6 +5947,27 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 	    break;
 	  /* FALLTHRU */
 
+          {
+            /* need to pattern match  '(struct B *) operator new (12)'
+               to keep it as single expression, so optimizer can easily 
+               figure out the type of object created */
+            tree op0 = TREE_OPERAND (*expr_p, 0);
+            if (TREE_CODE (op0) == CALL_EXPR
+                /* make sure this pattern is immediately assigned to temp var */
+                && (gimple_test_f == is_gimple_formal_tmp_rhs 
+                    || gimple_test_f == is_gimple_reg_rhs))
+              {
+                tree fn = get_callee_fndecl (op0);
+                if (fn && is_gxx_operator_new (fn))
+                  {
+                    ret = gimplify_expr (&TREE_OPERAND (*expr_p, 0), pre_p, post_p,
+                                         is_gimple_formal_tmp_rhs, fb_rvalue);
+                    recalculate_side_effects (*expr_p);
+                    break;
+                  }
+              }
+          }
+
 	case FIX_TRUNC_EXPR:
 	  /* unary_expr: ... | '(' cast ')' val | ...  */
 	  ret = gimplify_expr (&TREE_OPERAND (*expr_p, 0), pre_p, post_p,
@@ -5800,7 +5983,7 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 	case ALIGN_INDIRECT_REF:
 	case MISALIGNED_INDIRECT_REF:
 	  ret = gimplify_expr (&TREE_OPERAND (*expr_p, 0), pre_p, post_p,
-			       is_gimple_reg, fb_rvalue);
+			       flag_use_rtl_backend == 0 ? is_gimple_val : is_gimple_reg, fb_rvalue);
 	  recalculate_side_effects (*expr_p);
 	  break;
 
@@ -5828,7 +6011,10 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 	case DECL_EXPR:
 	  ret = gimplify_decl_expr (expr_p);
 	  break;
-
+          
+        /* 2nd pass of gimplifier may see those: */
+        case RESX_EXPR:
+        case FILTER_EXPR:
 	case EXC_PTR_EXPR:
 	  /* FIXME make this a decl.  */
 	  ret = GS_ALL_DONE;
@@ -6027,6 +6213,7 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 
 	case OMP_SECTIONS:
 	case OMP_SINGLE:
+        case OMP_TASK:
 	  ret = gimplify_omp_workshare (expr_p, pre_p);
 	  break;
 
@@ -6043,7 +6230,8 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 
 	case OMP_RETURN:
 	case OMP_CONTINUE:
-	case OMP_ATOMIC_STORE:
+        case OMP_ATOMIC_STORE:
+        case OMP_TASKWAIT:
 	  ret = GS_ALL_DONE;
 	  break;
 

@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* An exception is an event that can be signaled from within a
    function. This event can then be "caught" or "trapped" by the
@@ -77,6 +78,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "diagnostic.h"
 #include "tree-pass.h"
 #include "timevar.h"
+#include "ir/ir_common.h"
+#include "tree-ir.h"
+#include "c-common.h"
 
 /* Provide defaults for stuff that may not be defined when using
    sjlj exceptions.  */
@@ -84,6 +88,10 @@ along with GCC; see the file COPYING3.  If not see
 #define EH_RETURN_DATA_REGNO(N) INVALID_REGNUM
 #endif
 
+/* Three arrays used to keep the EH table content to generate IR leaves. */
+#define ACTION_LEAF_ARRAY cfun->eh->action_record_leaf_array
+#define EHSPEC_LEAF_ARRAY cfun->eh->ehspec_leaf_array
+#define TTYPE_LEAF_ARRAY  cfun->eh->ttype_leaf_array
 
 /* Protect cleanup actions with must-not-throw regions, with a call
    to the given failure handler.  */
@@ -181,6 +189,9 @@ struct eh_region GTY(())
     } GTY ((tag ("ERT_CLEANUP"))) cleanup;
   } GTY ((desc ("%0.type"))) u;
 
+  int landing_label; /* SUN IR landing pad label */
+  int action_number; /* SUN IR action number */
+
   /* Entry point for this region's handler before landing pads are built.  */
   rtx label;
   tree tree_label;
@@ -235,6 +246,12 @@ struct eh_status GTY(())
   varray_type ehspec_data;
   varray_type action_record_data;
 
+  /* When flag_tree_ir_eh_supported is 1, generate one IR leaf node for every element
+     in ttype_data, ehspec_data, and action_record_data. */
+  varray_type GTY ((skip)) ttype_leaf_array;  
+  varray_type GTY ((skip)) ehspec_leaf_array;
+  varray_type GTY ((skip)) action_record_leaf_array;
+  
   htab_t GTY ((param_is (struct ehl_map_entry))) exception_handler_label_map;
 
   struct call_site_record * GTY ((length ("%h.call_site_data_used")))
@@ -357,6 +374,8 @@ init_eh (void)
     {
       tree f_jbuf, f_per, f_lsda, f_prev, f_cs, f_data, tmp;
 
+      gcc_assert (!flag_tree_ir_eh_supported);  /* not for SJLJ */
+      
       sjlj_fc_type_node = lang_hooks.types.make_type (RECORD_TYPE);
 
       f_prev = build_decl (FIELD_DECL, get_identifier ("__prev"),
@@ -471,7 +490,8 @@ gen_eh_region (enum eh_region_type type, struct eh_region *outer)
     }
 
   new->region_number = ++cfun->eh->last_region_number;
-
+  new->action_number = -4;  /* initialized to a fixed wrong number */
+  
   return new;
 }
 
@@ -540,6 +560,12 @@ gen_eh_region_must_not_throw (struct eh_region *outer)
 }
 
 int
+has_eh_region(struct eh_status *p)
+{
+  return p->last_region_number > 0;
+}
+
+int
 get_eh_region_number (struct eh_region *region)
 {
   return region->region_number;
@@ -562,7 +588,477 @@ set_eh_region_tree_label (struct eh_region *region, tree lab)
 {
   region->tree_label = lab;
 }
-
+
+struct eh_status*
+save_cfun_eh_status (void)
+{
+  if (cfun->eh) 
+    {
+      struct eh_status *tmp = ggc_alloc (sizeof (*tmp));
+      tmp = memcpy (tmp, cfun->eh, sizeof(*tmp));
+      return tmp;
+    } 
+  else 
+    {
+      return NULL;
+    }
+}
+
+void
+restore_cfun_eh_status (struct eh_status *tmp)
+{
+  if (tmp)
+    memcpy (cfun->eh, tmp, sizeof(*tmp));
+  else
+    cfun->eh = NULL;
+}
+
+static htab_t gcc2ir_ar_hash = 0;
+
+int 
+get_action_number (struct eh_region *r)
+{
+  if (r->action_number < -3) 
+    {
+      r->action_number = collect_one_action_chain (gcc2ir_ar_hash, r);
+      if (r->action_number < -3)
+        abort ();
+      if (r->action_number != -1)
+        cfun->uses_eh_lsda = 1;
+    }
+  return r->action_number;
+}
+
+int 
+get_landing_label (struct eh_region *r)
+{
+  return r->landing_label;
+}
+
+int
+in_must_not_throw_region (tree stmt)
+{
+  int n = lookup_stmt_eh_region (stmt);
+  struct eh_region *region;
+  if (n < 0)
+    return 0;  /* not in any region */
+  if (n <= 0 || cfun->eh->last_region_number < n)
+    abort ();
+  region = VEC_index (eh_region, cfun->eh->region_array, n);
+  /* skip ERT_CATCH region, which is not really a landing block */
+  while (region->type == ERT_CATCH && region->outer)
+    region = region->outer;
+  return (region->type == ERT_MUST_NOT_THROW);
+}
+
+struct eh_region *
+find_eh_region (tree stmt)
+{
+  int n = lookup_stmt_eh_region (stmt);
+  struct eh_region *region;
+  if (n < 0)
+    return NULL;  /* current stmt has no EH */
+  if (n <= 0 || cfun->eh->last_region_number < n)
+    abort ();
+  region = VEC_index (eh_region, cfun->eh->region_array, n);
+  /* skip ERT_CATCH region, which is not really a landing block */
+  while (region->type == ERT_CATCH && region->outer)
+    region = region->outer;
+  if (region->type == ERT_CATCH)
+    return 0;  /* no handler */
+  /* NOTE: no-throw statements do not need exception handlers in IR */
+  if (region->type == ERT_MUST_NOT_THROW)
+    return 0;
+  if (!region->landing_label)
+    region->landing_label = gen_ir_label ();
+  return region;
+}
+
+static int
+get_ir_label_of_tree (tree t)
+{
+  if (t == 0)
+    abort ();
+  if (TREE_CODE (t) == LABEL_EXPR)
+    return get_ir_label (LABEL_EXPR_LABEL (t));
+  if (TREE_CODE (t) == LABEL_DECL)
+    return get_ir_label (t);
+  abort ();     /* no return */
+}
+
+static void
+gen_call_unwind_resume (int set_for_pbranch, int label)
+{
+  IR_NODE *argp, *ex_ptr, *unwind_fp, *ir_callnode;
+  IR_TYPE_NODE *fn_ir_type;
+  TYPE fn_type, obj_ptr_type;
+  tree fn_type_tree, ptr_fn_type_tree;
+
+  ex_ptr = get_ir_exception_pointer ();
+  fn_ir_type = map_gnu_type_to_IR_TYPE_NODE (void_type_node);
+  fn_type = map_gnu_type_to_TYPE (void_type_node);
+  obj_ptr_type = map_gnu_type_to_TYPE (ptr_type_node);
+  fn_type_tree = build_function_type (void_type_node, 
+                                      tree_cons (0, ptr_type_node, 
+                                                 void_list_node));
+  ptr_fn_type_tree = build_pointer_type (fn_type_tree);
+  unwind_fp = build_ir_funcname ("_Unwind_Resume", 
+                map_gnu_type_to_TYPE (ptr_fn_type_tree),
+                map_gnu_type_to_IR_TYPE_NODE (ptr_fn_type_tree));
+  unwind_fp->leaf.func_descr = SUPPORT_FUNC;
+  argp = build_ir_triple (IR_PARAM, ex_ptr, NULL, obj_ptr_type, NULL);
+  argp->triple.param_info = IrParamIsDeclared;
+  ir_callnode = build_ir_triple (IR_SCALL, unwind_fp, argp, 
+                                 fn_type, fn_ir_type);
+  ir_callnode->triple.dont_tailcall = IR_TRUE;
+  ir_callnode->triple.never_returns = IR_TRUE;
+  ir_callnode->triple.is_rarely_executed = IR_TRUE;
+  if (set_for_pbranch)
+    {
+      /* generate a special pbranch with identical eh_landing_label
+         and fall_through_label */
+      set_may_cause_exception (ir_callnode);
+      ir_pbranch (0, label, label);
+    }
+  else
+    build_ir_goto (label);
+  argp->triple.right = ir_callnode;
+}
+
+static void
+gen_unwind_resume_block (struct eh_region *region, 
+                         int start_label, int end_label)
+{
+  int need_pbranch = (!region || !region->outer 
+                      || region->outer->type != ERT_MUST_NOT_THROW);
+  build_ir_labeldef (start_label);
+  gen_call_unwind_resume (need_pbranch, end_label);
+}
+
+static int
+find_outer_catch_label (struct eh_region *c)
+{
+  while (c && c->outer && c->type != ERT_MUST_NOT_THROW)
+    {
+      c = c->outer;
+      if (c->landing_label 
+          && (c->type == ERT_TRY 
+              || c->type == ERT_CLEANUP 
+              || c->type == ERT_ALLOWED_EXCEPTIONS))
+        return c->landing_label;
+    }
+  return 0;
+}
+
+#if 0
+static struct eh_region*
+find_outer_catch_region (struct eh_region *c)
+{
+  while (c && c->outer)
+    {
+      c = c->outer;
+      if (c->landing_label 
+          && (c->type == ERT_TRY 
+              || c->type == ERT_CLEANUP 
+              || c->type == ERT_ALLOWED_EXCEPTIONS))
+        return c;
+    }
+  return 0;
+  }
+#endif
+
+static ir_eh_node_hdl_t
+get_ir_eh_type_leaf (int filter)
+{
+  ir_eh_node_hdl_t eh_node;
+  if (filter > 0)
+    eh_node = (ir_eh_node_hdl_t) VARRAY_GENERIC_PTR (TTYPE_LEAF_ARRAY, filter);
+  else if (filter < 0)
+    eh_node = (ir_eh_node_hdl_t) VARRAY_GENERIC_PTR (EHSPEC_LEAF_ARRAY, -filter);
+  else
+    {
+      if (clean_up_ehnode == NULL)
+        clean_up_ehnode = build_ir_eh_node (IR_CLEANUP);
+      eh_node = clean_up_ehnode;
+    }
+  
+  gcc_assert (eh_node);
+  return eh_node;
+}
+
+static IR_NODE*
+build_ir_eh_type_index (int filter)
+{
+  if (!flag_tree_ir_eh_supported) 
+    return build_ir_int_const (filter, inttype, 0);
+  else
+    {
+      /* __builtin_EH_table_index(the_EH_type_leaf) */
+      IR_NODE *fp, *eh_leaf, *call_node, *argp;
+      /* IR_TYPE_NODE *string_ir_type = map_gnu_type_to_IR_TYPE_NODE 
+                                            (char_type_node); */
+      IR_TYPE_NODE *fn_ir_type = map_gnu_type_to_IR_TYPE_NODE 
+                                            (integer_type_node);
+      TYPE fn_type = map_gnu_type_to_TYPE (integer_type_node);
+      /* TYPE obj_ptr_type = map_gnu_type_to_TYPE (ptr_type_node); */
+      tree fn_type_tree = build_function_type (integer_type_node, 
+                                    tree_cons (0, char_type_node, 
+                                                void_list_node));
+      tree ptr_fn_type_tree = build_pointer_type (fn_type_tree);
+      fp = build_ir_funcname ("__builtin_EH_table_index",
+                 map_gnu_type_to_TYPE (ptr_fn_type_tree),
+                 map_gnu_type_to_IR_TYPE_NODE (ptr_fn_type_tree));
+      /* fp->leaf.func_descr = SUPPORT_FUNC; */
+      fp->leaf.func_descr = INTR_FUNC;
+      fp->leaf.pure_func = IR_TRUE;
+      fp->leaf.throw_nothing = IR_TRUE;
+      eh_leaf = (IR_NODE *) get_ir_eh_type_leaf (filter);
+      argp = build_ir_triple (IR_PARAM, eh_leaf, NULL, inttype, NULL);
+      argp->triple.param_info = IrParamIsDeclared;  /* ??? */
+      call_node = build_ir_triple (IR_FCALL, fp, argp, 
+                                   fn_type, fn_ir_type);
+      argp->triple.right = call_node;
+      return call_node;
+    }
+}
+
+static void
+generate_one_landing_pad (struct eh_region *region, int exit_label)
+{
+  /* this function is based on build_post_landing_pads */
+  switch (region->type)
+    {
+    case ERT_TRY:
+      {
+        struct eh_region *c;
+        int rethrow_label = 0;
+        IR_NODE *filter = get_ir_exception_filter ();
+        for (c = region->u.try.catch; c ; c = c->u.catch.next_catch)
+          {
+            if (c->u.catch.type_list == NULL)
+              build_ir_goto (get_ir_label_of_tree (c->tree_label));
+            else
+              {
+                tree tp_node = c->u.catch.type_list;
+                tree flt_node = c->u.catch.filter_list;
+                for (; tp_node; )
+                  {
+                    IR_NODE *ir_cond;
+                    TRIPLE *t1, *t2;
+                    int outer_catch = 0;
+                    int next_label = 0;
+                    int catch_label = get_ir_label_of_tree (c->tree_label);
+                    int has_next = (TREE_CHAIN (tp_node) != 0 
+                                    || c->u.catch.next_catch);
+                    if (has_next)   /* goto next catch if it exists */
+                      next_label = gen_ir_label ();
+                    else
+                      {
+                        outer_catch = find_outer_catch_label (c);
+                        if (outer_catch)  /* goto outer catch if it exists */
+                          next_label = gen_ir_label ();
+                        else
+                          {
+                            /* otherwise, call unwind_resume */
+                            if (!rethrow_label)
+                              rethrow_label = gen_ir_label ();
+                            next_label = rethrow_label;
+                          }
+                      }
+                    t1 = (TRIPLE*) build_ir_labelref (catch_label, 1);
+                    t2 = (TRIPLE*) build_ir_labelref (next_label, 0);
+                    TAPPEND (t1, t2);
+                    ir_cond = build_ir_triple (IR_EQ, filter,
+                                build_ir_eh_type_index (
+                                    tree_low_cst (TREE_VALUE (flt_node), 0)),
+                                inttype, NULL);
+                    build_ir_triple (IR_CBRANCH, ir_cond, 
+                                     (IR_NODE*) t1, longtype, NULL);
+                    tp_node = TREE_CHAIN (tp_node);
+                    flt_node = TREE_CHAIN (flt_node);
+                    if (outer_catch || has_next)
+                      {
+                        build_ir_labeldef (next_label);
+                        if (outer_catch)
+                          {
+                            restore_eh_registers ();  /* set up %i0 and %i1 */
+                            build_ir_goto (outer_catch);
+                          }
+                      }
+                  }
+              }  /* else */
+          }  /* for */
+        if (rethrow_label)
+          gen_unwind_resume_block (region, rethrow_label, exit_label);
+      }
+      break;
+    case ERT_ALLOWED_EXCEPTIONS:
+      {
+        /* output: when (find_outer_catch_label (region))
+                  if (exception_filter == allowed.filter) goto L2
+            L1:   goto outer_region_label
+            L2:   handler  (already generated by Gcc starting from region->tree_label)
+           output: when !(find_outer_catch_label (region))
+                  if (exception_filter == allowed.filter) goto L2
+            L1:   call _Unwind_Resume (exception_pointer)
+            L2:   handler  (already generated by Gcc starging from region->tree_label)
+        */
+        int b1_label = gen_ir_label ();
+        int b2_label = get_ir_label_of_tree (region->tree_label); 
+        int outer_catch = find_outer_catch_label (region);
+        IR_NODE *filter = get_ir_exception_filter ();
+        IR_NODE *ex_ptr = get_ir_exception_pointer ();
+        IR_NODE *ir_cond, *t1, *t2;
+        TRIPLE *triple_t1;
+        t2 = build_ir_labelref (b2_label,1); 
+        t1 = build_ir_labelref (b1_label,0); 
+        triple_t1 = (TRIPLE*) t1;  /* avoid compiler warning */
+        TAPPEND (triple_t1, (TRIPLE*)t2);
+        ir_cond = build_ir_triple (IR_EQ, filter,
+                            build_ir_eh_type_index (region->u.allowed.filter), 
+                            inttype, NULL);
+        build_ir_triple (IR_CBRANCH, ir_cond, t1, longtype, NULL);
+        {
+#if 0
+          IR_NODE *argp, *unexpected_fp, *ir_callnode;
+          IR_TYPE_NODE *fn_ir_type = map_gnu_type_to_IR_TYPE_NODE 
+                                            (void_type_node);
+          TYPE fn_type = map_gnu_type_to_TYPE (void_type_node);
+          TYPE obj_ptr_type = map_gnu_type_to_TYPE (ptr_type_node);
+          tree fn_type_tree = build_function_type (void_type_node, 
+                                    tree_cons (0, ptr_type_node, 
+                                                void_list_node));
+          tree ptr_fn_type_tree = build_pointer_type (fn_type_tree);
+          unexpected_fp = build_ir_funcname ("__cxa_call_unexpected",
+                            map_gnu_type_to_TYPE (ptr_fn_type_tree),
+                            map_gnu_type_to_IR_TYPE_NODE (ptr_fn_type_tree));
+          unexpected_fp->leaf.func_descr = SUPPORT_FUNC;
+#endif
+          /* L1 */
+          build_ir_labeldef (b1_label);
+          if (outer_catch)
+            {
+              restore_eh_registers ();  /* set up %i0 and %i1 */
+              build_ir_goto (outer_catch);
+            }
+          else
+            gen_call_unwind_resume (1, b2_label);
+
+#if 0
+          build_ir_labeldef (b2_label);
+          argp = build_ir_triple (IR_PARAM, ex_ptr, NULL, obj_ptr_type, NULL);
+          argp->triple.param_info = IrParamIsDeclared;
+          ir_callnode = build_ir_triple (IR_SCALL, unexpected_fp, argp, 
+                                            fn_type, fn_ir_type);
+          ir_callnode->triple.never_returns = IR_TRUE;
+          argp->triple.right = ir_callnode;
+          set_may_cause_exception (ir_callnode);
+          if (outer_catch)
+            ir_pbranch (get_action_number (find_outer_catch_region (region)), 
+                        outer_catch, exit_label);
+          else
+            ir_pbranch (0, exit_label, exit_label);
+#endif
+        }
+      }
+      break;
+    case ERT_CLEANUP:
+      build_ir_goto (get_ir_label_of_tree (region->tree_label));
+      break;
+    case ERT_CATCH:
+    case ERT_MUST_NOT_THROW:
+    case ERT_THROW:
+      abort (); /* do not need landing pad  */
+      break;
+    default:
+      gcc_unreachable ();
+    }
+}
+
+/* Generate a landing pad, for the current function */
+void
+generate_cfun_landing_pads (int exit_label)
+{
+  int i;
+  for (i = cfun->eh->last_region_number; i > 0; i--)
+    {
+      int label;
+      struct eh_region *region;
+      region = VEC_index (eh_region, cfun->eh->region_array, i);
+      if (!region->landing_label)
+        continue;
+      label = region->landing_label;
+      build_ir_labeldef (label); 
+      save_eh_registers ();    /* save %i0 and %i1 */
+      generate_one_landing_pad (region, exit_label);
+    }
+}
+
+/* Generate a landing pad for a given number region.*/
+void
+generate_special_landing_pads (int exit_label, int region_number)
+{
+  struct eh_region *region;
+  int label;
+
+  region = VEC_index (eh_region, cfun->eh->region_array, region_number);
+  if (!region->landing_label)
+    return;
+  label = region->landing_label;
+  build_ir_labeldef (label);
+  save_eh_registers ();
+  generate_one_landing_pad ( region, exit_label);
+  region->landing_label = 0;
+}
+
+/* Generate filter numbers for each eh region, 
+   similar to assign_filter_values */
+
+void
+generate_cfun_eh_filters (void)
+{
+  /* Simply use assign_filter_values, which has no bad side effect yet. */
+  assign_filter_values ();
+  /* prepare hash table to generate action for each PBRANCH */
+  VARRAY_UCHAR_INIT (cfun->eh->action_record_data, 64, "action_record_data");
+  gcc2ir_ar_hash = htab_create (31, action_record_hash, action_record_eq, free);
+  if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+    {
+      VARRAY_GENERIC_PTR_INIT (ACTION_LEAF_ARRAY, 64, "ACTION_LEAF_ARRAY");
+      /* ACTION_LEAF_ARRAY[0] is not used, 
+         all action_record index are positive */
+      VARRAY_PUSH_GENERIC_PTR (ACTION_LEAF_ARRAY, NULL);
+    }
+}
+
+void
+dump_ir_resx_expr (tree stmt)
+{
+  /* similar to expand_resx_expr but generate IR */
+  int region_nr = TREE_INT_CST_LOW (TREE_OPERAND (stmt, 0));
+  struct eh_region *region;
+  region = VEC_index (eh_region, cfun->eh->region_array, region_nr);
+  if (region)
+    region = region->outer;
+  else
+    abort ();
+  /* skip ERT_CATCH region, which is not really a landing block */
+  while (region && region->type == ERT_CATCH)
+    region = region->outer;
+  if (!region 
+      || (/*!inside_eh_region &&*/ region->type == ERT_MUST_NOT_THROW))
+    gen_call_unwind_resume (1, 0);
+  else
+    {
+/*      if (!inside_eh_region != !region)
+        abort ();*/
+      if (region && !region->landing_label)
+        region->landing_label = gen_ir_label ();
+      restore_eh_registers ();  /* set up %i0 and %i1 */
+      build_ir_goto (region->landing_label);
+    }
+}
+
 void
 expand_resx_expr (tree exp)
 {
@@ -754,6 +1250,7 @@ remove_unreachable_regions (rtx insns)
 void
 convert_from_eh_region_ranges (void)
 {
+  /* When generating Sun IR, leave optimization to to Sun iropt and cg */
   rtx insns = get_insns ();
   int i, n = cfun->eh->last_region_number;
 
@@ -1250,6 +1747,55 @@ add_ttypes_entry (htab_t ttypes_hash, tree type)
       *slot = n;
 
       VEC_safe_push (tree, gc, cfun->eh->ttype_data, type);
+      if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+      {
+        ir_eh_node_hdl_t eh_node = NULL;
+        if (type == NULL_TREE)
+          eh_node = build_ir_eh_node (IR_CATCH_ALL);
+        else
+          {
+            const char *type_name;
+	    struct cgraph_varpool_node *node;
+	    type = lookup_type_for_runtime (type);
+	    STRIP_NOPS (type);
+	    if (TREE_CODE (type) == ADDR_EXPR)
+	      {
+	        type = TREE_OPERAND (type, 0);
+	        if (TREE_CODE (type) == VAR_DECL)
+		  {
+                    /* original EH code in output_ttype() calls 
+                       expand_expr (type, NULL_RTX, VOIDmode, EXPAND_INITIALIZER);
+                       to generate RTL via subsequent DECL_RTL (type);
+                       To indicate cgraph that this var_decl is needed,
+                       we can either do the same here
+                       1. DECL_RTL (type);
+                       or mark cgraph explicitly
+                       2. node->force_output = 1;
+                       otherwise cgraph_varpool_remove_unreferenced_decls() will
+                       cleanup all 'unreferenced' decls including some RTTIs
+                       See 2nd part of CR 6584153 */
+	            node = cgraph_varpool_node (type);
+                    node->force_output = 1;
+	            if (node)
+		      cgraph_varpool_mark_needed_node (node);
+                    type_name = get_ir_name (type);
+		  }
+                 else
+                  gcc_unreachable ();
+	      }
+            else
+              {
+	        gcc_assert (TREE_CODE (type) == INTEGER_CST);
+                gcc_unreachable ();
+              }
+            eh_node = build_ir_eh_node(IR_RTTI);
+            ir_eh_node_set_type_string (eh_node, type_name);
+           }
+        {
+          gcc_assert (eh_node);
+          VARRAY_PUSH_GENERIC_PTR (TTYPE_LEAF_ARRAY, eh_node);
+        }
+      }
     }
 
   return n->filter;
@@ -1270,6 +1816,9 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
 
   if ((n = *slot) == NULL)
     {
+      /* when flag_tree_ir_eh_supported keep a list of IR_NODE */
+      ir_eh_node_hdl_t estl_list = NULL;
+      
       /* Filter value is a -1 based byte index into a uleb128 buffer.  */
 
       n = XNEW (struct ttypes_filter);
@@ -1281,15 +1830,40 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
       for (; list ; list = TREE_CHAIN (list))
 	{
 	  if (targetm.arm_eabi_unwinder)
-	    VARRAY_PUSH_TREE (cfun->eh->ehspec_data, TREE_VALUE (list));
+            {
+              gcc_assert (!flag_tree_ir_eh_supported);
+	      VARRAY_PUSH_TREE (cfun->eh->ehspec_data, TREE_VALUE (list));
+            }
 	  else
 	    {
 	      /* Look up each type in the list and encode its filter
 		 value as a uleb128.  */
-	      push_uleb128 (&cfun->eh->ehspec_data,
-		  add_ttypes_entry (ttypes_hash, TREE_VALUE (list)));
+                int ttypes_entry_index = add_ttypes_entry (ttypes_hash, 
+                                                         TREE_VALUE (list));
+              if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+                {
+                    /* ttypes_entry_index starts from 1 */
+                    ir_eh_node_hdl_t eh_node =
+                        (ir_eh_node_hdl_t) VARRAY_GENERIC_PTR (TTYPE_LEAF_ARRAY, ttypes_entry_index);
+                    if (estl_list == NULL)
+                      estl_list = build_ir_eh_node (IR_ESTL);
+                    ir_eh_node_list_append (estl_list, eh_node);
+                }
+    	      push_uleb128 (&cfun->eh->ehspec_data, ttypes_entry_index);
 	    }
 	}
+      if (flag_tree_ir_eh_supported && !flag_use_rtl_backend 
+          && !targetm.arm_eabi_unwinder)
+        {
+          int estl_num = -(n->filter);
+          int k = estl_num - VARRAY_ACTIVE_SIZE (EHSPEC_LEAF_ARRAY);
+          for (; k > 0; k--)
+            VARRAY_PUSH_GENERIC_PTR (EHSPEC_LEAF_ARRAY, NULL);
+          if (estl_list == NULL)
+            estl_list = build_ir_eh_node (IR_ESTL);
+          VARRAY_PUSH_GENERIC_PTR (EHSPEC_LEAF_ARRAY, estl_list);
+        }
+      
       if (targetm.arm_eabi_unwinder)
 	VARRAY_PUSH_TREE (cfun->eh->ehspec_data, NULL_TREE);
       else
@@ -1319,6 +1893,17 @@ assign_filter_values (void)
   ttypes = htab_create (31, ttypes_filter_hash, ttypes_filter_eq, free);
   ehspec = htab_create (31, ehspec_filter_hash, ehspec_filter_eq, free);
 
+  if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+    {
+      /* TTYPE_LEAF_ARRAY[0] is not used, all type table index are positive */
+      VARRAY_GENERIC_PTR_INIT (TTYPE_LEAF_ARRAY, 16, "TTYPE_LEAF_ARRAY");
+      VARRAY_PUSH_GENERIC_PTR (TTYPE_LEAF_ARRAY, NULL);
+
+      /* EHSPEC_LEAF_ARRAY[0] is not used, all estl index are negative */
+      VARRAY_GENERIC_PTR_INIT (EHSPEC_LEAF_ARRAY, 64, "EHSPEC_LEAF_ARRAY");
+      VARRAY_PUSH_GENERIC_PTR (EHSPEC_LEAF_ARRAY, NULL);
+    }
+  
   for (i = cfun->eh->last_region_number; i > 0; --i)
     {
       struct eh_region *r;
@@ -3112,6 +3697,34 @@ add_action_record (htab_t ar_hash, int filter, int next)
       if (next)
 	next -= VARRAY_ACTIVE_SIZE (cfun->eh->action_record_data) + 1;
       push_sleb128 (&cfun->eh->action_record_data, next);
+      
+      if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+        {
+          ir_eh_node_hdl_t type_list = NULL, eh_node;
+          int k = new->offset - VARRAY_ACTIVE_SIZE (ACTION_LEAF_ARRAY);
+          /* Due to variable length coding, not every offset in
+             ACTION_LEAF_ARRAY corrsponds to an __EH_LF leaf.
+             We simply fill the empty elements with NULL. */
+          for (; k > 0; k--)
+            VARRAY_PUSH_GENERIC_PTR (ACTION_LEAF_ARRAY, NULL);
+
+          if (next)
+            {
+              eh_node =
+                  (ir_eh_node_hdl_t) VARRAY_GENERIC_PTR (ACTION_LEAF_ARRAY, new->next);
+              if (type_list == NULL)
+                type_list = build_ir_eh_node (IR_TYPELIST);
+              ir_eh_node_list_append (type_list, eh_node);
+            }
+          eh_node = get_ir_eh_type_leaf (filter);
+          if (type_list == NULL)
+            type_list = build_ir_eh_node (IR_TYPELIST);
+          ir_eh_node_list_append (type_list, eh_node);
+          
+          if (filter == 0)
+            get_ir_eh_type_leaf (0);
+          VARRAY_PUSH_GENERIC_PTR (ACTION_LEAF_ARRAY, type_list);
+        }
     }
 
   return new->offset;
@@ -3588,6 +4201,32 @@ switch_to_exception_section (const char * ARG_UNUSED (fnname))
 
   switch_to_section (s);
 }
+
+static void
+comdat_exception_section (const char* routine_name)
+{
+  /* Similar to default_exception_section, but add routine_name after
+     the .gcc_except_table name. */
+  int flags;
+  size_t len = strlen (routine_name) + sizeof (".gcc_except_table%") + 1;
+  char *name = (char*) ggc_alloc (len);
+  sprintf (name, ".gcc_except_table%%%s", routine_name);
+
+  if (EH_TABLES_CAN_BE_READ_ONLY)
+    {
+      int tt_format =
+	ASM_PREFERRED_EH_DATA_FORMAT (/*code=*/0, /*global=*/1);
+      flags = ((! flag_pic
+		|| ((tt_format & 0x70) != DW_EH_PE_absptr
+		    && (tt_format & 0x70) != DW_EH_PE_aligned))
+	       ? 0 : SECTION_WRITE);
+    }
+  else
+    flags = SECTION_WRITE;
+  exception_section = get_section (name, flags, NULL);
+  switch_to_section (exception_section);
+}
+
 #endif
 
 
@@ -3640,10 +4279,16 @@ output_ttype (tree type, int tt_format, int tt_format_size)
     dw2_asm_output_encoded_addr_rtx (tt_format, value, public, NULL);
 }
 
+#define GCC2IR_EH_COMMENT(msg)  \
+    (!flag_use_rtl_backend ? (fprintf (asm_out_file, msg), 1) : 0)
+#define GCC2IR_EH_LABEL(fmt, fname) \
+    (!flag_use_rtl_backend ? (fprintf (asm_out_file, fmt, fname), 1) : 0)
+
 void
 output_function_exception_table (const char * ARG_UNUSED (fnname))
 {
   int tt_format, cs_format, lp_format, i, n;
+  char ttype_label[32];
 #ifdef HAVE_AS_LEB128
   char ttype_label[32];
   char cs_after_size_label[32];
@@ -3651,15 +4296,37 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
 #else
   int call_site_len;
 #endif
+  int call_site_len = 0;
   int have_tt_data;
   int tt_format_size = 0;
-
+  const char *fnname = 0;
+  
   /* Not all functions need anything.  */
   if (! cfun->uses_eh_lsda)
     return;
 
+  if (!flag_use_rtl_backend && gcc2ir_ar_hash)
+    {
+      htab_delete (gcc2ir_ar_hash);
+      gcc2ir_ar_hash = 0;
+    }
+  
   if (eh_personality_libfunc)
     assemble_external_libcall (eh_personality_libfunc);
+
+  if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+    return; /* EH leaves are generated when PBRANCH are created. */
+
+  if (!flag_use_rtl_backend)
+    {
+      rtx x = DECL_RTL (current_function_decl);
+      if (!MEM_P (x))
+        abort ();
+      x = XEXP (x, 0);
+      if (GET_CODE (x) != SYMBOL_REF)
+        abort ();
+      fnname = XSTR (x, 0);
+    }
 
 #ifdef TARGET_UNWIND_INFO
   /* TODO: Move this into target file.  */
@@ -3669,7 +4336,11 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   /* Note that varasm still thinks we're in the function's code section.
      The ".endp" directive that will immediately follow will take us back.  */
 #else
-  switch_to_exception_section (fnname);
+  /* When output Solaris IR, always use .gcc_except_table%func_name */
+  if (!flag_use_rtl_backend)
+    comdat_exception_section (fnname);
+  else
+    switch_to_exception_section (fname);
 #endif
 
   /* If the target wants a label to begin the table, emit it here.  */
@@ -3687,14 +4358,21 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
 #ifdef HAVE_AS_LEB128
       ASM_GENERATE_INTERNAL_LABEL (ttype_label, "LLSDATT",
 				   current_function_funcdef_no);
+#else
+      if (!flag_use_rtl_backend)
+        ASM_GENERATE_INTERNAL_LABEL (ttype_label, "LLSDATT",
+				   current_function_funcdef_no);
 #endif
       tt_format_size = size_of_encoded_value (tt_format);
 
       assemble_align (tt_format_size * BITS_PER_UNIT);
     }
-
-  targetm.asm_out.internal_label (asm_out_file, "LLSDA",
-			     current_function_funcdef_no);
+  
+  if (!flag_use_rtl_backend)
+    fprintf (asm_out_file, ".LLB.LSDA.%s:\n", fnname);
+  else
+    targetm.asm_out.internal_label (asm_out_file, "LLSDA",
+                                    current_function_funcdef_no);
 
   /* The LSDA header.  */
 
@@ -3714,11 +4392,17 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
 		       eh_data_format_name (tt_format));
 
 #ifndef HAVE_AS_LEB128
-  if (USING_SJLJ_EXCEPTIONS)
-    call_site_len = sjlj_size_of_call_site_table ();
-  else
-    call_site_len = dw2_size_of_call_site_table ();
+  if (!flag_use_rtl_backend)
+    {
+      if (USING_SJLJ_EXCEPTIONS)
+        call_site_len = sjlj_size_of_call_site_table ();
+      else
+        call_site_len = dw2_size_of_call_site_table ();
+    }
 #endif
+
+  if (!flag_use_rtl_backend)
+    GCC2IR_EH_COMMENT ("\t! empty or .uaword offset to the type table\n");
 
   /* A pc-relative 4-byte displacement to the @TType data.  */
   if (have_tt_data)
@@ -3731,33 +4415,48 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
 				    "@TType base offset");
       ASM_OUTPUT_LABEL (asm_out_file, ttype_after_disp_label);
 #else
-      /* Ug.  Alignment queers things.  */
-      unsigned int before_disp, after_disp, last_disp, disp;
+      if (!flag_use_rtl_backend)
+        {
+          char ttype_after_disp_label[32];
+          ASM_GENERATE_INTERNAL_LABEL (ttype_after_disp_label, "LLSDATTD",
+				       current_function_funcdef_no);
+          fputs ("\t.uaword ", asm_out_file);
+          assemble_name (asm_out_file, ttype_label);
+          fputs (" - ", asm_out_file);
+          assemble_name (asm_out_file, ttype_after_disp_label);
+          fputc ('\n', asm_out_file);
+          ASM_OUTPUT_LABEL (asm_out_file, ttype_after_disp_label);
+        }
+      else
+        {
+          /* Ug.  Alignment queers things.  */
+          unsigned int before_disp, after_disp, last_disp, disp;
 
-      before_disp = 1 + 1;
-      after_disp = (1 + size_of_uleb128 (call_site_len)
-		    + call_site_len
-		    + VARRAY_ACTIVE_SIZE (cfun->eh->action_record_data)
-		    + (VEC_length (tree, cfun->eh->ttype_data)
-		       * tt_format_size));
+          before_disp = 1 + 1;
+          after_disp = (1 + size_of_uleb128 (call_site_len)
+                        + call_site_len
+                        + VARRAY_ACTIVE_SIZE (cfun->eh->action_record_data)
+                        + (VEC_length (tree, cfun->eh->ttype_data)
+                           * tt_format_size));
+          
+          disp = after_disp;
+          do
+            {
+              unsigned int disp_size, pad;
 
-      disp = after_disp;
-      do
-	{
-	  unsigned int disp_size, pad;
+              last_disp = disp;
+              disp_size = size_of_uleb128 (disp);
+              pad = before_disp + disp_size + after_disp;
+              if (pad % tt_format_size)
+                pad = tt_format_size - (pad % tt_format_size);
+              else
+                pad = 0;
+              disp = after_disp + pad;
+            }
+          while (disp != last_disp);
 
-	  last_disp = disp;
-	  disp_size = size_of_uleb128 (disp);
-	  pad = before_disp + disp_size + after_disp;
-	  if (pad % tt_format_size)
-	    pad = tt_format_size - (pad % tt_format_size);
-	  else
-	    pad = 0;
-	  disp = after_disp + pad;
-	}
-      while (disp != last_disp);
-
-      dw2_asm_output_data_uleb128 (disp, "@TType base offset");
+          dw2_asm_output_data_uleb128 (disp, "@TType base offset");
+        }
 #endif
     }
 
@@ -3770,27 +4469,50 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   dw2_asm_output_data (1, cs_format, "call-site format (%s)",
 		       eh_data_format_name (cs_format));
 
+  if (!flag_use_rtl_backend)
+    GCC2IR_EH_COMMENT ("\t! length = .LLE.CST.<fname> - .LLB.CST.<fname>\n");
+
 #ifdef HAVE_AS_LEB128
-  ASM_GENERATE_INTERNAL_LABEL (cs_after_size_label, "LLSDACSB",
-			       current_function_funcdef_no);
-  ASM_GENERATE_INTERNAL_LABEL (cs_end_label, "LLSDACSE",
-			       current_function_funcdef_no);
-  dw2_asm_output_delta_uleb128 (cs_end_label, cs_after_size_label,
-				"Call-site table length");
-  ASM_OUTPUT_LABEL (asm_out_file, cs_after_size_label);
-  if (USING_SJLJ_EXCEPTIONS)
-    sjlj_output_call_site_table ();
+  if (!flag_use_rtl_backend)
+    {
+      fprintf (asm_out_file, "\t.uaword .LLE.CST.%s - .LLB.CST.%s\n", 
+               fnname, fnname);
+      GCC2IR_EH_LABEL (".LLB.CST.%s:\n", fnname);
+    }
   else
-    dw2_output_call_site_table ();
-  ASM_OUTPUT_LABEL (asm_out_file, cs_end_label);
+    {
+      ASM_GENERATE_INTERNAL_LABEL (cs_after_size_label, "LLSDACSB",
+                                   current_function_funcdef_no);
+      ASM_GENERATE_INTERNAL_LABEL (cs_end_label, "LLSDACSE",
+                                   current_function_funcdef_no);
+      dw2_asm_output_delta_uleb128 (cs_end_label, cs_after_size_label,
+                                    "Call-site table length");
+      ASM_OUTPUT_LABEL (asm_out_file, cs_after_size_label);
+      if (USING_SJLJ_EXCEPTIONS)
+        sjlj_output_call_site_table ();
+      else
+        dw2_output_call_site_table ();
+      ASM_OUTPUT_LABEL (asm_out_file, cs_end_label);
+    }
 #else
-  dw2_asm_output_data_uleb128 (call_site_len,"Call-site table length");
-  if (USING_SJLJ_EXCEPTIONS)
-    sjlj_output_call_site_table ();
+  if (!flag_use_rtl_backend)
+    {
+      fprintf (asm_out_file, "\t.uaword .LLE.CST.%s - .LLB.CST.%s\n",
+                fnname, fnname);
+      GCC2IR_EH_LABEL (".LLB.CST.%s:\n", fnname);
+    }
   else
-    dw2_output_call_site_table ();
+    {
+      dw2_asm_output_data_uleb128 (call_site_len,"Call-site table length");
+      if (USING_SJLJ_EXCEPTIONS)
+        sjlj_output_call_site_table ();
+      else
+        dw2_output_call_site_table ();
+    }
 #endif
 
+  GCC2IR_EH_LABEL (".LLE.CST.%s:\n", fnname);
+   
   /* ??? Decode and interpret the data for flag_debug_asm.  */
   n = VARRAY_ACTIVE_SIZE (cfun->eh->action_record_data);
   for (i = 0; i < n; ++i)
@@ -3810,6 +4532,9 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
 #ifdef HAVE_AS_LEB128
   if (have_tt_data)
       ASM_OUTPUT_LABEL (asm_out_file, ttype_label);
+#else
+  if (!flag_use_rtl_backend && have_tt_data)
+      ASM_OUTPUT_LABEL (asm_out_file, ttype_label);
 #endif
 
   /* ??? Decode and interpret the data for flag_debug_asm.  */
@@ -3826,7 +4551,23 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
 			     (i ? NULL : "Exception specification table"));
     }
 
+  GCC2IR_EH_LABEL (".LLE.LSDA.%s:\n", fnname);
   switch_to_section (current_function_section ());
+}
+
+void *
+build_eh_leaf (int action_num)
+{
+  void *tmp;
+  if (action_num == 0)
+    {
+      if (clean_up_ehnode == NULL)
+        clean_up_ehnode = build_ir_eh_node (IR_CLEANUP);
+      tmp = clean_up_ehnode;
+    }
+  else
+    tmp = (IR_NODE*) VARRAY_GENERIC_PTR (ACTION_LEAF_ARRAY, action_num);
+  return tmp;
 }
 
 void

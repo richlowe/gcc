@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* Conditional constant propagation (CCP) is based on the SSA
    propagation engine (tree-ssa-propagate.c).  Constant assignments of
    the form VAR = CST are propagated from the assignments into uses of
@@ -1718,7 +1720,7 @@ maybe_fold_offset_to_array_ref (tree base, tree offset, tree orig_type,
 	   && compare_tree_int (idx, 0) < 0)
     return NULL_TREE;
 
-  return build4 (ARRAY_REF, elt_type, base, idx, NULL_TREE, NULL_TREE);
+  return build5 (ARRAY_REF, elt_type, base, idx, NULL_TREE, NULL_TREE, NULL_TREE);
 }
 
 

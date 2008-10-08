@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This file contains the low level primitives for operating on tree nodes,
    including allocation, list operations, interning of identifiers,
    construction of data type nodes and statement nodes,
@@ -186,7 +188,10 @@ unsigned const char omp_clause_num_ops[] =
   1, /* OMP_CLAUSE_SCHEDULE  */
   0, /* OMP_CLAUSE_NOWAIT  */
   0, /* OMP_CLAUSE_ORDERED  */
-  0  /* OMP_CLAUSE_DEFAULT  */
+  0, /* OMP_CLAUSE_DEFAULT  */
+  1, /* OMP_CLAUSE_AUTO */
+  0, /* OMP_CLAUSE_UNTIED */
+  1  /* OMP_CLAUSE_COLLAPSE */
 };
 
 const char * const omp_clause_code_name[] =
@@ -204,7 +209,10 @@ const char * const omp_clause_code_name[] =
   "schedule",
   "nowait",
   "ordered",
-  "default"
+  "default",
+  "__auto",
+  "untied",
+  "collapse"
 };
 
 /* Init tree.c.  */
@@ -311,6 +319,7 @@ bool
 decl_assembler_name_equal (tree decl, tree asmname)
 {
   tree decl_asmname = DECL_ASSEMBLER_NAME (decl);
+  const char * decl_asmname_str = IDENTIFIER_POINTER (decl_asmname);
 
   if (decl_asmname == asmname)
     return true;
@@ -321,9 +330,9 @@ decl_assembler_name_equal (tree decl, tree asmname)
      historically been doing the wrong thing in assemble_alias by always
      printing the leading underscore.  Since we're not changing that, make
      sure user_label_prefix follows the '*' before matching.  */
-  if (IDENTIFIER_POINTER (decl_asmname)[0] == '*')
+  if (decl_asmname_str[0] == '*')
     {
-      const char *decl_str = IDENTIFIER_POINTER (decl_asmname) + 1;
+      const char *decl_str = decl_asmname_str + 1;
       size_t ulp_len = strlen (user_label_prefix);
 
       if (ulp_len == 0)
@@ -336,6 +345,17 @@ decl_assembler_name_equal (tree decl, tree asmname)
       return strcmp (decl_str, IDENTIFIER_POINTER (asmname)) == 0;
     }
 
+  /* GCCFSS globalized name for -xipo $XA_sgcc prefix */
+  if (globalize_flag && decl_asmname_str[0] == '$' && decl_asmname_str[1] == 'X')
+    if (strncmp (decl_asmname_str + 2, "A_sgcc", 6) == 0)
+      {
+        /* could assert that 
+         * strncmp (decl_asmname_str, ir_global_prefix, 16) == 0
+         * but check for '.' should be enough */
+        gcc_assert (decl_asmname_str[16] == '.');
+        return strcmp (decl_asmname_str + 17, IDENTIFIER_POINTER (asmname)) == 0;
+      }
+      
   return false;
 }
 
@@ -722,6 +742,9 @@ copy_node_stat (tree node MEM_STAT_DECL)
 	  TYPE_CACHED_VALUES_P (t) = 0;
 	  TYPE_CACHED_VALUES (t) = NULL_TREE;
 	}
+
+      /* Clear dbggen type information field.  */
+      TYPE_IR_DBG_GEN_1 (t) = TYPE_IR_DBG_GEN_2 (t) = 0;
     }
 
   return t;
@@ -2564,7 +2587,7 @@ tree
 substitute_placeholder_in_expr (tree exp, tree obj)
 {
   enum tree_code code = TREE_CODE (exp);
-  tree op0, op1, op2, op3;
+  tree op0, op1, op2, op3, op4;
 
   /* If this is a PLACEHOLDER_EXPR, see if we find a corresponding type
      in the chain of OBJ.  */
@@ -2675,6 +2698,21 @@ substitute_placeholder_in_expr (tree exp, tree obj)
 	      return exp;
 	    else
 	      return fold (build4 (code, TREE_TYPE (exp), op0, op1, op2, op3));
+	      
+	  case 5:
+	    op0 = SUBSTITUTE_PLACEHOLDER_IN_EXPR (TREE_OPERAND (exp, 0), obj);
+	    op1 = SUBSTITUTE_PLACEHOLDER_IN_EXPR (TREE_OPERAND (exp, 1), obj);
+	    op2 = SUBSTITUTE_PLACEHOLDER_IN_EXPR (TREE_OPERAND (exp, 2), obj);
+	    op3 = SUBSTITUTE_PLACEHOLDER_IN_EXPR (TREE_OPERAND (exp, 3), obj);
+	    op4 = SUBSTITUTE_PLACEHOLDER_IN_EXPR (TREE_OPERAND (exp, 4), obj);
+
+	    if (op0 == TREE_OPERAND (exp, 0) && op1 == TREE_OPERAND (exp, 1)
+		&& op2 == TREE_OPERAND (exp, 2)
+		&& op3 == TREE_OPERAND (exp, 3)
+		&& op4 == TREE_OPERAND (exp, 4))
+	      return exp;
+	    else
+	      return fold (build5 (code, TREE_TYPE (exp), op0, op1, op2, op3, op4));
 
 	  default:
 	    gcc_unreachable ();
@@ -2759,7 +2797,8 @@ stabilize_reference (tree ref)
       result = build_nt (ARRAY_REF,
 			 stabilize_reference (TREE_OPERAND (ref, 0)),
 			 stabilize_reference_1 (TREE_OPERAND (ref, 1)),
-			 TREE_OPERAND (ref, 2), TREE_OPERAND (ref, 3));
+			 TREE_OPERAND (ref, 2), TREE_OPERAND (ref, 3),
+                         TREE_OPERAND (ref, 4));
       break;
 
     case ARRAY_RANGE_REF:
@@ -2914,6 +2953,8 @@ do { tree _node = (NODE); \
 	    UPDATE_TITCSE (TREE_OPERAND (node, 2));
 	  if (TREE_OPERAND (node, 3))
 	    UPDATE_TITCSE (TREE_OPERAND (node, 3));
+	  if (TREE_CODE (node) == ARRAY_REF && TREE_OPERAND (node, 4))
+	    UPDATE_TITCSE (TREE_OPERAND (node, 4));
 	}
       /* Likewise, just because this is a COMPONENT_REF doesn't mean we have a
 	 FIELD_DECL, apparently.  The G++ front end can put something else
@@ -6008,6 +6049,24 @@ build_complex_type (tree component_type)
 
   TREE_TYPE (t) = TYPE_MAIN_VARIANT (component_type);
 
+  /* need to fix inner types for CQI, CHI, CSI and CDI to SF and DF for gcc2ir */
+  if (TREE_CODE (TREE_TYPE (t)) == INTEGER_TYPE)
+    {
+      switch (TYPE_MODE (TREE_TYPE (t)))
+       {
+       case QImode:
+       case HImode:
+       case SImode:
+         TREE_TYPE (t) = float_type_node;
+         break;
+       case DImode:
+         TREE_TYPE (t) = double_type_node;
+         break;
+       default:
+         break;
+       }
+    }
+    
   /* If we already have such a type, use the old one.  */
   hashcode = iterative_hash_object (TYPE_HASH (component_type), 0);
   t = type_hash_canon (hashcode, t);
@@ -7588,6 +7647,14 @@ build_common_builtin_nodes (void)
 			BUILT_IN_PROFILE_FUNC_ENTER, "profile_func_enter", 0);
   local_define_builtin ("__builtin_profile_func_exit", ftype,
 			BUILT_IN_PROFILE_FUNC_EXIT, "profile_func_exit", 0);
+			
+  tmp = tree_cons (NULL_TREE, ptr_type_node, void_list_node);
+  ftype = build_function_type (void_type_node, tmp);
+  local_define_builtin ("__builtin_lni_start", ftype,
+			BUILT_IN_LNI_START, "liblni_inline_start", ECF_NOTHROW);
+  local_define_builtin ("__builtin_lni_end", ftype,
+			BUILT_IN_LNI_END, "liblni_inline_end", ECF_NOTHROW);
+
 
   /* Complex multiplication and division.  These are handled as builtins
      rather than optabs because emit_library_call_value doesn't support
@@ -8558,12 +8625,15 @@ walk_tree_1 (tree *tp, walk_tree_fn func, void *data,
 	case OMP_CLAUSE_IF:
 	case OMP_CLAUSE_NUM_THREADS:
 	case OMP_CLAUSE_SCHEDULE:
+	case OMP_CLAUSE_AUTO:
+        case OMP_CLAUSE_COLLAPSE:
 	  WALK_SUBTREE (OMP_CLAUSE_OPERAND (*tp, 0));
 	  /* FALLTHRU */
 
 	case OMP_CLAUSE_NOWAIT:
 	case OMP_CLAUSE_ORDERED:
 	case OMP_CLAUSE_DEFAULT:
+	case OMP_CLAUSE_UNTIED:
 	  WALK_SUBTREE_TAIL (OMP_CLAUSE_CHAIN (*tp));
 
 	case OMP_CLAUSE_REDUCTION:
@@ -8865,6 +8935,49 @@ block_nonartificial_location (tree block)
       block = BLOCK_SUPERCONTEXT (block);
     }
   return ret;
+}
+
+/* Chenk whether the tree is a structure field array.
+   If so, return 1;
+   If not, return 0;
+*/
+int
+check_field_array (tree stmt, int is_component)
+{
+  tree op0, t;
+  int result = 0;
+  if (is_component == 1) result = 0x1;
+
+  op0 = stmt;
+  do
+    {
+      switch (TREE_CODE (op0))
+        {
+        case COMPONENT_REF:
+          if (TREE_CODE (DECL_FIELD_OFFSET (TREE_OPERAND (op0, 1))) != INTEGER_CST)
+            return 0;
+          t = TREE_OPERAND (op0, 0);
+          if (TREE_CODE (t) != INDIRECT_REF || TREE_CODE (TREE_TYPE (t)) != RECORD_TYPE)
+            result = result | 0x1;
+          break;
+        case ARRAY_REF:
+          if (TREE_CODE (TYPE_SIZE_UNIT (TREE_TYPE (op0))) != INTEGER_CST)
+            return 0;
+          result = result | 0x2;
+          break;
+        case INDIRECT_REF:
+        case VAR_DECL:
+        case PARM_DECL:
+          if (result == 0x3)
+            return 1;
+          else
+            return 0;
+        default:
+          return 0;
+        }
+      op0 = TREE_OPERAND (op0, 0);
+  } while (op0);
+  return 0;
 }
 
 #include "gt-tree.h"

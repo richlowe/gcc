@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* For tcc_references, tcc_expression, tcc_comparison, tcc_unary,
    tcc_binary, and tcc_statement nodes, which use struct tree_exp, the
@@ -417,8 +418,9 @@ DEFTREECODE (MISALIGNED_INDIRECT_REF, "misaligned_indirect_ref", tcc_reference, 
    Operand 0 is the array; operand 1 is a (single) array index.
    Operand 2, if present, is a copy of TYPE_MIN_VALUE of the index.
    Operand 3, if present, is the element size, measured in units of
-   the alignment of the element type.  */
-DEFTREECODE (ARRAY_REF, "array_ref", tcc_reference, 4)
+   the alignment of the element type.
+   Operand 4, if present, is a copy of TYPE_MAX_VALUE of the index. */
+DEFTREECODE (ARRAY_REF, "array_ref", tcc_reference, 5)
 
 /* Likewise, except that the result is a range ("slice") of the array.  The
    starting index of the resulting array is taken from operand 1 and the size
@@ -1002,13 +1004,15 @@ DEFTREECODE (OMP_PARALLEL, "omp_parallel", tcc_statement, 4)
 	from INIT, COND, and INCR that are technically part of the
 	OMP_FOR structured block, but are evaluated before the loop
 	body begins.
+   Operand 6: OMP_FOR_PAR_CLAUSES: address of the clauses of omp_parallel 
+        that is combined with omp_for. 
 
    VAR must be a signed integer variable, which is implicitly thread
    private.  N1, N2 and INCR are required to be loop invariant integer
    expressions that are evaluated without any synchronization.
    The evaluation order, frequency of evaluation and side-effects are
    unspecified by the standard.  */
-DEFTREECODE (OMP_FOR, "omp_for", tcc_statement, 6)
+DEFTREECODE (OMP_FOR, "omp_for", tcc_statement, 7)
 
 /* OpenMP - #pragma omp sections [clause1 ... clauseN]
    Operand 0: OMP_SECTIONS_BODY: Sections body.
@@ -1073,6 +1077,14 @@ DEFTREECODE (OMP_ATOMIC_STORE, "omp_atomic_store", tcc_statement, 1)
 
 /* OpenMP clauses.  */
 DEFTREECODE (OMP_CLAUSE, "omp_clause", tcc_exceptional, 0)
+
+/* OpenMP 3.0 - #pragma omp task [clause1 ... clauseN]
+   Operand 0: OMP_TASK_BODY: Task body.
+   Operand 1: OMP_TASK_CLAUSES: List of clauses.  */
+DEFTREECODE (OMP_TASK, "omp_task", tcc_statement, 2)
+
+/* OpenMP 3.0 - #pragma omp taskwait [no clauses] */
+DEFTREECODE (OMP_TASKWAIT, "omp_taskwait", tcc_statement, 0)
 
 /* Reduction operations. 
    Operations that take a vector of elements and "reduce" it to a scalar

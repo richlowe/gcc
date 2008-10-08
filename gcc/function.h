@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_FUNCTION_H
 #define GCC_FUNCTION_H
 
@@ -356,7 +358,12 @@ struct function GTY(())
      function.  */
   unsigned int va_list_fpr_size : 8;
 
-
+  /* Nonzero if code to return builtin_addr has been emitted.  */
+  unsigned int builtin_return_addr_called : 1;
+  
+  /* Nonzero if the current function has old style inline asm code */
+  unsigned int has_old_style_inline_asm : 1;
+  
   /* How commonly executed the function is.  Initialized during branch
      probabilities pass.  */
   ENUM_BITFIELD (function_frequency) function_frequency : 2;
@@ -432,6 +439,9 @@ struct function GTY(())
 
   /* Nonzero if the current function needs an lsda for exception handling.  */
   unsigned int uses_eh_lsda : 1;
+  
+  /* Nonzero if the current function uses pbranch in sparc IR.  */
+  unsigned int uses_pbranch : 1;
 
   /* Nonzero if code to initialize arg_pointer_save_area has been emitted.  */
   unsigned int arg_pointer_save_area_init : 1;
@@ -587,6 +597,9 @@ extern const char *current_function_assembler_name (void);
 extern void do_warn_unused_parameter (tree);
 
 extern bool pass_by_reference (CUMULATIVE_ARGS *, enum machine_mode,
+			       tree, bool);
+			       /* defined in tree-ir.c for use in tree2ir. */ 
+extern bool tu_pass_by_reference (CUMULATIVE_ARGS *, enum machine_mode,
 			       tree, bool);
 extern bool reference_callee_copied (CUMULATIVE_ARGS *, enum machine_mode,
 				     tree, bool);

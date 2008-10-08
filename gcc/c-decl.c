@@ -25,6 +25,8 @@ along with GCC; see the file COPYING3.  If not see
 
 /* ??? not all decl nodes are given the most useful possible
    line numbers.  For example, the CONST_DECLs for enum values.  */
+   
+/* Modified by Sun Microsystems 2008 */
 
 #include "config.h"
 #include "system.h"
@@ -61,6 +63,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "except.h"
 #include "langhooks-def.h"
 #include "pointer-set.h"
+#include "tree-ir.h"
 
 /* In grokdeclarator, distinguish syntactic contexts of declarators.  */
 enum decl_context
@@ -1703,6 +1706,7 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
     {
       DECL_TLS_MODEL (newdecl) = DECL_TLS_MODEL (olddecl);
       C_DECL_THREADPRIVATE_P (newdecl) = 1;
+      register_threadprivate_variable (newdecl, NULL_TREE, NULL_TREE, NULL_TREE);
     }
 
   if (CODE_CONTAINS_STRUCT (TREE_CODE (olddecl), TS_DECL_WITH_VIS))
@@ -1744,6 +1748,10 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
 	  DECL_IS_OPERATOR_NEW (newdecl) |= DECL_IS_OPERATOR_NEW (olddecl);
 	  DECL_IS_PURE (newdecl) |= DECL_IS_PURE (olddecl);
 	  DECL_IS_NOVOPS (newdecl) |= DECL_IS_NOVOPS (olddecl);
+	  DECL_IS_TM_ATOMIC_P (newdecl) |= DECL_IS_TM_ATOMIC_P (olddecl);
+      DECL_IS_TM_CALLABLE_P (newdecl) |= DECL_IS_TM_CALLABLE_P (olddecl);
+      DECL_IS_TM_ABORT_OK_P (newdecl) |= DECL_IS_TM_ABORT_OK_P (olddecl);
+      DECL_IS_TM_PURE_P (newdecl) |= DECL_IS_TM_PURE_P (olddecl);
 	}
 
       /* Merge the storage class information.  */
@@ -2058,6 +2066,8 @@ clone_underlying_type (tree x)
       TYPE_NAME (tt) = x;
       TREE_USED (tt) = TREE_USED (x);
       TREE_TYPE (x) = tt;
+      if (TYPE_IR_TAGNODE (DECL_ORIGINAL_TYPE (x)) == NULL_TREE)
+        TYPE_IR_TAGNODE (DECL_ORIGINAL_TYPE (x)) = tt;
     }
 }
 
@@ -3467,7 +3477,30 @@ finish_decl (tree decl, tree init, tree asmspec_tree)
   if (TREE_CODE (decl) == VAR_DECL)
     {
       if (init && TREE_CODE (init) == CONSTRUCTOR)
-	add_flexible_array_elts_to_size (decl, init);
+        {
+          add_flexible_array_elts_to_size (decl, init);
+          if (flag_unit_at_a_time) 
+            {
+              unsigned HOST_WIDE_INT ix;
+              tree value;
+
+              FOR_EACH_CONSTRUCTOR_VALUE (CONSTRUCTOR_ELTS (init),ix, value)
+                {
+                  if (TREE_CODE (value) == NOP_EXPR)
+                    value = TREE_OPERAND (value, 0);
+                  if (TREE_CODE (value) == ADDR_EXPR)
+                    value = TREE_OPERAND (value, 0);
+                  else break;
+
+                  /* value must be a FUNCTION_decl */
+                  if (TREE_CODE (value) == FUNCTION_DECL && TREE_STATIC (value))
+                    {
+                      struct cgraph_node *node = cgraph_node (value);
+                      cgraph_mark_needed_node (node);
+                    }
+                }
+            }
+        }
 
       if (DECL_SIZE (decl) == 0 && TREE_TYPE (decl) != error_mark_node
 	  && COMPLETE_TYPE_P (TREE_TYPE (decl)))
@@ -5875,7 +5908,7 @@ finish_enum (tree enumtype, tree values, tree attributes)
      as one of the integral types - the narrowest one that fits, except
      that normally we only go as narrow as int - and signed iff any of
      the values are negative.  */
-  unsign = (tree_int_cst_sgn (minnode) >= 0);
+  unsign = (tree_int_cst_sgn (minnode) >= 0 && !flag_signed_enums);
   precision = MAX (min_precision (minnode, unsign),
 		   min_precision (maxnode, unsign));
 
@@ -8097,6 +8130,15 @@ c_write_global_declarations (void)
     }
 
   ext_block = NULL;
+}
+
+/* Return true if decl is thread private */
+tree
+lhd_var_is_omp_threadprivate (tree decl)
+{
+  if (C_DECL_THREADPRIVATE_P (decl) == 1)
+    return lookup_threadprivate_variable (decl);
+  return NULL_TREE;
 }
 
 #include "gt-c-decl.h"

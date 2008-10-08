@@ -27,6 +27,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+ 
+ /* Modified by Sun Microsystems 2008 */
 
 /* Mangled into a form that works on SPARC Solaris 2 by Mark Eichin
  * for Cygnus Support, July 1992.
@@ -272,7 +274,7 @@ static void internal_mcount (char *, unsigned short *) __attribute__ ((used));
 /* i7 == last ret, -> frompcindex */
 /* o7 == current ret, -> selfpc */
 /* Solaris 2 libraries use _mcount.  */
-asm(".global _mcount; _mcount: mov %i7,%o1; mov %o7,%o0;b,a internal_mcount");
+asm(".section \".text\"; .global _mcount; _mcount: mov %i7,%o1; mov %o7,%o0;b,a internal_mcount");
 /* This is for compatibility with old versions of gcc which used mcount.  */
 asm(".global mcount; mcount: mov %i7,%o1; mov %o7,%o0;b,a internal_mcount");
 
@@ -290,10 +292,10 @@ static void internal_mcount(char *selfpc, unsigned short *frompcindex)
 
 	if(!already_setup) {
           extern char etext[];
-	  extern char _start[];
-	  extern char _init[];
+	  extern char _start(void);
+	  extern char _init(void);
 	  already_setup = 1;
-	  monstartup(_start < _init ? _start : _init, etext);
+	  monstartup((char*)(_start < _init ? _start : _init), etext);
 #ifdef USE_ONEXIT
 	  on_exit(_mcleanup, 0);
 #else

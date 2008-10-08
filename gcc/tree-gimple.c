@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -32,10 +34,115 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "expr.h"
 #include "bitmap.h"
+#include "flags.h"
 
 /* For the definitive definition of GIMPLE, see doc/tree-ssa.texi.  */
 
 /* Validation of GIMPLE expressions.  */
+
+/* gcc4ss rvalue */
+static bool
+is_gimple4ss_rvalue (tree t)
+{
+  enum tree_code code = TREE_CODE (t);
+
+  if (TREE_CODE (TREE_TYPE (t)) != VECTOR_TYPE)
+    {
+      /* IR can handle all operations on non-vector types */
+      switch (TREE_CODE_CLASS (code))
+        {
+        case tcc_unary:
+        case tcc_binary:
+        case tcc_comparison:
+          return true;
+
+        default:
+          break;
+        }
+    }
+  else
+    {
+      /* only limited set is supported by sparc vis.
+         the rest of ops should be split into simple ops on each vector element */
+      switch (TREE_CODE_CLASS (code))
+        {
+        case PLUS_EXPR:
+        case MINUS_EXPR:
+        case BIT_AND_EXPR:
+        case BIT_IOR_EXPR: 
+        case BIT_XOR_EXPR: 
+        case BIT_NOT_EXPR: 
+          return true;
+        default:
+          break;
+        }
+    }
+
+  switch (code)
+    {
+    case TRUTH_NOT_EXPR:
+    case TRUTH_AND_EXPR:
+    case TRUTH_OR_EXPR:
+    case TRUTH_XOR_EXPR:
+    case ADDR_EXPR:
+/*    case CALL_EXPR: */ /* func calls needs to be assigned to temp var,
+                            so tree-inline.c can handle them.
+                            call_expr is handled in is_gimple_formal_tmp_rhs() */
+/*    case CONSTRUCTOR:*/ /* rvalues ok for comp_ref/array_ref, 
+                             so we can't allow constructor to be an rvalue
+                             and it will be handled in is_gimple_formal_tmp_rhs()*/
+    case COMPLEX_EXPR:
+    case INTEGER_CST:
+    case REAL_CST:
+    case STRING_CST:
+    case COMPLEX_CST:
+    case VECTOR_CST:
+    case OBJ_TYPE_REF:
+      
+    case INDIRECT_REF:
+    case ARRAY_REF:
+    case COMPONENT_REF:
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
+      
+    case NOP_EXPR:
+    case CONVERT_EXPR:
+    case FIX_TRUNC_EXPR:
+    case FIX_CEIL_EXPR:
+    case FIX_FLOOR_EXPR:
+    case FIX_ROUND_EXPR:
+      return true;
+
+    default:
+      break;
+    }
+  
+  return false;
+}
+
+/* gcc4ss lvalue */
+static bool
+is_gimple4ss_lvalue (tree t)
+{
+  enum tree_code code = TREE_CODE (t);
+
+  switch (code)
+    {
+/*    case ADDR_EXPR:*/
+    case OBJ_TYPE_REF:
+    case INDIRECT_REF:
+    case ARRAY_REF:
+    case COMPONENT_REF:
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
+      return true;
+
+    default:
+      break;
+    }
+  
+  return false;
+}
 
 /* Return true if T is a GIMPLE RHS for an assignment to a temporary.  */
 
@@ -99,8 +206,11 @@ is_gimple_reg_rhs (tree t)
      the assignment.  */
 
   if (is_gimple_reg_type (TREE_TYPE (t))
-      && ((TREE_CODE (t) == CALL_EXPR && TREE_SIDE_EFFECTS (t))
-	  || tree_could_throw_p (t)))
+      && (/*(TREE_CODE (t) == CALL_EXPR && TREE_SIDE_EFFECTS (t))
+            ||*/
+          /* check only for throw in gcc4ss.
+             to fix: g++.old-deja/g++.robertl/eb66.C */
+          tree_could_throw_p (t)))
     return false;
 
   return is_gimple_formal_tmp_rhs (t);
@@ -132,6 +242,8 @@ rhs_predicate_for (tree lhs)
 {
   if (is_gimple_formal_tmp_var (lhs))
     return is_gimple_formal_tmp_rhs;
+  else if (flag_use_rtl_backend == 0)
+    return is_gimple_reg_rhs;
   else if (is_gimple_reg (lhs))
     return is_gimple_reg_rhs;
   else
@@ -243,6 +355,8 @@ is_gimple_stmt (tree t)
     case OMP_CONTINUE:
     case OMP_ATOMIC_LOAD:
     case OMP_ATOMIC_STORE:
+    case OMP_TASK:
+    case OMP_TASKWAIT:
       /* These are always void.  */
       return true;
 
@@ -264,7 +378,11 @@ is_gimple_variable (tree t)
   return (TREE_CODE (t) == VAR_DECL
 	  || TREE_CODE (t) == PARM_DECL
 	  || TREE_CODE (t) == RESULT_DECL
-	  || TREE_CODE (t) == SSA_NAME);
+	  || TREE_CODE (t) == SSA_NAME
+          || (flag_use_rtl_backend != 0 
+              /* 2nd pass of gimplifier may see those */
+              && (TREE_CODE (t) == FILTER_EXPR || TREE_CODE (t) == EXC_PTR_EXPR))
+          || (flag_use_rtl_backend == 0 && is_gimple4ss_lvalue (t)));
 }
 
 /*  Return true if T is a GIMPLE identifier (something with an address).  */
@@ -308,7 +426,7 @@ is_gimple_reg (tree t)
   if (!is_gimple_variable (t))
     return false;
 
-  if (!is_gimple_reg_type (TREE_TYPE (t)))
+  if (flag_use_rtl_backend != 0 && !is_gimple_reg_type (TREE_TYPE (t)))
     return false;
 
   /* A volatile decl is not acceptable because we can't reuse it as
@@ -318,7 +436,9 @@ is_gimple_reg (tree t)
 
   /* We define "registers" as things that can be renamed as needed,
      which with our infrastructure does not apply to memory.  */
-  if (needs_to_live_in_memory (t))
+  if ((TREE_CODE_CLASS (TREE_CODE (t)) == tcc_declaration
+       || flag_use_rtl_backend != 0)
+      && needs_to_live_in_memory (t))
     return false;
 
   /* Hard register variables are an interesting case.  For those that
@@ -381,7 +501,14 @@ is_gimple_non_addressable (tree t)
   if (TREE_CODE (t) == SSA_NAME)
     t = SSA_NAME_VAR (t);
 
-  return (is_gimple_variable (t) && ! needs_to_live_in_memory (t));
+  return (/* needs_to_live_in_memory() is only valid for decls
+             otherwise we may incorrectly allow
+             *ptr = call() to be marked as 'return slot opt'
+             and coupled with tree inliner may generate wrong code.
+             see CR 6578077 for further details */
+          (TREE_CODE_CLASS (TREE_CODE (t)) == tcc_declaration
+           || flag_use_rtl_backend)
+          && is_gimple_variable (t) && ! needs_to_live_in_memory (t));
 }
 
 /* Return true if T is a GIMPLE rvalue, i.e. an identifier or a constant.  */
@@ -390,17 +517,29 @@ bool
 is_gimple_val (tree t)
 {
   /* Make loads from volatiles and memory vars explicit.  */
-  if (is_gimple_variable (t)
-      && is_gimple_reg_type (TREE_TYPE (t))
-      && !is_gimple_reg (t))
-    return false;
+  if (flag_use_rtl_backend == 0) /* SunIR mode */
+    {
+      if (is_gimple_variable (t)
+          /* don't gimplify memory vars. They are ok to be addressed as-is in SunIR
+             && is_gimple_reg_type (TREE_TYPE (t))
+             && !is_gimple_reg (t)) */
+          /* gimplify volatile vars: copy them into temp vars, before using */
+          && TREE_THIS_VOLATILE (t)) 
+        return false;
+    }
+  else
+    if (is_gimple_variable (t)
+        && is_gimple_reg_type (TREE_TYPE (t))
+        && !is_gimple_reg (t))
+      return false;
 
   /* FIXME make these decls.  That can happen only when we expose the
      entire landing-pad construct at the tree level.  */
   if (TREE_CODE (t) == EXC_PTR_EXPR || TREE_CODE (t) == FILTER_EXPR)
     return true;
 
-  return (is_gimple_variable (t) || is_gimple_min_invariant (t));
+  return (is_gimple_variable (t) || is_gimple_min_invariant (t) 
+          || (flag_use_rtl_backend == 0 && is_gimple4ss_rvalue (t)));
 }
 
 /* Similarly, but accept hard registers as inputs to asm statements.  */
@@ -452,7 +591,8 @@ get_call_expr_in (tree t)
   gcc_assert (TREE_CODE (t) != MODIFY_EXPR);
   if (TREE_CODE (t) == GIMPLE_MODIFY_STMT)
     t = GIMPLE_STMT_OPERAND (t, 1);
-  if (TREE_CODE (t) == WITH_SIZE_EXPR)
+  if (TREE_CODE (t) == WITH_SIZE_EXPR
+      || (flag_use_rtl_backend == 0 && TREE_CODE (t) == NOP_EXPR))
     t = TREE_OPERAND (t, 0);
   if (TREE_CODE (t) == CALL_EXPR)
     return t;
@@ -472,6 +612,14 @@ tree
 get_base_address (tree t)
 {
   while (handled_component_p (t))
+    t = TREE_OPERAND (t, 0);
+
+  /* we could see (&pmv)[i] here, where pmv is 'type pmv[i]'
+     addr_expr may be generated due to 'pmv' being passed
+     to some other function as a parameter that takes 'type *'
+     and then array_ref'ed inside that function. See CR 6580198 */
+  if (TREE_CODE (t) == ADDR_EXPR 
+      && TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE)
     t = TREE_OPERAND (t, 0);
   
   if (SSA_VAR_P (t)

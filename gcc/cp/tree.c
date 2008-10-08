@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1219,6 +1221,100 @@ cxx_printable_name (tree decl, int v)
   return print_ring[ring_counter];
 }
 
+
+void
+cp_handle_tm_atomic_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) == FUNCTION_DECL)
+    {
+      DECL_IS_TM_ATOMIC_P (*node) = 1;
+      if (DECL_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    }
+  else if (TREE_CODE (*node) == RECORD_TYPE && CLASS_TYPE_P (*node))
+    {
+      CLASS_TYPE_IS_TM_ATOMIC_P (*node) = 1;
+      if (CLASS_TYPE_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    } 
+  else
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+    }
+}
+
+void
+cp_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) == FUNCTION_DECL)
+    {
+      DECL_IS_TM_CALLABLE_P (*node) = 1;
+      if (DECL_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    }
+  else if (TREE_CODE (*node) == RECORD_TYPE && CLASS_TYPE_P (*node))
+    {
+      CLASS_TYPE_IS_TM_CALLABLE_P (*node) = 1;
+      if (CLASS_TYPE_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    } 
+  else
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+    }
+}
+
+void
+cp_handle_tm_abort_ok_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) == FUNCTION_DECL)
+    {
+      DECL_IS_TM_ABORT_OK_P (*node) = 1;
+      if (DECL_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    }
+  else if (TREE_CODE (*node) == RECORD_TYPE && CLASS_TYPE_P (*node))
+    {
+      CLASS_TYPE_IS_TM_ABORT_OK_P (*node) = 1;
+      if (CLASS_TYPE_IS_TM_PURE_P (*node) == 1)
+        error ("%qE attribute can't combine with tm_pure", name);
+    } 
+  else
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+    }
+}
+
+void
+cp_handle_tm_pure_attribute (tree *node, tree name, bool * no_add_attrs)
+{
+  if (TREE_CODE (*node) == FUNCTION_DECL)
+    {
+      DECL_IS_TM_PURE_P (*node) = 1;
+      if (DECL_IS_TM_ATOMIC_P (*node)
+          || DECL_IS_TM_CALLABLE_P (*node)
+          || DECL_IS_TM_ABORT_OK_P (*node))
+        error ("%qE attribute can't combine with tm_atomic, tm_callable or tm_abort_ok", name);
+    }
+  else if (TREE_CODE (*node) == RECORD_TYPE && CLASS_TYPE_P (*node))
+    {
+      CLASS_TYPE_IS_TM_PURE_P (*node) = 1;
+      if (CLASS_TYPE_IS_TM_ATOMIC_P (*node)
+          || CLASS_TYPE_IS_TM_CALLABLE_P (*node)
+          || CLASS_TYPE_IS_TM_ABORT_OK_P (*node))
+        error ("%qE attribute can't combine with tm_atomic, tm_callable or tm_abort_ok", name);
+    }
+  else
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+    }
+}
+
+
 /* Build the FUNCTION_TYPE or METHOD_TYPE which may throw exceptions
    listed in RAISES.  */
 

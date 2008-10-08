@@ -20,6 +20,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #ifndef GCC_CP_TREE_H
 #define GCC_CP_TREE_H
 
@@ -3657,6 +3659,12 @@ extern int at_eof;
    in the TREE_VALUE slot and the initializer is stored in the
    TREE_PURPOSE slot.  */
 extern GTY(()) tree static_aggregates;
+/* A list of objects which have constructors or destructors
+   which reside in the static block scope and objects without
+   constructors (include struct). TREE_VALUE: decl,
+   TREE_PURPOSE: init. this is used for threadprivate init-
+   ialization.*/
+extern GTY(()) tree static_block_aggregates;
 
 enum overload_flags { NO_SPECIAL = 0, DTOR_FLAG, OP_FLAG, TYPENAME_FLAG };
 
@@ -4265,6 +4273,7 @@ extern tree cxx_builtin_function		(tree decl);
 extern tree check_elaborated_type_specifier	(enum tag_types, tree, bool);
 extern void warn_extern_redeclared_static	(tree, tree);
 extern const char *cxx_comdat_group		(tree);
+extern bool cxx_global_namespace_decl_p         (tree);
 extern bool cp_missing_noreturn_ok_p		(tree);
 extern void initialize_artificial_var		(tree, tree);
 extern tree check_var_type			(tree, tree);
@@ -4618,9 +4627,9 @@ extern tree finish_label_stmt			(tree);
 extern void finish_label_decl			(tree);
 extern tree finish_parenthesized_expr		(tree);
 extern tree finish_non_static_data_member       (tree, tree, tree);
-extern tree begin_stmt_expr			(void);
+extern tree begin_stmt_expr			(bool);
 extern tree finish_stmt_expr_expr		(tree, tree);
-extern tree finish_stmt_expr			(tree, bool);
+extern tree finish_stmt_expr			(tree, bool, bool);
 extern tree stmt_expr_value_expr		(tree);
 extern tree perform_koenig_lookup		(tree, tree);
 extern tree finish_call_expr			(tree, tree, bool, bool);
@@ -4664,18 +4673,26 @@ extern void finish_omp_threadprivate		(tree);
 extern tree begin_omp_structured_block		(void);
 extern tree finish_omp_structured_block		(tree);
 extern tree begin_omp_parallel			(void);
-extern tree finish_omp_parallel			(tree, tree);
+extern tree finish_omp_parallel			(location_t, tree, tree);
+#define IS_RANDOM_ACCESS_ITER(decl)     \
+  (TREE_CODE (TREE_TYPE (decl)) == TEMPLATE_TYPE_PARM   \
+   || TREE_CODE (TREE_TYPE (decl)) == TYPENAME_TYPE     \
+   || TREE_CODE (TREE_TYPE (decl)) == RECORD_TYPE)
 extern tree finish_omp_for			(location_t, tree, tree,
-						 tree, tree, tree, tree);
+						 tree, tree, tree, tree, tree *, tree *);
 extern void finish_omp_atomic			(enum tree_code, tree, tree);
 extern void finish_omp_barrier			(void);
 extern void finish_omp_flush			(void);
+extern void finish_omp_taskwait                 (void);
 extern enum omp_clause_default_kind cxx_omp_predetermined_sharing (tree);
 extern tree cxx_omp_clause_default_ctor		(tree, tree);
 extern tree cxx_omp_clause_copy_ctor		(tree, tree, tree);
 extern tree cxx_omp_clause_assign_op		(tree, tree, tree);
 extern tree cxx_omp_clause_dtor			(tree, tree);
 extern bool cxx_omp_privatize_by_reference	(const_tree);
+extern tree cxx_var_is_omp_threadprivate        (tree);
+extern void cxx_register_omp_threadprivate_init (tree);
+extern void cxx_new_register_omp_threadprivate_init (tree);
 extern tree baselink_for_fns                    (tree);
 extern void finish_static_assert                (tree, tree, location_t,
                                                  bool);
@@ -4716,6 +4733,10 @@ extern tree get_first_fn			(tree);
 extern tree ovl_cons				(tree, tree);
 extern tree build_overload			(tree, tree);
 extern const char *cxx_printable_name		(tree, int);
+extern void cp_handle_tm_atomic_attribute	(tree *, tree, bool *);
+extern void cp_handle_tm_callable_attribute	(tree *, tree, bool *);
+extern void cp_handle_tm_abort_ok_attribute	(tree *, tree, bool *);
+extern void cp_handle_tm_pure_attribute		(tree *, tree, bool *);
 extern tree build_exception_variant		(tree, tree);
 extern tree bind_template_template_parm		(tree, tree);
 extern tree array_type_nelts_total		(tree);

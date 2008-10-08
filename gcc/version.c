@@ -7,11 +7,21 @@
    welcome to forward us bugs reported to you, if you determine that
    they are not bugs in your modifications.)  */
 
-const char bug_report_url[] = BUGURL;
+const char bug_report_url[] = "<URL:http://forum.java.sun.com/forum.jspa?forumID=905>";
+
+/* This is the trailing component of the string reported as the
+   version number by all components of the compiler.  For an official
+   FSF release, it is empty.  If you distribute a modified version of
+   GCC, please change this string to indicate that.  The suggested
+   format is a leading space, followed by your organization's name
+   in parentheses.  You may also wish to include a number indicating
+   the revision of your modified compiler.  */
+
+#define VERSUFFIX " (gccfss)"
 
 /* The complete version string, assembled from several pieces.
    BASEVER, DATESTAMP, DEVPHASE, and REVISION are defined by the
    Makefile.  */
 
-const char version_string[] = BASEVER DATESTAMP DEVPHASE REVISION;
+const char version_string[] = BASEVER DATESTAMP DEVPHASE REVISION VERSUFFIX;
 const char pkgversion_string[] = PKGVERSION;

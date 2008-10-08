@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This file contains low level functions to manipulate the CFG and analyze it
    that are aware of the RTL intermediate language.
 
@@ -316,6 +318,7 @@ create_basic_block_structure (rtx head, rtx end, rtx bb_note, basic_block after)
   BB_END (bb) = end;
   bb->index = last_basic_block++;
   bb->flags = BB_NEW | BB_RTL;
+  bb->ir_label = 0;
   link_block (bb, after);
   SET_BASIC_BLOCK (bb->index, bb);
   df_bb_refs_record (bb->index, false);

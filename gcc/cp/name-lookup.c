@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -818,6 +820,8 @@ pushdecl_maybe_friend (tree x, bool is_friend)
 	      TYPE_STUB_DECL (type) = TYPE_STUB_DECL (DECL_ORIGINAL_TYPE (x));
 	      TYPE_NAME (type) = x;
 	      TREE_TYPE (x) = type;
+	      if (TYPE_IR_TAGNODE (DECL_ORIGINAL_TYPE (x)) == NULL_TREE)
+          TYPE_IR_TAGNODE (DECL_ORIGINAL_TYPE (x)) = type;
 	    }
 
 	  if (type != error_mark_node

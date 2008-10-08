@@ -27,6 +27,8 @@
    Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* @@@ Really this should be out of line, but this also causes link
    compatibility problems with the base ABI.  This is slightly better
    than duplicating code, however.  */
@@ -63,6 +65,138 @@
 
 #define DW_EH_PE_indirect	0x80
 
+
+/* Read unaligned data from the instruction buffer.  */
+
+/* Until cg can handle 'packed' attribute, we avoid read from unaligned
+   structure.  When cg can handle 'packed', we can undo this change
+   and the code in unwind-dw2.c. */
+
+#ifndef NO_PACKED
+  #ifdef __linux__
+    #define NO_PACKED 1
+  #else
+    /* on Solaris, we have other way to work around unaligned access */
+    #define NO_PACKED 0
+  #endif
+#endif
+
+#if NO_PACKED
+
+/* need definition of memcpy */
+#include <string.h>
+
+union aligned
+{
+  void *p;
+  unsigned u2 __attribute__ ((mode (HI)));
+  unsigned u4 __attribute__ ((mode (SI)));
+  unsigned u8 __attribute__ ((mode (DI)));
+  signed s2 __attribute__ ((mode (HI)));
+  signed s4 __attribute__ ((mode (SI)));
+  signed s8 __attribute__ ((mode (DI)));
+};
+
+#define COPY_UNALIGNED(n, p) \
+    union aligned copy; \
+    memcpy (&copy, p, sizeof (copy.n)); \
+    return copy.n;
+
+static inline void *
+read_pointer (const void *p) { COPY_UNALIGNED (p, p) }
+
+static inline int
+read_1u (const void *p) { return *(const unsigned char *) p; }
+
+static inline int
+read_1s (const void *p) { return *(const signed char *) p; }
+
+static inline int
+read_2u (const void *p) { COPY_UNALIGNED (u2, p) }
+
+static inline int
+read_2s (const void *p) { COPY_UNALIGNED (s2, p) }
+
+static inline unsigned int
+read_4u (const void *p) { COPY_UNALIGNED (u4, p) }
+
+static inline int
+read_4s (const void *p) { COPY_UNALIGNED (s4, p) }
+
+static inline unsigned long
+read_8u (const void *p) { COPY_UNALIGNED (u8, p) }
+
+static inline unsigned long
+read_8s (const void *p) { COPY_UNALIGNED (s8, p) }
+
+#else
+union unaligned
+{
+  void *p;
+  unsigned u2 __attribute__ ((mode (HI)));
+  unsigned u4 __attribute__ ((mode (SI)));
+  unsigned u8 __attribute__ ((mode (DI)));
+  signed s2 __attribute__ ((mode (HI)));
+  signed s4 __attribute__ ((mode (SI)));
+  signed s8 __attribute__ ((mode (DI)));
+} __attribute__ ((packed));
+
+static inline void *
+read_pointer (const void *p) 
+{ 
+    const union unaligned *up = (const union unaligned *)p; 
+    return up->p; 
+}
+
+static inline int
+read_1u (const void *p) { return *(const unsigned char *) p; }
+
+static inline int
+read_1s (const void *p) { return *(const signed char *) p; }
+
+static inline int
+read_2u (const void *p)
+{ 
+    const union unaligned *up = (const union unaligned *)p; 
+    return up->u2; 
+}
+
+static inline int
+read_2s (const void *p)
+{ 
+    const union unaligned *up = (const union unaligned *)p; 
+    return up->s2; 
+}
+
+static inline unsigned int
+read_4u (const void *p)
+{ 
+    const union unaligned *up = (const union unaligned *)p; 
+    return up->u4; 
+}
+
+static inline int
+read_4s (const void *p)
+{ 
+    const union unaligned *up = (const union unaligned *)p; 
+    return up->s4; 
+}
+
+static inline unsigned long
+read_8u (const void *p)
+{ 
+    const union unaligned *up = (const union unaligned *)p; 
+    return up->u8; 
+}
+
+static inline unsigned long
+read_8s (const void *p)
+{ 
+    const union unaligned *up = (const union unaligned *)p; 
+    return up->s8; 
+}
+
+#endif
 
 #ifndef NO_SIZE_OF_ENCODED_VALUE
 
@@ -186,18 +320,7 @@ static const unsigned char *
 read_encoded_value_with_base (unsigned char encoding, _Unwind_Ptr base,
 			      const unsigned char *p, _Unwind_Ptr *val)
 {
-  union unaligned
-    {
-      void *ptr;
-      unsigned u2 __attribute__ ((mode (HI)));
-      unsigned u4 __attribute__ ((mode (SI)));
-      unsigned u8 __attribute__ ((mode (DI)));
-      signed s2 __attribute__ ((mode (HI)));
-      signed s4 __attribute__ ((mode (SI)));
-      signed s8 __attribute__ ((mode (DI)));
-    } __attribute__((__packed__));
-
-  const union unaligned *u = (const union unaligned *) p;
+  const void *u = (const void*) p;
   _Unwind_Internal_Ptr result;
 
   if (encoding == DW_EH_PE_aligned)
@@ -212,7 +335,7 @@ read_encoded_value_with_base (unsigned char encoding, _Unwind_Ptr base,
       switch (encoding & 0x0f)
 	{
 	case DW_EH_PE_absptr:
-	  result = (_Unwind_Internal_Ptr) u->ptr;
+	  result = (_Unwind_Internal_Ptr) read_pointer(u);
 	  p += sizeof (void *);
 	  break;
 
@@ -233,28 +356,28 @@ read_encoded_value_with_base (unsigned char encoding, _Unwind_Ptr base,
 	  break;
 
 	case DW_EH_PE_udata2:
-	  result = u->u2;
+	  result = read_2u(u);
 	  p += 2;
 	  break;
 	case DW_EH_PE_udata4:
-	  result = u->u4;
+	  result = read_4u(u);
 	  p += 4;
 	  break;
 	case DW_EH_PE_udata8:
-	  result = u->u8;
+	  result = read_8u(u);
 	  p += 8;
 	  break;
 
 	case DW_EH_PE_sdata2:
-	  result = u->s2;
+	  result = read_2s(u);
 	  p += 2;
 	  break;
 	case DW_EH_PE_sdata4:
-	  result = u->s4;
+	  result = read_4s(u);
 	  p += 4;
 	  break;
 	case DW_EH_PE_sdata8:
-	  result = u->s8;
+	  result = read_8s(u);
 	  p += 8;
 	  break;
 

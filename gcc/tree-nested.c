@@ -17,6 +17,8 @@
    along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -1074,6 +1076,9 @@ convert_nonlocal_reference (tree *tp, int *walk_subtrees, void *data)
 			 NULL);
 	      walk_tree (&TREE_OPERAND (t, 3), convert_nonlocal_reference, wi,
 			 NULL);
+              if (TREE_CODE (t) == ARRAY_REF)
+	        walk_tree (&TREE_OPERAND (t, 4), convert_nonlocal_reference, wi,
+			   NULL);
 	    }
 	  else if (TREE_CODE (t) == BIT_FIELD_REF)
 	    {
@@ -1127,6 +1132,7 @@ convert_nonlocal_reference (tree *tp, int *walk_subtrees, void *data)
 
     case OMP_SECTIONS:
     case OMP_SINGLE:
+    case OMP_TASK:
       save_suppress = info->suppress_expansion;
       convert_nonlocal_omp_clauses (&OMP_CLAUSES (t), wi);
       walk_body (convert_nonlocal_reference, info, &OMP_BODY (t));
@@ -1174,10 +1180,12 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_REDUCTION:
 	case OMP_CLAUSE_COPYPRIVATE:
 	case OMP_CLAUSE_SHARED:
+        case OMP_CLAUSE_AUTO:
 	  decl = OMP_CLAUSE_DECL (clause);
 	  if (decl_function_context (decl) != info->context)
 	    {
-	      bitmap_set_bit (new_suppress, DECL_UID (decl));
+	      //fix 6675065. 
+	      //bitmap_set_bit (new_suppress, DECL_UID (decl));
 	      OMP_CLAUSE_DECL (clause) = get_nonlocal_debug_decl (info, decl);
 	      need_chain = true;
 	    }
@@ -1189,6 +1197,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	  /* FALLTHRU */
 	case OMP_CLAUSE_IF:
 	case OMP_CLAUSE_NUM_THREADS:
+        case OMP_CLAUSE_COLLAPSE:
 	  wi->val_only = true;
 	  wi->is_lhs = false;
 	  convert_nonlocal_reference (&OMP_CLAUSE_OPERAND (clause, 0), &dummy,
@@ -1199,6 +1208,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_ORDERED:
 	case OMP_CLAUSE_DEFAULT:
 	case OMP_CLAUSE_COPYIN:
+        case OMP_CLAUSE_UNTIED:
 	  break;
 
 	default:
@@ -1365,6 +1375,9 @@ convert_local_reference (tree *tp, int *walk_subtrees, void *data)
 			 NULL);
 	      walk_tree (&TREE_OPERAND (t, 3), convert_local_reference, wi,
 			 NULL);
+              if (TREE_CODE (t) == ARRAY_REF)
+	        walk_tree (&TREE_OPERAND (t, 4), convert_local_reference, wi,
+			   NULL);
 	    }
 	  else if (TREE_CODE (t) == BIT_FIELD_REF)
 	    {
@@ -1419,6 +1432,7 @@ convert_local_reference (tree *tp, int *walk_subtrees, void *data)
 
     case OMP_SECTIONS:
     case OMP_SINGLE:
+    case OMP_TASK:
       save_suppress = info->suppress_expansion;
       convert_local_omp_clauses (&OMP_CLAUSES (t), wi);
       walk_body (convert_local_reference, info, &OMP_BODY (t));
@@ -1466,6 +1480,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_REDUCTION:
 	case OMP_CLAUSE_COPYPRIVATE:
 	case OMP_CLAUSE_SHARED:
+        case OMP_CLAUSE_AUTO:
 	  decl = OMP_CLAUSE_DECL (clause);
 	  if (decl_function_context (decl) == info->context
 	      && !use_pointer_in_frame (decl))
@@ -1473,7 +1488,8 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	      tree field = lookup_field_for_decl (info, decl, NO_INSERT);
 	      if (field)
 		{
-		  bitmap_set_bit (new_suppress, DECL_UID (decl));
+		  //fix 6675065. 
+		  //bitmap_set_bit (new_suppress, DECL_UID (decl));
 		  OMP_CLAUSE_DECL (clause)
 		    = get_local_debug_decl (info, decl, field);
 		  need_frame = true;
@@ -1487,6 +1503,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	  /* FALLTHRU */
 	case OMP_CLAUSE_IF:
 	case OMP_CLAUSE_NUM_THREADS:
+        case OMP_CLAUSE_COLLAPSE:
 	  wi->val_only = true;
 	  wi->is_lhs = false;
 	  convert_local_reference (&OMP_CLAUSE_OPERAND (clause, 0), &dummy, wi);
@@ -1496,6 +1513,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_ORDERED:
 	case OMP_CLAUSE_DEFAULT:
 	case OMP_CLAUSE_COPYIN:
+        case OMP_CLAUSE_UNTIED:
 	  break;
 
 	default:
@@ -1758,10 +1776,14 @@ convert_call_expr (tree *tp, int *walk_subtrees, void *data)
     case OMP_MASTER:
     case OMP_ORDERED:
     case OMP_CRITICAL:
+    case OMP_TASK:
       walk_body (convert_call_expr, info, &OMP_BODY (t));
       break;
 
     default:
+      if (TREE_CODE (t) == NOP_EXPR 
+          && TREE_CODE (TREE_OPERAND (t, 0)) == CALL_EXPR)
+        *walk_subtrees = 1;
       break;
     }
 

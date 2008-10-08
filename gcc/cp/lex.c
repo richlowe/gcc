@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* This file is the lexical analyzer for GNU C++.  */
 
@@ -191,6 +192,9 @@ static const struct resword reswords[] =
   { "__asm__",		RID_ASM,	0 },
   { "__attribute",	RID_ATTRIBUTE,	0 },
   { "__attribute__",	RID_ATTRIBUTE,	0 },
+  { "__tm_atomic",      RID_TM_ATOMIC,  0 },
+  { "__tm_abort_ok",    RID_TM_ABORT_OK,0 },
+  { "__tm_waiver",      RID_TM_WAIVER,  0 },
   { "__builtin_offsetof", RID_OFFSETOF, 0 },
   { "__builtin_va_arg",	RID_VA_ARG,	0 },
   { "__complex",	RID_COMPLEX,	0 },

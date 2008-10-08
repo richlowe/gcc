@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This is the contribution to the `default_compilers' array in gcc.c for
    g++.  */
 
@@ -48,7 +50,7 @@ along with GCC; see the file COPYING3.  If not see
       cc1plus %{save-temps|no-integrated-cpp:-fpreprocessed %{save-temps:%b.ii} %{!save-temps:%g.ii}}\
 	      %{!save-temps:%{!no-integrated-cpp:%(cpp_unique_options)}}\
 	%(cc1_options) %2 %{+e1*}\
-	%{!fsyntax-only:-o %g.s %{!o*:--output-pch=%i.gch} %W{o*:--output-pch=%*}%V}}}}",
+	%{!fsyntax-only:%{usertl:-o %g.s} %{!o*:--output-pch=%i.gch} %W{o*:--output-pch=%*}%V}}}}",
      CPLUSPLUS_CPP_SPEC, 0, 0},
   {"@c++",
     "%{E|M|MM:cc1plus -E %(cpp_options) %2 %(cpp_debug_options)}\
@@ -58,10 +60,27 @@ along with GCC; see the file COPYING3.  If not see
       cc1plus %{save-temps|no-integrated-cpp:-fpreprocessed %{save-temps:%b.ii} %{!save-temps:%g.ii}}\
 	      %{!save-temps:%{!no-integrated-cpp:%(cpp_unique_options)}}\
 	%(cc1_options) %2 %{+e1*}\
-       %{!fsyntax-only:%(invoke_as)}}}}",
+        %{!usertl: %{ipo=* : -ftree-ir-crossfile } }\
+       %{!fsyntax-only: \
+         %{frtl-backend: %(invoke_as) ; \
+           : %(invoke_iropt) %(ssiropt_spec_gxx) %Q \
+		 %(invoke_cg) %(sscg_spec_gxx) %T} \
+           %{!S: \
+              %{!frtl-backend: %{xforceas: %(invoke_as) }} \
+              %{Zpec=*: %(invoke_cppipo1) ; \
+                xpec : %(invoke_cppipo1); \
+                xipo=1|xipo=2: %{!xprofile=collect*: %(invoke_cppipo1)} } 
      CPLUSPLUS_CPP_SPEC, 0, 0},
   {".ii", "@c++-cpp-output", 0, 0, 0},
   {"@c++-cpp-output",
    "%{!M:%{!MM:%{!E:\
     cc1plus -fpreprocessed %i %(cc1_options) %2 %{+e*}\
-    %{!fsyntax-only:%(invoke_as)}}}}", 0, 0, 0},
+    %{!fsyntax-only: \
+      %{frtl-backend: %(invoke_as) ; \
+        :  %(invoke_iropt) %(ssiropt_spec_gxx) %Q \
+		%(invoke_cg) %(sscg_spec_gxx) %T}\
+         %{!S: \
+            %{!frtl-backend: %{xforceas: %(invoke_as) }} \
+            %{Zpec=*: %(invoke_cppipo1) ; \
+              xpec: %(invoke_cppipo1); \
+              xipo=1|xipo=2: %{!xprofile=collect*: %(invoke_cppipo1)} } } }}}}", 0, 0, 0},

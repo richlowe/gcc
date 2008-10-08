@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
 
 /* This file is part of the C++ front end.
    It contains routines to build C++ expressions given their operands,
@@ -471,8 +472,8 @@ split_nonconstant_init_1 (tree dest, tree init)
 	      tree sub;
 
 	      if (array_type_p)
-		sub = build4 (ARRAY_REF, inner_type, dest, field_index,
-			      NULL_TREE, NULL_TREE);
+		sub = build5 (ARRAY_REF, inner_type, dest, field_index,
+			      NULL_TREE, NULL_TREE, NULL_TREE);
 	      else
 		sub = build3 (COMPONENT_REF, inner_type, dest, field_index,
 			      NULL_TREE);
@@ -496,8 +497,8 @@ split_nonconstant_init_1 (tree dest, tree init)
 	      --idx;
 
 	      if (array_type_p)
-		sub = build4 (ARRAY_REF, inner_type, dest, field_index,
-			      NULL_TREE, NULL_TREE);
+		sub = build5 (ARRAY_REF, inner_type, dest, field_index,
+			      NULL_TREE, NULL_TREE, NULL_TREE);
 	      else
 		sub = build3 (COMPONENT_REF, inner_type, dest, field_index,
 			      NULL_TREE);

@@ -60,6 +60,8 @@ if ![info exists PROFOPT_OPTIONS] {
 	{ -O2 } \
 	{ -O3 } \
 	{ -O3 -g } \
+	{ -fast } \
+	{ -fast -xipo=2 } \
 	{ -Os } ]
 }
 

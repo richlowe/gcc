@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /* This file handles the generation of rtl code from tree structure
    at the level of the function as a whole.
    It creates the rtl expressions for parameters and auto variables
@@ -3275,6 +3277,32 @@ gimplify_parameters (void)
 	      SET_DECL_VALUE_EXPR (parm, local);
 	      DECL_HAS_VALUE_EXPR_P (parm) = 1;
 	    }
+	    /* passed by value types of constant size */
+      else if (TREE_CONSTANT (DECL_SIZE (parm))
+               && ((TREE_CODE (data.nominal_type) == REAL_TYPE
+                    /* same as DECL_ARG_TYPE (parm) != TREE_TYPE (parm)
+                       for SPARC the only case should be: 
+                       passed_type == double, nominal_type == float */
+                    && data.passed_type != data.nominal_type)
+                   /* addr taken double, longlong, etc params
+                      need to be copied into temp var in 32-bit mode */
+                   || (TREE_ADDRESSABLE (parm) 
+                       && !TARGET_ARCH64
+                       && tree_low_cst (DECL_SIZE (parm), 1) > 4)))
+               
+        {
+          tree type = data.nominal_type;
+          tree local, t;
+
+	  local = create_tmp_var (type, get_name (parm));
+	  DECL_IGNORED_P (local) = 0;
+          t = build2 (MODIFY_EXPR, void_type_node, local, parm);
+	  gimplify_and_add (t, &stmts);
+
+          /* gimplify_expr() will pick it up from DECL_VALUE_EXPR field */
+	  SET_DECL_VALUE_EXPR (parm, local);
+          DECL_HAS_VALUE_EXPR_P (parm) = 1;
+        }
 	}
     }
 
@@ -4298,9 +4326,9 @@ expand_function_start (tree subr)
 	 before the frame variable gets declared.  Help out...  */
       expand_var (TREE_OPERAND (cfun->nonlocal_goto_save_area, 0));
 
-      t_save = build4 (ARRAY_REF, ptr_type_node,
+      t_save = build5 (ARRAY_REF, ptr_type_node,
 		       cfun->nonlocal_goto_save_area,
-		       integer_zero_node, NULL_TREE, NULL_TREE);
+		       integer_zero_node, NULL_TREE, NULL_TREE, NULL_TREE);
       r_save = expand_expr (t_save, NULL_RTX, VOIDmode, EXPAND_WRITE);
       r_save = convert_memory_address (Pmode, r_save);
 

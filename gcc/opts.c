@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 #include "config.h"
 #include "system.h"
 #include "intl.h"
@@ -41,6 +43,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "dbgcnt.h"
 #include "debug.h"
+#include "tree-ir.h"
 
 /* Value of the -G xx switch, and whether it was passed or not.  */
 unsigned HOST_WIDE_INT g_switch_value;
@@ -728,6 +731,7 @@ void
 decode_options (unsigned int argc, const char **argv)
 {
   unsigned int i, lang_mask;
+  bool use_rtl_backend = false;
 
   /* Perform language-specific options initialization.  */
   lang_mask = lang_hooks.init_options (argc, argv);
@@ -765,6 +769,37 @@ decode_options (unsigned int argc, const char **argv)
 		}
 	    }
 	}
+      else if (!strcmp (argv[i], "-frtl-backend"))
+        {
+          use_rtl_backend = true;
+          /* if we set 'flag_use_rtl_backend' to 1 here, then
+             front-ends and gimplifier will run in original mode,
+             but we want them first to be run in genir mode,
+             so the 2nd pass of gimplifier will clean it up for rtl gen.
+             execute_generate_ir() wrapper will set 'flag_use_rtl_backend'
+             to 1 after 1st gimplifier pass and before genir */
+        }
+    }
+    
+  if (!use_rtl_backend)
+    {
+      /* set optimization level for IR gen */
+      if (optimize <= 0)
+        default_opt_level = 0;
+      else if (optimize == 1)
+        default_opt_level = 3;
+      else if (optimize == 2)
+        default_opt_level = 3;
+      else /* -O3 and above */
+        default_opt_level = 5;
+
+      /* don't want pessimize it for RTL,
+       * no optimize = 0; here
+       * tree-ssa opts are disabled by 
+       * 'optimize >= 1 && default_opt_level == 0' condition */
+
+      /* allow -Os as well, 
+       * so no "optimize_size = 0;" here */
     }
 
   if (!optimize)
@@ -841,7 +876,8 @@ decode_options (unsigned int argc, const char **argv)
       if (!optimize_size)
 	{
           /* PRE tends to generate bigger code.  */
-          flag_tree_pre = 1;
+          /* very slow compile time in some cases (CR#6337284). flag_tree_pre = 1; */
+
 	}
 
       /* Allow more virtual operators to increase alias precision.  */
@@ -854,7 +890,8 @@ decode_options (unsigned int argc, const char **argv)
   if (optimize >= 3)
     {
       flag_predictive_commoning = 1;
-      flag_inline_functions = 1;
+      if (use_rtl_backend)
+        flag_inline_functions = 1; /* too aggressive and too buggy */
       flag_unswitch_loops = 1;
       flag_gcse_after_reload = 1;
       flag_tree_vectorize = 1;
@@ -927,7 +964,7 @@ decode_options (unsigned int argc, const char **argv)
      code should be lang-independent when all front ends use tree
      inlining, in which case it, and this condition, should be moved
      to the top of process_options() instead.  */
-  if (optimize == 0)
+  if (optimize == 0 && default_opt_level == 0)
     {
       /* Inlining does not work if not optimizing,
 	 so force it not to be done.  */
@@ -1779,6 +1816,10 @@ common_handle_option (size_t scode, const char *arg, int value,
       flag_pedantic_errors = pedantic = 1;
       break;
 
+    case OPT_r:
+      ir_file_name = arg;
+      break;
+
     case OPT_floop_optimize:
     case OPT_frerun_loop_opt:
     case OPT_fstrength_reduce:
@@ -1787,6 +1828,101 @@ common_handle_option (size_t scode, const char *arg, int value,
       /* These are no-ops, preserved for backward compatibility.  */
       break;
 
+    case OPT_ftree_ir_crossfile:
+      flag_tree_ir_crossfile = globalize_flag = 1;
+      break;
+      
+    case OPT_ftree_ir_verbose_:
+      tree_ir_verbosity_level = atoi (arg);
+      break;
+
+    case OPT_xrestrict_:
+      /* TODO */
+      break;
+      
+    case OPT_xinline_:
+      /* TODO */
+      break;
+
+    case OPT_xpagesize_stack_:
+      /* preferred page size for the stack, ={8K|64K|512K|4M|32M|256M|2G|16G|default}*/
+      if (strcasecmp (arg, "8k") == 0)
+        pagesize_stack = 8*1024;
+      else if (strcasecmp (arg, "64k") == 0)
+        pagesize_stack = 64*1024;
+      else if (strcasecmp (arg, "512k") == 0)
+        pagesize_stack = 512*1024;
+      else if (strcasecmp (arg, "4m") == 0)
+        pagesize_stack = 4*1024*1024;
+      else if (strcasecmp (arg, "32m") == 0)
+        pagesize_stack = 32*1024*1024;
+      else if (strcasecmp (arg, "256m") == 0)
+        pagesize_stack = 256*1024*1024;
+      else if (strcasecmp (arg, "2g") == 0)
+        pagesize_stack = ((unsigned HOST_WIDE_INT)2)*1024*1024*1024;
+      else if (strcasecmp (arg, "16g") == 0)
+        pagesize_stack = ((unsigned HOST_WIDE_INT)16)*1024*1024*1024;
+      else if (strcasecmp (arg, "default") == 0)
+        pagesize_stack = 0; /* do not emit any global vars, use OS default */
+      else
+        error ("unrecognized stack page size \"%s\"", arg);
+      break;
+      
+    case OPT_xpagesize_heap_:
+      /* preferred page size for the heap, ={8K|64K|512K|4M|32M|256M|2G|16G|default}*/
+      if (strcasecmp (arg, "8k") == 0)
+        pagesize_heap = 8*1024;
+      else if (strcasecmp (arg, "64k") == 0)
+        pagesize_heap = 64*1024;
+      else if (strcasecmp (arg, "512k") == 0)
+        pagesize_heap = 512*1024;
+      else if (strcasecmp (arg, "4m") == 0)
+        pagesize_heap = 4*1024*1024;
+      else if (strcasecmp (arg, "32m") == 0)
+        pagesize_heap = 32*1024*1024;
+      else if (strcasecmp (arg, "256m") == 0)
+        pagesize_heap = 256*1024*1024;
+      else if (strcasecmp (arg, "2g") == 0)
+        pagesize_heap = ((unsigned HOST_WIDE_INT)2)*1024*1024*1024;
+      else if (strcasecmp (arg, "16g") == 0)
+        pagesize_heap = ((unsigned HOST_WIDE_INT)16)*1024*1024*1024;
+      else if (strcasecmp (arg, "default") == 0)
+        pagesize_heap = 0; /* do not emit any global vars, use OS default */
+      else
+        error ("unrecognized heap page size \"%s\"", arg);
+      break;
+
+    case OPT_xalias_level_:  
+      /* Enable optimizations based on the specified alias_level */
+      if (strcmp (arg, "strong") == 0)
+        default_alias_level = ALIAS_STRONG;
+      
+      else if (strcmp (arg, "std") == 0)
+        default_alias_level = ALIAS_C_STD;
+      
+      else if (strcmp (arg, "strict") == 0)
+        default_alias_level = ALIAS_STRICT;
+      
+      else if (strcmp (arg, "layout") == 0)
+        default_alias_level = ALIAS_LAYOUT;
+
+      else if (strcmp (arg, "weak") == 0)
+        default_alias_level = ALIAS_WEAK;
+      
+      else if (strcmp (arg, "basic") == 0)
+        default_alias_level = ALIAS_BASIC;
+      
+      else if (strcmp (arg, "any") == 0)
+        default_alias_level = ALIAS_ANY;
+      else
+        error ("unrecognized alias level \"%s\"", arg);
+      break;
+
+    case OPT_cmdline:  
+      /* Get original command line passed by driver. */
+      dbg_cmdline = arg;
+      break;
+       
     default:
       /* If the flag was handled in a standard way, assume the lack of
 	 processing here is intentional.  */

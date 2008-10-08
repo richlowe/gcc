@@ -277,6 +277,9 @@ proc g++_target_compile { source dest type options } {
     lappend options "additional_flags=-fno-show-column"
     lappend options "compiler=$GXX_UNDER_TEST"
     lappend options "timeout=[timeout_value]"
+    if [target_info exists g++,timeout] {
+	    lappend options "timeout=[target_info g++,timeout]"
+    }
 
     set options [concat $gpp_compile_options $options]
 

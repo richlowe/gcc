@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2008 */
+
 /*@@ This file should be rewritten to use an arbitrary precision
   @@ representation for "struct tree_int_cst" and "struct tree_real_cst".
   @@ Perhaps the routines could also be used for bc/dc, and made a lib.
@@ -7009,6 +7011,11 @@ tree_swap_operands_p (const_tree arg0, const_tree arg1, bool reorder)
   if (TREE_CODE (arg0) == COMPLEX_CST)
     return 1;
 
+  if (TREE_CODE (TREE_TYPE (arg0)) == POINTER_TYPE)
+    return 0;
+  if (TREE_CODE (TREE_TYPE (arg1)) == POINTER_TYPE)
+    return 1;
+  
   if (TREE_CONSTANT (arg1))
     return 0;
   if (TREE_CONSTANT (arg0))
@@ -7039,7 +7046,8 @@ tree_swap_operands_p (const_tree arg0, const_tree arg1, bool reorder)
   /* Put variables last.  */
   if (DECL_P (arg1))
     return 0;
-  if (DECL_P (arg0))
+  if (DECL_P (arg0)
+      && flag_openmp == 0 /* workaround for cr6739470. */)
     return 1;
 
   return 0;
@@ -8048,7 +8056,14 @@ fold_unary (enum tree_code code, tree type, tree op0)
 	      TREE_TYPE (arg0) = type;
 	      return arg0;
 	    }
-	  else if (TREE_CODE (type) != INTEGER_TYPE)
+	  else if (TREE_CODE (type) != INTEGER_TYPE
+                   /* tree-inline.c uses fold_convert() to setup
+                      function arguments for inlining. At that time
+                      functions are already lowered, so we cannot introduce
+                      new basic blocks here. See CR 6582875.
+                      (type)a!=b expressions can only be seen in 
+                      gccfss-gimplified trees */
+                   && !TYPE_SIZES_GIMPLIFIED (type))
 	    return fold_build3 (COND_EXPR, type, arg0,
 				fold_build1 (code, type,
 					     integer_one_node),
@@ -10002,7 +10017,8 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 	        TYPE_UNSIGNED (rtype))
 	    /* Only create rotates in complete modes.  Other cases are not
 	       expanded properly.  */
-	    && TYPE_PRECISION (rtype) == GET_MODE_PRECISION (TYPE_MODE (rtype)))
+	    && TYPE_PRECISION (rtype) == GET_MODE_PRECISION (TYPE_MODE (rtype))
+            && 0) /* SunIR */
 	  {
 	    tree tree01, tree11;
 	    enum tree_code code01, code11;
@@ -10661,7 +10677,8 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 		}
 
 	      /* Optimize x*x as pow(x,2.0), which is expanded as x*x.  */
-	      if (! optimize_size
+	      if (0 /* harmful optimization */
+                  && ! optimize_size
 		  && operand_equal_p (arg0, arg1, 0))
 		{
 		  tree powfn = mathfn_built_in (type, BUILT_IN_POW);
@@ -11871,7 +11888,7 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 
     truth_andor:
       /* We only do these simplifications if we are optimizing.  */
-      if (!optimize)
+      if (!optimize || 1/* harmful optimization. don't do it */)
 	return NULL_TREE;
 
       /* Check for things like (A || B) && (A || C).  We can convert this
@@ -12123,7 +12140,11 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 	 two operations, but the latter can be done in one less insn
 	 on machines that have only two-operand insns or on which a
 	 constant cannot be the first operand.  */
-      if (TREE_CODE (arg0) == BIT_AND_EXPR
+      if (0 /* harmful optimization. see quantum_toffoli()
+               1 << foo can be hoisted out of the loop if 'foo' is loop
+               invariant, whereas (bar>>foo)&1 would have to be done
+               for every loop iteration. */
+          && TREE_CODE (arg0) == BIT_AND_EXPR
 	  && integer_zerop (arg1))
 	{
 	  tree arg00 = TREE_OPERAND (arg0, 0);
@@ -12237,9 +12258,12 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 
       /* If we have (A & C) != 0 or (A & C) == 0 and C is the sign
 	 bit, then fold the expression into A < 0 or A >= 0.  */
-      tem = fold_single_bit_test_into_sign_test (code, arg0, arg1, type);
-      if (tem)
-	return tem;
+      /* harmful optimization.
+         since gimplifier will add != 0 anyway, there is no use
+         to convert  (a & 2) != 0 into ((a >> 1) & 1) != 0
+       tem = fold_single_bit_test_into_sign_test (code, arg0, arg1, type);
+       if (tem)
+         return tem;*/
 
       /* If we have (A & C) == D where D & ~C != 0, convert this into 0.
 	 Similarly for NE_EXPR.  */
@@ -12723,6 +12747,7 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 
       /* Comparisons with the highest or lowest possible integer of
 	 the specified precision will have known values.  */
+      if (!in_omp_for_cond)
       {
 	tree arg1_type = TREE_TYPE (arg1);
 	unsigned int width = TYPE_PRECISION (arg1_type);
@@ -12730,7 +12755,11 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 	if (TREE_CODE (arg1) == INTEGER_CST
 	    && !TREE_OVERFLOW (arg1)
 	    && width <= 2 * HOST_BITS_PER_WIDE_INT
-	    && (INTEGRAL_TYPE_P (arg1_type) || POINTER_TYPE_P (arg1_type)))
+	    && (INTEGRAL_TYPE_P (arg1_type)
+                || POINTER_TYPE_P (arg1_type))
+            && (flag_optimize_unsigned_comparison
+                || !TYPE_UNSIGNED (TREE_TYPE (arg1))))
+	  
 	  {
 	    HOST_WIDE_INT signed_max_hi;
 	    unsigned HOST_WIDE_INT signed_max_lo;
@@ -13159,7 +13188,7 @@ fold_ternary (enum tree_code code, tree type, tree op0, tree op1, tree op2)
       if (COMPARISON_CLASS_P (arg0)
 	  && operand_equal_for_comparison_p (TREE_OPERAND (arg0, 0),
 					     arg1, TREE_OPERAND (arg0, 1))
-	  && !HONOR_SIGNED_ZEROS (TYPE_MODE (TREE_TYPE (arg1))))
+	  && !HONOR_SIGNED_ZEROS (TYPE_MODE (TREE_TYPE (arg1))) && 0) /* Sun IR */
 	{
 	  tem = fold_cond_expr_with_comparison (type, arg0, op1, op2);
 	  if (tem)
@@ -15071,7 +15100,7 @@ fold_indirect_ref_1 (tree type, tree op0)
 	  tree min_val = size_zero_node;
 	  if (type_domain && TYPE_MIN_VALUE (type_domain))
 	    min_val = TYPE_MIN_VALUE (type_domain);
-	  return build4 (ARRAY_REF, type, op, min_val, NULL_TREE, NULL_TREE);
+	  return build5 (ARRAY_REF, type, op, min_val, NULL_TREE, NULL_TREE, NULL_TREE);
 	}
       /* *(foo *)&complexfoo => __real__ complexfoo */
       else if (TREE_CODE (optype) == COMPLEX_TYPE
@@ -15117,7 +15146,7 @@ fold_indirect_ref_1 (tree type, tree op0)
       type_domain = TYPE_DOMAIN (TREE_TYPE (sub));
       if (type_domain && TYPE_MIN_VALUE (type_domain))
 	min_val = TYPE_MIN_VALUE (type_domain);
-      return build4 (ARRAY_REF, type, sub, min_val, NULL_TREE, NULL_TREE);
+      return build5 (ARRAY_REF, type, sub, min_val, NULL_TREE, NULL_TREE, NULL_TREE);
     }
 
   return NULL_TREE;
