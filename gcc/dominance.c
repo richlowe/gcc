@@ -1435,6 +1435,9 @@ dom_info_available_p (enum cdi_direction dir)
 {
   unsigned int dir_index = dom_convert_dir_to_idx (dir);
 
+  if (!cfun->cfg)
+    return false;
+
   return dom_computed[dir_index] != DOM_NONE;
 }
 

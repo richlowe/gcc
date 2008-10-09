@@ -5303,7 +5303,7 @@ diagnose_sb_1 (tree *tp, int *walk_subtrees, void *data)
       ctx->record_type = inner_context;      
       wi->info = ctx;
       walk_stmts (wi, &OMP_BODY (t));
-      wi->info = prev_context;
+      wi->info = prev_ctx;
       break;
 
     case OMP_FOR:

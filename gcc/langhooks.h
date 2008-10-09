@@ -44,6 +44,7 @@ enum classify_record
 struct lang_hooks_for_tree_inlining
 {
   bool (*var_mod_type_p) (tree, tree);
+  bool (*anon_aggr_type_p) (tree);
 };
 
 struct lang_hooks_for_callgraph

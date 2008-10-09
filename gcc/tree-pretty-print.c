@@ -357,8 +357,8 @@ dump_omp_clause (pretty_printer *buffer, tree clause, int spc, int flags)
 	break;
       case OMP_CLAUSE_DEFAULT_PRIVATE:
 	pp_string (buffer, "private");
-	break
-	case OMP_CLAUSE_DEFAULT_AUTO:
+	break;
+      case OMP_CLAUSE_DEFAULT_AUTO:
         pp_string (buffer, "__auto");
 	break;
       default:

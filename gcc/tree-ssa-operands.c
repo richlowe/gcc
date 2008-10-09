@@ -2218,7 +2218,7 @@ get_expr_operands (tree stmt, tree *expr_p, int flags)
             get_expr_operands (stmt, &TREE_OPERAND (expr, 1), opf_use);
             get_expr_operands (stmt, &TREE_OPERAND (expr, 2), opf_use);
             get_expr_operands (stmt, &TREE_OPERAND (expr, 3), opf_use);
-            get_expr_operands (stmt, &TREE_OPERAND (expr, 4), opf_none);
+            get_expr_operands (stmt, &TREE_OPERAND (expr, 4), 0);
 
 	  }
 

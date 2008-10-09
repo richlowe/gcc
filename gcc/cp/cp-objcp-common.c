@@ -44,7 +44,7 @@ cxx_get_alias_set (tree t)
   if (IS_FAKE_BASE_TYPE (t))
     /* The base variant of a type must be in the same alias set as the
        complete type.  */
-    return get_alias_set (TYPE_CONTEXT (t));s
+    return get_alias_set (TYPE_CONTEXT (t));
 
   /* Punt on PMFs until we canonicalize functions properly.  */
   if (TYPE_PTRMEMFUNC_P (t)

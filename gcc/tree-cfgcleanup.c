@@ -702,6 +702,8 @@ repair_loop_structures (void)
 bool
 cleanup_tree_cfg (void)
 {
+  if (!cfun->cfg)
+    return false;
   bool changed = cleanup_tree_cfg_noloop ();
 
   if (current_loops != NULL

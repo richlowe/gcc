@@ -53,6 +53,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-dump.h"
 #include "intl.h"
 #include "tree-ir.h"
+#include "tree-iterator.h"
 
 extern cpp_reader *parse_in;
 
@@ -3864,7 +3865,7 @@ build_cxx_tp_init_function (tree decl, tree init, bool initp)
   type = TREE_TYPE (decl);
   fun_type = build_function_type_list (void_type_node, type, NULL);
 
-  name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+  name = (char *) IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
   fun_name = (char * )xmalloc (strlen(name) + 6);
   if (initp)
     strcpy (fun_name, "_INIT_");
@@ -3892,57 +3893,9 @@ build_cxx_tp_init_function (tree decl, tree init, bool initp)
   TREE_USED (t) = 1;
   DECL_ARGUMENTS (fn_decl) = t;
 
-  allocate_struct_function ( fn_decl);
+  allocate_struct_function (fn_decl, false);
 
-  TREE_STATIC (fnstatic void 
-build_cxx_tp_init_function (tree decl, tree init, bool initp)
-{
-  tree fn_decl, list;
-  tree t, t1, body, type, fun_type;
-  char *fun_name, *name;
-
-  /* if init == NULL; we don't need generate a function here. 
-     Later when register a threadprivate, we need check this 
-     situation to emit NULL_TREE as ctor.*/
-  if (initp == 1 && !init)
-    return;
-  
-  /* the init function's type should be 
-	void (*init)(class_type omp_var) */
-  type = TREE_TYPE (decl);
-  fun_type = build_function_type_list (void_type_node, type, NULL);
-
-  name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
-  fun_name = (char * )xmalloc (strlen(name) + 6);
-  if (initp)
-    strcpy (fun_name, "_INIT_");
-  else
-    strcpy (fun_name, "_FINI_");
-  strcpy (fun_name + 6, name );
-  
-  fn_decl = build_fn_decl ( fun_name, fun_type);
-
-  input_location = DECL_SOURCE_LOCATION (decl);
-  push_function_context();
-  current_function_decl = fn_decl;
-
-  /* Result */
-  t = build_decl (RESULT_DECL, NULL_TREE, void_type_node);
-  DECL_ARTIFICIAL (t) = 1;
-  DECL_IGNORED_P (t) = 1;
-  DECL_RESULT (fn_decl) = t;
-
-  /* parm :DECL_ARGUMENTS (decl) */
-  t = build_decl (PARM_DECL, get_identifier ("omp_var"), type);
-  DECL_ARTIFICIAL (t) = 1;
-  DECL_ARG_TYPE (t) = type;
-  DECL_CONTEXT (t) = current_function_decl;
-  TREE_USED (t) = 1;
-  DECL_ARGUMENTS (fn_decl) = t;
-
-  allocate_struct_function ( fn_decl);
-
-  TREE_STATIC (fn_decl) = 1;_decl) = 1;
+  TREE_STATIC (fn_decl) = 1;
   TREE_USED (fn_decl) = 1;
   DECL_ARTIFICIAL (fn_decl) = 1;
   DECL_IGNORED_P (fn_decl) = 1;

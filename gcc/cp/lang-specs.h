@@ -69,7 +69,7 @@ along with GCC; see the file COPYING3.  If not see
               %{!frtl-backend: %{xforceas: %(invoke_as) }} \
               %{Zpec=*: %(invoke_cppipo1) ; \
                 xpec : %(invoke_cppipo1); \
-                xipo=1|xipo=2: %{!xprofile=collect*: %(invoke_cppipo1)} } 
+                xipo=1|xipo=2: %{!xprofile=collect*: %(invoke_cppipo1)} }  }  }}}}",
      CPLUSPLUS_CPP_SPEC, 0, 0},
   {".ii", "@c++-cpp-output", 0, 0, 0},
   {"@c++-cpp-output",

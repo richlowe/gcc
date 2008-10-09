@@ -32,6 +32,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "tree-gimple.h"
 #include "tree-pass.h"
+#include "flags.h"
 
 /* Walk tree and record all calls and references to functions/variables.
    Called via walk_tree: TP is pointer to tree to be examined.  */
@@ -118,61 +119,67 @@ build_cgraph_edges (void)
   block_stmt_iterator bsi;
   tree_stmt_iterator tsi;
   tree step;
-  int entry_freq = ENTRY_BLOCK_PTR->frequency;
-
-  if (!entry_freq)
-    entry_freq = 1;
 
   if (flag_use_rtl_backend == 0)
-    for (tsi = tsi_start (DECL_SAVED_TREE (body)); !tsi_end_p (tsi); tsi_next (&tsi))
-      {
-	tree stmt = tsi_stmt (tsi);
-	tree call = get_call_expr_in (stmt);
-	tree decl;
-
-	if (call && (decl = get_callee_fndecl (call)))
-	  {
-	    cgraph_create_edge (node, cgraph_node (decl), stmt, 0, 0);
-	    walk_tree (&TREE_OPERAND (call, 1),
-		       record_reference, node, visited_nodes);
-	    if (TREE_CODE (stmt) == MODIFY_EXPR)
-	      walk_tree (&TREE_OPERAND (stmt, 0),
-			 record_reference, node, visited_nodes);
-	  }
-	else
-	  walk_tree (tsi_stmt_ptr (tsi), record_reference, node, visited_nodes);
-      }
+    {
+      tree stmts = DECL_SAVED_TREE (current_function_decl);
+      for (tsi = tsi_start (stmts); !tsi_end_p (tsi); tsi_next (&tsi))
+        {
+	  tree stmt = tsi_stmt (tsi);
+          tree call = get_call_expr_in (stmt);
+          tree decl;
+          
+          if (call && (decl = get_callee_fndecl (call)))
+	    {
+	      cgraph_create_edge (node, cgraph_node (decl), stmt, 0, 0, 0);
+              walk_tree (&TREE_OPERAND (call, 1),
+                         record_reference, node, visited_nodes);
+              if (TREE_CODE (stmt) == MODIFY_EXPR)
+                  walk_tree (&TREE_OPERAND (stmt, 0),
+                             record_reference, node, visited_nodes);
+            }
+          else
+            walk_tree (tsi_stmt_ptr (tsi), record_reference, node, visited_nodes);
+        }
+    }
   else
-  /* Create the callgraph edges and record the nodes referenced by the function.
-     body.  */
-  FOR_EACH_BB (bb)
-    for (bsi = bsi_start (bb); !bsi_end_p (bsi); bsi_next (&bsi))
-      {
-	tree stmt = bsi_stmt (bsi);
-	tree call = get_call_expr_in (stmt);
-	tree decl;
+    {
+      int entry_freq = ENTRY_BLOCK_PTR->frequency;
 
-	if (call && (decl = get_callee_fndecl (call)))
-	  {
-	    int i;
-	    int n = call_expr_nargs (call);
-	    int freq = (!bb->frequency && !entry_freq ? CGRAPH_FREQ_BASE
-			: bb->frequency * CGRAPH_FREQ_BASE / entry_freq);
-	    if (freq > CGRAPH_FREQ_MAX)
-	      freq = CGRAPH_FREQ_MAX;
-	    cgraph_create_edge (node, cgraph_node (decl), stmt,
-				bb->count, freq,
-				bb->loop_depth);
-	    for (i = 0; i < n; i++)
-	      walk_tree (&CALL_EXPR_ARG (call, i),
-			 record_reference, node, visited_nodes);
-	    if (TREE_CODE (stmt) == GIMPLE_MODIFY_STMT)
-	      walk_tree (&GIMPLE_STMT_OPERAND (stmt, 0),
-			 record_reference, node, visited_nodes);
-	  }
-	else
-	  walk_tree (bsi_stmt_ptr (bsi), record_reference, node, visited_nodes);
-      }
+      if (!entry_freq)
+        entry_freq = 1;
+      
+      /* Create the callgraph edges and record the nodes referenced by the function.
+         body.  */
+      FOR_EACH_BB (bb)
+      for (bsi = bsi_start (bb); !bsi_end_p (bsi); bsi_next (&bsi))
+        {
+          tree stmt = bsi_stmt (bsi);
+          tree call = get_call_expr_in (stmt);
+          tree decl;
+          
+          if (call && (decl = get_callee_fndecl (call)))
+	    {
+	      int i;
+              int n = call_expr_nargs (call);
+              int freq = (!bb->frequency && !entry_freq ? CGRAPH_FREQ_BASE
+                          : bb->frequency * CGRAPH_FREQ_BASE / entry_freq);
+              if (freq > CGRAPH_FREQ_MAX)
+                  freq = CGRAPH_FREQ_MAX;
+              cgraph_create_edge (node, cgraph_node (decl), stmt,
+                                  bb->count, freq,
+                                  bb->loop_depth);
+              for (i = 0; i < n; i++)
+                  walk_tree (&CALL_EXPR_ARG (call, i),
+                             record_reference, node, visited_nodes);
+              if (TREE_CODE (stmt) == GIMPLE_MODIFY_STMT)
+                  walk_tree (&GIMPLE_STMT_OPERAND (stmt, 0),
+                             record_reference, node, visited_nodes);
+            }
+          else
+            walk_tree (bsi_stmt_ptr (bsi), record_reference, node, visited_nodes);
+        }
+    }
 
   /* Look for initializers of constant variables and private statics.  */
   for (step = cfun->unexpanded_var_list;

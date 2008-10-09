@@ -6542,7 +6542,7 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
         TREE_NOTHROW (decl) = 1;
         DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
         DECL_VISIBILITY_SPECIFIED (decl) = 1;
-        call = build_function_call_expr (decl, arglist);
+        call = build_function_call_expr (decl, TREE_OPERAND (exp, 1));
 
         return expand_call (call, target, ignore);
       }

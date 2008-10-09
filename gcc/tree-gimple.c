@@ -108,9 +108,6 @@ is_gimple4ss_rvalue (tree t)
     case NOP_EXPR:
     case CONVERT_EXPR:
     case FIX_TRUNC_EXPR:
-    case FIX_CEIL_EXPR:
-    case FIX_FLOOR_EXPR:
-    case FIX_ROUND_EXPR:
       return true;
 
     default:

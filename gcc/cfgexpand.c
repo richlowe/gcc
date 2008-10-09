@@ -1868,7 +1868,7 @@ tree_expand_cfg (void)
     {
       /* did not generate IR due to compilation error
          avoid duplicated error message by skipping RTL phase */
-      if (cfun->function_end_locus.file)
+      if (cfun->function_end_locus != UNKNOWN_LOCATION)
         input_location = cfun->function_end_locus;
       DECL_DEFER_OUTPUT (current_function_decl) = 0;
       TREE_ASM_WRITTEN (current_function_decl) = 1;
@@ -2031,13 +2031,15 @@ execute_rest_of_genir (void)
 {
   if (errorcount == 0) 
     {
+      rtx x;
       currently_expanding_to_rtl = 1;
-      reset_block_changes ();     /* initialize arrays for RTL block */
+      //reset_block_changes ();     /* initialize arrays for RTL block */
       expand_used_vars (0);
       currently_expanding_to_rtl = 0;
-      output_function_exception_table ();
+      x = DECL_RTL (current_function_decl);
+      output_function_exception_table (XSTR (x, 0));
     }
-  if (cfun->function_end_locus.file)
+  if (cfun->function_end_locus != UNKNOWN_LOCATION)
     input_location = cfun->function_end_locus;
   DECL_DEFER_OUTPUT (current_function_decl) = 0;
   TREE_ASM_WRITTEN (current_function_decl) = 1;

@@ -928,7 +928,8 @@ static const char *cpp_unique_options =
  %{m32: %{Zarchm32=v8plusc: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
         %{Zarchm32=v8plusd: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
    m64: %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
-        %{Zarchm64=v9d: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } } \";
+        %{Zarchm64=v9d: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } } \
+";
 
 /* This contains cpp options which are common with cc1_options and are passed
    only when preprocessing only to avoid duplication.  We pass the cc1 spec
@@ -978,7 +979,6 @@ static const char *cpp_debug_options = "%{d*}";
  %{undef}\
  %{Qn:-fno-ident} %{--help:--help}\
  %{--target-help:--target-help}\
-
  %{fsyntax-only:-o %j} %{-param*}\
  %{xcode=pic13: -fpic} \
  %{xcode=pic32: -fPIC} \
@@ -3051,7 +3051,7 @@ delete_duplicate_options (int *argcp, char ***argvp)
               (strncmp(argv[j], "-xhwcprof", 9) == 0 ) ) {
           /* set the old one to NULL, and try another option */
           argv[i] = NULL;
-	  if ((deb  ug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
           newc--;
             goto NEXTI;
         } /* if argv */
@@ -6836,7 +6836,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
                   /* one of the Sun -x flags */
                   switches[n_switches].part1 = &argv[i][1];
                   switches[n_switches].args = 0;
-                  switches[n_switches].live_cond = SWITCH_OK;
+                  switches[n_switches].live_cond = 0;
                   switches[n_switches].validated = 0;
                   n_switches++;
                   continue; /*it is one of the -x* options from Sun */
@@ -7356,7 +7356,7 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
         if (arg_going)
 	  {
 	    obstack_1grow (&obstack, 0);
-	    string = XOBFINISH (&obstack, const char *);
+	    const char *string = XOBFINISH (&obstack, const char *);
 	    if (this_is_library_file)
 	      string = find_file (string);
             else if (suffix_add) {
@@ -11393,7 +11393,7 @@ static const char *print_orig_cmdline(int dummy __attribute__ ((unused)),
           e.g. -DENV="ONE TWO THREE" is transformed to -DENV='ONE TWO THREE'. */
       length = strlen (cmdlinestr);
       pn = p = orig_argv[i];
-      while (pn = strchr (p, '"'))
+      while ((pn = strchr (p, '"')))
         {
            (void)strncat (cmdlinestr, p, pn - p); 
            length += pn - p;

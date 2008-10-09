@@ -3223,7 +3223,7 @@ struct tree_decl_with_vis GTY(())
  unsigned refer_scoped_shared: 1; 
 };
 
-#define DECL_HAS_SCOPED_CLAUSE_P(NODE) (VAR_DECL_CHECK (NODE)-decl_with_vis.has_scoped_clause)
+#define DECL_HAS_SCOPED_CLAUSE_P(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.has_scoped_clause)
 #define DECL_REFER_SCOPED_SHARED(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.refer_scoped_shared)
 
 /* In a VAR_DECL that's static,

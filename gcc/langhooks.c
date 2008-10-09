@@ -610,3 +610,13 @@ lhd_builtin_function (tree decl)
   lang_hooks.decls.pushdecl (decl);
   return decl;
 }
+
+/* lang_hooks.tree_inlining.anon_aggr_type_p determines whether T is a
+   type node representing an anonymous aggregate (union, struct, etc),
+   i.e., one whose members are in the same scope as the union itself.  */
+
+int
+lhd_tree_inlining_anon_aggr_type_p (tree t ATTRIBUTE_UNUSED)
+{
+  return 0;
+}

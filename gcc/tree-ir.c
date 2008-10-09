@@ -50,6 +50,7 @@ Boston, MA 02111-1307, USA.  */
 #include "tree-ssa-propagate.h"
 #include "regs.h"
 #include "tree-ir.h"
+#include "df.h"
 
 #define FIRST_SGCC_VIRTUAL_REGNO 14159000
 
@@ -733,25 +734,25 @@ lookup_param_offset (tree stmt, TYPE argtype)
   return DECL_IR_OFFSET (stmt);
 }
 
-#define SCOPE_TEMP_AS_PRIVATE(irnode) \ 
+#define SCOPE_TEMP_AS_PRIVATE(irnode) \
       if (cur_omp_context && (cur_omp_context->pinfo \
-          || (cur_omp_context->prev_ctx && cur_omp_context->prev_ctx->pinfo))) \  
-        { \ 
-          LIST *lp; \ 
-          PRAGMAINFO *pinfo; \  
-          pinfo = cur_omp_context->pinfo ? cur_omp_context->pinfo \  
-                                         : cur_omp_context->prev_ctx->pinfo; \  
-          lp = build_ir_proc_list (); \ 
-          lp->datap = (LDATA *) ((irnode)); \ 
-          LAPPEND (pinfo->u.s.omp_private, lp); \ 
+          || (cur_omp_context->prev_ctx && cur_omp_context->prev_ctx->pinfo))) \
+        { \
+          LIST *lp; \
+          PRAGMAINFO *pinfo; \
+          pinfo = cur_omp_context->pinfo ? cur_omp_context->pinfo \
+                                         : cur_omp_context->prev_ctx->pinfo; \
+          lp = build_ir_proc_list (); \
+          lp->datap = (LDATA *) ((irnode)); \
+          LAPPEND (pinfo->u.s.omp_private, lp); \
         }  
 
-#define SCOPE_TEMP_AS_PRIVATE_IFNEEDED(tree, name, irnode) \ 
+#define SCOPE_TEMP_AS_PRIVATE_IFNEEDED(tree, name, irnode) \
       if (DECL_ARTIFICIAL ((tree)) && !(name) \
           && !(TREE_CODE ((tree)) == VAR_DECL \
-               && DECL_HAS_SCOPED_CLAUSE_P ((tree)))) \ 
+               && DECL_HAS_SCOPED_CLAUSE_P ((tree)))) \
         { \
-          SCOPE_TEMP_AS_PRIVATE((irnode)) \ 
+          SCOPE_TEMP_AS_PRIVATE((irnode)) \
           if (TREE_CODE ((tree)) == VAR_DECL) \
             DECL_HAS_SCOPED_CLAUSE_P ((tree)) = 1; \
         }
@@ -1226,7 +1227,7 @@ static tree outer_tree;
 static int g_esize;
 
 /* compute the whole offset in a struture field array. */
-static void *
+static void
 compute_goffset (tree stmt)
 {
   tree t, op0, op1;
@@ -1277,7 +1278,7 @@ compute_goffset (tree stmt)
 static IR_TYPE_NODE *
 compute_field_array_ir_type (tree stmt)
 {
-  tree t, op0, op1;
+  tree op0, op1;
   IR_TYPE_NODE * ret, *ir_type;
 
   op0 = TREE_OPERAND (stmt, 0);
@@ -1287,7 +1288,7 @@ compute_field_array_ir_type (tree stmt)
     case COMPONENT_REF:
       {
 	tree aligned_offset = TREE_OPERAND (stmt, 2);
-	CONSZ offset, offset_bits;
+	CONSZ offset_bits;
 	const char * fld_name;
 	char fld_name_buf[64];
 	IR_NODE * ir_offset;
@@ -1506,7 +1507,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
                 {
                   ret->leaf.in_taskcommon_block = IR_TRUE;
                   /* Associate the segments */
-                  LEAF *tpleaf = dump_ir_expr (tp, MAP_FOR_VALUE);
+                  LEAF *tpleaf = (LEAF *) dump_ir_expr (tp, MAP_FOR_VALUE);
                   gcc_assert (ir_proc_associate_objs (irProc, ret->leaf.val.addr.seg,
                             IR_ASSOC_VAR_TLS, tpleaf->val.addr.seg));
                 }
@@ -1543,7 +1544,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
             {
               ret->leaf.in_taskcommon_block = IR_TRUE;
               /* Associate the segments */
-              LEAF *tpleaf = dump_ir_expr (tp, MAP_FOR_VALUE);
+              LEAF *tpleaf = (LEAF *) dump_ir_expr (tp, MAP_FOR_VALUE);
               gcc_assert (ir_proc_associate_objs (irProc, ret->leaf.val.addr.seg,
                           IR_ASSOC_VAR_TLS, tpleaf->val.addr.seg));
             }
@@ -1750,7 +1751,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
 	 /* Fix build error. expmed.c:152(((&all.reg)->u.fld[0]).rt_uint)
 	    (&all.reg)->u is generate as ir leaf. So we have to minus the
 	    offset from gir_offset.*/
-	  if (is_field_array == 1 & offset != 0)
+	  if (is_field_array == 1 && offset != 0)
 	    {
 	      gir_offset = build_ir_triple (IR_MINUS, gir_offset, build_ir_int_const (offset, inttype, 0), inttype, 0);
 	    }
@@ -2383,7 +2384,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 		      {
                         ret->leaf.in_taskcommon_block = IR_TRUE;
 			/* Associate the segments */
-			LEAF *tpleaf = dump_ir_expr (threadprivate, MAP_FOR_VALUE);
+			LEAF *tpleaf = (LEAF *) dump_ir_expr (threadprivate, MAP_FOR_VALUE);
 			gcc_assert (ir_proc_associate_objs (irProc, ret->leaf.val.addr.seg,
 			IR_ASSOC_VAR_TLS, tpleaf->val.addr.seg));
 		      }
@@ -2427,7 +2428,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 	      {
                 ret->leaf.in_taskcommon_block = IR_TRUE;
 		/* Associate the segments */
-		LEAF *tpleaf = dump_ir_expr (threadprivate, MAP_FOR_VALUE);
+		LEAF *tpleaf = (LEAF *) dump_ir_expr (threadprivate, MAP_FOR_VALUE);
 		gcc_assert (ir_proc_associate_objs (irProc, ret->leaf.val.addr.seg,
 			IR_ASSOC_VAR_TLS, tpleaf->val.addr.seg));
 	      }
@@ -2465,7 +2466,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 	      {
                 ret->leaf.in_taskcommon_block = IR_TRUE;
 		/* Associate the segments */
-		LEAF *tpleaf = dump_ir_expr (threadprivate, MAP_FOR_VALUE);
+		LEAF *tpleaf = (LEAF *) dump_ir_expr (threadprivate, MAP_FOR_VALUE);
 		gcc_assert (ir_proc_associate_objs (irProc, ret->leaf.val.addr.seg,
 			IR_ASSOC_VAR_TLS, tpleaf->val.addr.seg));
 	      }
@@ -2491,7 +2492,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 	      {
                 ret->leaf.in_taskcommon_block = IR_TRUE;
 		/* Associate the segments */
-		LEAF *tpleaf = dump_ir_expr (threadprivate, MAP_FOR_VALUE);
+		LEAF *tpleaf = (LEAF *) dump_ir_expr (threadprivate, MAP_FOR_VALUE);
 		gcc_assert (ir_proc_associate_objs (irProc, ret->leaf.val.addr.seg,
 			IR_ASSOC_VAR_TLS, tpleaf->val.addr.seg));
 	      }
@@ -2538,7 +2539,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 	      {
                 ret->leaf.in_taskcommon_block = IR_TRUE;
 		/* Associate the segments */
-		LEAF *tpleaf = dump_ir_expr (threadprivate, MAP_FOR_VALUE);
+		LEAF *tpleaf = (LEAF *) dump_ir_expr (threadprivate, MAP_FOR_VALUE);
 		gcc_assert (ir_proc_associate_objs (irProc, ret->leaf.val.addr.seg,
 			IR_ASSOC_VAR_TLS, tpleaf->val.addr.seg));
 	      }
@@ -6003,7 +6004,7 @@ dump_ir_builtin_va_start (tree arglist)
       return;
     }
 
-  if (fold_builtin_next_arg (chain))
+  if (fold_builtin_next_arg (chain, true))
     return;
 
   nextarg = dump_ir_builtin_next_arg ();
@@ -8030,7 +8031,7 @@ dump_ir_stmt (tree stmt)
                 /* in V9 mark %g[2367] as used, so .register will be 
                    output in the side door file */
                 if (regn == 2 || regn == 3 || regn == 6 || regn == 7)
-                  regs_ever_live[regn] = 1;
+                  df_set_regs_ever_live (regn, true);
                           
               TAPPEND (asm_args, (TRIPLE *) tp);
 
@@ -9342,16 +9343,6 @@ ir_remove_scope_triples (void)
 
 #define END_PRAGMA_LINE(xloc) ((xloc).line + 1)
 
-static tree
-find_omp_clause (tree clauses, enum tree_code kind)
-{
-  for (; clauses ; clauses = OMP_CLAUSE_CHAIN (clauses))
-    if (OMP_CLAUSE_CODE (clauses) == kind)
-      return clauses;
-
-  return NULL_TREE;
-}
-
 static IR_NODE *
 dump_num_threads_clause (tree clauses)
 {
@@ -9530,7 +9521,7 @@ create_ir_scope (tree decl,
     {
       IR_NODE *lf = get_tmp_leaf (var->triple.type,
                                   var->triple.typep);
-      char *name = get_ir_name (orig);
+      const char *name = get_ir_name (orig);
       if (name)
         lf->leaf.pass1_id = build_ir_proc_string (name);
       (void) build_ir_triple (IR_ASSIGN, lf, var,
@@ -10721,7 +10712,7 @@ dump_omp_critical (tree stmt)
 	  DECL_COMMON (decl) = 1;
 	  DECL_ARTIFICIAL (decl) = 1;
 	  DECL_IGNORED_P (decl) = 1;
-	  cgraph_varpool_finalize_decl (decl);
+	  varpool_finalize_decl (decl);
 
 	  splay_tree_insert (critical_name_mutexes, (splay_tree_key) lock_name,
 			     (splay_tree_value) decl);
@@ -10974,7 +10965,7 @@ register_threadprivate_variable (tree tpvar, tree ctor,
         DECL_COMMON (decl) = 1;
         DECL_ARTIFICIAL (decl) = 1;
         DECL_IGNORED_P (decl) = 1;
-        cgraph_varpool_finalize_decl (decl);
+        varpool_finalize_decl (decl);
 
         tp = xmalloc (sizeof (tp_info));
         tp->tp_var = decl;
@@ -11277,7 +11268,7 @@ dump_ir_threadprivate_fn_1 (int initp)
   DECL_IGNORED_P (resdecl) = 1;
   DECL_RESULT (decl) = resdecl;
 
-  allocate_struct_function (decl);
+  allocate_struct_function (decl, false);
 
   TREE_STATIC (decl) = 1;
   TREE_USED (decl) = 1;
@@ -11491,7 +11482,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   DECL_IGNORED_P (t) = 1;
   DECL_RESULT (wrapper) = t;
 
-  allocate_struct_function (wrapper);
+  allocate_struct_function (wrapper, false);
   cfun->function_end_locus = DECL_SOURCE_LOCATION (wrapper);
   
   bind = build3 (BIND_EXPR, void_type_node, NULL_TREE,

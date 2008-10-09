@@ -53,6 +53,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "params.h"
 #include "pointer-set.h"
 #include "fixed-value.h"
+#include "tree-ir.h"
 
 /* Each tree code class has an associated string representation.
    These must correspond to the tree_code_class entries.  */

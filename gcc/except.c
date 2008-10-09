@@ -907,7 +907,7 @@ generate_one_landing_pad (struct eh_region *region, int exit_label)
         int b2_label = get_ir_label_of_tree (region->tree_label); 
         int outer_catch = find_outer_catch_label (region);
         IR_NODE *filter = get_ir_exception_filter ();
-        IR_NODE *ex_ptr = get_ir_exception_pointer ();
+        /*IR_NODE *ex_ptr = get_ir_exception_pointer ();*/
         IR_NODE *ir_cond, *t1, *t2;
         TRIPLE *triple_t1;
         t2 = build_ir_labelref (b2_label,1); 
@@ -1755,7 +1755,7 @@ add_ttypes_entry (htab_t ttypes_hash, tree type)
         else
           {
             const char *type_name;
-	    struct cgraph_varpool_node *node;
+	    struct varpool_node *node;
 	    type = lookup_type_for_runtime (type);
 	    STRIP_NOPS (type);
 	    if (TREE_CODE (type) == ADDR_EXPR)
@@ -1774,10 +1774,10 @@ add_ttypes_entry (htab_t ttypes_hash, tree type)
                        otherwise cgraph_varpool_remove_unreferenced_decls() will
                        cleanup all 'unreferenced' decls including some RTTIs
                        See 2nd part of CR 6584153 */
-	            node = cgraph_varpool_node (type);
+	            node = varpool_node (type);
                     node->force_output = 1;
 	            if (node)
-		      cgraph_varpool_mark_needed_node (node);
+		      varpool_mark_needed_node (node);
                     type_name = get_ir_name (type);
 		  }
                  else
@@ -4293,13 +4293,10 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   char ttype_label[32];
   char cs_after_size_label[32];
   char cs_end_label[32];
-#else
-  int call_site_len;
 #endif
   int call_site_len = 0;
   int have_tt_data;
   int tt_format_size = 0;
-  const char *fnname = 0;
   
   /* Not all functions need anything.  */
   if (! cfun->uses_eh_lsda)
@@ -4340,7 +4337,7 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   if (!flag_use_rtl_backend)
     comdat_exception_section (fnname);
   else
-    switch_to_exception_section (fname);
+    switch_to_exception_section (fnname);
 #endif
 
   /* If the target wants a label to begin the table, emit it here.  */

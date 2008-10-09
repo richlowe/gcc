@@ -1235,7 +1235,7 @@ OBJS-common = \
 	tree-vect-patterns.o \
 	tree-vect-transform.o \
 	tree-vectorizer.o \
-	tree-vn.o \f
+	tree-vn.o \
 	tree-vrp.o \
 	tree.o \
 	value-prof.o \
@@ -1554,7 +1554,7 @@ libbackend.a: $(OBJS@onestep@)
 	-rm -rf libbackend.a
 	$(AR) $(AR_FLAGS) libbackend.a $(OBJS@onestep@)
 	-$(RANLIB) $(RANLIB_FLAGS) libbackend.a
-	
+
 drdr: driverdriver.o prefix.o errors.o $(LIBS)
 	$(CC) -o drdr $(LDFLAGS) driverdriver.o prefix.o errors.o $(LIBS)
 
@@ -1591,7 +1591,7 @@ gcc-cross$(exeext): xgcc$(exeext)
 dummy-checksum.o : dummy-checksum.c
 
 cc1-dummy$(exeext): $(C_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
-    if [ "x${SUNW_SCGFSS_PATH}" = x ] ; then \
+	if [ "x${SUNW_SCGFSS_PATH}" = x ] ; then \
 	  echo You must set SUNW_SCGFSS_PATH to point to sparc backend package >&2; \
 	  false; \
 	elif test ! -d ${SUNW_SCGFSS_PATH}; then \
@@ -1610,7 +1610,7 @@ cc1-checksum.c : cc1-dummy$(exeext) build/genchecksum$(build_exeext)
 cc1-checksum.o : cc1-checksum.c
 
 cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS)
-    if [ "x${SUNW_SCGFSS_PATH}" = x ] ; then \
+	if [ "x${SUNW_SCGFSS_PATH}" = x ] ; then \
 	  echo You must set SUNW_SCGFSS_PATH to point to sparc backend package >&2; \
 	  false; \
 	elif test ! -d ${SUNW_SCGFSS_PATH}; then \
@@ -2467,7 +2467,7 @@ stmt.o : stmt.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
    $(TREE_H) $(FLAGS_H) $(FUNCTION_H) insn-config.h hard-reg-set.h $(EXPR_H) \
    libfuncs.h except.h $(RECOG_H) toplev.h output.h $(GGC_H) $(TM_P_H) \
    langhooks.h $(PREDICT_H) $(OPTABS_H) $(TARGET_H) $(MACHMODE_H) \
-   $(REGS_H) alloc-pool.hasm.c
+   $(REGS_H) alloc-pool.h
 except.o : except.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
    $(TREE_H) $(FLAGS_H) except.h $(FUNCTION_H) $(EXPR_H) libfuncs.h \
    langhooks.h insn-config.h hard-reg-set.h $(BASIC_BLOCK_H) output.h \

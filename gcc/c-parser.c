@@ -7466,7 +7466,6 @@ c_parser_omp_all_clauses (c_parser *parser, unsigned int mask,
     {
       pragma_omp_clause c_kind;
       location_t here;
-      pragma_omp_clause c_kind;
       const char *c_name;
       tree prev = clauses;
 

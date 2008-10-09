@@ -148,6 +148,7 @@ static void dbg_gen_begin_prologue (unsigned, const char *);
 static void dbg_gen_end_epilogue (unsigned, const char *);
 static void dbg_gen_type_decl (tree, int);
 static void dbg_gen_global_decl (tree);
+static bool debug_true_tree (tree block);
 
 /* The SUN dbg gen debug hooks structure.  
    See debug.h for description of each hook.  */
@@ -180,6 +181,12 @@ const struct gcc_debug_hooks dbg_gen_debug_hooks =
   debug_nothing_void,          /* switch_text_section */
   0                            /* start_end_main_source_file  */
 };
+
+static bool
+debug_true_tree (tree block ATTRIBUTE_UNUSED)
+{
+  return true;
+}
 
 #define INIT_STACK_SIZE 64
 

@@ -573,7 +573,6 @@ init_optimization_passes (void)
   NEXT_PASS (pass_build_cfg);
   NEXT_PASS (pass_lower_complex_O0);  
   NEXT_PASS (pass_warn_function_return);
-  NEXT_PASS (pass_early_tree_profile);
   NEXT_PASS (pass_early_local_passes);
     {
       struct tree_opt_pass **p = &pass_early_local_passes.sub;

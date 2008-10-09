@@ -3394,7 +3394,6 @@ c_mark_addressable (tree exp)
 	/* ... fall through ...  */
         
       case ADDR_EXPR:
-      case ARRAY_REF:
       case REALPART_EXPR:
       case IMAGPART_EXPR:
 	x = TREE_OPERAND (x, 0);
