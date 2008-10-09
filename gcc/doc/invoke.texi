@@ -176,7 +176,7 @@ in the following sections.
 -fallow-single-precision  -fcond-mismatch -flax-vector-conversions @gol
 -fsigned-bitfields  -fsigned-char @gol
 -funsigned-bitfields  -funsigned-char @gol
--Xc -xc99@r{[=}@var{version}@r{]} }}
+-Xc -xc99@r{[=}@var{version}@r{]} }
 
 @item C++ Language Options
 @xref{C++ Dialect Options,,Options Controlling C++ Dialect}.

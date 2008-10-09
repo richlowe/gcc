@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Modified by Sun Microsystems 2008 */
+/* Modified by Sun Microsystems 2009 */
 
 #include "config.h"
 #include "system.h"
@@ -392,12 +392,44 @@ execute_fixup_cfg (void)
 {
   basic_block bb;
   gimple_stmt_iterator gsi;
+  tree_stmt_iterator tsi;
   int todo = gimple_in_ssa_p (cfun) ? TODO_verify_ssa : 0;
 
   cfun->after_inlining = true;
   cfun->always_inline_functions_inlined = true;
 
   if (cfun->eh)
+    {
+      if (flag_use_rtl_backend == 0)
+        {
+          tree stmts = DECL_SAVED_TREE (current_function_decl);
+          for (tsi = tsi_start (stmts); !tsi_end_p (tsi); tsi_next (&tsi))
+            {
+	      tree stmt = tsi_stmt (tsi);
+              tree call = get_call_expr_in (stmt);
+              tree decl = call ? get_callee_fndecl (call) : NULL;
+              
+              if (decl && call_expr_flags (call) & (ECF_CONST | ECF_PURE)
+                  && TREE_SIDE_EFFECTS (call))
+	        {
+                  if (gimple_in_ssa_p (cfun))
+                    {
+                      todo |= TODO_update_ssa | TODO_cleanup_cfg;
+                      update_stmt (stmt);
+                    }
+                  TREE_SIDE_EFFECTS (call) = 0;
+                }
+              if (decl && TREE_NOTHROW (decl))
+                TREE_NOTHROW (call) = 1;
+              if (!tree_could_throw_p (stmt) && lookup_stmt_eh_region (stmt))
+	       remove_stmt_from_eh_region (stmt);
+            }
+          /*if (tree_purge_dead_eh_edges (bb))
+            todo |= TODO_cleanup_cfg;*/
+        }
+    }
+  else
+    {
     FOR_EACH_BB (bb)
       {
 	for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
@@ -426,6 +458,7 @@ execute_fixup_cfg (void)
 	if (gimple_purge_dead_eh_edges (bb))
           todo |= TODO_cleanup_cfg;
       }
+    }
 
   /* Dump a textual representation of the flowgraph.  */
   if (dump_file)

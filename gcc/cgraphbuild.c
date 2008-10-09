@@ -33,6 +33,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "gimple.h"
 #include "tree-pass.h"
+#include "flags.h"
 
 /* Walk tree and record all calls and references to functions/variables.
    Called via walk_tree: TP is pointer to tree to be examined.  */
@@ -137,24 +138,27 @@ build_cgraph_edges (void)
   tree step;
 
   if (flag_use_rtl_backend == 0)
-    for (tsi = tsi_start (DECL_SAVED_TREE (body)); !tsi_end_p (tsi); tsi_next (&tsi))
-      {
-	tree stmt = tsi_stmt (tsi);
-	tree call = get_call_expr_in (stmt);
-	tree decl;
-
-	if (call && (decl = get_callee_fndecl (call)))
-	  {
-	    cgraph_create_edge (node, cgraph_node (decl), stmt, 0, 0);
-	    walk_tree (&TREE_OPERAND (call, 1),
-		       record_reference, node, visited_nodes);
-	    if (TREE_CODE (stmt) == MODIFY_EXPR)
-	      walk_tree (&TREE_OPERAND (stmt, 0),
-			 record_reference, node, visited_nodes);
-	  }
-	else
-	  walk_tree (tsi_stmt_ptr (tsi), record_reference, node, visited_nodes);
-      }
+    {
+      tree stmts = DECL_SAVED_TREE (current_function_decl);
+      for (tsi = tsi_start (stmts); !tsi_end_p (tsi); tsi_next (&tsi))
+        {
+	  tree stmt = tsi_stmt (tsi);
+          tree call = get_call_expr_in (stmt);
+          tree decl;
+          
+          if (call && (decl = get_callee_fndecl (call)))
+	    {
+	      cgraph_create_edge (node, cgraph_node (decl), stmt, 0, 0, 0);
+              walk_tree (&TREE_OPERAND (call, 1),
+                         record_reference, node, visited_nodes);
+              if (TREE_CODE (stmt) == MODIFY_EXPR)
+                  walk_tree (&TREE_OPERAND (stmt, 0),
+                             record_reference, node, visited_nodes);
+            }
+          else
+            walk_tree (tsi_stmt_ptr (tsi), record_reference, node, visited_nodes);
+        }
+    }
   else
   /* Create the callgraph edges and record the nodes referenced by the function.
      body.  */

@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #ifndef _TREE_FLOW_INLINE_H
 #define _TREE_FLOW_INLINE_H 1
 
@@ -286,6 +288,22 @@ get_lineno (const_gimple stmt)
     return -1;
 
   return LOCATION_LINE (loc);
+}
+
+static inline const char *
+get_filename (tree expr)
+{
+  const char *filename;
+  if (expr == NULL_TREE)
+    return "???";
+
+  if (TREE_CODE (expr) == COMPOUND_EXPR)
+    expr = TREE_OPERAND (expr, 0);
+
+  if (EXPR_HAS_LOCATION (expr) && (filename = EXPR_FILENAME (expr)))
+    return filename;
+  else
+    return "???";
 }
 
 /* Delink an immediate_uses node from its chain.  */

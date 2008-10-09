@@ -54,6 +54,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "gimple.h"
 #include "tree-ir.h"
+#include "tree-iterator.h"
 
 extern cpp_reader *parse_in;
 
@@ -4005,9 +4006,9 @@ build_cxx_tp_init_function (tree decl, tree init, bool initp)
   TREE_USED (t) = 1;
   DECL_ARGUMENTS (fn_decl) = t;
 
-  allocate_struct_function ( fn_decl);
+  allocate_struct_function (fn_decl, false);
 
-  TREE_STATIC (fn_decl) = 1;_decl) = 1;
+  TREE_STATIC (fn_decl) = 1;
   TREE_USED (fn_decl) = 1;
   DECL_ARTIFICIAL (fn_decl) = 1;
   DECL_IGNORED_P (fn_decl) = 1;
