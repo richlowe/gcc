@@ -17,6 +17,8 @@ License along with libiberty; see the file COPYING.LIB.  If not,
 write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -115,14 +117,16 @@ choose_tmpdir (void)
       base = try_dir (getenv ("TMP"), base);
       base = try_dir (getenv ("TEMP"), base);
       
+      /* First try /tmp */
+      base = try_dir (tmp, base);
+
 #ifdef P_tmpdir
       base = try_dir (P_tmpdir, base);
 #endif
 
-      /* Try /var/tmp, /usr/tmp, then /tmp.  */
+      /* Try /var/tmp, /usr/tmp.  */
       base = try_dir (vartmp, base);
       base = try_dir (usrtmp, base);
-      base = try_dir (tmp, base);
       
       /* If all else fails, use the current directory!  */
       if (base == 0)
@@ -156,6 +160,26 @@ choose_tmpdir (void)
     }
 
   return memoized_tmpdir;
+=======
+  /* Try /var/tmp, /usr/tmp.  */
+  base = try_dir (vartmp, base);
+  base = try_dir (usrtmp, base);
+ 
+  /* If all else fails, use the current directory!  */
+  if (base == 0)
+    base = ".";
+
+  /* Append DIR_SEPARATOR to the directory we've chosen
+     and return it.  */
+  len = strlen (base);
+  tmpdir = XNEWVEC (char, len + 2);
+  strcpy (tmpdir, base);
+  tmpdir[len] = DIR_SEPARATOR;
+  tmpdir[len+1] = '\0';
+
+  memoized_tmpdir = tmpdir;
+  return tmpdir;
+>>>>>>> Fix option processing that was causing garbage to be passed to cc1. Remove code for non -ftree-ir-eh, as it is supported by default. Prefer /tmp over /var/tmp for compiler temp files. Handle updated CALL_EXPR:libiberty/make-temp-file.c
 }
 
 /*
