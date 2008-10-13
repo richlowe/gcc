@@ -357,6 +357,7 @@ conv_treecode2ir (tree node)
     case RSHIFT_EXPR:
       return IR_RSHIFT;
 
+    case POINTER_PLUS_EXPR:
     case PLUS_EXPR:
       return IR_PLUS;
 
@@ -3775,6 +3776,8 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
       break;
 
       /* binary arithmetic and logic expressions.  */
+    case POINTER_PLUS_EXPR:
+    
     case MULT_EXPR:
     case PLUS_EXPR:
     case MINUS_EXPR:
