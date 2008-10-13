@@ -469,4 +469,5 @@ extern tree add_builtin_function (const char *name, tree type,
 				  const char *library_name,
 				  tree attrs);
 
+extern int lhd_tree_inlining_anon_aggr_type_p (tree);
 #endif /* GCC_LANG_HOOKS_H */

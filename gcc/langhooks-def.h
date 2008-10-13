@@ -147,7 +147,8 @@ extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
   lhd_tree_inlining_anon_aggr_type_p
 #define LANG_HOOKS_TREE_INLINING_INITIALIZER { \
   LANG_HOOKS_TREE_INLINING_VAR_MOD_TYPE_P, \
-}
+  LANG_HOOKS_TREE_INLINING_ANON_AGGR_TYPE_P, \
+ }
 
 #define LANG_HOOKS_CALLGRAPH_ANALYZE_EXPR lhd_callgraph_analyze_expr
 #define LANG_HOOKS_CALLGRAPH_EMIT_ASSOCIATED_THUNKS NULL
