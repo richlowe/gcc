@@ -5512,12 +5512,19 @@ dump_ir_modify (tree stmt)
   IR_NODE * ret = 0, * ir_op0 = 0, * ir_op1 = 0;
   tree op0, op1;
   int is_indirect = 0;
- 
-  if (TREE_CODE (stmt) != MODIFY_EXPR) abort ();
 
-  op0 = TREE_OPERAND (stmt, 0); /* left */
-
-  op1 = TREE_OPERAND (stmt, 1); /* right */
+  if (TREE_CODE (stmt) == MODIFY_EXPR)
+    {
+      op0 = TREE_OPERAND (stmt, 0); /* left */
+      op1 = TREE_OPERAND (stmt, 1); /* right */
+    }
+  else if (TREE_CODE (stmt) == GIMPLE_MODIFY_STMT)
+    {
+      op0 = GIMPLE_STMT_OPERAND (stmt, 0); /* left */
+      op1 = GIMPLE_STMT_OPERAND (stmt, 1); /* right */
+    }
+  else
+    abort();
   
   if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
       && TREE_CODE (TREE_OPERAND (op1, 0)) == ADDR_EXPR)
@@ -7689,6 +7696,7 @@ dump_ir_stmt (tree stmt)
       dump_ir_call (stmt, 0/* procedure call*/);
       break;
     case MODIFY_EXPR:
+    case GIMPLE_MODIFY_STMT:
       dump_ir_modify (stmt);
       break;
     case RETURN_EXPR:
@@ -7699,14 +7707,25 @@ dump_ir_stmt (tree stmt)
 
         if (op0) 
           {
-            if (TREE_CODE (op0) == MODIFY_EXPR)
+            if (TREE_CODE (op0) == MODIFY_EXPR || TREE_CODE (op0) == GIMPLE_MODIFY_STMT)
               {
-                /* case of 'return_expr (result_decl = var_decl)' */
-                if (TREE_CODE (TREE_OPERAND (op0, 0)) == RESULT_DECL
-                    && !TREE_USED (TREE_OPERAND (op0, 0))
-                    && TREE_CODE (TREE_OPERAND (op0, 1)) == VAR_DECL)
+                tree left, right;
+                if (TREE_CODE (op0) == MODIFY_EXPR)
                   {
-                    IR_NODE * ret = dump_ir_expr (TREE_OPERAND (op0, 1), MAP_FOR_VALUE);
+                    left = TREE_OPERAND (op0, 0); /* left */
+                    right = TREE_OPERAND (op0, 1); /* left */
+                  }
+                else if (TREE_CODE (op0) == GIMPLE_MODIFY_STMT)
+                  {
+                    left = GIMPLE_STMT_OPERAND (op0, 0); /* left */
+                    right = GIMPLE_STMT_OPERAND (op0, 1); /* right */
+                  }
+                /* case of 'return_expr (result_decl = var_decl)' */
+                if (TREE_CODE (left) == RESULT_DECL
+                    && !TREE_USED (left)
+                    && TREE_CODE (right) == VAR_DECL)
+                  {
+                    IR_NODE * ret = dump_ir_expr (right, MAP_FOR_VALUE);
                     gcc_assert (ret->operand.tag == ISLEAF);
                     if (ret->leaf.type.tword == func_ret_leaf->leaf.type.tword
                         && ret->leaf.typep == func_ret_leaf->leaf.typep)
@@ -7716,7 +7735,7 @@ dump_ir_stmt (tree stmt)
                         /* cleanup: now it's done in adjust_leaf_overlaps()
                            ret->leaf.elvarno = func_ret_leaf->leaf.elvarno; */
                         func_ret_leaf = ret;
-                        TREE_USED (TREE_OPERAND (op0, 0)) = 1;
+                        TREE_USED (left) = 1;
                       }
                     else
                       dump_ir_modify (op0);
