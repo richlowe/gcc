@@ -246,7 +246,7 @@ struct eh_status GTY(())
   varray_type ehspec_data;
   varray_type action_record_data;
 
-  /* When flag_tree_ir_eh_supported is 1, generate one IR leaf node for every element
+  /* Generate one IR leaf node for every element
      in ttype_data, ehspec_data, and action_record_data. */
   varray_type GTY ((skip)) ttype_leaf_array;  
   varray_type GTY ((skip)) ehspec_leaf_array;
@@ -374,8 +374,6 @@ init_eh (void)
     {
       tree f_jbuf, f_per, f_lsda, f_prev, f_cs, f_data, tmp;
 
-      gcc_assert (!flag_tree_ir_eh_supported);  /* not for SJLJ */
-      
       sjlj_fc_type_node = lang_hooks.types.make_type (RECORD_TYPE);
 
       f_prev = build_decl (FIELD_DECL, get_identifier ("__prev"),
@@ -789,11 +787,7 @@ get_ir_eh_type_leaf (int filter)
 static IR_NODE*
 build_ir_eh_type_index (int filter)
 {
-  if (!flag_tree_ir_eh_supported) 
-    return build_ir_int_const (filter, inttype, 0);
-  else
-    {
-      /* __builtin_EH_table_index(the_EH_type_leaf) */
+    /* __builtin_EH_table_index(the_EH_type_leaf) */
       IR_NODE *fp, *eh_leaf, *call_node, *argp;
       /* IR_TYPE_NODE *string_ir_type = map_gnu_type_to_IR_TYPE_NODE 
                                             (char_type_node); */
@@ -819,7 +813,6 @@ build_ir_eh_type_index (int filter)
                                    fn_type, fn_ir_type);
       argp->triple.right = call_node;
       return call_node;
-    }
 }
 
 static void
@@ -1022,7 +1015,7 @@ generate_cfun_eh_filters (void)
   /* prepare hash table to generate action for each PBRANCH */
   VARRAY_UCHAR_INIT (cfun->eh->action_record_data, 64, "action_record_data");
   gcc2ir_ar_hash = htab_create (31, action_record_hash, action_record_eq, free);
-  if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+  if (!flag_use_rtl_backend)
     {
       VARRAY_GENERIC_PTR_INIT (ACTION_LEAF_ARRAY, 64, "ACTION_LEAF_ARRAY");
       /* ACTION_LEAF_ARRAY[0] is not used, 
@@ -1747,7 +1740,7 @@ add_ttypes_entry (htab_t ttypes_hash, tree type)
       *slot = n;
 
       VEC_safe_push (tree, gc, cfun->eh->ttype_data, type);
-      if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+      if (!flag_use_rtl_backend)
       {
         ir_eh_node_hdl_t eh_node = NULL;
         if (type == NULL_TREE)
@@ -1816,7 +1809,7 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
 
   if ((n = *slot) == NULL)
     {
-      /* when flag_tree_ir_eh_supported keep a list of IR_NODE */
+      /* keep a list of IR_NODE */
       ir_eh_node_hdl_t estl_list = NULL;
       
       /* Filter value is a -1 based byte index into a uleb128 buffer.  */
@@ -1831,7 +1824,6 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
 	{
 	  if (targetm.arm_eabi_unwinder)
             {
-              gcc_assert (!flag_tree_ir_eh_supported);
 	      VARRAY_PUSH_TREE (cfun->eh->ehspec_data, TREE_VALUE (list));
             }
 	  else
@@ -1840,7 +1832,7 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
 		 value as a uleb128.  */
                 int ttypes_entry_index = add_ttypes_entry (ttypes_hash, 
                                                          TREE_VALUE (list));
-              if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+              if (!flag_use_rtl_backend)
                 {
                     /* ttypes_entry_index starts from 1 */
                     ir_eh_node_hdl_t eh_node =
@@ -1852,7 +1844,7 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
     	      push_uleb128 (&cfun->eh->ehspec_data, ttypes_entry_index);
 	    }
 	}
-      if (flag_tree_ir_eh_supported && !flag_use_rtl_backend 
+      if (!flag_use_rtl_backend 
           && !targetm.arm_eabi_unwinder)
         {
           int estl_num = -(n->filter);
@@ -1893,7 +1885,7 @@ assign_filter_values (void)
   ttypes = htab_create (31, ttypes_filter_hash, ttypes_filter_eq, free);
   ehspec = htab_create (31, ehspec_filter_hash, ehspec_filter_eq, free);
 
-  if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+  if (!flag_use_rtl_backend)
     {
       /* TTYPE_LEAF_ARRAY[0] is not used, all type table index are positive */
       VARRAY_GENERIC_PTR_INIT (TTYPE_LEAF_ARRAY, 16, "TTYPE_LEAF_ARRAY");
@@ -3698,7 +3690,7 @@ add_action_record (htab_t ar_hash, int filter, int next)
 	next -= VARRAY_ACTIVE_SIZE (cfun->eh->action_record_data) + 1;
       push_sleb128 (&cfun->eh->action_record_data, next);
       
-      if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+      if (!flag_use_rtl_backend)
         {
           ir_eh_node_hdl_t type_list = NULL, eh_node;
           int k = new->offset - VARRAY_ACTIVE_SIZE (ACTION_LEAF_ARRAY);
@@ -4311,7 +4303,7 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   if (eh_personality_libfunc)
     assemble_external_libcall (eh_personality_libfunc);
 
-  if (flag_tree_ir_eh_supported && !flag_use_rtl_backend)
+  if (!flag_use_rtl_backend)
     return; /* EH leaves are generated when PBRANCH are created. */
 
   if (!flag_use_rtl_backend)

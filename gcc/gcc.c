@@ -1606,9 +1606,9 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i} \n\
 		    cc1 -fpreprocessed %{save-temps:%b.i} %{!save-temps:%g.i} \
-			%(cc1_options) %(cc1_unique_options)}}\
+			%(cc1_options) %(cc1_unique_options)}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options)  %(cc1_unique_options)}}}\
+		cc1 %(cpp_unique_options) %(cc1_options) %(cc1_unique_options)}}}\
           %{!fsyntax-only: \
              %{frtl-backend: %(invoke_as) ; \
                : %(invoke_iropt) %(ssiropt_spec) %Q \
@@ -1623,7 +1623,7 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i}}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options)  %(cc1_unique_options)}}\
+		cc1 %(cpp_unique_options) %(cc1_options) %(cc1_unique_options)}}\
                 %{!fsyntax-only:\
                    %{frtl-backend: %(invoke_as) ;\
                      : %(invoke_iropt) %(ssiropt_spec) %Q \
@@ -1911,7 +1911,7 @@ translate_options (int *argcp, const char *const **argvp)
   int newindex = 0;
 
   i = 0;
-  newv[newindex++] = argv[i++];
+  newv[newindex++] = argv[i];
   argv[i] = xstrdup("-mcpu=v9"); /* the default */
   newv[newindex++] = xstrdup("-Zsunir-backend"); /* the default */
 
@@ -4925,7 +4925,7 @@ execute (void)
 	      fatal_ice ("\
 Internal error: %s (program %s)\n\
 Please submit a full bug report to\n\
-%s",
+%s.",
 		 	strsignal (WTERMSIG (status)), commands[i].prog,
 		 	bug_report_url);
 	  }
@@ -5752,14 +5752,7 @@ process_command (int argc, const char **argv)
       add_prefix (&exec_prefixes, studioproddir_bin, "GCC",
                     PREFIX_PRIORITY_LAST, 0, 0);
 
-      /* if g++ EH inlining is supported by the backend
-         enable EH table generation in SunIR instead of side-door file 
-         in front-end and pass extra flag to iropt to turn it on there */
-      if (stat (concat (studioproddir_lib, "/gxx_eh_supported", NULL), &statbuf) >= 0)
-        {
-          add_frontend_option ("-ftree-ir-eh", sizeof ("-ftree-ir-eh"));
-          add_iropt_option ("-h_gen_eh_table", sizeof ("-h_gen_eh_table"));
-        }
+      add_iropt_option ("-h_gen_eh_table", sizeof ("-h_gen_eh_table"));
 #ifdef CROSS_COMPILE
       if (!getenv ("LD_ALTEXEC"))
       {
@@ -7083,6 +7076,15 @@ end_going_arg (void)
       string = XOBFINISH (&obstack, const char *);
       if (this_is_library_file)
 	string = find_file (string);
+      else if (suffix_add) {
+          if (debug_driver_val & 0x40)
+              fprintf(stdout,"ADD_SUFFIX_1: string=%s,suffix=%s\n",
+                      string,suffix_add);
+          string = concat(string,suffix_add, NULL);
+          if (debug_driver_val & 0x40)
+              fprintf(stdout,"ADD_SUFFIX_1: string=%s\n",string);
+          suffix_add = NULL;
+      }
       else if (this_is_executable_file)
 	string = find_executable_file (string);
       store_arg (string, delete_this_arg, this_is_output_file);
@@ -7353,28 +7355,8 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 
       case '\t':
       case ' ':
-        if (arg_going)
-	  {
-	    obstack_1grow (&obstack, 0);
-	    const char *string = XOBFINISH (&obstack, const char *);
-	    if (this_is_library_file)
-	      string = find_file (string);
-            else if (suffix_add) {
-              if (debug_driver_val & 0x40)
-                fprintf(stdout,"ADD_SUFFIX_1: string=%s,suffix=%s\n",
-                        string,suffix_add);
-              string = concat(string,suffix_add, NULL);
-              if (debug_driver_val & 0x40)
-                fprintf(stdout,"ADD_SUFFIX_1: string=%s\n",string);
-              suffix_add = NULL;
-            }
-            else if (this_is_executable_file)
-              string = find_executable_file (string);
-	    store_arg (string, delete_this_arg, this_is_output_file);
-	    if (this_is_output_file)
-	      outfiles[input_file_number] = string;
-	  }
-
+        end_going_arg ();
+          
 	/* Reinitialize for a new argument.  */
 	delete_this_arg = 0;
 	this_is_output_file = 0;

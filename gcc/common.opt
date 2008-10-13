@@ -1170,10 +1170,6 @@ ftree-ir-verbose=
 Common RejectNegative Joined
 -ftree-ir-verbose=<number>	Set the verbosity level of the IR generator
 
-ftree-ir-eh
-Common Report Var(flag_tree_ir_eh_supported) Init(0)
-Emit EH table in IR instead of side-door file
-
 funit-at-a-time
 Common Report Var(flag_unit_at_a_time) Optimization
 Compile whole compilation unit at a time

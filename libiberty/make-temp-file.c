@@ -107,14 +107,16 @@ choose_tmpdir (void)
   base = try_dir (getenv ("TMP"), base);
   base = try_dir (getenv ("TEMP"), base);
 
+  /* First try /tmp */
+
+  base = try_dir (tmp, base);
 #ifdef P_tmpdir
   base = try_dir (P_tmpdir, base);
 #endif
 
-  /* Try /var/tmp, /usr/tmp, then /tmp.  */
+  /* Try /var/tmp, /usr/tmp.  */
   base = try_dir (vartmp, base);
   base = try_dir (usrtmp, base);
-  base = try_dir (tmp, base);
  
   /* If all else fails, use the current directory!  */
   if (base == 0)

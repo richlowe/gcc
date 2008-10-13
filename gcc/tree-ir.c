@@ -5086,17 +5086,9 @@ ir_pbranch (int action_num, int eh_landing_label, int fall_through_label)
 	}
     }
 
-  if (!flag_tree_ir_eh_supported)
-    {
-      char buf[sizeof (int)*3+2];
-      sprintf (buf,"%d",(int)action_num);
-      action = build_ir_string_const (buf);
-    }
-  else
-    {
-      /* generate new __EH_LFi node */
-      action = (IR_NODE*) build_eh_leaf (action_num);
-    }
+  /* generate new __EH_LFi node */
+  action = (IR_NODE*) build_eh_leaf (action_num);
+
   if (eh_landing_label != fall_through_label && eh_landing_label != 0)
     {
       lab1 = build_ir_labelref (eh_landing_label, 1);
@@ -5193,8 +5185,8 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
 
   fncalltype = map_gnu_type_to_TYPE (TREE_TYPE (stmt));
 
-  op0 = TREE_OPERAND (stmt, 0); /* callee: function name or register */
-  op2 = TREE_OPERAND (stmt, 2); /* chain reg. if not zero it's a call to nested function */
+  op0 = CALL_EXPR_FN (stmt); /* The call expression */
+  op2 = CALL_EXPR_STATIC_CHAIN (stmt); /* chain reg. if not zero it's a call to nested function */
  
   /* look for list of arg types. 
      triple.param_info field is used in v9 to correctly pass floating point types,
@@ -5212,8 +5204,6 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
 
   ir_dest = dump_ir_expr (op0, MAP_FOR_VALUE);
 
-  op1 = TREE_OPERAND (stmt, 1); /* list of arguments */
-  
   if (!for_value && CALL_EXPR_RETURN_SLOT_OPT (stmt) && return_slot)
     {
       tree return_slot_addr;
@@ -5264,6 +5254,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
       is_fake_call = 0;
     }
 
+  op1 = CALL_EXPR_ARGS (stmt);
   for (; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
     {
       ir_argp = dump_ir_genargs (TREE_VALUE (op1));
@@ -8488,10 +8479,7 @@ dump_function_ir (tree fn)
 
   /* IR optimizer does not have enough EH information to 
      inline C++ functions with eh regions. */
-  /* However, when flag_tree_ir_eh_supported is 1, let IR optimizer decide
-     whether a function should be inlined or not. */
   if (lookup_attribute ("noinline", DECL_ATTRIBUTES (fn))
-      || (!flag_tree_ir_eh_supported && has_eh_region(cfun->eh))
       || strcmp (func_name, "__init_task_common") == 0) /* Fix 6588138 */
     ir_proc_set_inline_control (irProc, DO_NOT_INLINE_CALL);
   else if (DECL_DECLARED_INLINE_P (fn)
