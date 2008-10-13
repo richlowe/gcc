@@ -5,5 +5,5 @@ $(T)crtfastmath.o: $(srcdir)/config/sparc/crtfastmath.c $(GCC_PASSES)
 
 $(T)gccbuiltins.il: $(srcdir)/config/sparc/gccbuiltins.il $(srcdir)/config/sparc/gccbuiltins-m64.il specs
 	$(INSTALL_DATA) $(srcdir)/config/sparc/gccbuiltins.il gccbuiltins.il
-	mkdir sparcv9
+	if [ ! -d sparcv9 ];then mkdir sparcv9;fi 
 	$(INSTALL_DATA) $(srcdir)/config/sparc/gccbuiltins-m64.il sparcv9/gccbuiltins.il

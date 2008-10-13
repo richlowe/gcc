@@ -2020,6 +2020,7 @@ ir_dump_vis (tree stmt, tree op0, tree op1)
   
   switch (TREE_CODE (stmt))
     {
+    case POINTER_PLUS_EXPR:
     case PLUS_EXPR: strcat (buf, "padd"); need_size = 1; break;
     case MINUS_EXPR: strcat (buf, "psub"); need_size = 1; break;
     case BIT_AND_EXPR:
@@ -3780,6 +3781,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
     
     case MULT_EXPR:
     case PLUS_EXPR:
+    case POINTER_PLUS_EXPR:
     case MINUS_EXPR:
       
     case RDIV_EXPR: /* div for float types */
@@ -3812,7 +3814,10 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 	/* temporary vars for R|LROTATE_EXPR */
 	IR_NODE * ir_cmp = 0, * ir_modesize = 0, * ir_ret0 = 0, * ir_ret1 = 0;
 	int rrotate=0;
-        
+
+        if (TREE_CODE (stmt) == POINTER_PLUS_EXPR)
+	  gcc_assert (TREE_CODE (TREE_TYPE (op0)) == POINTER_TYPE && TREE_CODE (TREE_TYPE (op1)) == INTEGER_TYPE);
+
         if (TREE_CODE (TREE_TYPE (stmt)) == VECTOR_TYPE)
           return ir_dump_vis (stmt, op0, op1);
 
