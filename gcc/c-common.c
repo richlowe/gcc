@@ -2978,12 +2978,14 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
   /* Replace the integer argument with a suitable product by the object size.
      Do this multiplication as signed, then convert to the appropriate
      type for the pointer operation.  */
-  /*intop = convert (sizetype,
+  intop = convert (sizetype,
 		   build_binary_op (MULT_EXPR, intop,
-				    convert (TREE_TYPE (intop), size_exp), 1));*/
+				    convert (TREE_TYPE (intop), size_exp), 1));
 				    
+  /* NEW: have to convert to ptr type (UNSIGNED INT). */
   /* do not convert to ptr type. ptr + int = ptr in SunIR */
-  intop = build_binary_op (MULT_EXPR, intop, convert (TREE_TYPE (intop), size_exp), 1);
+  //intop = build_binary_op (MULT_EXPR, intop, convert (TREE_TYPE (intop), size_exp), 1);
+
   /* Create the sum or difference.  */
   if (resultcode == MINUS_EXPR)
     intop = fold_build1 (NEGATE_EXPR, sizetype, intop);
