@@ -3391,6 +3391,8 @@ optimize_inline_calls (tree fn)
      not possible yet - the IPA passes might make various functions to not
      throw and they don't care to proactively update local EH info.  This is
      done later in fixup_cfg pass that also execute the verification.  */
+  if (flag_use_rtl_backend == 0)
+    return 1; /* don't fixup cfg. */ 
   return (TODO_update_ssa | TODO_cleanup_cfg
 	  | (gimple_in_ssa_p (cfun) ? TODO_remove_unused_locals : 0)
 	  | (profile_status != PROFILE_ABSENT ? TODO_rebuild_frequencies : 0));
