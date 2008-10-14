@@ -4620,12 +4620,16 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
       ret = dump_string_cst (stmt, map_for);
       break;
     case CALL_EXPR:
-      if (TREE_CODE (TREE_OPERAND (stmt, 0)) == ADDR_EXPR
+      /* if (TREE_CODE (TREE_OPERAND (stmt, 0)) == ADDR_EXPR
           && (TREE_CODE (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))
               == FUNCTION_DECL)
-          && DECL_BUILT_IN (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0)))
+          && DECL_BUILT_IN (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))) */ 
+      if (TREE_CODE (CALL_EXPR_FN (stmt)) == ADDR_EXPR
+          && (TREE_CODE (TREE_OPERAND (CALL_EXPR_FN (stmt), 0))
+              == FUNCTION_DECL)
+          && DECL_BUILT_IN (TREE_OPERAND (CALL_EXPR_FN (stmt), 0)))
         {       
-          if (DECL_BUILT_IN_CLASS (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))
+          if (DECL_BUILT_IN_CLASS (TREE_OPERAND (CALL_EXPR_FN (stmt), 0))
               == BUILT_IN_FRONTEND)
             abort ();
           else
@@ -5533,7 +5537,7 @@ dump_ir_modify (tree stmt)
     abort();
   
   if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
-      && TREE_CODE (TREE_OPERAND (op1, 0)) == ADDR_EXPR)
+      && TREE_CODE (CALL_EXPR_FN (op1)) == ADDR_EXPR)
     {
       tree fndecl = get_callee_fndecl (op1);
       if (fndecl && DECL_RESULT (fndecl)
@@ -5995,24 +5999,22 @@ dump_ir_builtin_next_arg (void)
 /* Expand ARGLIST, from a call to __builtin_va_start.  */
 
 static void
-dump_ir_builtin_va_start (tree arglist)
+dump_ir_builtin_va_start (tree exp)
 {
   tree nextarg;
-  tree chain, valist, t;
+  tree valist, t;
 
-  chain = TREE_CHAIN (arglist);
-
-  if (!chain)
+  if (call_expr_nargs (exp) < 2)
     {
       error ("too few arguments to function %<va_start%>");
       return;
     }
 
-  if (fold_builtin_next_arg (chain, true))
+  if (fold_builtin_next_arg (exp, true))
     return;
 
   nextarg = dump_ir_builtin_next_arg ();
-  valist = stabilize_va_list (TREE_VALUE (arglist), 1);
+  valist = stabilize_va_list (CALL_EXPR_ARG (exp, 0), 1);
 
   t = build2 (MODIFY_EXPR, TREE_TYPE (valist), valist, nextarg);
   TREE_SIDE_EFFECTS (t) = 1;
@@ -6985,7 +6987,7 @@ static IR_NODE *
 dump_ir_builtin_call (tree stmt, int need_return)
 {
   tree fndecl = get_callee_fndecl (stmt);
-  tree arglist = TREE_OPERAND (stmt, 1);
+  tree arglist = CALL_EXPR_ARGS (stmt);
   enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
   IR_NODE * ret = 0;
 
@@ -7034,7 +7036,7 @@ dump_ir_builtin_call (tree stmt, int need_return)
       break;
     case BUILT_IN_VA_START:
     case BUILT_IN_STDARG_START:
-      dump_ir_builtin_va_start (arglist);
+      dump_ir_builtin_va_start (stmt);
       break;
     case BUILT_IN_VA_END:
       dump_ir_builtin_va_end (arglist);
@@ -7686,12 +7688,16 @@ dump_ir_stmt (tree stmt)
   switch (TREE_CODE (stmt))
     {
     case CALL_EXPR:
-      if (TREE_CODE (TREE_OPERAND (stmt, 0)) == ADDR_EXPR
+      /* if (TREE_CODE (TREE_OPERAND (stmt, 0)) == ADDR_EXPR
           && (TREE_CODE (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))
               == FUNCTION_DECL)
-          && DECL_BUILT_IN (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0)))
+          && DECL_BUILT_IN (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))) */ 
+      if (TREE_CODE (CALL_EXPR_FN (stmt)) == ADDR_EXPR
+          && (TREE_CODE (TREE_OPERAND (CALL_EXPR_FN (stmt), 0))
+              == FUNCTION_DECL)
+          && DECL_BUILT_IN (TREE_OPERAND (CALL_EXPR_FN (stmt), 0)))
         {       
-          if (DECL_BUILT_IN_CLASS (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))
+          if (DECL_BUILT_IN_CLASS (TREE_OPERAND (CALL_EXPR_FN (stmt), 0))
               == BUILT_IN_FRONTEND)
             abort ();
           else
