@@ -565,7 +565,7 @@ init_optimization_passes (void)
   NEXT_PASS (pass_all_passes_rtl);
   NEXT_PASS (pass_rest_of_genir);  /* generate LSDA and global variables */
   NEXT_PASS (pass_rest_of_compilation);
-  NEXT_PASS (pass_clean_state);
+  //NEXT_PASS (pass_clean_state);
   *p = NULL;
   
   p = &pass_all_passes_rtl.sub;
@@ -738,9 +738,12 @@ init_optimization_passes (void)
   NEXT_PASS (pass_mudflap_2);
   NEXT_PASS (pass_free_cfg_annotations);
   NEXT_PASS (pass_expand);
-  NEXT_PASS (pass_rest_of_compilation);
+  *p = NULL;
+
+  //NEXT_PASS (pass_rest_of_compilation);
+  p = &pass_rest_of_compilation.sub;
     {
-      struct tree_opt_pass **p = &pass_rest_of_compilation.sub;
+      //struct tree_opt_pass **p = &pass_rest_of_compilation.sub;
       NEXT_PASS (pass_init_function);
       NEXT_PASS (pass_jump);
       NEXT_PASS (pass_rtl_eh);
