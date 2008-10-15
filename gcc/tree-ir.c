@@ -6919,7 +6919,7 @@ static IR_NODE *
 dump_ir_builtin_int_roundingfn (tree stmt, int need_return)
 {
   tree fndecl = get_callee_fndecl (stmt);
-  tree arglist = TREE_OPERAND (stmt, 1);
+  tree arglist = CALL_EXPR_ARGS (stmt);
   enum built_in_function fallback_fn;
   tree fallback_fndecl;
   tree arg, exp;
@@ -7357,7 +7357,7 @@ dump_ir_builtin_call (tree stmt, int need_return)
       {
 	tree val;
 
-	val = fold_builtin_constant_p (arglist);
+	val = fold_builtin_constant_p (TREE_VALUE (arglist));
 	/* Gimplification will pull the CALL_EXPR for the builtin out of
 	   an if condition.  When not optimizing, we'll not CSE it back.
 	   To avoid link error types of regressions, return false now.  */
