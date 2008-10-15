@@ -131,11 +131,15 @@ build_cgraph_edges (void)
           
           if (call && (decl = get_callee_fndecl (call)))
 	    {
+	      int i;
+              int n = call_expr_nargs (call);
 	      cgraph_create_edge (node, cgraph_node (decl), stmt, 0, 0, 0);
-              walk_tree (&TREE_OPERAND (call, 1),
-                         record_reference, node, visited_nodes);
-              if (TREE_CODE (stmt) == MODIFY_EXPR)
-                  walk_tree (&TREE_OPERAND (stmt, 0),
+
+              for (i = 0; i < n; i++)
+                  walk_tree (&CALL_EXPR_ARG (call, i),
+                             record_reference, node, visited_nodes);
+              if (TREE_CODE (stmt) == GIMPLE_MODIFY_STMT)
+                  walk_tree (&GIMPLE_STMT_OPERAND (stmt, 0),
                              record_reference, node, visited_nodes);
             }
           else

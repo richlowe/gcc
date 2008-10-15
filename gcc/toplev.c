@@ -1793,10 +1793,6 @@ process_options (void)
   if (flag_asynchronous_unwind_tables)
     flag_unwind_tables = 1;
 
-  /* tree2ir never wants pass_build_cfg. so set flag_unit_at_a_time to 0. */
-  if (flag_use_rtl_backend == 0)
-    flag_unit_at_a_time = 0;
-
   if (!flag_unit_at_a_time)
     flag_section_anchors = 0;
 
