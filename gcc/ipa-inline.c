@@ -1608,6 +1608,8 @@ apply_inline (void)
 	if (e->callee->analyzed)
           cgraph_mark_needed_node (e->callee);
     }
+  if (flag_use_rtl_backend == 0)
+    return 1; /* don't fixup cfg. */
   return todo | execute_fixup_cfg ();
 }
 
