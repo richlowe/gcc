@@ -1594,7 +1594,7 @@ apply_inline (void)
   for (e = node->callees; e; e = e->next_callee)
     if (!e->inline_failed || warn_inline)
       break;
-  if (flag_use_rtl_backend == 0 || e)
+  if (e)
     {
       timevar_push (TV_INTEGRATION);
       todo = optimize_inline_calls (current_function_decl);
