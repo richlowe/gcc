@@ -1749,6 +1749,16 @@ inline_transform (struct cgraph_node *node)
       todo = optimize_inline_calls (current_function_decl);
       timevar_pop (TV_INTEGRATION);
     }
+  /* In non-unit-at-a-time we must mark all referenced functions as needed.  */
+  if (!flag_unit_at_a_time)
+    {
+      struct cgraph_edge *e;
+      for (e = node->callees; e; e = e->next_callee)
+	if (e->callee->analyzed)
+          cgraph_mark_needed_node (e->callee);
+    }
+  if (flag_use_rtl_backend == 0)
+    return 1; /* don't fixup cfg. */
   return todo | execute_fixup_cfg ();
 }
 
