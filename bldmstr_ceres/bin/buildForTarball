@@ -1,0 +1,70 @@
+#/bin/ksh
+
+trap 'echo ERROR; exit 1' ERR
+
+function usage {
+	echo "Usage: $0 <baseinstalldir> <nightly_build_dir>"
+	echo "where <nightly_build_dir> is something like 20050828_gcc2ir"
+	echo "and <baseinstalldir> is something like /opt or /pkg/isv/packages/sgcc"
+	exit 1
+}
+
+if [ $# -ne 2 ]
+then
+	usage
+fi
+
+INSTALLDIR=$1
+NIGHTLYNAME=$2
+
+# All scripts are run from the same directory as this one.
+SCRIPTDIR=$(/bin/dirname $0)
+
+# Set common configuration variables
+. $SCRIPTDIR/commonconfig
+
+OS=`/bin/uname -r`
+if [ $OS = 5.10 ]
+then
+        # Solaris 10
+	OSDIR=s10
+else
+	OSDIR=s9
+fi
+
+BUILDAREA=$(${SCRIPTDIR}/getBuildAreaForMachine)
+
+ORIGBUILDAREA=$(${SCRIPTDIR}/getBuildAreaForMachine $BUILDMACHINE_s9)
+ORIGBUILDDIR=$ORIGBUILDAREA/$NIGHTLYNAME
+if [ ! -d $ORIGBUILDDIR ]
+then
+	echo "Build directory $ORIGBUILDDIR does not exist"
+	exit 2
+fi
+
+if [ -d $INSTALLDIR/$GCCINSTSUBDIR/bin ]
+then
+	echo Removing pre-existing installation from $INSTALLDIR/$GCCINSTSUBDIR
+	rm -rf $INSTALLDIR/$GCCINSTSUBDIR/*
+fi
+
+if [ -d $INSTALLDIR/$SUNINSTSUBDIR/*/prod ]
+then
+	echo Removing pre-existing installation from $INSTALLDIR/$SUNINSTSUBDIR
+	rm -rf $INSTALLDIR/$SUNINSTSUBDIR/*
+fi
+
+# Attempt to create a directory under the install area.
+mkdir -p $INSTALLDIR/$GCCINSTSUBDIR/testdir
+rmdir $INSTALLDIR/$GCCINSTSUBDIR/testdir
+
+TAG=${INSTALLDIR##/}
+TAG=${TAG%%/*}
+
+NEWBUILDDIR=$BUILDAREA/$NIGHTLYNAME.$OSDIR.$TAG.tarbuild
+
+#${SCRIPTDIR}/gcc2ir_master_build -g $ORIGBUILDDIR/srcws -i $INSTALLDIR -s $ORIGBUILDDIR/langinstall -t $NEWBUILDDIR
+# hack!!
+${SCRIPTDIR}/gcc2ir_master_build -i $INSTALLDIR -s $ORIGBUILDDIR/langinstall -t $NEWBUILDDIR
+
+tar cf $NEWBUILDDIR/sgcc.$OSDIR.$TAG.tar $INSTALLDIR/$GCCINSTSUBDIR $INSTALLDIR/$SUNINSTSUBDIR

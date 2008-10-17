@@ -1,0 +1,90 @@
+#!/bin/ksh
+
+PATH=/usr/bin:/bin
+
+# All scripts are run from the same directory as this one.
+SCRIPTDIR=$(dirname $0)
+
+GOLDENDIR=$SCRIPTDIR/../golden
+
+TEMPFILE1=/tmp/compare.$$.1.tmp
+
+function usage {
+	echo >&2 "Usage: $0 <OS> <builddir>"
+	echo >&2 "where <builddir> is the top directory of the gcc4ss build"
+	echo >&2 "and <OS> is either 5.10, or Linux"
+	exit 1
+}
+
+function compareFailureFiles {
+	typeset RESULTFILE=$1
+	typeset GOLDENFILE=$2
+
+	if [ ! -e $RESULTFILE ]
+	then
+		echo >&2 "Result file $RESULTFILE does not exist"
+		usage;
+	fi
+
+	if [ ! -e $GOLDENFILE ]
+	then
+		echo >&2 "Golden file $GOLDENFILE does not exist"
+		usage;
+	fi
+
+	diff $GOLDENFILE $RESULTFILE > $TEMPFILE1
+
+	grep '^<' $TEMPFILE1 > /dev/null
+	if [ $? -eq 0 ]
+	then
+		echo "There are test failures in the $GOLDENFILE golden file that are no longer failing."
+		echo "Consider updating the golden file."
+	fi
+
+	grep '^>' $TEMPFILE1
+	if [ $? -eq 0 ]
+	then
+		echo "The failures listed above are new."
+	else
+		echo "There are no new unexpected failures."
+	fi
+}
+
+if [ $# -ne 2 ]
+then
+	usage
+fi
+
+OS=$1
+BUILDDIR=$2
+
+case $OS in
+	5.10|Linux)	;;
+	*)	usage;;
+esac
+
+if [ ! -d $BUILDDIR/logs ]
+then
+	echo "$BUILDDIR does not appear to be a build directory"
+	usage;
+fi
+
+# Compare the GCC check tests
+for ARCH in m32 m64
+do
+	RESULTFILE=$BUILDDIR/logs/fails.$ARCH
+	GOLDENFILE=$GOLDENDIR/$OS/fails.$ARCH
+
+	echo
+	echo "Comparing $ARCH $OS check tests results:"
+	compareFailureFiles $RESULTFILE $GOLDENFILE
+done
+
+# Compare putback test results.
+RESULTFILE=$BUILDDIR/test_results/pbtest.failures
+GOLDENFILE=$GOLDENDIR/$OS/pbtest.failures
+echo
+echo "Comparing putback test results:"
+compareFailureFiles $RESULTFILE $GOLDENFILE
+
+rm -f /tmp/compare.$$.*.tmp

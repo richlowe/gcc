@@ -1,0 +1,399 @@
+BUILDDIR:sh = pwd
+
+# Reset the path to get rid of anything that may cause trouble--especially .
+PATH=/usr/bin:/bin
+
+# LANGWSLIST lists all lang workspaces from which we need to bringover.
+# Users can either:
+#   * set neither LANGWSLIST nor EXTRALANGWS to use the default workspace list
+#   * set EXTRALANGWS only to specify workspaces in addition to the default list
+#   * set LANGWSLIST explicitly to specify the complete list of workspaces 
+
+EXTRALANGWS =
+LANGWSLIST = $(EXTRALANGWS) /import/backend-src/ceres/lang /shared/dp/sstrunk/latest/src/lang
+
+BM_BUILD_DATE:sh = /bin/date +\%Y/\%m/\%d
+BM_BUILD_NAME="gccfss_lang"
+BM_COMMON_IMPORT="$(BUILDDIR)/shelf"
+BM_COMMON_EXPORT="$(BUILDDIR)/shelf"
+BM_UTIL = /import/backend-src/ceres/build_util
+BM_IMPORT = /set/sstrunk/import
+BUILD_MODE = 
+DONEDIR = $(BUILDDIR)/done
+DESTDIR = $(BUILDDIR)/langinstall/4.2.1/prod
+LOGDIR = $(BUILDDIR)/logs
+JOBS = 4
+ROOTDIR = $(BUILDDIR)/lang
+TRAIN_NAME = sstrunk
+ALT_SHELF_386=/ws/gccfss/cross-compiler/crossshelf                  
+CHIP:sh = /bin/uname -p
+OSNAME:sh = /bin/uname -s
+
+CBE-i386 = /shared/dp/sstrunk/cbe/inst/intel-S2
+CBE-sparc = /shared/dp/sstrunk/cbe/inst/sparc-S2
+CBE-unknown = /shared/dp/sstrunk/cbe/inst/sparc-S2
+SPARCCBE = $(CBE-$(CHIP))
+
+CPU-SunOS = sparc-S2
+CPU-Linux = sparc-Linux
+CPU = $(CPU-$(OSNAME))
+
+CPUV9-SunOS = sparcv9-S2
+CPUV9-Linux = sparcv9-Linux
+CPUV9 = $(CPUV9-$(OSNAME))
+
+# The RDT libraries are not built--they are pulled over 
+# in pre-compiled form.
+# RDT_DIR is the prod dir containing the RDT libraries.
+RDT_DIR-SunOS=$(SPARCCBE)/prod
+RDT_DIR-Linux=$(SPARCCBE)/prod
+RDT_DIR = $(RDT_DIR-$(OSNAME))
+
+VARIANT = $(CPU)
+
+BRINGOVER-SunOS = /ws/onnv-tools/SUNWspro/SC6.1/bin/bringover
+BRINGOVER-Linux = /ws/gccfss/linux/bin/remotebringover
+BRINGOVER = $(BRINGOVER-$(OSNAME))
+
+COMPILERS-sparc-S2 = sunc
+COMPILERS-sparc-Linux = gcc
+COMPILERS = $(COMPILERS-$(CPU))
+
+CC-sunc = $(SPARCCBE)/bin/cc
+CC-gcc = /usr/bin/gcc
+CC = $(CC-$(COMPILERS))
+
+CCC-sunc = $(SPARCCBE)/bin/CC
+CCC-gcc = /usr/bin/g++
+CCC = $(CCC-$(COMPILERS))
+
+LINT-sunc = $(SPARCCBE)/bin/lint
+LINT-gcc = NOLINT
+LINT = $(LINT-$(COMPILERS))
+
+YACC-sunc = /usr/ccs/bin/yacc
+YACC-gcc = /usr/bin/yacc
+YACC = $(YACC-$(COMPILERS))
+
+AR-sunc = /usr/ccs/bin/ar
+AR-gcc = /usr/bin/ar
+AR = $(AR-$(COMPILERS))
+
+AS-sunc = $(SPARCCBE)/bin/fbe
+AS-gcc = /import/backend-src/mars_gcc/linuxcbe/prod/bin/as
+AS = $(AS-$(COMPILERS))
+
+INSTALL-sunc = /usr/sbin/install
+INSTALL-gcc = /set/sstrunk/src/tools/intel-Linux/bin/install-solaris.sh
+INSTALL = $(INSTALL-$(COMPILERS))
+
+DMAKE-sparc-S2 = $(SPARCCBE)/bin/dmake
+DMAKE-sparc-Linux = /opt/dmake/bin/dmake
+DMAKE = $(DMAKE-$(CPU))
+
+MCS-sparc-S2 = /usr/ccs/bin/mcs
+MCS-sparc-Linux = true
+MCS = $(MCS-$(CPU))
+
+PERL-sparc-S2 = /bin/perl
+PERL-sparc-Linux = /usr/bin/perl
+PERL = $(PERL-$(CPU))
+
+SCCS-SunOS = /usr/ccs/bin/sccs
+SCCS-Linux = /ws/gccfss/linux/bin/remotesccs
+SCCS = $(SCCS-$(OSNAME))
+
+STRIP-sparc-S2 = /usr/ccs/bin/strip
+STRIP-sparc-Linux = /usr/bin/strip
+STRIP = $(STRIP-$(CPU))
+
+GOLDEN_SHELF-i386 = $(BM_IMPORT)/shelf/intel-S2
+GOLDEN_SHELF-sparc = $(BM_IMPORT)/shelf/sparc-S2
+GOLDEN_SHELF-unknown = /import/backend-src/mars_gcc/linuxshelf
+GOLDEN_SHELF- = /bad/directory
+GOLDEN_SHELF = $(GOLDEN_SHELF-$(CHIP))
+
+ENVPARMS = \
+        AS="$(AS)" \
+        BM_BUILD_DATE="$(BM_BUILD_DATE)" \
+        BM_BUILD_NAME="$(BM_BUILD_NAME)" \
+        BM_COMMON_IMPORT="$(BM_COMMON_IMPORT)" \
+        BM_UTIL="$(BM_UTIL)" \
+        BM_IMPORT="$(BM_IMPORT)"\
+        BUILD_MODE="$(BUILD_MODE)" \
+        BUILD_NUMBER="$(BUILD_NUMBER)" \
+        CAFE="$(CAFE)" \
+        CC="$(CC)" \
+        CCC="$(CCC)" \
+        CCPP="$(CCPP)" \
+        CCR_IMPORT="$(CCR_IMPORT)" \
+        COMPILERS="$(COMPILERS)" \
+        CPU="$(CPU)" \
+        DESTDIR="$(DESTDIR)" \
+        F90C="$(F90C)" \
+        FC="$(FC)" \
+        INSTALL="$(INSTALL)" \
+        LANGUAGE="$(LANGUAGE)" \
+        LEX="$(LEX)" \
+        LINT="$(LINT)" \
+        MCS="$(MCS)" \
+        OPENWINHOME="$(OPENWINHOME)" \
+        OSNAME="$(OSNAME)" \
+        PERL="$(PERL)" \
+        ROOTDIR="$(ROOTDIR)" \
+        SOURCE="$(SOURCE)" \
+        STRIP="$(STRIP)" \
+        TRAIN_NAME="$(TRAIN_NAME)" \
+        YACC="$(YACC)" \
+        VARIANT="$(VARIANT)"
+
+.INIT:
+	mkdir -p $(LOGDIR)
+	mkdir -p $(DONEDIR)
+
+build : build-$(CPU)
+
+build-$(CPU) :  $(DONEDIR)/build-v8 \
+                .WAIT $(DONEDIR)/build-v9 \
+		.WAIT libm-$(CPU) \
+		.WAIT $(DONEDIR)/linkandcopy
+
+BUILDLIBS-i386 = 
+BUILDLIBS-sparc = liblv libm libfast
+BUILDLIBS-unknown = 
+
+BUILDTOOLS-i386 = dbg_gen ir ipo proflib iropt cg
+BUILDTOOLS-sparc = csu as dbg_gen include ir fpversion ipo perfextra proflib version postopt iropt cg
+BUILDTOOLS-unknown = as dbg_gen ir ipo proflib iropt cg
+
+build-sparc-Linux := BUILDLIBS = $(BUILDLIBS-$(CHIP))
+build-sparc-Linux := BUILDTOOLS = $(BUILDTOOLS-$(CHIP))
+build-sparc-S2	:= BUILDLIBS = $(BUILDLIBS-$(CHIP))
+build-sparc-S2	:= BUILDTOOLS = $(BUILDTOOLS-$(CHIP))
+
+$(DONEDIR)/build-v8 :
+	cd $(BUILDDIR)/lang && \
+	$(DMAKE) -j $(JOBS) \
+		common shared libs ctools tools \
+		$(ENVPARMS) \
+		BM_CTCOMMON="$(BUILDDIR)/lang/ct-common" \
+		MAKE="$(DMAKE) -j $(JOBS)" \
+		COMMON_COMPONENTS=	\
+		LIBS="$(BUILDLIBS)" \
+		C_COMPONENTS= \
+		TOOLS="$(BUILDTOOLS)" \
+		> $(BUILDDIR)/logs/build.lang 2>&1
+	touch $@
+
+$(DONEDIR)/linkandcopy :
+	cd $(BM_COMMON_IMPORT)/libdwarf; find . -print | cpio -pd -u $(DESTDIR)
+	cd $(BM_COMMON_IMPORT)/cafe_dbx; find . -print | cpio -pd -u $(DESTDIR)
+	cd $(RDT_DIR); find . -name 'libtha.so.1' -print | cpio -pd -u $(DESTDIR)
+	touch $@
+
+BUILDLIBSV9-i386 = 
+BUILDLIBSV9-sparc = csu liblv libm 
+BUILDLIBSV9-unknown = 
+
+BUILDTOOLSV9-i386 = 
+BUILDTOOLSV9-sparc = proflib ipo postopt
+BUILDTOOLSV9-unknown = proflib 
+
+build-sparc-Linux := BUILDLIBSV9 = $(BUILDLIBSV9-$(CHIP))
+build-sparc-Linux := BUILDTOOLSV9 = $(BUILDTOOLSV9-$(CHIP))
+build-sparc-S2	:= BUILDLIBSV9 = $(BUILDLIBSV9-$(CHIP))
+build-sparc-S2	:= BUILDTOOLSV9 = $(BUILDTOOLSV9-$(CHIP))
+
+# dbg_gen include liblv libm iropt cg proflib ipo postopt
+# Turning on annotation by default requires libld_annotate.so
+# to be also be built. None of the lang makefile targets
+# cover this, so explicitly build it.
+$(DONEDIR)/build-v9 :
+	cd $(BUILDDIR)/lang && \
+	$(DMAKE) -j $(JOBS) \
+		common shared headers libs ctools tools \
+		$(ENVPARMS)	\
+		BM_CTCOMMON="$(BUILDDIR)/lang/ct-common" \
+		CPU="$(CPUV9)" \
+		MAKE="$(DMAKE) -j $(JOBS)" \
+		COMMON_COMPONENTS=	\
+		LIBS="$(BUILDLIBSV9)" \
+		C_COMPONENTS= \
+		TOOLS="$(BUILDTOOLSV9)" \
+		> $(BUILDDIR)/logs/buildv9.lang 2>&1
+	if test -d "$(BUILDDIR)/lang/postopt/$(CPUV9)" ;then \
+	  cd $(BUILDDIR)/lang/postopt/sparcv9-S2 && \
+	  $(DMAKE) -j $(JOBS) \
+		install_libldannotate \
+		$(ENVPARMS)	\
+		BM_CTCOMMON="$(BUILDDIR)/lang/ct-common" \
+		CPU="$(CPUV9)" \
+		MAKE="$(DMAKE) -j $(JOBS)" \
+		COMMON_COMPONENTS=	\
+		LIBS="$(BUILDLIBSV9)" \
+		C_COMPONENTS= \
+		TOOLS="$(BUILDTOOLSV9)" \
+		> $(BUILDDIR)/logs/buildv9.ldannotate.lang 2>&1 ;\
+	else \
+	 echo "$(BUILDDIR)/lang/postopt/$(CPUV9) doesn't exist on Linux."; \
+	fi 
+	touch $@
+
+$(DONEDIR)/libm-% : install-libm-Linux-%
+	touch $@
+
+libm-sparc-S2 :
+	echo No need to build libm specially for Solaris
+
+libm-sparc-Linux : build-libm-Linux .WAIT install-libm-Linux
+
+#ARCHITECTURES		= v7 v8 v8a v8plus v8plusa v8plusb v9 v9a v9b
+ARCHITECTURES		= v8 v9
+BUILD_LIBM_TARGETS	= $(ARCHITECTURES:%=build-libm-sparc-Linux-%)
+INSTALL_LIBM_TARGETS	= $(ARCHITECTURES:%=install-libm-linux-%) \
+		install-libm-linux-default
+
+build-libm-Linux : $(BUILD_LIBM_TARGETS)
+
+install-libm-Linux : $(INSTALL_LIBM_TARGETS)
+
+CGMACRO = CG=$(LIBMARCH)
+install-libm-linux-v%  := LIBMARCH=$(@:install-libm-linux-%=%)
+install-libm-linux-v9% := LIBMVARIANT=v9
+install-libm-linux-default := LIBMARCH=
+install-libm-linux-default := CGMACRO = CG=v8
+
+install-libm-linux-% :
+	$(INSTALL) -d -m 0775 $(DESTDIR)/lib/$(LIBMARCH)
+	$(INSTALL) -d -m 0775 $(DESTDIR)/lib/$(LIBMARCH)/libp
+	cd $(BUILDDIR)/lang/libm/sparc$(LIBMVARIANT)-Linux && \
+	$(DMAKE) -j $(JOBS) -f Makefile_sparc$(LIBMVARIANT).master \
+		$(ENVPARMS)	\
+		$(CGMACRO)	\
+		$(DESTDIR)/lib/$(LIBMARCH)/libcplxsupp.a	\
+		$(DESTDIR)/lib/$(LIBMARCH)/libp/libcplxsupp.a	\
+		> $(BUILDDIR)/logs/install-libm.$(LIBMARCH) 2>&1
+
+
+build-libm-sparc-Linux-% := LIBMARCH=$(@:build-libm-sparc-Linux-%=%)
+build-libm-sparc-Linux-v9% := LIBMVARIANT=v9
+
+build-libm-sparc-Linux-% :
+	cd $(BUILDDIR)/lang/libm/sparc$(LIBMVARIANT)-Linux && \
+	$(DMAKE) -j $(JOBS) \
+		$(ENVPARMS)	\
+		$(LIBMARCH)/libcplxsupp.a \
+		$(LIBMARCH)/libp/libcplxsupp.a \
+		> $(BUILDDIR)/logs/build-libm-$(LIBMARCH) 2>&1
+
+all : setup .WAIT build
+
+setup : bringovers .WAIT init_shelf
+	echo Setup complete
+
+bringovers : $(DONEDIR)/bringovers
+
+init_shelf : $(DONEDIR)/init_shelf
+
+$(DONEDIR)/init_shelf : init_shelf_$(CPU) .WAIT init_shelf_$(CHIP)
+	touch $@
+
+init_shelf_sparc-S2 : copy_shelf .WAIT build_ct-common
+
+init_shelf_i386 : copy_386_shelf
+
+init_shelf_unknown :
+
+init_shelf_sparc:
+
+copy_shelf:
+	mkdir -p $(BM_COMMON_IMPORT) ;
+	cd $(GOLDEN_SHELF) && find . |   \
+                        cpio -pdum $(BM_COMMON_IMPORT)
+
+init_shelf_sparc-Linux : $(DONEDIR)/build_ct-common.v8 \
+		.WAIT $(BM_COMMON_EXPORT)/sbrowser/lib/libcb.a
+	mkdir -p $(BM_COMMON_IMPORT)
+	# Copy dbx demangling files from the shelf.
+	cd $(GOLDEN_SHELF) && find cafe_dbx |	\
+			cpio -pdum $(BM_COMMON_IMPORT)
+copy_386_shelf: \
+	# Copy libcpf demangling files from the shelf.
+	cd $(ALT_SHELF_386) && find libcpf |	\
+			cpio -pdum $(BM_COMMON_IMPORT)
+
+libcb : $(BM_COMMON_EXPORT)/sbrowser/lib/libcb.a
+
+$(BM_COMMON_EXPORT)/sbrowser/lib/libcb.a :
+	cd $(BUILDDIR)/lang/sb/$(CPU);	\
+	$(DMAKE) export $(ENVPARMS) BM_COMMON_EXPORT=$(BM_COMMON_IMPORT) SVR4_INSTALL=$(INSTALL) > $(BUILDDIR)/logs/build_libcb 2>&1
+
+build_ct-common : $(DONEDIR)/build_ct-common.v8 .WAIT \
+		$(DONEDIR)/build_ct-common.v9
+
+ctclean		:= CTTARGET = clean
+ctinstall	:= CTTARGET = install
+ctexport	:= CTTARGET = export
+ctall		:= CTTARGET = 
+
+# EXPORTVAL contains the setting of the EXPORT_COMPONENTS flag passed into
+# the ct-common makefile.  If all components are to be built, then
+# the EXPORT_COMPONENTS flag is not set.
+EXPORTVAL-Linux	= EXPORT_COMPONENTS="export_libcpf export_stabs export_comp_com export_msgutils export_libsunws export_pathutils export_libdwarf"
+EXPORTVAL-SunOS	= 
+EXPORTVAL	= $(EXPORTVAL-$(OSNAME))
+
+ctclean ctinstall ctexport ctall :
+	cd $(BUILDDIR)/lang/ct-common && \
+	$(DMAKE) -j $(JOBS) \
+		$(ENVPARMS) \
+		MKDIR=mkdir \
+		BM_COMMON_EXPORT=$(BM_COMMON_EXPORT) \
+		BM_CTCOMMON=${BUILDDIR}/lang/ct-common \
+		BM_MISC_IMPORT=$(BM_IMPORT)/${CPU}/misc \
+		DTHELPPATH=/usr/dt \
+		LD_LIBRARY_PATH=/usr/openwin/lib \
+		SUPPRESS_DBX_USAGE_MAIL=1 UT_NO_USAGE_TRACKING=1 \
+		DESTDIR="$(DESTDIR)/.." \
+		$(EXPORTVAL)	\
+		$(CTTARGET) \
+			> $(BUILDDIR)/logs/build.ct-common.v8 2>&1
+
+$(DONEDIR)/build_ct-common.v8 : ctall
+	touch $@
+
+$(DONEDIR)/build_ct-common.v9 :
+	cd $(BUILDDIR)/lang/ct-common/libdwarf && $(DMAKE) -j $(JOBS) \
+		$(ENVPARMS) \
+		BM_COMMON_EXPORT=$(BM_COMMON_EXPORT) \
+		BM_CTCOMMON=${BUILDDIR}/lang/ct-common \
+		BM_MISC_IMPORT=$(BM_IMPORT)/${CPU}/misc \
+		CPU=$(CPUV9) DTHELPPATH=/usr/dt \
+		HYDRA_PERL_PATH=/set/sqe/perl HYDRA_ROOT=/set/sqe/hydra \
+		LD_LIBRARY_PATH=/usr/openwin/lib \
+		OPENWINHOME=/usr/openwin \
+		SUPPRESS_DBX_USAGE_MAIL=1 UT_NO_USAGE_TRACKING=1 \
+		VARIANT=$(CPUV9) \
+		clean export \
+			> $(BUILDDIR)/logs/build.ct-common.v9 2>&1
+	echo Build of v9 ct-common complete
+	touch $@
+
+$(DONEDIR)/bringovers :
+	for langws in $(LANGWSLIST) ;   \
+	do      \
+		suffix=I$$suffix;       \
+		echo Bringing over from $$langws ;      \
+		$(BRINGOVER) -p $$langws -w $(BUILDDIR)/lang .   \
+			> $(BUILDDIR)/logs/bringover.$$suffix 2>&1;       \
+	done
+	cd $(BUILDDIR)/lang/ct-common; $(SCCS) get SCCS > /dev/null 2>&1
+	echo Bringovers complete
+	touch $@
+
+clean :
+	- for dir in $(BUILDDIR)/lang/*/sparc-S2 ; \
+	do      \
+		echo "Cleaning $$dir";  \
+		cd $$dir; $(DMAKE) clean;   \
+	done

@@ -1,0 +1,116 @@
+#!/bin/ksh
+
+GNU_TOOL_BIN=/import/dr3/gnu/bin
+DEFAULT_OPTIONS=
+
+function run_tests {
+	typeset ROOT=$1
+	typeset SOURCE_WS=$2
+	typeset SUN_DIR=$3
+	typeset OPTIONS=$4
+
+	echo "Running tests ..."
+	if [ ! -d $SOURCE_WS/tcl ]
+	then
+		/bin/rm -f $SOURCE_WS/tcl
+		/usr/bin/ln -s /import/dr3/GCC2IR/gcc/tcl $SOURCE_WS/tcl
+	fi
+
+	if [ ! -d $SOURCE_WS/dejagnu ]
+	then
+		/bin/rm -f $SOURCE_WS/dejagnu
+		/usr/bin/ln -s /import/dr3/GCC2IR/gcc/dejagnu $SOURCE_WS/dejagnu
+	fi
+
+	if [ ! -d $ROOT/build.gcc2ir/expect ]
+	then
+		/bin/rm -f $ROOT/build.gcc2ir/expect
+		/usr/bin/ln -s /import/dr1/tools/expect $ROOT/build.gcc2ir/expect
+	fi
+
+	PATH=/import/dr3/GCC2IR/bin:/import/dr3/gnu/bin:/usr/dist/exe:/usr/bin:/usr/sbin:/sbin:/usr/ccs/bin:/bin
+	export PATH
+	SUNCC_PATH=$SUN_DIR/bin/cc
+	export SUNCC_PATH
+	SN_SERIAL_FILE=/set/venus/import/sn_license/serial.dat
+	export SN_SERIAL_FILE
+
+	cd $ROOT/build.gcc2ir
+
+	if [ "$OPTIONS" = "" ]
+	then
+		# Run with no options.  This causes the default options sets
+		# to be used.
+		$GNU_TOOL_BIN/make -j 3 check IR_BACKEND_PATH="-B$SUN_DIR/bin"
+	else
+		# Make string consisting of the options seperated by / instead
+		# of spaces
+		OPTIONSTRING=`echo $OPTIONS | sed 's![ 	][ 	]*!/!g'`
+		$GNU_TOOL_BIN/make -j 3 check IR_BACKEND_PATH="-B$SUN_DIR/bin" \
+			RUNTESTFLAGS="--target_board=unix/$OPTIONSTRING"
+	fi
+}
+
+
+function usage {
+	cat <<EOF
+Usage: $0 -r <rootdir> -s <sundir> [-o <options>] [-S <sourcedir>]
+where	<rootdir> is the root of a gcc2ir build directory
+	<sundir> is the root of a Sun compiler installation directory
+	<options> is the set of options to use for the test run
+	<sourcedir> is the gcc2ir source workspace to be used for the tests
+EOF
+	exit 1
+}
+
+
+while getopts o:r:s:S: optflag
+do
+	case $optflag in
+		o)	OPTIONS="$OPTARG";;
+		r)	ROOT=$OPTARG;;
+		s)	SUN_DIR=$OPTARG;;
+		S)	SOURCE_WS=$OPTARG;;
+		*)	usage;;
+        esac
+done
+
+if [ "$ROOT" = "" ]
+then
+	usage
+fi
+
+if [ "$SUN_DIR" = "" ]
+then
+	usage
+fi
+
+if [ "$OPTIONS" = "" ]
+then
+	OPTIONS="$DEFAULT_OPTIONS"
+fi
+
+if [ "$SOURCE_WS" = "" ]
+then
+	SOURCE_WS="$ROOT/src"
+fi
+
+if [ ! -d $ROOT ]
+then
+	echo >&2 "ERROR:  $ROOT is not a directory."
+	usage
+fi
+
+if [ ! -d $SUN_DIR ]
+then
+	echo >&2 "ERROR:  $SUN_DIR is not a directory."
+	usage
+fi
+
+if [ ! -d $SOURCE_WS ]
+then
+	echo >&2 "ERROR:  Source directory $SOURCE_WS does not exist."
+	usage
+fi
+
+run_tests $ROOT $SOURCE_WS $SUN_DIR "$OPTIONS"

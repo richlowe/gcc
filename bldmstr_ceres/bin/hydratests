@@ -1,0 +1,59 @@
+#!/bin/ksh
+
+# All scripts are run from the same directory as this one.
+SCRIPTDIR=$(/bin/dirname $0)
+
+function usage {
+	cat <<EOF
+Usage: $0 [-i <INSTALL_DIR>] <test_dir>
+where
+	<INSTALL_DIR>	is the installation directory containing the compiler
+			Default: <build_dir>/install
+	<test_dir>	is the directory under which the tests are to be run
+EOF
+	exit 1
+}
+
+
+while getopts i: optflag
+do
+        case $optflag in
+		i)	INSTALLDIR=$OPTARG
+			;;
+                *)      usage
+                        ;;
+        esac
+done
+         
+shift `expr $OPTIND - 1`
+if [ $# -ne 1 ]
+then
+	usage
+fi
+
+TESTDIR=$1
+
+if [ "$INSTALLDIR" = "" ]
+then
+	INSTALLDIR="$TESTDIR"
+fi
+
+SUNINSTALL="$INSTALLDIR"
+if [ ! -e "$SUNINSTALL/bin/iropt" ]
+then
+	echo $SUNINSTALL does not contain the necessary Sun compiler components
+	exit 1
+fi
+
+mkdir -p $TESTDIR/test_results
+mkdir -p $TESTDIR/logs
+
+# Run the putback tests
+/import/dr3/gcc2ir_putbacktest/bin/gcc2ir_putbacktest.new -b $INSTALLDIR/bin -d $TESTDIR/pbtests > $TESTDIR/logs/putbacktest.log 2>&1
+
+# Record the results of the putback tests
+${SCRIPTDIR}/hydra_failures $TESTDIR/pbtests > $TESTDIR/test_results/pbtest.failures 
+
+# See if all hydra tests passed
+FAILURES=$(/bin/wc -l $TESTDIR/test_results/pbtest.failures)
+echo "Number of test failures: $FAILURES"
