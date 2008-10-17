@@ -231,12 +231,18 @@ execute_build_cfg (void)
   return 0;
 }
 
+static bool 
+gate_build_cfg (void)
+{
+  return gate_generate_rtl ();
+}
+
 struct gimple_opt_pass pass_build_cfg =
 {
  {
   GIMPLE_PASS,
   "cfg",				/* name */
-  NULL,					/* gate */
+  gate_build_cfg,			/* gate */
   execute_build_cfg,			/* execute */
   NULL,					/* sub */
   NULL,					/* next */
