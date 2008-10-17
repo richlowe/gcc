@@ -3277,6 +3277,7 @@ gimplify_parameters (void)
 	      SET_DECL_VALUE_EXPR (parm, local);
 	      DECL_HAS_VALUE_EXPR_P (parm) = 1;
 	    }
+        }
 	    /* passed by value types of constant size */
       else if (TREE_CONSTANT (DECL_SIZE (parm))
                && ((TREE_CODE (data.nominal_type) == REAL_TYPE
@@ -3303,7 +3304,6 @@ gimplify_parameters (void)
 	  SET_DECL_VALUE_EXPR (parm, local);
           DECL_HAS_VALUE_EXPR_P (parm) = 1;
         }
-	}
     }
 
   return stmts;
