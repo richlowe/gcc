@@ -3994,9 +3994,15 @@ maintainer-clean:
 # Copy the compiler files into directories where they will be run.
 # Install the driver last so that the window when things are
 # broken is small.
-install: install-common $(INSTALL_HEADERS) \
+install: install-gccbuiltins.il install-common $(INSTALL_HEADERS) \
     install-cpp install-man install-info install-@POSUB@ \
     install-driver
+
+install-gccbuiltins.il:
+	rm -f $(DESTDIR)$(libsubdir)/gccbuiltins.il
+	$(INSTALL_DATA) gccbuiltins.il $(DESTDIR)$(libsubdir)/gccbuiltins.il
+	rm -f $(DESTDIR)$(libsubdir)/sparcv9/gccbuiltins.il
+	$(INSTALL_DATA) sparcv9/gccbuiltins.il $(DESTDIR)$(libsubdir)/sparcv9/gccbuiltins.il
 
 # Handle cpp installation.
 install-cpp: installdirs cpp$(exeext)

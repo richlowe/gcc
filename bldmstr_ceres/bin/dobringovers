@@ -1,0 +1,34 @@
+#!/bin/ksh
+
+trap 'echo >&2 ERROR: a command has failed; exit 1' ERR
+
+PATH=/usr/bin:/bin
+BRINGOVER=/usr/dist/share/forte_dev,v6.2/SUNWspro/bin/bringover
+
+# All scripts are run from the same directory as this one.
+SCRIPTDIR=$(dirname $0)
+
+# Set common configuration variables
+. $SCRIPTDIR/commonconfig
+
+OS_NAME=`uname -s`
+if [ "$OS_NAME" == "Linux" ]
+then
+	echo "Error:  $0 must be run on a Solaris machine" >&2
+	exit 2
+fi
+
+if [ $# -ne 1 ]
+then
+	echo "Usage: $0 <builddir>" >&2
+	exit 3
+fi
+
+BUILDDIR=$1
+
+# Solaris needs to bringover mars backend to Linux host
+/usr/ccs/bin/make -f $SCRIPTDIR/../data/Makefile.langbuild BUILDDIR=$BUILDDIR LANGWSLIST="/import/backend-src/mars_gcc/linuxlang $LANGWSLISTDEFAULT" bringovers
+
+# no need to bringover gccfss front-end, since it's under svn and svn works on Linux
+
+exit 0
