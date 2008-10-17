@@ -1200,7 +1200,7 @@ then
 	    # use system 'as' during configure, gccfss driver will use 'fbe'
 	    export AS="/usr/ccs/bin/as"
 	    export AS_FOR_TARGET="/usr/ccs/bin/as"
-	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --disable-bootstrap --with-mpfr=/ws/gccfss/tools --with-gmp=/ws/gccfss/tools --enable-tls"
+	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --enable-bootstrap --with-mpfr=/ws/gccfss/tools --with-gmp=/ws/gccfss/tools --enable-tls"
 	fi
 
 	# make sure $CONFIG_FLAGS is the last parameter on the list
@@ -1259,7 +1259,7 @@ do
             CFLAGS_FOR_BUILD="-g -frtl-backend" \
 		> $ROOT/logs/build.gcc2ir.log.$try 2>&1
         else
-	    $GMAKE $PARALLEL_BUILD_OPTION STAGE1_CFLAGS="-g -O0" CFLAGS=-g \
+	    $GMAKE $PARALLEL_BUILD_OPTION CFLAGS=-g \
 		> $ROOT/logs/build.gcc2ir.log.$try 2>&1
         fi
         if [ "$?" == "0" ]
