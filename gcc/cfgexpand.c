@@ -2033,7 +2033,8 @@ execute_rest_of_genir (void)
     {
       rtx x;
       currently_expanding_to_rtl = 1;
-      //reset_block_changes ();     /* initialize arrays for RTL block */
+      /* initialize arrays for RTL block */
+      /* reset_block_changes (); */
       expand_used_vars (0);
       currently_expanding_to_rtl = 0;
       x = DECL_RTL (current_function_decl);

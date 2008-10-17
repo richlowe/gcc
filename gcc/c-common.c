@@ -2984,7 +2984,7 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 				    
   /* NEW: have to convert to ptr type (UNSIGNED INT). */
   /* do not convert to ptr type. ptr + int = ptr in SunIR */
-  //intop = build_binary_op (MULT_EXPR, intop, convert (TREE_TYPE (intop), size_exp), 1);
+  /* intop = build_binary_op (MULT_EXPR, intop, convert (TREE_TYPE (intop), size_exp), 1); */
 
   /* Create the sum or difference.  */
   if (resultcode == MINUS_EXPR)
@@ -4828,6 +4828,15 @@ c_check_tm_calling_rules (tree function)
         error ("bad call in tm_abort_ok function.");
     }
 }
+
+void
+c_handle_tm_atomic_attribute (tree *node, tree name, bool * no_add_attrs);
+void
+c_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs);
+void
+c_handle_tm_abort_ok_attribute (tree *node, tree name, bool * no_add_attrs);
+void
+c_handle_tm_pure_attribute (tree *node, tree name, bool * no_add_attrs);
 
 void
 c_handle_tm_atomic_attribute (tree *node, tree name, bool * no_add_attrs)

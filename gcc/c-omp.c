@@ -158,7 +158,7 @@ c_finish_omp_flush (tree args)
   tree x;
 
   x = built_in_decls[BUILT_IN_SYNCHRONIZE];
-  x = build_call_expr (x, args);
+  x = build_call_expr (x, 1, args);
   add_stmt (x);
 }
 
@@ -389,7 +389,7 @@ c_finish_omp_for (location_t locus, tree decl, tree init, tree cond,
       OMP_FOR_PRE_BODY (t) = pre_body;
 
       SET_EXPR_LOCATION (t, locus);
-      //ret = add_stmt (t);
+      /* ret = add_stmt (t); */
       if (post_body)
         {
           if (TREE_CODE (post_body) == STATEMENT_LIST)
