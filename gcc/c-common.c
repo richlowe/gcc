@@ -5321,6 +5321,15 @@ c_check_tm_calling_rules (tree function)
 }
 
 void
+c_handle_tm_atomic_attribute (tree *node, tree name, bool * no_add_attrs);
+void
+c_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs);
+void
+c_handle_tm_abort_ok_attribute (tree *node, tree name, bool * no_add_attrs);
+void
+c_handle_tm_pure_attribute (tree *node, tree name, bool * no_add_attrs);
+
+void
 c_handle_tm_atomic_attribute (tree *node, tree name, bool * no_add_attrs)
 {
   if (TREE_CODE (*node) != FUNCTION_DECL)
