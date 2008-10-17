@@ -214,10 +214,16 @@ execute_build_cfg (void)
   return 0;
 }
 
+static bool 
+gate_build_cfg (void)
+{
+  return gate_generate_rtl ();
+}
+
 struct tree_opt_pass pass_build_cfg =
 {
   "cfg",				/* name */
-  NULL,					/* gate */
+  gate_build_cfg,			/* gate */
   execute_build_cfg,			/* execute */
   NULL,					/* sub */
   NULL,					/* next */

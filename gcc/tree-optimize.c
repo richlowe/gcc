@@ -380,36 +380,6 @@ execute_fixup_cfg (void)
 
   if (cfun->eh)
     {
-      if (flag_use_rtl_backend == 0)
-        {
-          tree stmts = DECL_SAVED_TREE (current_function_decl);
-          for (tsi = tsi_start (stmts); !tsi_end_p (tsi); tsi_next (&tsi))
-            {
-	      tree stmt = tsi_stmt (tsi);
-              tree call = get_call_expr_in (stmt);
-              tree decl = call ? get_callee_fndecl (call) : NULL;
-              
-              if (decl && call_expr_flags (call) & (ECF_CONST | ECF_PURE)
-                  && TREE_SIDE_EFFECTS (call))
-	        {
-                  if (gimple_in_ssa_p (cfun))
-                    {
-                      todo |= TODO_update_ssa | TODO_cleanup_cfg;
-                      update_stmt (stmt);
-                    }
-                  TREE_SIDE_EFFECTS (call) = 0;
-                }
-              if (decl && TREE_NOTHROW (decl))
-                TREE_NOTHROW (call) = 1;
-              if (!tree_could_throw_p (stmt) && lookup_stmt_eh_region (stmt))
-	       remove_stmt_from_eh_region (stmt);
-            }
-          /*if (tree_purge_dead_eh_edges (bb))
-            todo |= TODO_cleanup_cfg;*/
-        }
-    }
-  else
-    {
       FOR_EACH_BB (bb)
         {
 	  for (bsi = bsi_start (bb); !bsi_end_p (bsi); bsi_next (&bsi))

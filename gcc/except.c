@@ -4306,17 +4306,6 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   if (!flag_use_rtl_backend)
     return; /* EH leaves are generated when PBRANCH are created. */
 
-  if (!flag_use_rtl_backend)
-    {
-      rtx x = DECL_RTL (current_function_decl);
-      if (!MEM_P (x))
-        abort ();
-      x = XEXP (x, 0);
-      if (GET_CODE (x) != SYMBOL_REF)
-        abort ();
-      fnname = XSTR (x, 0);
-    }
-
 #ifdef TARGET_UNWIND_INFO
   /* TODO: Move this into target file.  */
   fputs ("\t.personality\t", asm_out_file);
