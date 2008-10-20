@@ -1,7 +1,0 @@
-#Column 1: name of the libraries;
-#Column 2: the feature it supports;
-#Column 3: licence information;
-#make sure to use Tab to separate the column.
-libmtsk.so	-xparallel, -xautopar
-libmtsk_db.so	-xparallel, -xautopar
-prof.map	profile opt.
