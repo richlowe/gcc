@@ -702,11 +702,9 @@ repair_loop_structures (void)
 bool
 cleanup_tree_cfg (void)
 {
-  bool changed;
   if (!cfun->cfg)
     return false;
-
-  changed = cleanup_tree_cfg_noloop ();
+  bool changed = cleanup_tree_cfg_noloop ();
 
   if (current_loops != NULL
       && loops_state_satisfies_p (LOOPS_NEED_FIXUP))

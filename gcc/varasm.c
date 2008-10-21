@@ -2114,7 +2114,7 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       && DECL_ASSEMBLER_NAME_SET_P (decl))
     {
       const char * result = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
-      if ((result = strchr (result, '.'))) 
+      if (result = strchr (result, '.')) 
         if (strstr (result, "_ZTV") == result + 1)
           {
              TREE_STATIC (decl) = 0;
@@ -2361,7 +2361,7 @@ mark_decl_referenced (tree decl)
    followed again, and return the ultimate target of the alias
    chain.  */
 
-/*static inline*/ tree
+/*static*/ inline tree
 ultimate_transparent_alias_target (tree *alias)
 {
   tree target = *alias;
