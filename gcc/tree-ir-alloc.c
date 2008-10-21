@@ -208,7 +208,7 @@ build_ir_loop (void)
 PRAGMAINFO *
 build_ir_pragmainfo (void)
 {
-    return (PRAGMAINFO *) ir_proc_new_pragmainfo(irProc);
+  return ir_proc_new_pragmainfo(irProc);
 }
 
 LIST *
@@ -1108,9 +1108,6 @@ build_ir_float_const (const REAL_VALUE_TYPE *val, TYPE type)
 {
   struct constant cnst;
 
-#ifdef CROSS_COMPILE
-  long tmp;
-#endif
   memset (&cnst, 0, sizeof(cnst));
   cnst.isbinary = IR_TRUE;
 
@@ -1123,7 +1120,7 @@ build_ir_float_const (const REAL_VALUE_TYPE *val, TYPE type)
     } 
   else if (type.tword == PCC_DOUBLE || type.tword == PCC_DOUBLE_IMAGINARY) 
     {
-      long lval[2];
+      long lval[2], tmp;
       /* gcc_assert (sizeof (long) * 2 == type.size); */
       REAL_VALUE_TO_TARGET_DOUBLE (*val, lval);
 #ifdef CROSS_COMPILE
@@ -1135,7 +1132,7 @@ build_ir_float_const (const REAL_VALUE_TYPE *val, TYPE type)
     } 
   else 
     {
-      long lval[4];
+      long lval[4], tmp;
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (*val, lval);
 #ifdef CROSS_COMPILE
       tmp = lval[0];
@@ -1156,9 +1153,7 @@ IR_NODE *
 build_ir_int_complex_const (long long real_val, long long imag_val, TYPE type)
 {
   struct constant cnst;
-#ifdef CROSS_COMPILE
-  long tmp;
-#endif
+
   memset (&cnst, 0, sizeof (cnst));
   cnst.isbinary = IR_TRUE;
 
@@ -1169,7 +1164,7 @@ build_ir_int_complex_const (long long real_val, long long imag_val, TYPE type)
     } 
   else 
     {
-      long lval[4];
+      long lval[4], tmp;
       REAL_VALUE_TYPE ld_value;
       /* gcc_assert (sizeof (long) * 4 * 2 >= type.size); */
       /* assume that target long double can hold all size of __complex__ int */
@@ -1208,9 +1203,7 @@ build_ir_complex_const (const REAL_VALUE_TYPE *real_val,
 
   memset (&cnst, 0, sizeof (cnst));
   cnst.isbinary = IR_TRUE;
-#ifdef CROSS_COMPILE
-  long tmp;
-#endif
+
   if (type.tword == PCC_FLOAT_COMPLEX) 
     {
       long n;
@@ -1222,7 +1215,7 @@ build_ir_complex_const (const REAL_VALUE_TYPE *real_val,
     } 
   else if (type.tword == PCC_DOUBLE_COMPLEX) 
     {
-      long lval[2];
+      long lval[2], tmp;
       /* gcc_assert (sizeof (long) * 2 * 2 == type.size); */
       REAL_VALUE_TO_TARGET_DOUBLE (*real_val, lval);
 #ifdef CROSS_COMPILE
@@ -1241,7 +1234,7 @@ build_ir_complex_const (const REAL_VALUE_TYPE *real_val,
     } 
   else 
     {
-      long lval[4];
+      long lval[4], tmp;
       /* gcc_assert (sizeof (long) * 4 * 2 == type.size); */
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (*real_val, lval);
 #ifdef CROSS_COMPILE
