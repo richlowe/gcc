@@ -106,7 +106,8 @@ cc1plus$(exeext): $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
 	      $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBS) $(GMPLIBS) -l_I_dbg_gen -llni -lsunir \
 		-L $(scgfss_lib_dir) \
-		-L $(scgfss_lib_dir)/sys
+		-L $(scgfss_lib_dir)/sys \
+		-R \$$ORIGIN/../../../../lib/gcc/$(target_noncanonical)/$(version)
 
 # Special build rules.
 # Do not recreate cfns.h for gccfss

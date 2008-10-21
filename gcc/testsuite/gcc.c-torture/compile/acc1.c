@@ -1,4 +1,5 @@
-/* { dg-options "-O2 -ffast-math" } */
+/* test it with all optimization levels. not just -O2 -ffast-math
+ * dg-options "-O2 -ffast-math" */
 
 /* Fast maths allows tail recursion to be turned into iteration.  */
 

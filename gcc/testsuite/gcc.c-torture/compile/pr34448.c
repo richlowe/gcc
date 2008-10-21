@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O" } */
+/* { dg-options "" } */
 
 typedef struct chunk_t chunk_t;
 struct chunk_t

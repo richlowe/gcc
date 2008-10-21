@@ -1,7 +1,7 @@
 /* PR tree-optimization/34648 */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -fexceptions" } */
+/* { dg-options "-fexceptions" } */
 
 extern const unsigned short int **bar (void) __attribute__ ((const));
 const char *a;

@@ -1,5 +1,6 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* test it with all optimization levels. not just -O2
+ *  dg-options "-O2"  */
 short *_offsetTable;
 /* This tests to make sure PRE splits the entry block ->block 0 edge
    when there are multiple block 0 predecessors.
