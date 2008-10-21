@@ -1,4 +1,4 @@
-/* { dg-do link } */
+/* { dg-do compile } */
 /* { dg-options "-O2" } */
 
 struct S {

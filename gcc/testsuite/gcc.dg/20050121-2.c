@@ -1,6 +1,6 @@
 /* PR middle-end/19551 */
 /* { dg-options "-O2" } */
-/* { dg-do link } */
+/* { dg-do compile } */
 
 extern void abort ();
 

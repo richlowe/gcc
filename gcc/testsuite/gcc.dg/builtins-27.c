@@ -5,7 +5,7 @@
 
    Written by Roger Sayle, 29th July 2003.  */
 
-/* { dg-do link } */
+/* { dg-do compile } */
 /* { dg-options "-O2 -ffast-math" } */
 
 extern void link_error(void);

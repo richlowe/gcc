@@ -1045,7 +1045,7 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
 # we probably also dont need the .a file. Check this
 add_gfortran_libs()
 {
-    LIB_DIR="$INSTALL_DIR/$LIB_SUFFIX"
+    LIB_DIR="$INSTALL_DIR/$LIB_SUFFIX/gcc/sparc-sun-solaris2.10/"
     LIB_LOCATION="/ws/gccfss/tools/lib/gcc/sparc-sun-solaris2.10"
 
     (cd $LIB_LOCATION; find . -name "libgmp.*" |cpio -pdum $LIB_DIR)
@@ -1309,7 +1309,7 @@ then
 
         else
 		$GMAKE DESTDIR=$INSTALL_DIR \
-            	install-gcc install-target-libstdc++-v3 \
+            	install-gcc install-target-libgcc install-target-libstdc++-v3 \
             	install-target-libgfortran install-target-libgomp \
             	> $ROOT/logs/install.gcc2ir.log 2>&1
 

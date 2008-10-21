@@ -155,7 +155,7 @@ coverageexts = .{gcda,gcno}
 # apply to the back end and some front ends, which may be compiled
 # with other compilers.
 LOOSE_WARN = @loose_warn@
-STRICT_WARN = @strict_warn@
+STRICT_WARN = @strict_warn@ -Wno-error
 
 # This is set by --enable-checking.  The idea is to catch forgotten
 # "extern" tags in header files.
@@ -1689,7 +1689,8 @@ cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS) gccbuiltins.il
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(C_OBJS) cc1-checksum.o \
 	  $(BACKEND) $(LIBS) $(BACKENDLIBS) -l_I_dbg_gen -llni -lsunir \
 	    -L $(scgfss_lib_dir) \
-		-L $(scgfss_lib_dir)/sys; \
+		-L $(scgfss_lib_dir)/sys \
+		-R \$$ORIGIN/../../../../lib/gcc/$(target_noncanonical)/$(version); \
 	fi
 gccbuiltins.il: $(srcdir)/config/sparc/gccbuiltins.il $(srcdir)/config/sparc/gccbuiltins-m64.il
 	$(INSTALL_DATA) $(srcdir)/config/sparc/gccbuiltins.il gccbuiltins.il
@@ -4169,11 +4170,11 @@ maintainer-clean:
 # Copy the compiler files into directories where they will be run.
 # Install the driver last so that the window when things are
 # broken is small.
-install: install-common $(INSTALL_HEADERS) \
+install: install-common install-gccbuiltins.il $(INSTALL_HEADERS) \
     install-cpp install-man install-info install-@POSUB@ \
-    install-driver install-gccbuiltins.il 
+    install-driver 
 
-install-gccbuiltins.il:
+install-gccbuiltins.il: installdirs gccbuiltins.il sparcv9/gccbuiltins.il
 	rm -f $(DESTDIR)$(libsubdir)/gccbuiltins.il
 	$(INSTALL_DATA) gccbuiltins.il $(DESTDIR)$(libsubdir)/gccbuiltins.il
 	rm -f $(DESTDIR)$(libsubdir)/sparcv9/gccbuiltins.il
