@@ -31,4 +31,4 @@ export GCCPACKAGE=SUNW0gccfss
 #export LANGWSINT=/shared/dp/sstrunk/latest/src/lang
 export LANGWSLISTDEFAULT="/import/backend-src/apophis-gccfss/lang /ws/gccfss/source/opt-debug" 
 
-export GCC_VERSION="4.3.0" 
+export GCC_VERSION="4.3.2" 
