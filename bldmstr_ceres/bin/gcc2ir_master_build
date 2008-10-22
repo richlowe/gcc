@@ -26,7 +26,6 @@ else
 	CPUS=`/usr/sbin/psrinfo | wc -l`
 fi
 
-GCC2IRWS="svn://gccsvn/gccfss421/trunk"
 EXTRALANGWS=
 LANGWSLIST="$LANGWSLISTDEFAULT"
 INSTALLDIR=
@@ -48,12 +47,10 @@ fi
 
 function usage {
 	cat <<EOF
-Usage: $0 [-g <GCC2IR_WS>] [-f <FREEZEPT>] [-i <INSTALL_DIR>] [-l <PROJ_LANG_WS>] [-L "<LANG_WS_LIST>"] [-s <EXISTING_SUN_INSTALLATION>] [-p <EXISTING_CROSS_COMPONENTS>] [-t] <build_dir>
+Usage: $0 [-g <GCC2IR_WS>] [-i <INSTALL_DIR>] [-l <PROJ_LANG_WS>] [-L "<LANG_WS_LIST>"] [-s <EXISTING_SUN_INSTALLATION>] [-p <EXISTING_CROSS_COMPONENTS>] [-t] <build_dir>
 where
 	<GCC2IR_WS>	is a fully populated gcc2ir source workspace.
 			Default: $GCC2IRWS
-	<FREEZEPT>	is a gcc2ir workspace freezepoint file.  Specifying
-			a freezepoint disable bringovers even if -g is given.
 	<INSTALL_DIR>	is the desired installation directory.
 			Default: <build_dir>/install
 	<LANG_WS_LIST>	is a list of lang workspace, one of which must be
@@ -80,11 +77,9 @@ EOF
 	exit 1
 }
 
-while getopts If:g:i:l:nL:p:s:v:t optflag
+while getopts Ig:i:l:nL:p:s:v:t optflag
 do
         case $optflag in
-		f)	FREEZEPT=$OPTARG
-			;;
 		g)	GCC2IRWS=$OPTARG
 			;;
 		i)	INSTALLDIR=$OPTARG
@@ -158,22 +153,11 @@ then
 		exit 1
 	fi
 
-        # indicate to the driver that this backend supports EH inlining in IR
-        echo "this backend supports EH inlining in IR" >$BUILDDIR/langinstall/$GCC_VERSION/prod/lib/gxx_eh_supported
-        
 	SUNINSTALL="$BUILDDIR/langinstall"
 fi
 
 # Build and install gcc2ir
-if [ "$FREEZEPT" = "" ]
-then
-	SOURCEFLAGS="-w $GCC2IRWS"
-else
-	SOURCEFLAGS="-f $FREEZEPT"
-fi
-
-#/bin/ksh $SCRIPTDIR/build_gcc2ir $TESTOPTION -b $SOURCEFLAGS -i $INSTALLDIR/$GCCINSTSUBDIR -s $SUNINSTALL $BUILDDIR
-/bin/ksh $SCRIPTDIR/build_gcc2ir $TESTOPTION $SOURCEFLAGS -i $INSTALLDIR/$GCCINSTSUBDIR -s $SUNINSTALL $SPARC_INSTALL_DIR -v $GCC_VERSION $BUILDDIR
+/bin/ksh $SCRIPTDIR/build_gcc2ir $TESTOPTION "-w $GCC2IRWS" -i $INSTALLDIR/$GCCINSTSUBDIR -s $SUNINSTALL $SPARC_INSTALL_DIR -v $GCC_VERSION $BUILDDIR
 
 if [ $? -ne 0 ]
 then
