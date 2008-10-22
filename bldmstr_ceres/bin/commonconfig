@@ -26,5 +26,5 @@ export GCCPACKAGE=SUNW0gccfss
 # Lang workspaces used by gcc4ss builds
 export LANGWSINT=/shared/dp/sstrunk/latest/src/lang
 export LANGWSLISTDEFAULT="$LANGWSINT /import/backend-src/ceres/lang /ws/gccfss/source/opt-debug" 
-export GCC2IRWS="/import/gccfss1/prash/gccfss432.git"
+export GCC2IRWS="/ws/gccfss/source/gcc.git"
 export GCC_VERSION="4.3.2" 
