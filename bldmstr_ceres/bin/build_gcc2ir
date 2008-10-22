@@ -16,12 +16,6 @@ fi
 # This can wreak havoc in some of the Gnu makefiles.
 unset CC
 
-# By default, set the freezepoint and bringover command to be invalid.
-# They will be made valid if possible in the OS-specific pieces of this script.
-FREEZEPT="echo freezept unavailable; exit 1;"
-BRINGOVER="echo bringover unavailable; exit 1;"
-SVN="echo svn unavailable; exit 1;"
-
 # Get the name and version of the OS.  This is used for pieces of code that
 # differ between Linux and the different versions of Solaris.
 OS_NAME=`/bin/uname -s`
@@ -32,14 +26,13 @@ OS_VERSION=`/bin/uname -r`
 # if the bootstrap gcc depends on libiconv.  So, we use sgcc to bootstrap.
 case "$OS_NAME" in
     "SunOS")
-	GNU_TOOL_BIN=/ws/gccfss/builds/4.0.4/current_mars_gcc/gcc/bin/
+	GNU_TOOL_BIN=/ws/gccfss/builds/4.2.1/current_gcc/gcc/bin/
 	LIB_SUFFIX="lib"
 	export PATH=$GNU_TOOL_BIN:/usr/sfw/bin:/usr/ccs/bin:/usr/bin:/bin
 	GMAKE=/usr/sfw/bin/gmake
-	TEAMWARE_BIN=/usr/dist/share/forte_dev,v6.2/SUNWspro/bin
-	FREEZEPT=$TEAMWARE_BIN/freezept
+	TEAMWARE_BIN=/ws/onnv-tools/SUNWspro/SC6.2/bin
 	BRINGOVER=$TEAMWARE_BIN/bringover
-        SVN=/import/pkg/local/bin/svn
+        GIT=/import/pkg/local/bin/git
 	# EXPECT will be set later.
 	EXPECT=
 	CPUS=`/usr/sbin/psrinfo | wc -l`
@@ -51,7 +44,7 @@ case "$OS_NAME" in
 	export PATH=$GNU_TOOL_BIN:/usr/bin:/bin
         LIB_SUFFIX="lib"
 	BRINGOVER=/ws/gccfss/linux/bin/remotebringover
-        SVN=/usr/bin/svn
+        GIT=/usr/bin/git
 	EXPECT=/usr/bin/expect
 	CPUS=`cat /proc/cpuinfo | grep 'ncpus active' | awk '{print $NF}'`
 	ERROR_TRAP=ZERR
@@ -63,8 +56,7 @@ case "$OS_NAME" in
 	;;
 esac
 
-DEFAULT_SUN_DIR=/ws/gccfss/builds/4.2.1/current_gcc/SUNW0scgfss
-BASE_GCC2IR_WS="svn://gccsvn/gccfss421/trunk"
+DEFAULT_SUN_DIR=/ws/gccfss/builds/4.3.2/current_gcc/SUNW0scgfss
 SPARC_INSTALL_DIR=
 ROOT=
 FORCE_BRINGOVER=0
@@ -82,11 +74,9 @@ trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
 usage()
 {
 	cat >&2 <<EOF
-Usage: $0 [-f <freezepoint>] [-w <gcc2ir_ws>] [-B] [-i <install_dir>]
+Usage: $0 [-w <gcc2ir_ws>] [-B] [-i <install_dir>]
 	[-s <suncc_dir>] [-p <cross_cmpnt>] [-j <jobs>] [-v <gcc version>] [-b] [-t] <target_dir>
 where
-	<freezepoint>	is a gcc2ir freezepoint file to be extracted and used
-			as the source base
 	<workspace>	is a gcc2ir workspace to be used as the source base
 	-B		indicates that <workspace> is to be brought over rather
 			than referenced in place
@@ -116,104 +106,12 @@ EOF
 	exit 1
 }
 
-
-# Find the freezepoint file specified in the path argument.
-# If a specific freezpoint file is specified, return the full path to it.
-# If the path is to a directory that contains only one freezepoint beneath it,
-# return the full path of that freezepoint.
-# If there are multiple freezpoint files beneath it, list them all and
-# end the program, telling the user to specify one of them.
-#
-# Arguments:
-#	Partial path to the freezepoint file
-#		This is a path to some point above the desired freezepoint file.
-#		If the path is relative, it is relative to the Freezepoints
-#		directory of the base workspace.
-#
-# Globals used:
-#	BASE_GCC2IR_WS
-
-find_freezepoint()
-{
-	typeset partial_name=$1
-        
-	echo "NOT supported yet"
-	exit 1
-
-	if [ "$partial_name" == "${partial_name#/}" ]
-	then
-		# An absolute path name was not supplied.
-		# Assume the freezepoint is under the base workspace.
-		partial_name=$BASE_GCC2IR_WS/Codemgr_wsdata/Freezepoints/$partial_name
-	fi
-
-	# See if the path is now a full path to an existing file.
-	if [ -f "$partial_name" ]
-	then
-		echo $partial_name
-		return
-	fi
-
-	# Find all files that match the given prefix.
-	typeset tempfile=/tmp/tmp.$$.find_freezepoint
-	find ${partial_name}* -type f > $tempfile 2> /dev/null
-	typeset num_matches=`cat $tempfile | wc -l`
-
-	if [ 0 -eq $num_matches ]
-	then
-		echo >&2 "Error:  No matching freezepoint file could be found"
-		rm -f $tempfile
-		exit 1
-	elif [ 1 -eq $num_matches ]
-	then
-		cat $tempfile
-		rm -f $tempfile
-		return
-	else
-		# Multiple freezepoints match.  Tell the user to specify one.
-		echo >&2 "Error:  Multiple matching freezpoints were found."
-		echo >&2 "Please specify one of the following using -f:"
-		cat $tempfile >&2
-		exit 1
-	fi
-	# Should never reach here.
-	echo >&2 "Error:  Bad code in find_freezepoint"
-	rm -f $tempfile
-	exit 1
-}
-
 # Check that the specified command-line options make sense.
 #
 # Arguments: none
 
 check_options()
 {
-	# Make sure the user is not trying to extract a freezepoing over an
-	# existing workspace.
-	if [[ -d $ROOT/src && "$GCC2IR_FREEZE_FILE" != "" ]]
-	then
-		echo >&2 "ERROR:  A freezepoint file cannot be specified when a src directory already exists in the build area."
-		exit 1
-	fi
-
-	# In the following case, -w will be ignored:
-	#	$ROOT/src exists or will exist because we are using freezepoint
-	#	We are not forcing a bringover
-	if [[ ( -d $ROOT/src || "$GCC2IR_FREEZE_FILE" != "" ) && \
-			"$ORIG_WS" != "" && $FORCE_BRINGOVER == 0 ]]
-	then
-		echo >&2 "WARNING:  argument to -w option will not be used"
-	fi
-
-	# Either $ROOT/src must exist or the user must point us to a source
-	# or freezepoint.
-	if [[ (! -d $ROOT/src) && "$GCC2IR_FREEZE_FILE" == "" && \
-			"$ORIG_WS" == "" ]]
-	then
-		echo >&2 "ERROR:  A source workspace or freezepoint file must specified."
-		exit 1
-	fi
-
         if [ ! -e $GNU_TOOL_BIN/gcc ]
         then
             echo >&2 ERROR: cannot configure without $GNU_TOOL_BIN/gcc
@@ -234,7 +132,7 @@ check_options()
 
 get_options()
 {
-	while getopts BIbngf:i:j:p:s:tw:v: optflag
+	while getopts BIbngi:j:p:s:tw:v: optflag
 	do
         	case $optflag in
 			B)	FORCE_BRINGOVER=1
@@ -243,8 +141,6 @@ get_options()
 				;;
 			n)	NIGHTLY_BUILD_MODE=1
 				;;
-                	f)      GCC2IR_FREEZE_FILE=`find_freezepoint "$OPTARG"`
-                        	;;
 			i)	INSTALL_DIR="$OPTARG"
 				;;
 			j)	if [ "0" = "$OPTARG" ]
@@ -348,52 +244,6 @@ preserve_options()
 	echo "PREV_ORIG_WS=$ORIG_WS"		>> $ROOT/previous
 }
 
-
-extract_freeze()
-{
-	typeset freeze_file=$1
-
-	$FREEZEPT extract -k $freeze_file -d $ROOT/src -x \
-			> $ROOT/logs/extract.log 2>&1
-        remove_SCCS
-	echo "Extraction from $freeze_file completed at $(date)" \
-			> $ROOT/done/freezepoint
-}
-
-
-remove_SCCS()
-{
-    # remove SCCS directories to reduce parallel make errors
-    if [ -d $ROOT/src ]
-    then
-        rm -fr $ROOT/src/Codemgr_wsdata
-        for f in `(cd $ROOT/src ; find . -name SCCS)`
-        do
-            rm -rf $ROOT/src/$f
-        done
-    fi
-}
-
-do_bringover()
-{
-	typeset src_ws=$1
-
-	if [ -e $ROOT/done/bringover.gcc2ir ]
-	then
-		echo "The gcc2ir workspace has already been brought over and"
-		echo "will not be brought over again."
-		echo "To force a bringover, remove $ROOT/done/bringover.gcc2ir"
-		echo "and restart."
-	else
-		echo Bringing over the gcc2ir source workspace $src_ws ...
-
-		$SVN export $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir.log 2>&1
-
-		echo "Bringover from $src_ws completed at $(date)" > \
-				$ROOT/done/bringover.gcc2ir
-	fi
-}
-
 # copy gcc to local build directory
 do_copy_gnu_tools()
 {
@@ -404,16 +254,11 @@ do_copy_gnu_tools()
     # but always copy pod2man, to create man pages
     mkdir -p $ROOT/tools/bin
     cp -pf /import/dr3/gnu/bin/pod2man $ROOT/tools/bin
-    cp -pf /import/dr3/gnu/bin/gmake $ROOT/tools/bin
-    # during parallel build buggy 'gmake' can call Sun's make
-    # so 'make' in the PATH should mean 'gmake'
-    cp -pf /import/dr3/gnu/bin/gmake $ROOT/tools/bin/make
 
     # need to use 'objdump' during configure otherwise "--traditional-format" flag
     # will be added
     cp -pf /import/dr3/gnu/bin/objdump $ROOT/tools/bin
 
-    # copy c++ name demangler
     cp -pf /import/dr1/tools/bin/c++filt $ROOT/tools/bin
 
     echo "==== copied gnu tools"
@@ -430,10 +275,6 @@ do_copy_gnu_tools_cross()
     # but always copy pod2man, to create man pages
     mkdir -p $ROOT/tools/bin
     cp -pf /ws/gccfss/cross-compiler/tools/bin/pod2man $ROOT/tools/bin
-    #cp -pf /import/dr3/gnu/bin/gmake $ROOT/tools/bin
-    # during parallel build buggy 'gmake' can call Sun's make
-    # so 'make' in the PATH should mean 'gmake'
-    #cp -pf /import/dr3/gnu/bin/gmake $ROOT/tools/bin/make
 
     # need to use 'objdump' during configure otherwise "--traditional-format" flag
     # will be added
@@ -444,47 +285,6 @@ do_copy_gnu_tools_cross()
 
     echo "==== copied i386 gnu tools"
     date
-}
-
-# copy source to local build directory
-do_copy_src()
-{
-	echo ==== copying source
-	date
-
-	# do not copy SCCS, .o, core, dejagnu, Codemgr_wsdata
-	if [ ! -d $ROOT/src ]
-	then
-            mkdir -p $ROOT/src
-# On Linux, tar does not support -FF option, use cpio and skip SCCS
-            if [ "$OS_NAME" = "Linux" ]
-            then
-		(cd $ORIG_WS ; \
-		find . -name SCCS -prune -o -name Codemgr_wsdata -prune \
-                        -o -print | cpio -pdum $ROOT/src)
-            else
-                FILE_LIST=`(cd $ORIG_WS ; ls ) \
-			| grep -v Codemgr_wsdata \
-			| grep -v dejagnu`
-                (cd $ORIG_WS ; tar -cfFF - $FILE_LIST) \
-                    | (cd $ROOT/src ; tar -xf -)
-            fi
-	fi
-
-#	if [[ `uname -p` = i386 && ! -e $ROOT/done/copy_bin_utils ]]
-#	then
-#	    # copy the bin utils to the install area
-#	    (mkdir -p $INSTALL_DIR ; \
-#	     cd /ws/gccfss/cross-compiler/gnu-i386/gcc42-cross ; \
-#	     find . | cpio -pdum $INSTALL_DIR) > $ROOT/logs/copy_bin_utils.log 2>&1
-#	    echo "Copied Binutils from /ws/gccfss/cross-compiler/gnu-i386/gcc42-cross to $INSTALL_DIR at $(date)" \
-#	> $ROOT/done/copy_bin_utils
-#	fi
-
-        cd $ROOT
-
-	echo ==== copied source
-	date
 }
 
 #for cross compiler, we need install the libraries in sparc format
@@ -984,8 +784,6 @@ canonicalize_paths()
 	# ORIG_WS=$(canonicalize_path $ORIG_WS)
 }
 
-
-
 # Installed libstdc++.la and libsupc++.la files should not refer to
 # the build directory, or C++ applications cannot link with libtool.
 patch_la_files()
@@ -1045,7 +843,7 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
 # we probably also dont need the .a file. Check this
 add_gfortran_libs()
 {
-    LIB_DIR="$INSTALL_DIR/$LIB_SUFFIX/gcc/sparc-sun-solaris2.10/"
+    LIB_DIR="$INSTALL_DIR/$LIB_SUFFIX/gcc/sparc-sun-solaris2.10/$GCC_VERSION"
     LIB_LOCATION="/ws/gccfss/tools/lib/gcc/sparc-sun-solaris2.10"
 
     (cd $LIB_LOCATION; find . -name "libgmp.*" |cpio -pdum $LIB_DIR)
@@ -1099,25 +897,26 @@ else
     export PATH=$ROOT/tools/bin:$GNU_TOOL_BIN:/usr/sfw/bin:/usr/ccs/bin:/usr/bin:/bin
 fi
 
-# export SUNCC_PATH=$SUN_DIR/bin/cc
-export SUNCC_PATH=
+do_bringover()
+{
+    typeset src_ws=$1
 
-if [ ! -d $ROOT/src ]
-then
-	ln -s $ORIG_WS $ROOT/src
-fi
-
-# Extract freezepoint if necessary
-if [[ "$GCC2IR_FREEZE_FILE" != "" && ! -d $ROOT/src ]]
-then
-	extract_freeze $GCC2IR_FREEZE_FILE
-fi
+    if [ -e $ROOT/done/bringover.gcc2ir ]
+    then
+	echo "The gcc2ir workspace has already been brought over"
+	echo "will not be brought over again."
+	echo "To force a bringover, remove $ROOT/done/bringover.gcc2ir"
+        echo "and restart."
+    else
+        echo "Bringing over the gcc2ir source workspace $src_ws ...."
+        $GIT clone --depth 1 $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir
+        echo "Bringover from $src_ws completed at $(date)" > \
+             $ROOT/done/bringover.gcc2ir
+    fi
+}
 
 # Bringover workspace if necessary
-if [ $FORCE_BRINGOVER == 1 ]
-then
-	do_bringover $ORIG_WS
-fi
+do_bringover $ORIG_WS
 
 mkdir -p $ROOT/build.gcc2ir
 cd $ROOT/build.gcc2ir
@@ -1133,23 +932,7 @@ then
     touch $ROOT/done/copy_gnu_tools
 fi
 
-# gmake could be copied by do_copy_gnu_tools
-if [ "$GMAKE" = "" ]
-then
-    if [ `uname -p` = i386 ]
-    then
-	GMAKE=/usr/sfw/bin/gmake
-    else
-	GMAKE=$ROOT/tools/bin/gmake
-    fi
-fi
-
-if [ -d $ROOT/src ]
-then
-	SOURCE_WS=$ROOT/src
-else
-	SOURCE_WS=$ORIG_WS
-fi
+SOURCE_WS=$ROOT/src
 
 if [ ! -d $SOURCE_WS ]
 then
@@ -1200,7 +983,7 @@ then
 	    # use system 'as' during configure, gccfss driver will use 'fbe'
 	    export AS="/usr/ccs/bin/as"
 	    export AS_FOR_TARGET="/usr/ccs/bin/as"
-	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --enable-bootstrap --with-mpfr=/ws/gccfss/tools --with-gmp=/ws/gccfss/tools --enable-tls"
+	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --disable-bootstrap --with-mpfr=/ws/gccfss/tools --with-gmp=/ws/gccfss/tools --enable-tls"
 	fi
 
 	# make sure $CONFIG_FLAGS is the last parameter on the list
@@ -1209,7 +992,6 @@ then
 	    --enable-shared \
 	    --with-system-zlib \
 	    --enable-checking=release \
-	    --disable-libmudflap \
 	    --enable-languages=c,c++ \
 	    $CONFIG_FLAGS > $ROOT/logs/config.gcc2ir.log 2>&1
     fi

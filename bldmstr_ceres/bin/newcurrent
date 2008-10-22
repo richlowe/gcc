@@ -4,7 +4,7 @@ if [ `uname -s` = Linux ]
 then
 	COMPILERDIR=/net/perftech-064/data/compilers
 else
-	COMPILERDIR=/ws/gccfss/builds/4.2.1
+	COMPILERDIR=/ws/gccfss/builds/4.3.2
 fi
 
 MAIL_LIST=

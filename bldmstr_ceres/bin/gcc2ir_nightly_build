@@ -78,8 +78,8 @@ then
 	exit 1
 fi
 
-BUILDNAME=`date +\%Y\%m\%d`_ceres_gcc421
-BACKEND_COMP_BUILDNAME=`date +\%Y\%m\%d`_ceres_gcc421
+BUILDNAME=`date +\%Y\%m\%d`_ceres_gcc432
+BACKEND_COMP_BUILDNAME=`date +\%Y\%m\%d`_ceres_gcc432
 if [ $# -gt 0 ]
 then
 	BUILDNAME=$1
@@ -114,11 +114,11 @@ case $OS in
 		# If we get here we know that both Solaris 9 and 10 builds
 		# finished and found no new test failures.
 		# Update the current link.
-		${SCRIPTDIR}/newcurrent gcc421
+		${SCRIPTDIR}/newcurrent gcc
 		;;
 	Linux)	# Copy the compiler to common place.
 		echo "Copy the compiler to common place /ws/gccfss/builds. " 
-		COMMONDIR=/ws/gccfss/builds/4.2.1_linux
+		COMMONDIR=/ws/gccfss/builds/4.3.2_linux
 		mkdir $COMMONDIR/$BUILDNAME
 		(cd $INSTALLDIR; find . | cpio -pdum $COMMONDIR/$BUILDNAME/)
 
@@ -130,8 +130,8 @@ case $OS in
 			exit 1;
 		else
 			# Update the current link.
-			${SCRIPTDIR}/newcurrent gcc421
-			(cd $COMMONDIR ; rm -f current_gcc421; ln -s $BUILDNAME current_gcc421)
+			${SCRIPTDIR}/newcurrent gcc
+			(cd $COMMONDIR ; rm -f current_gcc; ln -s $BUILDNAME current_gcc)
 		fi
 		;;
 	*)	;;

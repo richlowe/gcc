@@ -9,7 +9,6 @@ bin/version
 bin/ats
 bin/ats_server
 bin/bit
-lib/gxx_eh_supported
 lib/cg/model_cg_sparc64vi.so.3
 lib/cg/model_cg_ultra.so.3
 lib/cg/model_cg_ultra3.so.3
