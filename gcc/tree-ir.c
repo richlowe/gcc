@@ -3814,7 +3814,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 	int rrotate=0;
 
         if (TREE_CODE (stmt) == POINTER_PLUS_EXPR)
-	  gcc_assert (POINTER_TYPE_P (TREE_TYPE (op0)) && TREE_CODE (TREE_TYPE (op1)) == INTEGER_TYPE);
+	  gcc_assert (POINTER_TYPE_P (TREE_TYPE (op0)) && INTEGRAL_TYPE_P (TREE_TYPE (op1)));
 
         if (TREE_CODE (TREE_TYPE (stmt)) == VECTOR_TYPE)
           return ir_dump_vis (stmt, op0, op1);
