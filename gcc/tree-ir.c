@@ -6999,16 +6999,17 @@ dump_ir_builtin_call (tree stmt, int need_return)
   switch (fcode)
     {
     CASE_FLT_FN (BUILT_IN_SIGNBIT):
+      /* If no header files found, gccfss help to generate IR_* independent of 'gccbuiltins.il'. */
+      if (strncmp (IDENTIFIER_POINTER (DECL_NAME (fndecl)), "__builtin_", 10) == 0)
+        return dump_ir_call (stmt, need_return);
+
+      /* fall through */
     CASE_FLT_FN (BUILT_IN_ISINF):
     CASE_FLT_FN (BUILT_IN_ISNAN):
     CASE_FLT_FN (BUILT_IN_ISFINITE):
     CASE_FLT_FN (BUILT_IN_ISNORMAL):
     CASE_FLT_FN (BUILT_IN_FPCLASSIFY):
-      /* signbit, isinf, isnan, isfinite, isnormal, fpclassify are library micro defined in 'iso/math_c99.h'.
-         If no header files found, gccfss help to generate IR_* independent of 'gccbuiltins.il'. */
-      if (strncmp (IDENTIFIER_POINTER (DECL_NAME (fndecl)), "__builtin_", 10) == 0)
-        return dump_ir_call (stmt, need_return);
-
+      /* signbit, isinf, isnan, isfinite, isnormal, fpclassify are library micro defined in 'iso/math_c99.h'. */
       if (! arglist /* No args */
           || TREE_CHAIN (arglist) /* More than one arg */)
         return dump_ir_call (stmt, need_return);
@@ -7242,6 +7243,8 @@ dump_ir_builtin_call (tree stmt, int need_return)
     case BUILT_IN_LOCK_RELEASE_4:
     case BUILT_IN_LOCK_RELEASE_8:
     case BUILT_IN_LOCK_RELEASE_16:
+    case BUILT_IN_BSWAP32:
+    case BUILT_IN_BSWAP64:
       flag_use_rtl_backend = 1; /* disable IR gen for the rest of the function */
       return dump_ir_call (stmt, need_return);
     case BUILT_IN_PREFETCH: 
