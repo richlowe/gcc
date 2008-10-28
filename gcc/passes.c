@@ -486,8 +486,10 @@ init_optimization_passes (void)
   NEXT_PASS (pass_refactor_eh);
   NEXT_PASS (pass_lower_eh);
   NEXT_PASS (pass_lower_vector_nocfg);
-  NEXT_PASS (pass_build_cgraph_edges);
   NEXT_PASS (pass_build_cfg);
+  NEXT_PASS (pass_build_cgraph_edges);
+  /* these two passes are needed by ipa_inine. */
+  NEXT_PASS (pass_inline_parameters);
   /* NEXT_PASS (pass_lower_complex_O0);
   NEXT_PASS (pass_lower_vector);
   NEXT_PASS (pass_warn_function_return);
@@ -546,6 +548,7 @@ init_optimization_passes (void)
   /*NEXT_PASS (pass_ipa_increase_alignment);
   NEXT_PASS (pass_ipa_matrix_reorg);
   NEXT_PASS (pass_ipa_cp);*/
+
   NEXT_PASS (pass_ipa_inline);
   /* the trees after 1st pass of gimplifier are unusable for IPA passes
    which may cause wrong ECF_CONST markings leading to wrong code

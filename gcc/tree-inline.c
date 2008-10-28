@@ -742,7 +742,7 @@ copy_body_r (tree *tp, int *walk_subtrees, void *data)
       if (EXPR_P (*tp) || GIMPLE_STMT_P (*tp))
 	{
 	  new_block = id->block;
-	  if (TREE_BLOCK (*tp))
+	  if (TREE_BLOCK (*tp) && flag_use_rtl_backend != 0)
 	    {
 	      tree *n;
 	      n = (tree *) pointer_map_contains (id->decl_map,
@@ -1747,7 +1747,10 @@ setup_one_parameter (copy_body_data *id, tree p, tree value, tree fn,
      the argument to the proper type in case it was promoted.  */
   if (value)
     {
-      block_stmt_iterator bsi = bsi_last (bb);
+      block_stmt_iterator bsi;
+
+      if (flag_use_rtl_backend != 0)
+        bsi = bsi_last (bb);
 
       if (rhs == error_mark_node)
 	{
@@ -2697,7 +2700,6 @@ estimate_num_insns_1 (tree *tp, int *walk_subtrees, void *data)
 int
 estimate_num_insns (tree expr, eni_weights *weights)
 {
-  int num = 0;
   struct pointer_set_t *visited_nodes;
   basic_block bb;
   block_stmt_iterator bsi;
@@ -2718,7 +2720,7 @@ estimate_num_insns (tree expr, eni_weights *weights)
           visited_nodes = pointer_set_create ();
           for (tsi = tsi_start (DECL_SAVED_TREE (expr)); !tsi_end_p (tsi); tsi_next (&tsi))
             walk_tree (tsi_stmt_ptr (tsi), estimate_num_insns_1,
-                       &num, visited_nodes);
+                       &data, visited_nodes);
           pointer_set_destroy (visited_nodes);
         }
       else
