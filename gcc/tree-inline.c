@@ -1036,7 +1036,7 @@ copy_tree_body_r (tree *tp, int *walk_subtrees, void *data)
       if (EXPR_P (*tp))
 	{
 	  new_block = id->block;
-	  if (TREE_BLOCK (*tp))
+	  if (TREE_BLOCK (*tp) && flag_use_rtl_backend != 0)
 	    {
 	      tree *n;
 	      n = (tree *) pointer_map_contains (id->decl_map,
