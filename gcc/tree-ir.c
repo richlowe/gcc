@@ -2554,6 +2554,16 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
     case RESULT_DECL:
       {
         ret = func_ret_leaf;
+
+        /* inline will import result_decl from other function */
+        if (DECL_CONTEXT(stmt) != current_function_decl)
+          {
+	    tree var_type = TREE_TYPE (stmt);
+	    ret = get_tmp_leaf_with_name (map_gnu_type_to_TYPE (var_type),
+					  map_gnu_type_to_IR_TYPE_NODE (var_type),
+					  get_ir_name (stmt));
+	  }
+
         
         /* using extended IR to pass struct values out of funcs */
         if (TREE_CODE (TREE_TYPE (stmt)) == REFERENCE_TYPE

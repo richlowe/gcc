@@ -2865,7 +2865,8 @@ expand_call_inline (basic_block bb, tree stmt, tree *tp, void *data,
          where previous inlining turned indirect call into direct call by
          constant propagating arguments.  In all other cases we hit a bug
          (incorrect node sharing is most common reason for missing edges.  */
-      gcc_assert (dest->needed || !flag_unit_at_a_time);
+      /* fixme. 
+      gcc_assert (dest->needed || !flag_unit_at_a_time);*/
       if (flag_use_rtl_backend == 0)
         cgraph_create_edge (id->dst_node, dest, stmt, 0, 0, 0)->inline_failed
             = N_("originally indirect function call not considered for inlining");
