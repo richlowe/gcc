@@ -1,5 +1,6 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* test it with all optimization levels. not just -O2
+ * dg-options "-O2" */
 void make_file_symbol_completion_list (char *);
 /* This tests to make sure PRE doesn't choose the wrong name when
    inserting phi nodes.  Otherwise, we get uses that aren't dominated

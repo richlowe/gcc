@@ -4290,9 +4290,8 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   int have_tt_data;
   int tt_format_size = 0;
   
-  /* Not all functions need anything.  */
-  if (! cfun->uses_eh_lsda)
-    return;
+  if (eh_personality_libfunc)
+    assemble_external_libcall (eh_personality_libfunc);
 
   if (!flag_use_rtl_backend && gcc2ir_ar_hash)
     {
@@ -4300,8 +4299,9 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
       gcc2ir_ar_hash = 0;
     }
   
-  if (eh_personality_libfunc)
-    assemble_external_libcall (eh_personality_libfunc);
+  /* Not all functions need anything.  */
+  if (! cfun->uses_eh_lsda)
+    return;
 
   if (!flag_use_rtl_backend)
     return; /* EH leaves are generated when PBRANCH are created. */

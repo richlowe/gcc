@@ -8399,7 +8399,16 @@ dump_function_ir (tree fn)
       flag_use_rtl_backend = 1; /* disable IR gen for this function */
       return;
     }
-  
+
+  if (DECL_STATIC_CONSTRUCTOR (fn)
+      && targetm.have_ctors_dtors)
+    targetm.asm_out.constructor (XEXP (DECL_RTL (fn), 0),
+                                 decl_init_priority_lookup (fn));
+  if (DECL_STATIC_DESTRUCTOR (fn)
+      && targetm.have_ctors_dtors)
+    targetm.asm_out.destructor (XEXP (DECL_RTL (fn), 0),
+                                decl_fini_priority_lookup (fn)); 
+
   func_name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (fn));
   func_name = (* targetm.strip_name_encoding) (func_name);
   cfun_eh_filter = cfun_eh_exc_ptr = 0;

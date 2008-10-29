@@ -1,5 +1,6 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* test it with all optimization levels. not just -O2
+ * dg-options "-O2" */
 struct BlobSpan {
 	int right;
 };
