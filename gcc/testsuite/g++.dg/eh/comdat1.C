@@ -1,6 +1,6 @@
 // PR target/29487
 // { dg-do link }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 /* This function is not defined.  The compiler should optimize away
    all calls to it.  */
