@@ -6680,8 +6680,9 @@ gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 
 	case LABEL_EXPR:
 	  ret = GS_ALL_DONE;
+	  /* ipa inliner will import callee's label. close this assertion in regimple pass. */
 	  gcc_assert (decl_function_context (LABEL_EXPR_LABEL (*expr_p))
-		      == current_function_decl);
+		      == current_function_decl || flag_use_rtl_backend == 1);
 	  gimplify_seq_add_stmt (pre_p,
 			  gimple_build_label (LABEL_EXPR_LABEL (*expr_p)));
 	  break;
