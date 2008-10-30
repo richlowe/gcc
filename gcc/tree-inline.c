@@ -586,9 +586,14 @@ copy_body_r (tree *tp, int *walk_subtrees, void *data)
 	 ...)"); just toss the entire RETURN_EXPR.  */
       if (assignment && TREE_CODE (assignment) == GIMPLE_MODIFY_STMT)
 	{
+	  tree new_decl;
 	  /* Replace the RETURN_EXPR with (a copy of) the
-	     GIMPLE_MODIFY_STMT hanging underneath.  */
-	  *tp = copy_node (assignment);
+	     GIMPLE_MODIFY_STMT hanging underneath. */ 
+	  *tp = copy_node (assignment); 
+	  new_decl = remap_decl (GIMPLE_STMT_OPERAND(*tp, 0), id);
+	  GIMPLE_STMT_OPERAND(*tp, 0) = new_decl;
+	  /*copy_body_r (tp, walk_subtrees, data);
+	  walk_tree (&GIMPLE_STMT_OPERAND(*tp, 0), copy_body_r, id, NULL);*/
 	}
       else /* Else the RETURN_EXPR returns no value.  */
 	{
@@ -2024,6 +2029,7 @@ declare_return_variable (copy_body_data *id, tree return_slot, tree modify_dest,
   /* Register the VAR_DECL as the equivalent for the RESULT_DECL; that
      way, when the RESULT_DECL is encountered, it will be
      automatically replaced by the VAR_DECL.  */
+  result = DECL_ABSTRACT_ORIGIN (result);
   insert_decl_map (id, result, var);
 
   /* Remember this so we can ignore it in remap_decls.  */
