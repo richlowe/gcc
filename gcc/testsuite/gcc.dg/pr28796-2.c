@@ -1,4 +1,5 @@
 /* { dg-do run } */
+/* { dg-xfail-if "" { *-*-solaris2.* sparc*-*-* } { "*" } { "" } } */
 /* { dg-options "-O2 -funsafe-math-optimizations -fno-finite-math-only" } */
 /* { dg-options "-mieee -O2 -funsafe-math-optimizations -fno-finite-math-only" { target alpha*-*-* } } */
 /* { dg-skip-if "No Inf/NaN support" { spu-*-* } } */

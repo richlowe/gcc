@@ -1,6 +1,6 @@
 /* PR inline-asm/8832 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -dP" } */
+/* { dg-options "-O2 -dP -frtl-backend" } */
 
 /* Verify that GCC doesn't optimize
    old style asm instructions.  */

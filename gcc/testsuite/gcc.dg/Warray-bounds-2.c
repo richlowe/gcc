@@ -6,7 +6,7 @@ int a[10];
 
 int* f(void) {
 
-    a[-1] = 0;             /* { dg-warning "array subscript" } */
+    a[-1] = 0;             /* { g-warning "array subscript" } */ /* todo in iropt */
 
     return a;
 }

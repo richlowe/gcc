@@ -2,7 +2,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -gdwarf-2 -dA" } */
 /* { dg-skip-if "Unmatchable assembly" { mmix-*-* } { "*" } { "" } } */
-/* { dg-final { scan-assembler "0x\[68\]\[ \t\]+\[#@;!/|\]+\[ \t\]+DW_AT_encoding" } } */
-/* { dg-final { scan-assembler-not "0x\[57\]\[ \t\]+\[#@;!/|\]+\[ \t\]+DW_AT_encoding" } } */
+/* { dg-final { scan-assembler "0x\[68\]\[ \t\]+\[#@;!/|\]+\[ \t\]+DW_AT_encoding" { xfail sparc*-*-* } } } */
+/* { dg-final { scan-assembler-not "0x\[57\]\[ \t\]+\[#@;!/|\]+\[ \t\]+DW_AT_encoding" { xfail sparc*-*-* } } } */
 
 const char *p = "abc";

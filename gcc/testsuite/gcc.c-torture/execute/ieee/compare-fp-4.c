@@ -1,3 +1,4 @@
+/* { dg-options "-fno-fast-math" } */
 /* Copyright (C) 2004 Free Software Foundation.
 
    Test for correctness of composite floating-point comparisons.

@@ -1,3 +1,4 @@
+/* { dg-options "-fno-fast-math" } */
 #include <signal.h>
 
 double dnan = 1.0/0.0 - 1.0/0.0;

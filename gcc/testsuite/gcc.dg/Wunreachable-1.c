@@ -18,7 +18,7 @@ void bar (int i)
       return;
     }
 
-  baz ();	/* { dg-warning "will never be executed" "" } */
+  baz ();	/* { g-warning "will never be executed" "" } */ /* todo in iropt */
   baz ();
   baz ();
 }

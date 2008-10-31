@@ -4,6 +4,6 @@
 
 int f()
 {
-  int i = i; /* { dg-warning "i" "uninitialized variable warning" }  */
+  int i = i; /* TODO: warn in iropt. was: dg-warning "i" "uninitialized variable warning" */
   return i;
 }

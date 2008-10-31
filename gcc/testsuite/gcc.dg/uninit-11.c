@@ -12,12 +12,12 @@ void f1(int parm)	/* { dg-bogus "uninitialized" "parameter" } */
 void f2(void)
 {
   int x;
-  sink = x;		/* { dg-warning "is used" "unconditional" } */
+  sink = x;		/* { g-warning "is used" "unconditional" } */ /* todo in iropt */
 }
 
 void f3(int p)
 {
-  int x;		/* { dg-warning "may be used" "conditional" } */
+  int x;		/* { g-warning "may be used" "conditional" } */
   if (p)
     x = p;
   sink = x;

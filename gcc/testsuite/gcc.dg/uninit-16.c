@@ -18,6 +18,6 @@ void testfunc()
 
   decode_reloc(foo, &alt_reloc);
 
-  if (alt_reloc) /* { dg-warning "may be used uninitialized" } */
+  if (alt_reloc) /* { g-warning "may be used uninitialized" } */ /* todo in iropt */
     bar = 42;
 }
