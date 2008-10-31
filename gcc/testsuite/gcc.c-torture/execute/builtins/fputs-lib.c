@@ -1,3 +1,4 @@
+/* { dg-options "-O0" } */
 #include <stdio.h>
 #include <stddef.h>
 extern void abort (void);
