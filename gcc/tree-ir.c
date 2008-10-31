@@ -3833,7 +3833,9 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
         ir_op0 = dump_ir_expr (op0, MAP_FOR_VALUE);
        
         /* need to use longtype for op1==int_cst when left operand is a pointer */
-        if ((TREE_CODE (stmt) == PLUS_EXPR || TREE_CODE (stmt) == MINUS_EXPR)
+        if ((TREE_CODE (stmt) == PLUS_EXPR 
+             || TREE_CODE (stmt) == POINTER_PLUS_EXPR
+             || TREE_CODE (stmt) == MINUS_EXPR)
             && TREE_CODE (op1) == INTEGER_CST
             && PCC_ISPTR (ir_op0->operand.type.tword))
           {
