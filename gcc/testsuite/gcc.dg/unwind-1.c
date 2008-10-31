@@ -1,4 +1,4 @@
-/* { dg-do assemble { target { ! { powerpc-ibm-aix* } } } } */
+/* { dg-do assemble { target { ! { powerpc-ibm-aix* *-*-solaris2.* sparc*-*-* } } } } */
 /* { dg-options "-fleading-underscore -funwind-tables" } */
 
 void func(void) __asm("_func");

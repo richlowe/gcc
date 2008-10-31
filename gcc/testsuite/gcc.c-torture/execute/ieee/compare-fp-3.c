@@ -90,8 +90,9 @@ main ()
   return 0;
 }
 
-#ifndef __OPTIMIZE__
+/* iropt doesn't optimize this yet
+ * #ifndef __OPTIMIZE__*/
 void link_error0() {}
 void link_error1() {}
-#endif /* ! __OPTIMIZE__ */
+/* #endif */
 

@@ -17,7 +17,7 @@ gcc.sum:FAIL: gcc.dg/noreturn-1.c detect return from tail call (test for warning
 gcc.sum:FAIL: gcc.dg/noreturn-4.c warn for main (test for warnings, line 8)
 gcc.sum:FAIL: gcc.dg/noreturn-7.c  (test for warnings, line 45)
 gcc.sum:FAIL: gcc.dg/pr17506.c  (test for warnings, line 11)
-gcc.sum:FAIL: gcc.dg/pr17506.c  (test for errors, line 21)
+gcc.sum:FAIL: gcc.dg/pr17506.c  (test for warnings, line 21)
 gcc.sum:FAIL: gcc.dg/pr23075.c  (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr23584.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pr26570.c  (test for warnings, line 7)

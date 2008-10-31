@@ -6,14 +6,16 @@
 
 /* { dg-do compile } */
 /* { dg-options "-O2 -Wreturn-type -Wmissing-noreturn" } */
-
+/* gcc4ss doesn't run through middle-end and recursion conversion doesn't
+   happen, so pass_warn_function_return can't recognize noreturn candidates.
+   TODO: provide this warning in iropt */
 
 void f(void) __attribute__ ((__noreturn__));
 void _exit(int status) __attribute__ ((__noreturn__));
 
 int z = 0;
 
-void g() /* { dg-warning "possible candidate" } */
+void g() /* { dg-warning "possible candidate" {xfail sparc*-*-*}} */
 {
   if (++z > 10)
     _exit(0);
@@ -27,14 +29,14 @@ void f()
   f();
 }             /* { dg-bogus "does return" } */
 
-int h() /* { dg-warning "possible candidate" } */
+int h() /* { dg-warning "possible candidate"  {xfail sparc*-*-*}}*/
 {
   if (++z > 10)
     _exit(0);
   return h();
 }             /* { dg-bogus "end of non-void function" } */
 
-int k() /* { dg-warning "possible candidate" } */
+int k() /* { dg-warning "possible candidate" {xfail sparc*-*-*}} */
 {
   if (++z > 10)
     _exit(0);

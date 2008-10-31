@@ -1,6 +1,6 @@
 /* Verify that used enums are output.  */
 /* { dg-do compile } */
-/* { dg-final { scan-assembler "JTI_MAX" } } */
+/* { dg-final { scan-assembler "JTI_MAX" { xfail sparc*-*-* } } } */
 
 int var;
 

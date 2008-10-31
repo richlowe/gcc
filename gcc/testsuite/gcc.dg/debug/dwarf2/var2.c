@@ -1,8 +1,8 @@
 /* PR 23190 */
 /* { dg-do compile }
 /* { dg-options "-O2 -gdwarf-2 -dA" } */
-/* { dg-final { scan-assembler "DW_OP_addr\[\\n\\r\]+\[^\\n\\r\]+foo" } } */
-/* { dg-final { scan-assembler "DW_OP_addr\[\\n\\r\]+\[^\\n\\r\]+bar" } } */
+/* { dg-final { scan-assembler "DW_OP_addr\[\\n\\r\]+\[^\\n\\r\]+foo" { xfail sparc*-*-* } } } */
+/* { dg-final { scan-assembler "DW_OP_addr\[\\n\\r\]+\[^\\n\\r\]+bar" { xfail sparc*-*-* } } } */
 
 static int foo;
 int bar;

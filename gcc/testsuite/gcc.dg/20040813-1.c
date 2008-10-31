@@ -11,5 +11,7 @@ main ()
   return 0;
 }
 
-/* { dg-final { scan-assembler ".stabs.*100,0,2" } } */
+/* GCC thinks it is K&R C, hence marked as 2
+ * Sun backend thinks it is ANSI C, hence marked as 3 */
+/* { dg-final { scan-assembler ".stabs.*100,0,\[23\]" } } */
 

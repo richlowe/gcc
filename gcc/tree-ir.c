@@ -10275,8 +10275,8 @@ dump_omp_for (tree stmt)
      be available from the OMP_FOR_INIT body. */
   
   loop_index = OMP_FOR_INIT (stmt);
-  gcc_assert (TREE_CODE (loop_index) == MODIFY_EXPR);
-  loop_index = TREE_OPERAND (loop_index, 0);
+  gcc_assert (TREE_CODE (loop_index) == GIMPLE_MODIFY_STMT);
+  loop_index = GIMPLE_STMT_OPERAND (loop_index, 0);
   gcc_assert (DECL_P (loop_index));
   l0_lab = gen_ir_label ();
   l1_lab = gen_ir_label ();
@@ -10883,7 +10883,7 @@ dump_omp_flush (tree stmt)
   pinfo->end_lineno = ir_location.line;
   pinfo->filename = (LEAF *) build_ir_string_const (ir_location.file);
   
-  op1 = TREE_OPERAND (stmt, 1); /* list of arguments */
+  op1 = CALL_EXPR_ARGS (stmt); /* list of arguments */
   for (; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
     {
       var = dump_ir_expr (TREE_VALUE (op1), MAP_FOR_VALUE);
