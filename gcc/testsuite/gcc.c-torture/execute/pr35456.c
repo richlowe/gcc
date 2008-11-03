@@ -1,4 +1,3 @@
-/* { dg-options "-fno-fast-math" } */
 extern void abort (void);
 
 double

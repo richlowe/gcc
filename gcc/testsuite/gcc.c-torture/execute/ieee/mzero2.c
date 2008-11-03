@@ -1,4 +1,3 @@
-/* { dg-options "-fno-fast-math" } */
 /* Test IEEE +0/-0 rules */
 
 static double pzero = +0.0;

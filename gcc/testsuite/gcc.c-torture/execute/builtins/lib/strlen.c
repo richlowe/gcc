@@ -1,5 +1,3 @@
-/* { dg-options "-O0" } */
-
 extern void abort (void);
 extern int inside_main;
 

@@ -1,5 +1,3 @@
-/* { dg-options "-fno-fast-math" } */
-
 #ifndef SIGNAL_SUPPRESS
 #include <signal.h>
 #endif

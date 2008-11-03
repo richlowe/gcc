@@ -1,4 +1,3 @@
-/* { dg-options "-fno-fast-math" } */
 #ifndef FLOAT
 #define FLOAT double
 #endif
