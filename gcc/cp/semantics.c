@@ -3443,13 +3443,12 @@ generate_default_copy_ctor_function (tree decl)
 
   t = build1 (INDIRECT_REF, type, arg1);
   t2 = build1 (INDIRECT_REF, type, arg2);
-  t = build2 (MODIFY_EXPR, type, t, t2);
-  
+  t = build2 (GIMPLE_MODIFY_STMT, type, t, t2);
+
   append_to_statement_list (t, &BIND_EXPR_BODY (body));
   DECL_SAVED_TREE (fn_decl) = body;
   DECL_INITIAL (fn_decl) = make_node (BLOCK);
 
-  /* I am not sure whether the following is needed.*/
   cgraph_finalize_function (fn_decl, IR_FALSE);
   n = cgraph_node (fn_decl);
   cgraph_mark_needed_node (n);

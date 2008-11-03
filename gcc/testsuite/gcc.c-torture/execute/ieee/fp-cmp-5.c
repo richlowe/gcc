@@ -1,4 +1,3 @@
-/* { dg-options "-fno-fast-math" } */
 /* Like fp-cmp-4.c, but test that the setcc patterns are correct.  */
 
 static int

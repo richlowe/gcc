@@ -1,4 +1,3 @@
-/* { dg-options "-fno-fast-math" } */
 #include <float.h>
 
 extern void abort(void);

@@ -1,4 +1,3 @@
-/* { dg-options "-fno-fast-math" } */
 #include <signal.h>
 
 float fnan = 1.0f/0.0f - 1.0f/0.0f;
