@@ -519,16 +519,12 @@ init_optimization_passes (void)
   NEXT_PASS (pass_lower_cf);
   NEXT_PASS (pass_refactor_eh);
   NEXT_PASS (pass_lower_eh);
-  NEXT_PASS (pass_lower_vector_nocfg);
   NEXT_PASS (pass_build_cfg);
-  NEXT_PASS (pass_build_cgraph_edges);
-  /* these two passes are needed by ipa_inine. */
-  NEXT_PASS (pass_inline_parameters);
-  /* NEXT_PASS (pass_lower_complex_O0);
+  NEXT_PASS (pass_lower_complex_O0);
   NEXT_PASS (pass_lower_vector);
   NEXT_PASS (pass_warn_function_return);
   NEXT_PASS (pass_build_cgraph_edges);
-  NEXT_PASS (pass_inline_parameters); */
+  NEXT_PASS (pass_inline_parameters);
   *p = NULL;
 
   /* Interprocedural optimization passes.  */
@@ -1337,6 +1333,13 @@ execute_one_pass (struct opt_pass *pass)
 void
 execute_pass_list (struct opt_pass *pass)
 {
+  /* GCCFSS. Set/Reset the flag_use_rtl_backend
+     for the function */
+  HOST_WIDE_INT save = flag_use_rtl_backend;
+  if (flag_use_rtl_backend != -1 
+      && DECL_DONT_GENERATE_SUNIR(current_function_decl))
+    flag_use_rtl_backend = 1;
+
   do
     {
       gcc_assert (pass->type == GIMPLE_PASS
@@ -1346,6 +1349,8 @@ execute_pass_list (struct opt_pass *pass)
       pass = pass->next;
     }
   while (pass);
+
+  flag_use_rtl_backend = save;
 }
 
 /* Same as execute_pass_list but assume that subpasses of IPA passes

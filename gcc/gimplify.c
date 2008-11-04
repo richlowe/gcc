@@ -2973,29 +2973,21 @@ gimplify_cond_expr (tree *expr_p, gimple_seq *pre_p, fallback_t fallback)
     return GS_ERROR;
   gcc_assert (TREE_OPERAND (expr, 0) != NULL_TREE);
 
-  if (flag_use_rtl_backend == 0) 
-    {
-      /* the 2nd pass of gimplify after gen SunIR failed will
-         see cond_expr, which were properly gimplified during 1st pass
-         and then/else branches have 'goto_expr' in them.
-         No need to gimplify them into stmt_list for 2nd pass,
-         but gimplify them during 1st pass */
-
-      gimple_push_condition ();
+  gimple_push_condition ();
 
   have_then_clause_p = have_else_clause_p = false;
   if (TREE_OPERAND (expr, 1) != NULL
       && TREE_CODE (TREE_OPERAND (expr, 1)) == GOTO_EXPR
       && TREE_CODE (GOTO_DESTINATION (TREE_OPERAND (expr, 1))) == LABEL_DECL
       && (DECL_CONTEXT (GOTO_DESTINATION (TREE_OPERAND (expr, 1)))
-	  == current_function_decl)
+          == current_function_decl)
       /* For -O0 avoid this optimization if the COND_EXPR and GOTO_EXPR
-	 have different locations, otherwise we end up with incorrect
-	 location information on the branches.  */
+         have different locations, otherwise we end up with incorrect
+         location information on the branches.  */
       && (optimize
-	  || !EXPR_HAS_LOCATION (expr)
-	  || !EXPR_HAS_LOCATION (TREE_OPERAND (expr, 1))
-	  || EXPR_LOCATION (expr) == EXPR_LOCATION (TREE_OPERAND (expr, 1))))
+          || !EXPR_HAS_LOCATION (expr)
+          || !EXPR_HAS_LOCATION (TREE_OPERAND (expr, 1))
+          || EXPR_LOCATION (expr) == EXPR_LOCATION (TREE_OPERAND (expr, 1))))
     {
       label_true = GOTO_DESTINATION (TREE_OPERAND (expr, 1));
       have_then_clause_p = true;
@@ -3006,14 +2998,14 @@ gimplify_cond_expr (tree *expr_p, gimple_seq *pre_p, fallback_t fallback)
       && TREE_CODE (TREE_OPERAND (expr, 2)) == GOTO_EXPR
       && TREE_CODE (GOTO_DESTINATION (TREE_OPERAND (expr, 2))) == LABEL_DECL
       && (DECL_CONTEXT (GOTO_DESTINATION (TREE_OPERAND (expr, 2)))
-	  == current_function_decl)
+          == current_function_decl)
       /* For -O0 avoid this optimization if the COND_EXPR and GOTO_EXPR
-	 have different locations, otherwise we end up with incorrect
-	 location information on the branches.  */
+         have different locations, otherwise we end up with incorrect
+         location information on the branches.  */
       && (optimize
-	  || !EXPR_HAS_LOCATION (expr)
-	  || !EXPR_HAS_LOCATION (TREE_OPERAND (expr, 2))
-	  || EXPR_LOCATION (expr) == EXPR_LOCATION (TREE_OPERAND (expr, 2))))
+          || !EXPR_HAS_LOCATION (expr)
+          || !EXPR_HAS_LOCATION (TREE_OPERAND (expr, 2))
+          || EXPR_LOCATION (expr) == EXPR_LOCATION (TREE_OPERAND (expr, 2))))
     {
       label_false = GOTO_DESTINATION (TREE_OPERAND (expr, 2));
       have_else_clause_p = true;
@@ -3022,7 +3014,7 @@ gimplify_cond_expr (tree *expr_p, gimple_seq *pre_p, fallback_t fallback)
     label_false = create_artificial_label ();
 
   gimple_cond_get_ops_from_tree (COND_EXPR_COND (expr), &pred_code, &arm1,
-				 &arm2);
+                                 &arm2);
 
   gimple_cond = gimple_build_cond (pred_code, arm1, arm2, label_true,
                                    label_false);

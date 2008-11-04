@@ -6613,11 +6613,7 @@ execute_lower_omp (void)
 static bool
 gate_lower_omp (void)
 {
-  /* Create a new option to allow lowering of omp
-     in order to use gcc's implementation.
-     flag_openmp != 0 */
-    
-  return 0;
+  return flag_openmp != 0 && flag_use_rtl_backend == -1;
 }
 
 struct gimple_opt_pass pass_lower_omp = 

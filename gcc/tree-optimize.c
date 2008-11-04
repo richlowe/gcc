@@ -74,7 +74,8 @@ gate_all_optimizations (void)
   return (optimize >= 1
 	  /* Don't bother doing anything if the program has errors. 
 	     We have to pass down the queue if we already went into SSA */
-	  && (!(errorcount || sorrycount) || gimple_in_ssa_p (cfun)));
+	  && (!(errorcount || sorrycount) || gimple_in_ssa_p (cfun))
+	  && gate_generate_rtl());
 }
 
 struct gimple_opt_pass pass_all_optimizations =
@@ -119,7 +120,7 @@ static bool
 gate_all_early_local_passes (void)
 {
 	  /* Don't bother doing anything if the program has errors.  */
-  return (!errorcount && !sorrycount);
+  return (!errorcount && !sorrycount && gate_generate_rtl());
 }
 
 struct simple_ipa_opt_pass pass_early_local_passes =
@@ -253,6 +254,9 @@ struct gimple_opt_pass pass_cleanup_cfg_post_optimizing =
 bool
 gate_generate_ir (void)
 {
+  if (current_function_decl != NULL)
+    return !DECL_DONT_GENERATE_SUNIR(current_function_decl);
+
   return !flag_use_rtl_backend;
 }
 

@@ -130,22 +130,18 @@ map_gnu_type_to_tword (tree node)
           break;
         case TImode: /* 128 bit integer type */ 
           if (TARGET_ARCH64) 
-            { /* workaround for v9, cause bit_size_type has a precision of 68 bits */
+            { 
+	      /* workaround for v9, cause bit_size_type has a 
+		 precision of 68 bits */
               if (node == bitsizetype)
                 ret = PCC_ULONG;
               else if (TYPE_PRECISION (node) == 128)
-                {
-                  ret = 0; /* zero TYPE_IR_TWORD (node). Don't cache it */
-                  flag_use_rtl_backend = 1; /* disable IR gen for the rest of the function */
-                }
+		ret = 0; /* zero TYPE_IR_TWORD (node). Don't cache it */
               else /* for others let's hope that llong will fit */
                 ret = (TYPE_UNSIGNED (node) ? PCC_ULLONG : PCC_LLONG);
             }
           else
-            { /* shouldn't see this in v8 */
-              ret = 0; /* zero TYPE_IR_TWORD (node). Don't cache it */
-              flag_use_rtl_backend = 1; /* disable IR gen for the rest of the function */
-            }
+	    abort();
           break;
         default: abort ();
         }

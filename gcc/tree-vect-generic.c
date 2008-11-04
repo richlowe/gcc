@@ -531,23 +531,6 @@ gate_expand_vector_operations (void)
 }
 
 static unsigned int
-expand_vector_operations (void)
-{
-  gimple_stmt_iterator gsi;
-  basic_block bb;
-
-  FOR_EACH_BB (bb)
-    {
-      for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
-	{
-	  expand_vector_operations_1 (&gsi);
-	  update_stmt_if_modified (gsi_stmt (gsi));
-	}
-    }
-  return 0;
-}
-
-static unsigned int
 expand_vector_operations_nocfg (void)
 {
   tree_stmt_iterator tsi;
@@ -560,6 +543,27 @@ expand_vector_operations_nocfg (void)
       bsi.tsi = tsi;
       expand_vector_operations_1 (&bsi);
       update_stmt_if_modified (tsi_stmt (tsi));
+    }
+  return 0;
+}
+
+static unsigned int
+expand_vector_operations (void)
+{
+  block_stmt_iterator bsi;
+  basic_block bb;
+
+  /* No cfg for GCCFSS */
+  if (flag_use_rtl_backend == 0)
+    return expand_vector_operations_nocfg ();
+
+  FOR_EACH_BB (bb)
+    {
+      for (bsi = bsi_start (bb); !bsi_end_p (bsi); bsi_next (&bsi))
+	{
+	  expand_vector_operations_1 (&bsi);
+	  update_stmt_if_modified (bsi_stmt (bsi));
+	}
     }
   return 0;
 }
@@ -586,6 +590,8 @@ struct gimple_opt_pass pass_lower_vector =
 
 struct tree_opt_pass pass_lower_vector_nocfg = 
 {
+  {
+  GIMPLE_PASS,
   "veclower_nocfg",				/* name */
   0,					/* gate */
   expand_vector_operations_nocfg,		/* execute */
@@ -598,8 +604,8 @@ struct tree_opt_pass pass_lower_vector_nocfg =
   0,					/* properties_destroyed */
   0,					/* todo_flags_start */
   TODO_dump_func | TODO_ggc_collect
-    /*| TODO_verify_stmts*/,		/* todo_flags_finish */
-  0					/* letter */
+    /*| TODO_verify_stmts*/		/* todo_flags_finish */
+  }
 };
 
 struct gimple_opt_pass pass_lower_vector_ssa = 

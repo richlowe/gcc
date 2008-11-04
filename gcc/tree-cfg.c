@@ -242,7 +242,7 @@ struct gimple_opt_pass pass_build_cfg =
  {
   GIMPLE_PASS,
   "cfg",				/* name */
-  gate_build_cfg,			/* gate */
+  gate_generate_rtl,			/* gate */
   execute_build_cfg,			/* execute */
   NULL,					/* sub */
   NULL,					/* next */
@@ -527,14 +527,9 @@ make_edges (void)
 		 create abnormal edges to them.  */
 	      make_eh_edges (last);
 
-	      /* Some calls are known not to return. Dont
-                 mess with control flow if we are inside
-                 an openmp region. */
-              if (cur_region == NULL)
-                fallthru = !(gimple_call_flags (last) & ECF_NORETURN);
-              else
-                fallthru = true;
-              break;
+	      /* Some calls are known not to return.  */
+	      fallthru = !(call_expr_flags (last) & ECF_NORETURN);
+	      break;
 
 	    case GIMPLE_ASSIGN:
 	       /* A GIMPLE_ASSIGN may throw internally and thus be considered
@@ -560,17 +555,11 @@ make_edges (void)
 
 	    case GIMPLE_OMP_SECTIONS:
 	      cur_region = new_omp_region (bb, code, cur_region);
-	      if (flag_use_rtl_backend == 0)
-                fallthru = true;
-              else
-                fallthru = false;
+	      fallthru = true;
 	      break;
 
 	    case GIMPLE_OMP_SECTIONS_SWITCH:
-	      if (flag_use_rtl_backend == 0)
-                fallthru = true;
-              else
-                fallthru = false;
+	      fallthru = false;
 	      break;
 
 
@@ -585,10 +574,7 @@ make_edges (void)
 		 somewhere other than the next block.  This will be
 		 created later.  */
 	      cur_region->exit = bb;
-	      if (flag_use_rtl_backend == 0)
-                fallthru = true;
-              else
-                fallthru = cur_region->type != GIMPLE_OMP_SECTION;
+	      fallthru = cur_region->type != OMP_SECTION;
 	      cur_region = cur_region->outer;
 	      break;
 
@@ -7147,7 +7133,7 @@ struct gimple_opt_pass pass_warn_function_return =
  {
   GIMPLE_PASS,
   NULL,					/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,                    /* gate */
   execute_warn_function_return,		/* execute */
   NULL,					/* sub */
   NULL,					/* next */

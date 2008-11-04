@@ -1358,8 +1358,7 @@ copy_bb (copy_body_data *id, basic_block bb, int frequency_scale,
 	 non-gimple (foo *)&this->m, fix that here.  */
       if (is_gimple_assign (stmt)
 	  && gimple_assign_rhs_code (stmt) == NOP_EXPR
-	  && !is_gimple_val (gimple_assign_rhs1 (stmt))
-          && flag_use_rtl_backend != 0)
+	  && !is_gimple_val (gimple_assign_rhs1 (stmt)))
 	{
 	  tree new_rhs;
 	  new_rhs = force_gimple_operand_gsi (&seq_gsi,
