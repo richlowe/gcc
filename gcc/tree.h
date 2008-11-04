@@ -3401,6 +3401,11 @@ struct tree_decl_non_common GTY(())
    where it is called.  */
 #define DECL_INLINE(NODE) (FUNCTION_DECL_CHECK (NODE)->function_decl.inline_flag)
 
+/* Nonzero for a decl that GCCFSS cannot handle using IR. Require
+   to use RTL backend or it. */
+#define DECL_DONT_GENERATE_SUNIR(DECL) \
+  FUNCTION_DECL_CHECK (DECL)->function_decl.dont_generate_ir
+
 /* Nonzero in a FUNCTION_DECL means that this function was declared inline,
    such as via the `inline' keyword in C/C++.  This flag controls the linkage
    semantics of 'inline'; whether or not the function is inlined is
@@ -3482,7 +3487,8 @@ struct tree_function_decl GTY(())
   unsigned no_limit_stack : 1;
   unsigned disregard_inline_limits : 1;
 
-  /* 4 bits left */
+  unsigned dont_generate_ir : 1; /* GCCFSS */
+  /* 3 bits left */
 };
 
 /* For a TYPE_DECL, holds the "original" type.  (TREE_TYPE has the copy.) */

@@ -1425,7 +1425,7 @@ cgraph_decide_inlining_incrementally (struct cgraph_node *node,
 static bool
 cgraph_gate_inlining (void)
 {
-  return flag_inline_trees;
+  return flag_inline_trees && gate_generate_rtl();
 }
 
 struct tree_opt_pass pass_ipa_inline = 

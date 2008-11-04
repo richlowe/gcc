@@ -6302,6 +6302,12 @@ start_function (struct c_declspecs *declspecs, struct c_declarator *declarator,
      use the old decl.  */
 
   current_function_decl = pushdecl (decl1);
+  if (flag_use_rtl_backend != 0)
+    {
+      DECL_DONT_GENERATE_SUNIR (current_function_decl) = true;
+      if (flag_use_rtl_backend != -1)
+	flag_use_rtl_backend = 0;
+    }
 
   push_scope ();
   declare_parm_level ();

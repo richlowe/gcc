@@ -227,27 +227,11 @@ lni_init (const char *source_file,
 static void
 lni_fini (void)
 {
-  if (flag_use_rtl_backend != 0)
-    {
-      /* Something bad happened during IR gen. simply clean
-         up the lni stack. */
-      lni_ctx_t *lni_ctx;
-      while (current_lni_ctx)
-        {
-          lni_ctx = current_lni_ctx->prev;
-          free (current_lni_ctx->file);
-          free (current_lni_ctx);
-          current_lni_ctx = lni_ctx;
-        }
-    }
-  else
-    {  
-      gcc_assert (current_lni_ctx != NULL);
-      gcc_assert (current_lni_ctx->prev == NULL);
-      gcc_assert (inline_depth == 0);
-      free (current_lni_ctx->file);
-      free (current_lni_ctx);
-    }
+  gcc_assert (current_lni_ctx != NULL);
+  gcc_assert (current_lni_ctx->prev == NULL);
+  gcc_assert (inline_depth == 0);
+  free (current_lni_ctx->file);
+  free (current_lni_ctx);
   
   lni_proc = NULL;
   current_lni_handle = NULL;

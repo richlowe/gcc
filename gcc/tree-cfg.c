@@ -214,16 +214,10 @@ execute_build_cfg (void)
   return 0;
 }
 
-static bool 
-gate_build_cfg (void)
-{
-  return gate_generate_rtl ();
-}
-
 struct tree_opt_pass pass_build_cfg =
 {
   "cfg",				/* name */
-  gate_build_cfg,			/* gate */
+  gate_generate_rtl,			/* gate */
   execute_build_cfg,			/* execute */
   NULL,					/* sub */
   NULL,					/* next */
@@ -491,14 +485,9 @@ make_edges (void)
 		 create abnormal edges to them.  */
 	      make_eh_edges (last);
 
-	      /* Some calls are known not to return. Dont
-                 mess with control flow if we are inside
-                 an openmp region. */
-          if (cur_region == NULL)
-            fallthru = !(call_expr_flags (last) & ECF_NORETURN);
-          else
-            fallthru = true;
-          break;
+	      /* Some calls are known not to return.  */
+	      fallthru = !(call_expr_flags (last) & ECF_NORETURN);
+	      break;
 
 	    case MODIFY_EXPR:
 	      gcc_unreachable ();
@@ -531,17 +520,11 @@ make_edges (void)
 
 	    case OMP_SECTIONS:
 	      cur_region = new_omp_region (bb, code, cur_region);
-	      if (flag_use_rtl_backend == 0)
-                fallthru = true;
-              else
-                fallthru = false;
+	      fallthru = true;
 	      break;
 
 	    case OMP_SECTIONS_SWITCH:
-	      if (flag_use_rtl_backend == 0)
-                fallthru = true;
-              else
-                fallthru = false;
+	      fallthru = false;
 	      break;
 
 
@@ -555,10 +538,7 @@ make_edges (void)
 	      /* In the case of an OMP_SECTION, the edge will go somewhere
 		 other than the next block.  This will be created later.  */
 	      cur_region->exit = bb;
-	      if (flag_use_rtl_backend == 0)
-                fallthru = true;
-              else
-                fallthru = cur_region->type != OMP_SECTION;
+	      fallthru = cur_region->type != OMP_SECTION;
 	      cur_region = cur_region->outer;
 	      break;
 
@@ -2717,9 +2697,6 @@ last_and_only_stmt (basic_block bb)
 void
 set_bb_for_stmt (tree t, basic_block bb)
 {
-  if (flag_use_rtl_backend == 0 && bb == 0)
-    return;
-    
   if (TREE_CODE (t) == PHI_NODE)
     PHI_BB (t) = bb;
   else if (TREE_CODE (t) == STATEMENT_LIST)
@@ -7150,7 +7127,7 @@ extract_true_false_edges_from_block (basic_block b,
 struct tree_opt_pass pass_warn_function_return =
 {
   NULL,					/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,                    /* gate */
   execute_warn_function_return,		/* execute */
   NULL,					/* sub */
   NULL,					/* next */

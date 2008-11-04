@@ -2772,23 +2772,14 @@ gimplify_cond_expr (tree *expr_p, tree *pre_p, fallback_t fallback)
   ret = gimplify_expr (&TREE_OPERAND (expr, 0), pre_p, NULL,
 		       is_gimple_condexpr, fb_rvalue);
 
-  if (flag_use_rtl_backend == 0) 
-    {
-      /* the 2nd pass of gimplify after gen SunIR failed will
-         see cond_expr, which were properly gimplified during 1st pass
-         and then/else branches have 'goto_expr' in them.
-         No need to gimplify them into stmt_list for 2nd pass,
-         but gimplify them during 1st pass */
-
-      gimple_push_condition ();
-
-      gimplify_to_stmt_list (&TREE_OPERAND (expr, 1));
-      gimplify_to_stmt_list (&TREE_OPERAND (expr, 2));
-      recalculate_side_effects (expr);
-      
-      gimple_pop_condition (pre_p);
-    }
-
+  gimple_push_condition ();
+  
+  gimplify_to_stmt_list (&TREE_OPERAND (expr, 1));
+  gimplify_to_stmt_list (&TREE_OPERAND (expr, 2));
+  recalculate_side_effects (expr);
+  
+  gimple_pop_condition (pre_p);
+  
   if (ret == GS_ERROR)
     ;
   else if (TREE_SIDE_EFFECTS (TREE_OPERAND (expr, 1)))

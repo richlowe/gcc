@@ -4257,9 +4257,8 @@ execute_expand_omp (void)
 static bool
 gate_expand_omp_ssa (void)
 {
-  /* Not for gccfss
-     return flag_openmp_ssa && flag_openmp != 0 && errorcount == 0; */
-  return 0;
+  return flag_openmp_ssa && flag_openmp != 0 && errorcount == 0
+    && flag_use_rtl_backend == -1;
 }
 
 struct tree_opt_pass pass_expand_omp_ssa = 
@@ -4284,13 +4283,9 @@ struct tree_opt_pass pass_expand_omp_ssa =
 static bool
 gate_expand_omp (void)
 {
-  /* Create a new option to expand omp constructs
-     in order to use gcc's implementation.
-     flag_openmp != 0 && errorcount == 0 */
-    
-  return 0;
-  /*  return ((!flag_openmp_ssa || !optimize)
-      && flag_openmp != 0 && errorcount == 0);*/
+  return ((!flag_openmp_ssa || !optimize)
+	  && flag_openmp != 0 && errorcount == 0
+	  && flag_use_rtl_backend == -1);
 }
 
 struct tree_opt_pass pass_expand_omp = 
@@ -5150,11 +5145,7 @@ execute_lower_omp (void)
 static bool
 gate_lower_omp (void)
 {
-  /* Create a new option to allow lowering of omp
-     in order to use gcc's implementation.
-     flag_openmp != 0 */
-    
-  return 0;
+  return flag_openmp != 0 && flag_use_rtl_backend == -1;
 }
 
 struct tree_opt_pass pass_lower_omp = 

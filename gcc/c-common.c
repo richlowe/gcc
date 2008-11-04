@@ -511,6 +511,10 @@ const struct fname_var_t fname_vars[] =
   {NULL, 0, 0},
 };
 
+/* Special checking for GCCFSS for catching 128 bit data type
+   accesses. */
+static bool in_builtin_def_phase = false;
+
 static tree check_case_value (tree);
 static bool check_case_bounds (tree, tree, tree *, tree *);
 
@@ -1950,8 +1954,14 @@ c_common_type_for_size (unsigned int bits, int unsignedp)
 	    : long_long_integer_type_node);
 
   if (bits == TYPE_PRECISION (widest_integer_literal_type_node))
-    return (unsignedp ? widest_unsigned_literal_type_node
-	    : widest_integer_literal_type_node);
+    {
+      if (bits == 128 
+	  && !in_builtin_def_phase
+	  && flag_use_rtl_backend != -1)
+	flag_use_rtl_backend = 1; /* GCCFSS cannot handle 128 bits */
+      return (unsignedp ? widest_unsigned_literal_type_node
+	      : widest_integer_literal_type_node);
+    }
 
   if (bits <= TYPE_PRECISION (intQI_type_node))
     return unsignedp ? unsigned_intQI_type_node : intQI_type_node;
@@ -2028,8 +2038,14 @@ c_common_type_for_mode (enum machine_mode mode, int unsignedp)
     return unsignedp ? long_long_unsigned_type_node : long_long_integer_type_node;
 
   if (mode == TYPE_MODE (widest_integer_literal_type_node))
-    return unsignedp ? widest_unsigned_literal_type_node
-		     : widest_integer_literal_type_node;
+    {
+      if (TYPE_PRECISION(widest_integer_literal_type_node) == 128 
+	  && !in_builtin_def_phase
+	  && flag_use_rtl_backend != -1)
+	flag_use_rtl_backend = 1; /* GCCFSS cannot handle 128 bits */
+      return unsignedp ? widest_unsigned_literal_type_node
+	: widest_integer_literal_type_node;
+    }
 
   if (mode == QImode)
     return unsignedp ? unsigned_intQI_type_node : intQI_type_node;
@@ -7313,7 +7329,9 @@ complete_array_type (tree *ptype, tree initial_value, bool do_default)
 tree
 builtin_type_for_size (int size, bool unsignedp)
 {
+  in_builtin_def_phase = true;
   tree type = lang_hooks.types.type_for_size (size, unsignedp);
+  in_builtin_def_phase = false;
   return type ? type : error_mark_node;
 }
 

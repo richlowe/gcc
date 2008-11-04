@@ -731,7 +731,6 @@ void
 decode_options (unsigned int argc, const char **argv)
 {
   unsigned int i, lang_mask;
-  bool use_rtl_backend = false;
 
   /* Perform language-specific options initialization.  */
   lang_mask = lang_hooks.init_options (argc, argv);
@@ -771,17 +770,11 @@ decode_options (unsigned int argc, const char **argv)
 	}
       else if (!strcmp (argv[i], "-frtl-backend"))
         {
-          use_rtl_backend = true;
-          /* if we set 'flag_use_rtl_backend' to 1 here, then
-             front-ends and gimplifier will run in original mode,
-             but we want them first to be run in genir mode,
-             so the 2nd pass of gimplifier will clean it up for rtl gen.
-             execute_generate_ir() wrapper will set 'flag_use_rtl_backend'
-             to 1 after 1st gimplifier pass and before genir */
+          flag_use_rtl_backend = -1;
         }
     }
     
-  if (!use_rtl_backend)
+  if (flag_use_rtl_backend != -1)
     {
       /* set optimization level for IR gen */
       if (optimize <= 0)
@@ -890,7 +883,7 @@ decode_options (unsigned int argc, const char **argv)
   if (optimize >= 3)
     {
       flag_predictive_commoning = 1;
-      if (use_rtl_backend)
+      if (flag_use_rtl_backend == -1)
         flag_inline_functions = 1; /* too aggressive and too buggy */
       flag_unswitch_loops = 1;
       flag_gcse_after_reload = 1;
