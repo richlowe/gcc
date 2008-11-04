@@ -1115,7 +1115,7 @@ dump_ir_builtin_va_arg (tree valist, tree type)
 
   incr = fold (build2 (PLUS_EXPR, ptr_type_node, incr, build_int_cst (NULL_TREE, rsize)));
 
-  incr = build2 (MODIFY_EXPR, ptr_type_node, valist, incr);
+  incr = build2 (GIMPLE_MODIFY_STMT, ptr_type_node, valist, incr);
   TREE_SIDE_EFFECTS (incr) = 1;
 
   dump_ir_stmt (incr);
@@ -2272,7 +2272,7 @@ dump_ir_complexpart_expr (tree stmt, int is_realpart, enum MAP_FOR map_for)
     {
       tree var = create_tmp_var_raw (TREE_TYPE (op0), "__complex_tmp_var.");
       TREE_ADDRESSABLE (var) = 1;
-      t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
+      t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), var, op0);
       TREE_SIDE_EFFECTS (t) = 1;
       dump_ir_stmt (t);
       t = build_fold_addr_expr_with_type (var, build_pointer_type (record_type));
@@ -3672,7 +3672,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             /* copy op0 into temporary */
             var = create_tmp_var_raw (TREE_TYPE (op0), "__vis_tmp_var.");
             TREE_ADDRESSABLE (var) = 1;
-            t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
+            t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), var, op0);
             TREE_SIDE_EFFECTS (t) = 1;
             dump_ir_stmt (t);
             
@@ -4884,7 +4884,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                 /* copy op0 into temporary */
                 var = create_tmp_var_raw (TREE_TYPE (op0), "__fabsl_tmp_var.");
                 TREE_ADDRESSABLE (var) = 1;
-                t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
+                t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), var, op0);
                 dump_ir_stmt (t);
             
                 /* get the address of the temporary */
@@ -4897,7 +4897,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                 t2 = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (stmt)), var);
                 t2 = build1 (NOP_EXPR, integer_ptr_type_node, t2);
                 t2 = build1 (INDIRECT_REF, integer_type_node, t2);
-                t2 = build2 (MODIFY_EXPR, integer_type_node, t2, t);
+                t2 = build2 (GIMPLE_MODIFY_STMT, integer_type_node, t2, t);
                 dump_ir_stmt (t2);
 
                 ret = dump_ir_expr (var, map_for);
@@ -5535,19 +5535,12 @@ dump_ir_modify (tree stmt)
   tree op0, op1;
   int is_indirect = 0;
 
-  if (TREE_CODE (stmt) == MODIFY_EXPR)
-    {
-      op0 = TREE_OPERAND (stmt, 0); /* left */
-      op1 = TREE_OPERAND (stmt, 1); /* right */
-    }
-  else if (TREE_CODE (stmt) == GIMPLE_MODIFY_STMT)
-    {
-      op0 = GIMPLE_STMT_OPERAND (stmt, 0); /* left */
-      op1 = GIMPLE_STMT_OPERAND (stmt, 1); /* right */
-    }
-  else
+  if (TREE_CODE (stmt) != GIMPLE_MODIFY_STMT)
     abort();
   
+  op0 = GIMPLE_STMT_OPERAND (stmt, 0); /* left */
+  op1 = GIMPLE_STMT_OPERAND (stmt, 1); /* right */
+    
   if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
       && TREE_CODE (CALL_EXPR_FN (op1)) == ADDR_EXPR)
     {
@@ -5988,7 +5981,7 @@ dump_ir_builtin_va_copy (tree arglist)
 
   if (TREE_CODE (va_list_type_node) != ARRAY_TYPE)
     {
-      t = build2 (MODIFY_EXPR, va_list_type_node, dst, src);
+      t = build2 (GIMPLE_MODIFY_STMT, va_list_type_node, dst, src);
       TREE_SIDE_EFFECTS (t) = 1;
       dump_ir_stmt (t);
     }
@@ -6028,22 +6021,11 @@ dump_ir_builtin_va_start (tree exp)
   nextarg = dump_ir_builtin_next_arg ();
   valist = stabilize_va_list (CALL_EXPR_ARG (exp, 0), 1);
 
-  t = build2 (MODIFY_EXPR, TREE_TYPE (valist), valist, nextarg);
+  t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (valist), valist, nextarg);
   TREE_SIDE_EFFECTS (t) = 1;
 
   dump_ir_stmt (t);
 }
-
-/*static void
-dump_ir_builtin_stack_alloc (tree arglist)
-{
-  tree t, call, var;
-  tree args = build_tree_list (NULL_TREE, TREE_VALUE (TREE_CHAIN (arglist)));
-  call = build_function_call_expr (built_in_decls[BUILT_IN_ALLOCA], args);
-  var = TREE_OPERAND (TREE_VALUE (arglist), 0); 
-  t = build2 (MODIFY_EXPR, TREE_TYPE (var), var, call);
-  dump_ir_stmt (t);
-}*/
 
 static void
 dump_ir_builtin_nonlocal_goto (tree stmt ATTRIBUTE_UNUSED, tree arglist)
@@ -6586,7 +6568,7 @@ dump_builtin_memcpy (tree stmt, tree arglist, int need_return)
                      build1 (NOP_EXPR, ptr_type_node, dest));
       src = build1 (INDIRECT_REF, char_type_node, 
                      build1 (NOP_EXPR, const_ptr_type_node, src));
-      result = build2 (MODIFY_EXPR, char_type_node, new_dest, src);
+      result = build2 (GIMPLE_MODIFY_STMT, char_type_node, new_dest, src);
       dump_ir_stmt (result);
       return dump_ir_expr (dest, MAP_FOR_VALUE);
     }
@@ -7158,107 +7140,6 @@ dump_ir_builtin_call (tree stmt, int need_return)
     case BUILT_IN_EH_RETURN_DATA_REGNO:
       ret = dump_builtin_eh_return_data_regno (arglist);
       break;
-    case BUILT_IN_UNWIND_INIT:
-    case BUILT_IN_DWARF_CFA:
-    case BUILT_IN_DWARF_SP_COLUMN:
-    case BUILT_IN_INIT_DWARF_REG_SIZES:
-    case BUILT_IN_FROB_RETURN_ADDR:
-    case BUILT_IN_EXTRACT_RETURN_ADDR:
-    case BUILT_IN_EH_RETURN:
-    case BUILT_IN_EXTEND_POINTER:
-    case BUILT_IN_APPLY:
-    case BUILT_IN_APPLY_ARGS:
-    /* cannot handle object_size computations without SSA and optimizations */
-    case BUILT_IN_OBJECT_SIZE: 
-    /* all builtins below most like will be used in the same function
-       with builtin_object_size(), so no point generating IR for them */
-    case BUILT_IN_MEMCPY_CHK: 
-    case BUILT_IN_MEMPCPY_CHK:
-    case BUILT_IN_MEMMOVE_CHK:
-    case BUILT_IN_MEMSET_CHK:
-    case BUILT_IN_STRCPY_CHK:
-    case BUILT_IN_STPCPY_CHK:
-    case BUILT_IN_STRNCPY_CHK:
-    case BUILT_IN_STRCAT_CHK:
-    case BUILT_IN_SNPRINTF_CHK:
-    case BUILT_IN_VSNPRINTF_CHK:
-    case BUILT_IN_SPRINTF_CHK:
-    case BUILT_IN_VSPRINTF_CHK:
-    /* We could map all the builtin's below to
-       appropriate call in atomics.h on S10. However, since
-       we need to support this on S9 also, its too much work
-       for now to handle multiple versions of all these
-       synchronization interfaces. For now punt to RTL */
-    case BUILT_IN_FETCH_AND_OR_16:
-    case BUILT_IN_FETCH_AND_AND_1:
-    case BUILT_IN_FETCH_AND_AND_2:
-    case BUILT_IN_FETCH_AND_AND_4:
-    case BUILT_IN_FETCH_AND_AND_8:
-    case BUILT_IN_FETCH_AND_AND_16:
-    case BUILT_IN_FETCH_AND_XOR_1:
-    case BUILT_IN_FETCH_AND_XOR_2:
-    case BUILT_IN_FETCH_AND_XOR_4:
-    case BUILT_IN_FETCH_AND_XOR_8:
-    case BUILT_IN_FETCH_AND_XOR_16:
-    case BUILT_IN_FETCH_AND_NAND_1:
-    case BUILT_IN_FETCH_AND_NAND_2:
-    case BUILT_IN_FETCH_AND_NAND_4:
-    case BUILT_IN_FETCH_AND_NAND_8:
-    case BUILT_IN_FETCH_AND_NAND_16:
-    case BUILT_IN_ADD_AND_FETCH_1:
-    case BUILT_IN_ADD_AND_FETCH_2:
-    case BUILT_IN_ADD_AND_FETCH_4:
-    case BUILT_IN_ADD_AND_FETCH_8:
-    case BUILT_IN_ADD_AND_FETCH_16:
-    case BUILT_IN_SUB_AND_FETCH_1:
-    case BUILT_IN_SUB_AND_FETCH_2:
-    case BUILT_IN_SUB_AND_FETCH_4:
-    case BUILT_IN_SUB_AND_FETCH_8:
-    case BUILT_IN_SUB_AND_FETCH_16:
-    case BUILT_IN_OR_AND_FETCH_1:
-    case BUILT_IN_OR_AND_FETCH_2:
-    case BUILT_IN_OR_AND_FETCH_4:
-    case BUILT_IN_OR_AND_FETCH_8:
-    case BUILT_IN_OR_AND_FETCH_16:
-    case BUILT_IN_AND_AND_FETCH_1:
-    case BUILT_IN_AND_AND_FETCH_2:
-    case BUILT_IN_AND_AND_FETCH_4:
-    case BUILT_IN_AND_AND_FETCH_8:
-    case BUILT_IN_AND_AND_FETCH_16:
-    case BUILT_IN_XOR_AND_FETCH_1:
-    case BUILT_IN_XOR_AND_FETCH_2:
-    case BUILT_IN_XOR_AND_FETCH_4:
-    case BUILT_IN_XOR_AND_FETCH_8:
-    case BUILT_IN_XOR_AND_FETCH_16:
-    case BUILT_IN_NAND_AND_FETCH_1:
-    case BUILT_IN_NAND_AND_FETCH_2:
-    case BUILT_IN_NAND_AND_FETCH_4:
-    case BUILT_IN_NAND_AND_FETCH_8:
-    case BUILT_IN_NAND_AND_FETCH_16:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_1:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_2:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_16:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_16:
-    case BUILT_IN_LOCK_TEST_AND_SET_1:
-    case BUILT_IN_LOCK_TEST_AND_SET_2:
-    case BUILT_IN_LOCK_TEST_AND_SET_4:
-    case BUILT_IN_LOCK_TEST_AND_SET_8:
-    case BUILT_IN_LOCK_TEST_AND_SET_16:
-    case BUILT_IN_LOCK_RELEASE_1:
-    case BUILT_IN_LOCK_RELEASE_2:
-    case BUILT_IN_LOCK_RELEASE_4:
-    case BUILT_IN_LOCK_RELEASE_8:
-    case BUILT_IN_LOCK_RELEASE_16:
-    case BUILT_IN_BSWAP32:
-    case BUILT_IN_BSWAP64:
-      flag_use_rtl_backend = 1; /* disable IR gen for the rest of the function */
-      return dump_ir_call (stmt, need_return);
     case BUILT_IN_PREFETCH: 
       {
         tree arg0, arg1, arg2, t, fn;
@@ -7723,6 +7604,7 @@ dump_ir_stmt (tree stmt)
       dump_ir_call (stmt, 0/* procedure call*/);
       break;
     case MODIFY_EXPR:
+      abort();
     case GIMPLE_MODIFY_STMT:
       dump_ir_modify (stmt);
       break;
@@ -7734,19 +7616,12 @@ dump_ir_stmt (tree stmt)
 
         if (op0) 
           {
-            if (TREE_CODE (op0) == MODIFY_EXPR || TREE_CODE (op0) == GIMPLE_MODIFY_STMT)
+            if (TREE_CODE (op0) == GIMPLE_MODIFY_STMT)
               {
                 tree left, right;
-                if (TREE_CODE (op0) == MODIFY_EXPR)
-                  {
-                    left = TREE_OPERAND (op0, 0); /* left */
-                    right = TREE_OPERAND (op0, 1); /* left */
-                  }
-                else if (TREE_CODE (op0) == GIMPLE_MODIFY_STMT)
-                  {
-                    left = GIMPLE_STMT_OPERAND (op0, 0); /* left */
-                    right = GIMPLE_STMT_OPERAND (op0, 1); /* right */
-                  }
+		left = GIMPLE_STMT_OPERAND (op0, 0); /* left */
+		right = GIMPLE_STMT_OPERAND (op0, 1); /* right */
+                
                 /* case of 'return_expr (result_decl = var_decl)' */
                 if (TREE_CODE (left) == RESULT_DECL
                     && !TREE_USED (left)
@@ -7772,7 +7647,7 @@ dump_ir_stmt (tree stmt)
               }
             else if (TREE_CODE (op0) != RESULT_DECL) /* new gcc case */
               {
-                tree t = build2 (MODIFY_EXPR, TREE_TYPE (op0), 
+                tree t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), 
                                 DECL_RESULT (current_function_decl), op0);
                 dump_ir_stmt (t);
               }
@@ -8286,7 +8161,7 @@ dump_one_function_statement (tree stmt)
     
       
   if (flag_use_rtl_backend)
-    return;
+    abort();
       
   /* at the end of each statement */
   if (number_of_pbranch > 0)
@@ -8345,10 +8220,10 @@ dump_function_ir_statements (tree t)
               cur = tsi_stmt (tsi); 
               nxt = tsi_stmt (new_tsi);
               /* start with looong comparison. */
-              if (TREE_CODE (cur) == MODIFY_EXPR 
-                  && (op0 = TREE_OPERAND (cur, 0)) /* get lvalue */ 
+              if (TREE_CODE (cur) == GIMPLE_MODIFY_STMT 
+                  && (op0 = GIMPLE_STMT_OPERAND (cur, 0)) /* get lvalue */ 
                   && (DECL_P (op0) && DECL_ARTIFICIAL (op0)) 
-                  && (op1 = TREE_OPERAND (cur, 1)) /* get rvalue */ 
+                  && (op1 = GIMPLE_STMT_OPERAND (cur, 1)) /* get rvalue */ 
                   && TREE_CODE_CLASS (TREE_CODE (op1)) == tcc_comparison 
                   && TREE_CODE (nxt) == COND_EXPR 
                   && op0 == TREE_OPERAND (nxt, 0)) 
@@ -8358,7 +8233,7 @@ dump_function_ir_statements (tree t)
             } while (0); 
           dump_one_function_statement (tsi_stmt (tsi));
           if (flag_use_rtl_backend)
-            return;
+	    abort();
         }
     }
   else
@@ -8396,12 +8271,6 @@ dump_function_ir (tree fn)
   if (errorcount || sorrycount)
     return;
   
-  if (profile_arc_flag || flag_test_coverage || flag_branch_probabilities)
-    {
-      flag_use_rtl_backend = 1; /* disable IR gen for this function */
-      return;
-    }
-
   if (DECL_STATIC_CONSTRUCTOR (fn)
       && targetm.have_ctors_dtors)
     targetm.asm_out.constructor (XEXP (DECL_RTL (fn), 0),
@@ -8827,6 +8696,7 @@ dump_function_ir (tree fn)
   dump_function_ir_statements (DECL_SAVED_TREE (fn));
   if (flag_use_rtl_backend)
     {
+      abort();
       dump_ir_fini (fn, 0/* finish and do not write*/);
       return;
     }
@@ -9843,7 +9713,7 @@ fill_scope_info (pragmaEntry_t ptype,
            {
              tree value, t;
              value = DECL_VALUE_EXPR (decl); 
-             t = build2 (MODIFY_EXPR, TREE_TYPE (value), decl, value); 
+             t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (value), decl, value); 
              dump_ir_stmt (t); 
            }
           var = create_ir_scope (decl, &pinfo->u.s.firstprivate, pinfo, 1);
@@ -11688,6 +11558,121 @@ dump_omp_return (tree stmt)
     default:
       gcc_assert (0);
             
+    }
+}
+
+void
+sunir_check_builtin_handling (tree function)
+{
+  enum built_in_function code = DECL_FUNCTION_CODE (function);
+
+  switch (code)
+    {
+    case BUILT_IN_UNWIND_INIT:
+    case BUILT_IN_DWARF_CFA:
+    case BUILT_IN_DWARF_SP_COLUMN:
+    case BUILT_IN_INIT_DWARF_REG_SIZES:
+    case BUILT_IN_FROB_RETURN_ADDR:
+    case BUILT_IN_EXTRACT_RETURN_ADDR:
+    case BUILT_IN_EH_RETURN:
+    case BUILT_IN_EXTEND_POINTER:
+    case BUILT_IN_APPLY:
+    case BUILT_IN_APPLY_ARGS:
+    /* cannot handle object_size computations without SSA and optimizations */
+    case BUILT_IN_OBJECT_SIZE: 
+    /* all builtins below most like will be used in the same function
+       with builtin_object_size(), so no point generating IR for them */
+    case BUILT_IN_MEMCPY_CHK: 
+    case BUILT_IN_MEMPCPY_CHK:
+    case BUILT_IN_MEMMOVE_CHK:
+    case BUILT_IN_MEMSET_CHK:
+    case BUILT_IN_STRCPY_CHK:
+    case BUILT_IN_STPCPY_CHK:
+    case BUILT_IN_STRNCPY_CHK:
+    case BUILT_IN_STRCAT_CHK:
+    case BUILT_IN_SNPRINTF_CHK:
+    case BUILT_IN_VSNPRINTF_CHK:
+    case BUILT_IN_SPRINTF_CHK:
+    case BUILT_IN_VSPRINTF_CHK:
+    /* We could map all the builtin's below to
+       appropriate call in atomics.h on S10. However, since
+       we need to support this on S9 also, its too much work
+       for now to handle multiple versions of all these
+       synchronization interfaces. For now punt to RTL */
+    case BUILT_IN_FETCH_AND_OR_16:
+    case BUILT_IN_FETCH_AND_AND_1:
+    case BUILT_IN_FETCH_AND_AND_2:
+    case BUILT_IN_FETCH_AND_AND_4:
+    case BUILT_IN_FETCH_AND_AND_8:
+    case BUILT_IN_FETCH_AND_AND_16:
+    case BUILT_IN_FETCH_AND_XOR_1:
+    case BUILT_IN_FETCH_AND_XOR_2:
+    case BUILT_IN_FETCH_AND_XOR_4:
+    case BUILT_IN_FETCH_AND_XOR_8:
+    case BUILT_IN_FETCH_AND_XOR_16:
+    case BUILT_IN_FETCH_AND_NAND_1:
+    case BUILT_IN_FETCH_AND_NAND_2:
+    case BUILT_IN_FETCH_AND_NAND_4:
+    case BUILT_IN_FETCH_AND_NAND_8:
+    case BUILT_IN_FETCH_AND_NAND_16:
+    case BUILT_IN_ADD_AND_FETCH_1:
+    case BUILT_IN_ADD_AND_FETCH_2:
+    case BUILT_IN_ADD_AND_FETCH_4:
+    case BUILT_IN_ADD_AND_FETCH_8:
+    case BUILT_IN_ADD_AND_FETCH_16:
+    case BUILT_IN_SUB_AND_FETCH_1:
+    case BUILT_IN_SUB_AND_FETCH_2:
+    case BUILT_IN_SUB_AND_FETCH_4:
+    case BUILT_IN_SUB_AND_FETCH_8:
+    case BUILT_IN_SUB_AND_FETCH_16:
+    case BUILT_IN_OR_AND_FETCH_1:
+    case BUILT_IN_OR_AND_FETCH_2:
+    case BUILT_IN_OR_AND_FETCH_4:
+    case BUILT_IN_OR_AND_FETCH_8:
+    case BUILT_IN_OR_AND_FETCH_16:
+    case BUILT_IN_AND_AND_FETCH_1:
+    case BUILT_IN_AND_AND_FETCH_2:
+    case BUILT_IN_AND_AND_FETCH_4:
+    case BUILT_IN_AND_AND_FETCH_8:
+    case BUILT_IN_AND_AND_FETCH_16:
+    case BUILT_IN_XOR_AND_FETCH_1:
+    case BUILT_IN_XOR_AND_FETCH_2:
+    case BUILT_IN_XOR_AND_FETCH_4:
+    case BUILT_IN_XOR_AND_FETCH_8:
+    case BUILT_IN_XOR_AND_FETCH_16:
+    case BUILT_IN_NAND_AND_FETCH_1:
+    case BUILT_IN_NAND_AND_FETCH_2:
+    case BUILT_IN_NAND_AND_FETCH_4:
+    case BUILT_IN_NAND_AND_FETCH_8:
+    case BUILT_IN_NAND_AND_FETCH_16:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_1:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_2:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_16:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_16:
+    case BUILT_IN_LOCK_TEST_AND_SET_1:
+    case BUILT_IN_LOCK_TEST_AND_SET_2:
+    case BUILT_IN_LOCK_TEST_AND_SET_4:
+    case BUILT_IN_LOCK_TEST_AND_SET_8:
+    case BUILT_IN_LOCK_TEST_AND_SET_16:
+    case BUILT_IN_LOCK_RELEASE_1:
+    case BUILT_IN_LOCK_RELEASE_2:
+    case BUILT_IN_LOCK_RELEASE_4:
+    case BUILT_IN_LOCK_RELEASE_8:
+    case BUILT_IN_LOCK_RELEASE_16:
+    case BUILT_IN_BSWAP32:
+    case BUILT_IN_BSWAP64:
+      if (flag_use_rtl_backend != -1)
+	flag_use_rtl_backend = 1; /* disable IR gen for the rest 
+				     of the function */
+      break;
+    default:
+      break;
     }
 }
 
