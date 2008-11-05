@@ -1262,42 +1262,18 @@ static tree
 copy_body_nocfg (copy_body_data *id, tree_stmt_iterator * callsite_tsi_p)
 {
   tree callee_fndecl = id->src_fn;
-  /* Copy, built by this function.  */
-  struct function *new_cfun;
-  /* Place to copy from; when a copy of the function was saved off earlier,
-     use that instead of the main copy.  */
-  struct function *cfun_to_copy =
-    (struct function *) ggc_alloc_cleared (sizeof (struct function));
-  tree new_fndecl = NULL;
+  struct function *cfun_to_copy;
+  tree new_fndecl = id->dst_fn;
   tree_stmt_iterator tsi, copy_tsi;
   tree new_body;
 
-  /* Register specific tree functions.  */
-  tree_register_cfg_hooks ();
-
-  *cfun_to_copy = *DECL_STRUCT_FUNCTION (callee_fndecl);
+  cfun_to_copy = DECL_STRUCT_FUNCTION (callee_fndecl);
 
   id->src_cfun = cfun_to_copy;
 
-  /* If requested, create new basic_block_info and label_to_block_maps.
-     Otherwise, insert our new blocks and labels into the existing cfg.  */
-  if (id->transform_new_cfg)
-    {
-      new_cfun =
-	(struct function *) ggc_alloc_cleared (sizeof (struct function));
-      *new_cfun = *DECL_STRUCT_FUNCTION (callee_fndecl);
-      new_cfun->cfg = NULL;
-      new_cfun->decl = new_fndecl = copy_node (callee_fndecl);
-      /*new_cfun->ib_boundaries_block = NULL;*/
-      DECL_STRUCT_FUNCTION (new_fndecl) = new_cfun;
-      push_cfun (new_cfun);
-    }
-  
   /* Duplicate any exception-handling regions.  */
   if (cfun->eh)
     {
-      if (id->transform_new_cfg)
-        init_eh_for_function ();
       id->eh_region_offset
 	= duplicate_eh_regions (cfun_to_copy, remap_decl_1, id,
 				0, id->eh_region);
@@ -1420,10 +1396,7 @@ copy_body_nocfg (copy_body_data *id, tree_stmt_iterator * callsite_tsi_p)
 	}
     }
   if (id->transform_new_cfg)
-    {
-      DECL_SAVED_TREE (new_fndecl) = new_body;
-      pop_cfun ();
-    }
+    DECL_SAVED_TREE (new_fndecl) = new_body;
   else
     tsi_link_before (callsite_tsi_p, new_body, TSI_SAME_STMT);
 
@@ -2028,7 +2001,6 @@ declare_return_variable (copy_body_data *id, tree return_slot, tree modify_dest,
   /* Register the VAR_DECL as the equivalent for the RESULT_DECL; that
      way, when the RESULT_DECL is encountered, it will be
      automatically replaced by the VAR_DECL.  */
-  result = DECL_ABSTRACT_ORIGIN (result);
   insert_decl_map (id, result, var);
 
   /* Remember this so we can ignore it in remap_decls.  */
