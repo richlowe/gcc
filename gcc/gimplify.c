@@ -1706,6 +1706,12 @@ gimplify_var_or_parm_decl (tree *expr_p)
 {
   tree decl = *expr_p;
 
+  if (current_function_decl
+      && flag_use_rtl_backend != -1 
+      && TYPE_MODE (TREE_TYPE (*expr_p)) == TImode 
+      && TYPE_PRECISION (TREE_TYPE (*expr_p)) == 128)
+    DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
+
   /* ??? If this is a local variable, and it has not been seen in any
      outer BIND_EXPR, then it's probably the result of a duplicate
      declaration, for which we've already issued an error.  It would
@@ -6739,6 +6745,12 @@ gimplify_function_tree (tree fndecl)
     push_cfun (DECL_STRUCT_FUNCTION (fndecl));
   else
     push_struct_function (fndecl);
+
+  if (current_function_decl
+      && flag_use_rtl_backend != -1
+      && TYPE_MODE (TREE_TYPE (TREE_TYPE (current_function_decl))) == TImode
+      && TYPE_PRECISION (TREE_TYPE (TREE_TYPE (current_function_decl))) == 128)
+    DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
 
   for (parm = DECL_ARGUMENTS (fndecl); parm ; parm = TREE_CHAIN (parm))
     {

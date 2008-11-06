@@ -479,6 +479,7 @@ init_optimization_passes (void)
     backend might produce already lowered functions that are not processed
     by these passes.  */
   p = &all_lowering_passes;
+  NEXT_PASS (pass_regimple);  
   NEXT_PASS (pass_remove_useless_stmts);
   NEXT_PASS (pass_mudflap_1);
   NEXT_PASS (pass_lower_omp);
@@ -564,13 +565,9 @@ init_optimization_passes (void)
   NEXT_PASS (pass_all_passes_rtl);
   NEXT_PASS (pass_rest_of_genir);  /* generate LSDA and global variables */
   NEXT_PASS (pass_rest_of_compilation);
-  //NEXT_PASS (pass_clean_state);
   *p = NULL;
   
   p = &pass_all_passes_rtl.sub;
-  NEXT_PASS (pass_regimple);  /* need to regimplify after genir failed */
-  NEXT_PASS (pass_build_cfg);
-  NEXT_PASS (pass_apply_inline); /* need to fixup_cfg after genir failed */
   NEXT_PASS (pass_early_local_passes);
     {
       struct tree_opt_pass **p = &pass_early_local_passes.sub;
@@ -604,8 +601,6 @@ init_optimization_passes (void)
       NEXT_PASS (pass_profile);
 	  NEXT_PASS (pass_release_ssa_names);
 	}
-      NEXT_PASS (pass_rebuild_cgraph_edges);
-      NEXT_PASS (pass_inline_parameters);
     }
   NEXT_PASS (pass_all_optimizations);
     {

@@ -11667,9 +11667,7 @@ sunir_check_builtin_handling (tree function)
     case BUILT_IN_LOCK_RELEASE_16:
     case BUILT_IN_BSWAP32:
     case BUILT_IN_BSWAP64:
-      if (flag_use_rtl_backend != -1)
-	flag_use_rtl_backend = 1; /* disable IR gen for the rest 
-				     of the function */
+      DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
       break;
     default:
       break;

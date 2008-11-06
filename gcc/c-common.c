@@ -1958,7 +1958,9 @@ c_common_type_for_size (unsigned int bits, int unsignedp)
       if (bits == 128 
 	  && !in_builtin_def_phase
 	  && flag_use_rtl_backend != -1)
-	flag_use_rtl_backend = 1; /* GCCFSS cannot handle 128 bits */
+	/* GCCFSS cannot handle 128 bits */
+	if (current_function_decl) 
+          DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
       return (unsignedp ? widest_unsigned_literal_type_node
 	      : widest_integer_literal_type_node);
     }
@@ -2042,7 +2044,9 @@ c_common_type_for_mode (enum machine_mode mode, int unsignedp)
       if (TYPE_PRECISION(widest_integer_literal_type_node) == 128 
 	  && !in_builtin_def_phase
 	  && flag_use_rtl_backend != -1)
-	flag_use_rtl_backend = 1; /* GCCFSS cannot handle 128 bits */
+	/* GCCFSS cannot handle 128 bits */
+	if (current_function_decl) 
+          DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
       return unsignedp ? widest_unsigned_literal_type_node
 	: widest_integer_literal_type_node;
     }

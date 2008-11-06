@@ -1585,6 +1585,9 @@ tree_regimple (void)
   tree_stmt_iterator tsi;
   
   push_gimplify_context ();
+  if (TREE_CODE (DECL_SAVED_TREE (current_function_decl)) == BIND_EXPR)
+     tsi = tsi_start (BIND_EXPR_BODY (DECL_SAVED_TREE (current_function_decl)));
+  else
   tsi = tsi_start (DECL_SAVED_TREE (current_function_decl));
   while (!tsi_end_p (tsi))
     {
@@ -1649,7 +1652,7 @@ struct tree_opt_pass pass_lower_complex_O0 =
 struct tree_opt_pass pass_regimple = 
 {
   "regmpl",     			/* name */
-  NULL,                         	/* gate */
+  gate_generate_rtl,                    /* gate */
   tree_regimple,                	/* execute */
   NULL,					/* sub */
   NULL,					/* next */
