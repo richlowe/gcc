@@ -512,7 +512,9 @@ cgraph_finalize_function (tree decl, bool nested)
   node->pid = cgraph_max_pid ++;
   notice_global_symbol (decl);
   node->local.finalized = true;
-  node->lowered = DECL_STRUCT_FUNCTION (decl)->cfg != NULL;
+  /* Fix for cr6763453. No cfg lies in lower when using IR backend. */
+  if (flag_use_rtl_backend)
+    node->lowered = DECL_STRUCT_FUNCTION (decl)->cfg != NULL;
   record_cdtor_fn (node->decl);
   if (node->nested)
     lower_nested_functions (decl);
