@@ -254,7 +254,7 @@ struct gimple_opt_pass pass_cleanup_cfg_post_optimizing =
 bool
 gate_generate_ir (void)
 {
-  if (current_function_decl != NULL)
+  if (flag_use_rtl_backend != -1 && current_function_decl != NULL)
     return !DECL_DONT_GENERATE_SUNIR(current_function_decl);
 
   return !flag_use_rtl_backend;

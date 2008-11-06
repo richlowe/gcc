@@ -512,6 +512,7 @@ init_optimization_passes (void)
     backend might produce already lowered functions that are not processed
     by these passes.  */
   p = &all_lowering_passes;
+  NEXT_PASS (pass_regimple);  
   NEXT_PASS (pass_remove_useless_stmts);
   NEXT_PASS (pass_regimple);  /* need to regimplify after gimple for rtl.*/
   NEXT_PASS (pass_mudflap_1);
@@ -592,6 +593,7 @@ init_optimization_passes (void)
   NEXT_PASS (pass_generate_ir);
   NEXT_PASS (pass_all_passes_rtl);
   NEXT_PASS (pass_rest_of_genir);  /* generate LSDA and global variables */
+  NEXT_PASS (pass_rest_of_compilation);
   *p = NULL;
   
   p = &pass_all_passes_rtl.sub;
