@@ -909,7 +909,7 @@ do_bringover()
         echo "and restart."
     else
         echo "Bringing over the gcc2ir source workspace $src_ws ...."
-        $GIT clone --depth 1 $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir
+        $GIT clone -q --depth 1 $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir
         echo "Bringover from $src_ws completed at $(date)" > \
              $ROOT/done/bringover.gcc2ir
     fi
