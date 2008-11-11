@@ -1868,9 +1868,15 @@ finish_call_expr (tree fn, tree args, bool disallow_virtual, bool koenig_p)
   orig_fn = fn;
   orig_args = args;
 
-  if (flag_tm_mode && TREE_CODE (fn) == FUNCTION_DECL)
-    c_check_tm_calling_rules (fn);
-    
+  if (TREE_CODE (fn) == FUNCTION_DECL)
+    {
+      if (flag_tm_mode)
+        c_check_tm_calling_rules (fn);
+   
+      /* GCCFSS cannot currently handle all types of builtin functions */
+      sunir_check_builtin_handling (fn);
+    }
+ 
   if (processing_template_decl)
     {
       if (type_dependent_expression_p (fn)
