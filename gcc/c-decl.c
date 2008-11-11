@@ -1748,10 +1748,11 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
 	  DECL_IS_OPERATOR_NEW (newdecl) |= DECL_IS_OPERATOR_NEW (olddecl);
 	  DECL_IS_PURE (newdecl) |= DECL_IS_PURE (olddecl);
 	  DECL_IS_NOVOPS (newdecl) |= DECL_IS_NOVOPS (olddecl);
+          DECL_DONT_GENERATE_SUNIR (newdecl) |= DECL_DONT_GENERATE_SUNIR (olddecl);
 	  DECL_IS_TM_ATOMIC_P (newdecl) |= DECL_IS_TM_ATOMIC_P (olddecl);
-      DECL_IS_TM_CALLABLE_P (newdecl) |= DECL_IS_TM_CALLABLE_P (olddecl);
-      DECL_IS_TM_ABORT_OK_P (newdecl) |= DECL_IS_TM_ABORT_OK_P (olddecl);
-      DECL_IS_TM_PURE_P (newdecl) |= DECL_IS_TM_PURE_P (olddecl);
+          DECL_IS_TM_CALLABLE_P (newdecl) |= DECL_IS_TM_CALLABLE_P (olddecl);
+          DECL_IS_TM_ABORT_OK_P (newdecl) |= DECL_IS_TM_ABORT_OK_P (olddecl);
+          DECL_IS_TM_PURE_P (newdecl) |= DECL_IS_TM_PURE_P (olddecl);
 	}
 
       /* Merge the storage class information.  */

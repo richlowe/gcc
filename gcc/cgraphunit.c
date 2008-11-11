@@ -621,6 +621,13 @@ cgraph_finalize_function (tree decl, bool nested)
   /* Fix for cr6763453. No cfg lies in lower when using IR backend. */
   if (flag_use_rtl_backend)
     node->lowered = DECL_STRUCT_FUNCTION (decl)->cfg != NULL;
+  else if (DECL_SAVED_TREE (decl)) 
+    {
+      if (TREE_CODE (DECL_SAVED_TREE (decl)) != BIND_EXPR)
+        node->lowered = 1;
+      else 
+        node->lowered = 0;
+    }
   record_cdtor_fn (node->decl);
   if (node->nested)
     lower_nested_functions (decl);
