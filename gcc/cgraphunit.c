@@ -619,7 +619,7 @@ cgraph_finalize_function (tree decl, bool nested)
   node->decl = decl;
   node->local.finalized = true;
   /* Fix for cr6763453. No cfg lies in lower when using IR backend. */
-  if (flag_use_rtl_backend)
+  if (gate_generate_rtl ())
     node->lowered = DECL_STRUCT_FUNCTION (decl)->cfg != NULL;
   else if (DECL_SAVED_TREE (decl)) 
     {
