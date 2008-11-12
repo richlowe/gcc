@@ -470,6 +470,10 @@ lower_stmt (gimple_stmt_iterator *gsi, struct lower_data *data)
     case GIMPLE_OMP_PARALLEL:
     case GIMPLE_OMP_TASK:
       lower_omp_directive (gsi, data);
+      if (flag_use_rtl_backend == 0)
+        break;
+      else
+        return;
       return;
 
     default:
