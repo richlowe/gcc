@@ -351,7 +351,10 @@ lower_stmt (tree_stmt_iterator *tsi, struct lower_data *data)
 
     case OMP_PARALLEL:
       lower_omp_directive (tsi, data);
-      break;
+      if (flag_use_rtl_backend == 0)
+        break;
+      else
+        return;
 
     default:
       gcc_unreachable ();

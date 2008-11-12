@@ -3841,7 +3841,7 @@ finish_omp_clauses (tree clauses)
 
 	  if (need_default_ctor
 	      || (need_copy_ctor
-                  && (flag_use_rtl_backend == 0 /* pcg needs it in misc_list */ 
+                  && (gate_generate_ir ()/* pcg needs it in misc_list */ 
                       || !TYPE_HAS_TRIVIAL_INIT_REF (inner_type))))
 	    {
               tree wrap, vecs;
@@ -3850,10 +3850,31 @@ finish_omp_clauses (tree clauses)
                   t = build_special_member_call (NULL_TREE,
                                                  complete_ctor_identifier,
                                                  NULL, inner_type, LOOKUP_NORMAL);
+                  if (!gate_generate_ir ())
+                    if (targetm.cxx.cdtor_returns_this () || errorcount)
+                /* Because constructors and destructors return this,
+                   the call will have been cast to "void".  Remove the
+                   cast here.  We would like to use STRIP_NOPS, but it
+                   wouldn't work here because TYPE_MODE (t) and
+                   TYPE_MODE (TREE_OPERAND (t, 0)) are different.
+                   They are VOIDmode and Pmode, respectively.  */
+                      if (TREE_CODE (t) == NOP_EXPR)
+                        t = TREE_OPERAND (t, 0);
+
 	          t = get_callee_fndecl (t);
 		}
-	      else
+	      else if (!gate_generate_ir ())
 		{
+                  t = build_int_cst (build_pointer_type (inner_type), 0);
+                  t = build1 (INDIRECT_REF, inner_type, t);
+                  t = build_tree_list (NULL, t);
+                  t = build_special_member_call (NULL_TREE,
+                                             complete_ctor_identifier,
+                                             t, inner_type, LOOKUP_NORMAL);
+                  t = get_callee_fndecl (t);
+		}
+              else
+                {
                   t = build1 (ADDR_EXPR, build_pointer_type (inner_type), t);
 		  t = build1 (NOP_EXPR, build_pointer_type (inner_type), t);
 		  t = build1 (INDIRECT_REF, inner_type, t);
@@ -3868,23 +3889,29 @@ finish_omp_clauses (tree clauses)
                     t = generate_default_copy_ctor_function (orig_t);
 		}
 
-              vecs = make_tree_vec (2); 
-              TREE_VEC_ELT (vecs, 0) = t; 
-              TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
-              if (need_default_ctor)
-                wrap =
-                    cxx_omp_constructor_wrapper_for_irgen (vecs,
+	      if (gate_generate_ir ())
+		{
+                  vecs = make_tree_vec (2); 
+                  TREE_VEC_ELT (vecs, 0) = t; 
+                  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
+                  if (need_default_ctor)
+                    wrap =
+                      cxx_omp_constructor_wrapper_for_irgen (vecs,
                                                            DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 1);
-              else if (TREE_CODE (orig_t) == VAR_DECL 
+                  else if (TREE_CODE (orig_t) == VAR_DECL 
                        && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
-                wrap =
-                    cxx_omp_constructor_wrapper_for_irgen (vecs,
+                    wrap =
+                      cxx_omp_constructor_wrapper_for_irgen (vecs,
                                                            DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 2);
+                  else
+                    wrap = t;
+
+	          TREE_VEC_ELT (info, 0) = wrap;
+		}
               else
-                wrap = t;
+	        TREE_VEC_ELT (info, 0) = t;
               
-	      TREE_VEC_ELT (info, 0) = wrap;
-              if (flag_use_rtl_backend == 0
+              if (gate_generate_ir ()
                   && ((errorcount <= 0 && sorrycount <= 0)
                       || global_dc->abort_on_error) 
                   /* _t_ may be NULL if we are processing a template. */
@@ -3917,13 +3944,19 @@ finish_omp_clauses (tree clauses)
 		  t = TREE_OPERAND (t, 0);
 
 	      t = get_callee_fndecl (t);
-	      vecs = make_tree_vec (2); 
-              TREE_VEC_ELT (vecs, 0) = t; 
-              TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
-              wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 0);
+              if (gate_generate_ir ())
+                {
+	          vecs = make_tree_vec (2); 
+                  TREE_VEC_ELT (vecs, 0) = t; 
+                  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
+                  wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 0);
 
-	      TREE_VEC_ELT (info, 1) = wrap;
-              if (flag_use_rtl_backend == 0
+	          TREE_VEC_ELT (info, 1) = wrap;
+                }
+              else
+	        TREE_VEC_ELT (info, 1) = t;
+
+              if (gate_generate_ir ()
                   && ((errorcount <= 0 && sorrycount <= 0)
                       || global_dc->abort_on_error)
                   && t)
@@ -3936,7 +3969,7 @@ finish_omp_clauses (tree clauses)
 	    }
 
 	  if (need_copy_assignment
-	      && (flag_use_rtl_backend == 0 
+	      && (gate_generate_ir () 
                   || !TYPE_HAS_TRIVIAL_ASSIGN_REF (inner_type)))
 	    {
               tree wrap, vecs;
@@ -3952,24 +3985,33 @@ finish_omp_clauses (tree clauses)
 	      if (TREE_CODE (t) == INDIRECT_REF)
 		t = TREE_OPERAND (t, 0);
 
-	      if (TREE_CODE (t) == CALL_EXPR)
-	        t = get_callee_fndecl (t);
+              if (gate_generate_ir ())
+                {
+	          if (TREE_CODE (t) == CALL_EXPR)
+	            t = get_callee_fndecl (t);
+                  else
+                    /* no copy assignment at hand. define one. 
+                       default copy assignment acts like default copy constructor. */
+                    t = generate_default_copy_ctor_function (orig_t);
+
+                  vecs = make_tree_vec (2); 
+                  TREE_VEC_ELT (vecs, 0) = t; 
+                  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
+
+                  wrap = t;
+                  if (TREE_CODE (orig_t) == VAR_DECL
+                      && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
+                    wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 3);
+
+	          TREE_VEC_ELT (info, 2) = wrap;
+                }
               else
-                /* no copy assignment at hand. define one. 
-                   default copy assignment acts like default copy constructor. */
-                t = generate_default_copy_ctor_function (orig_t);
+                {
+	          t = get_callee_fndecl (t);
+	          TREE_VEC_ELT (info, 2) = t;
+                }
 
-              vecs = make_tree_vec (2); 
-              TREE_VEC_ELT (vecs, 0) = t; 
-              TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
-
-              wrap = t;
-              if (TREE_CODE (orig_t) == VAR_DECL
-                  && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
-                wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 3);
-
-	      TREE_VEC_ELT (info, 2) = wrap;
-              if (flag_use_rtl_backend == 0
+              if (gate_generate_ir ()
                   && ((errorcount <= 0 && sorrycount <= 0)
                       || global_dc->abort_on_error)
                   && t)
@@ -4040,7 +4082,7 @@ finish_omp_threadprivate (tree vars)
 		DECL_LANG_SPECIFIC (v)->decl_flags.u2sel = 1;
 	    }
 
-	  if (!DECL_THREAD_LOCAL_P (v) && flag_use_rtl_backend != 0)
+	  if (!DECL_THREAD_LOCAL_P (v) && gate_generate_rtl ())
 	    {
 	      DECL_TLS_MODEL (v) = decl_default_tls_model (v);
 	      /* If rtl has been already set for this var, call

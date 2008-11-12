@@ -5693,6 +5693,39 @@ goa_stabilize_expr (tree *expr_p, tree *pre_p, tree lhs_addr, tree lhs_var)
   return saw_lhs;
 }
 
+/* A subroutine of gimplify_omp_atomic.  Implement the atomic operation as:
+
+        GOMP_atomic_start ();
+        *addr = rhs;
+        GOMP_atomic_end ();
+
+   The result is not globally atomic, but works so long as all parallel
+   references are within #pragma omp atomic directives.  According to
+   responses received from omp@openmp.org, appears to be within spec.
+   Which makes sense, since that's how several other compilers handle
+   this situation as well.  */
+
+static enum gimplify_status
+gimplify_omp_atomic_mutex (tree *expr_p, tree *pre_p, tree addr, tree rhs)
+{
+  tree t;
+
+  t = built_in_decls[BUILT_IN_GOMP_ATOMIC_START];
+  t = build_function_call_expr (t, NULL);
+  gimplify_and_add (t, pre_p);
+
+  t = build_fold_indirect_ref (addr);
+  t = build2 (MODIFY_EXPR, void_type_node, t, rhs);
+  gimplify_and_add (t, pre_p);
+
+  t = built_in_decls[BUILT_IN_GOMP_ATOMIC_END];
+  t = build_function_call_expr (t, NULL);
+  gimplify_and_add (t, pre_p);
+
+  *expr_p = NULL;
+  return GS_ALL_DONE;
+}
+
 /* Gimplify an OMP_ATOMIC statement.  */
 
 static enum gimplify_status
@@ -5710,6 +5743,10 @@ gimplify_omp_atomic (tree *expr_p, tree *pre_p)
    if (gimplify_expr (&addr, pre_p, NULL, is_gimple_val, fb_rvalue)
        != GS_ALL_DONE)
      return GS_ERROR;
+
+   if (gate_generate_ir ())
+     /* The ultimate fallback is wrapping the operation in a mutex.  */
+     return gimplify_omp_atomic_mutex (expr_p, pre_p, addr, rhs);
 
    load = build2 (OMP_ATOMIC_LOAD, void_type_node, tmp_load, addr);
    append_to_statement_list (load, pre_p);
