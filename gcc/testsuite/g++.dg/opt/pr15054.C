@@ -2,7 +2,7 @@
 // This used to abort due to overlapping stack temporaries.
 
 // { dg-do run }
-// { dg-options "-O" }
+// { dg-options "" }
 
 extern "C" void abort (void);
 

@@ -1,6 +1,6 @@
 // PR 7944
 // { dg-do compile }
-// { dg-options -O2 }
+// { dg-options "" }
 
 struct B
 {

@@ -7,7 +7,7 @@
 // while it should have been inside.
 // { dg-do run }
 // { dg-require-weak "" }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct A {};
 struct B { virtual ~B(); };

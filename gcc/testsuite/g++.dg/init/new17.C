@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -fstrict-aliasing -fdump-tree-final_cleanup" }
+// { dg-options "-fstrict-aliasing -fdump-tree-final_cleanup" }
 
 // Test that placement new does not introduce an unnecessary memory
 // barrier.

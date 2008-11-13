@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 enum eumtype { ENUM1, ENUM2 };
 void g(const eumtype kind );

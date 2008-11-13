@@ -2,7 +2,7 @@
 // This testcase was miscompiled on 64-bit platforms, resulting to
 // operating on a[0x100000000] instead of a[0].
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 char *a;
 char b[] = "AAAA";

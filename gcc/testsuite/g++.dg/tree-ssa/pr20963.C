@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* This was causing PRE to insert the value of the ADDR variable, to 
    remove the invariant cast but in doing so, it was creating a 

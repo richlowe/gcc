@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-Wunused -O" }
+// { dg-options "-Wunused" }
 
 void do_cleanups();
 

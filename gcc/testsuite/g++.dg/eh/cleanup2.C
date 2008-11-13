@@ -1,6 +1,6 @@
 // PR c++/12491
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 // The return statements are necessary to trigger this bug.
 

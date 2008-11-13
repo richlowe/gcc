@@ -1,7 +1,7 @@
 // This testcase was miscompiled on IA-64 to read from unitialized memory
 // and dereference it.
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct A
 {

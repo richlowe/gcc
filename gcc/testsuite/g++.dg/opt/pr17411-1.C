@@ -1,6 +1,6 @@
 // PR middle-end/17411
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct CalibData {
   float mean_pedestal;

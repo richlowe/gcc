@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "" } */
 
 int *f(int *b)
 {
@@ -10,5 +10,3 @@ int *f(int *b)
   return a;
 }
 
-/* { dg-final { scan-tree-dump-not "if" "optimized" } } */
-/* { dg-final { cleanup-tree-dump "optimized" } } */

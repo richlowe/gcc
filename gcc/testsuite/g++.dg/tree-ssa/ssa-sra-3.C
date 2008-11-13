@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 /* Test check use_block_copy bit propagation in sra element hierarchy.  */
 
 typedef unsigned char UINT8 ;

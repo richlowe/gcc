@@ -1,6 +1,6 @@
 // PR c++/34862
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 typedef __SIZE_TYPE__ size_t;
 extern "C" void abort ();

@@ -1,6 +1,6 @@
 // PR optimization/7145
 // Bug: The NRV optimization caused us to lose the initializer for 'ret'.
-// { dg-options -O }
+// { dg-options "" }
 // { dg-do run }
 
 struct GdkColor {

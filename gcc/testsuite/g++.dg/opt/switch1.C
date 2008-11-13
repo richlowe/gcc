@@ -1,4 +1,4 @@
-// { dg-options "-O1" }
+// { dg-options "" }
 
 template <typename T>
 int f(T t) {

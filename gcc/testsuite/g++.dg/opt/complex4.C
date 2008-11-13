@@ -1,6 +1,6 @@
 // PR 24362
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 typedef __complex__ double cdouble;
 cdouble elt_zero();

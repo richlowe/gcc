@@ -2,7 +2,7 @@
 // one with REG_EH_REGION note with no handlers (ie. termination)
 // and one without REG_EH_REGION note.
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 #include <exception>
 #include <string>

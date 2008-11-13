@@ -1,4 +1,4 @@
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 // { dg-final { scan-assembler-not "\n_?_ZN1AILi0EE4foo1Ev\[: \t\n\]" } }
 
 template <int>

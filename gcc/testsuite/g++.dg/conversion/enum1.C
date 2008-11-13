@@ -1,5 +1,5 @@
 // { dg-do run }
-// { dg-options "-O2 -finline-functions" }
+// { dg-options "" }
 
 enum E { V = 1 };
 static const E E_MIN = V;

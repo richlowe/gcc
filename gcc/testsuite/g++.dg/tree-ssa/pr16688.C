@@ -2,7 +2,7 @@
    was aborting when trying to group aliases.  */
 
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 template<typename _Tp>
 struct iterator_traits;

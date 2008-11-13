@@ -1,6 +1,6 @@
 // Test fold-const.c (fold_range_test) optimizations.
 // { dg-do run } */
-// { dg-options "-O2" } */
+// { dg-options "" } */
 
 #include <stdlib.h>
 #include <stdio.h>

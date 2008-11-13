@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -Wuninitialized" } */
+/* { dg-options "-O3 -Wuninitialized -frtl-backend" } */
 
 struct a { int mode; };
 int sys_msgctl (void)

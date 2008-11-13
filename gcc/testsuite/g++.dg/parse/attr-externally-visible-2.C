@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O -fwhole-program" }
+// { dg-options "-O3 -fwhole-program" }
 
 static void foo1 (void) { }					// { dg-warning "have effect only on public" }
 extern void foo1 (void) __attribute__((externally_visible));

@@ -1,7 +1,7 @@
 // Verify that loop optimization takes into account the exception edge
 // and does not increment I before the call.
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" void abort();
 static void bar(char *);

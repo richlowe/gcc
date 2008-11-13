@@ -1,5 +1,5 @@
 // PR c++/20212
-// { dg-options "-O2 -Wunused -Wextra" }
+// { dg-options "-Wunused -Wextra" }
 
 template<int> void f(int);
 void g(int i)

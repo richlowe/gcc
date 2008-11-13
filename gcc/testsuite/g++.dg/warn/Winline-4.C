@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -Winline" }
+// { dg-options "-Winline" }
 // Origin: <markus at oberhumer dot com>
 // PR 17115: We should not emit -Winline warning for functions marked with
 //  noinline

@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options -O2 }
+// { dg-options "" }
 
 template<class T> struct O {
   O(T *p) : q(p) { }

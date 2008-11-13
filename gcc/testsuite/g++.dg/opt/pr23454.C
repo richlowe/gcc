@@ -1,6 +1,6 @@
 /* PR rtl-optimization/23454 */
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 void foo ();
 int a, b;

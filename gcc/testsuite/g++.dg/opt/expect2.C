@@ -1,6 +1,6 @@
 // PR c++/13392
 // { dg-do compile }
-// { dg-options "-O0" }
+// { dg-options "" }
 
 extern "C" void abort (void);
 struct X { ~X () throw() {} };

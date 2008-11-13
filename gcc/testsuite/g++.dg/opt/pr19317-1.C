@@ -1,5 +1,5 @@
 // PR c++/19317
-// { dg-options "-O2" }
+// { dg-options "" }
 // { dg-do run }
 // Origin: Dirk Mueller <mueller@kde.org>
 

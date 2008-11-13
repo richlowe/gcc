@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -funswitch-loops" } */
+/* { dg-options "-funswitch-loops" } */
 
 struct __normal_iterator 
 {

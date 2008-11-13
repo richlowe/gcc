@@ -1,6 +1,6 @@
 // PR c++/27894
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "" }
 
 class A;
 struct B

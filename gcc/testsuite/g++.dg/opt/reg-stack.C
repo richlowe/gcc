@@ -4,7 +4,7 @@
 // eventually fills up the register stack resulting in Z == NaN.
 
 // { dg-do run }
-// { dg-options "-O" }
+// { dg-options "" }
 
 extern "C" void abort ();
 

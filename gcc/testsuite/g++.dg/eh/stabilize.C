@@ -6,7 +6,7 @@
 // dereferences it and tries to initialize B::am with the INDIRECT_REF,
 // which calls for a bitwise copy.  Which is broken.
 
-// { dg-options "-O" }
+// { dg-options "" }
 
 struct A
 {

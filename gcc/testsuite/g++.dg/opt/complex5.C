@@ -1,6 +1,6 @@
 // PR 24365
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 typedef __complex__ double cdouble;
 inline cdouble to_complex(double r) {

@@ -6,7 +6,7 @@
 // of trapping loads, which led to the deletion of basic blocks.
 
 // { dg-do compile }
-// { dg-options "-O2 -fno-gcse -fnon-call-exceptions" }
+// { dg-options "-fno-gcse -fnon-call-exceptions" }
 
 
 struct B {

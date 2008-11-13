@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -Wall" } */
+/* { dg-options "-Wall -frtl-backend" } */
 
 extern void function(void * x);
 

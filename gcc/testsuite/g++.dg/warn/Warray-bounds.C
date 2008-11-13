@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -Warray-bounds" } */
+/* { dg-options "-Warray-bounds -frtl-backend" } */
 
 int a[10];
 

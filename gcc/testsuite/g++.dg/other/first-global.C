@@ -1,6 +1,4 @@
 /* { dg-do compile } */
-/* { dg-options "-fpie" { target { ! nonpic } } } */
-/* { dg-final { scan-assembler "_GLOBAL__I(_|_65535_0_)foobar" } } */
-
+/* { dg-final { scan-assembler "_GLOBAL__I_foobar" } } */
 struct foo { foo (); };
 foo foobar;

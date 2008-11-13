@@ -1,6 +1,6 @@
 // Test typeof with __asm redirection
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" {
   extern int foo1;

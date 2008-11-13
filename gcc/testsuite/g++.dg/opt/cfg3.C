@@ -6,7 +6,7 @@
 // unreachable blocks after CSE.
 
 // { dg-do compile }
-// { dg-options "-O -fgcse -fnon-call-exceptions" }
+// { dg-options "-fgcse -fnon-call-exceptions" }
 
 struct C
 {

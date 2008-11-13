@@ -1,5 +1,5 @@
 // PR c++/16717
-// { dg-options "-O2" }
+// { dg-options "" }
 
 int i;
 

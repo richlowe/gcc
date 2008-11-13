@@ -2,7 +2,7 @@
    forgot to handle RETURN_DECL which causes us to ICE. */
 
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct a
 {

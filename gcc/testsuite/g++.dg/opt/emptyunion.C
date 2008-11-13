@@ -1,7 +1,7 @@
 // PR optimization/11059
 // This testcase ICEd because clear_by_pieces was called with zero length.
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 union uni {};
 

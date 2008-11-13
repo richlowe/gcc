@@ -6,7 +6,7 @@
 // had been purged, which fooled the LCM code of the GCSE pass.
 
 // { dg-do compile }
-// { dg-options "-O2 -fnon-call-exceptions" }
+// { dg-options "-fnon-call-exceptions" }
 
 extern void *memmove (void *, const void *, unsigned int) throw ();
 

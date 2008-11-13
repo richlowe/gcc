@@ -7,7 +7,7 @@
    visible to the unreachable code warning.  */
 
 /* { dg-do compile } */
-/* { dg-options "-O -Wunreachable-code" } */
+/* { dg-options "-Wunreachable-code" } */
 
 int
 main (int argc, char *argv[])

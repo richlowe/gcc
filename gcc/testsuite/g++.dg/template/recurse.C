@@ -1,5 +1,5 @@
 // Test for handling of excessive template recursion.
-// { dg-options "-ftemplate-depth-50 -O" }
+// { dg-options "-ftemplate-depth-50" }
 
 template <int I> struct F
 {

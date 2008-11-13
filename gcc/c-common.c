@@ -1043,7 +1043,8 @@ fname_decl (location_t loc, unsigned int rid, tree id)
 	 it from appearing in the RTL.  */
       tree stmts;
       location_t saved_location = input_location;
-      input_location = UNKNOWN_LOCATION;
+      if (flag_use_rtl_backend == -1)
+        input_location = UNKNOWN_LOCATION;
 
       stmts = push_stmt_list ();
       decl = (*make_fname_decl) (id, fname_vars[ix].pretty);

@@ -1,6 +1,6 @@
 // Verify that we don't confuse precision and mode for enums.
 // { dg-do run }
-// { dg-options "-O" }
+// { dg-options "" }
 
 extern "C" void abort();
 

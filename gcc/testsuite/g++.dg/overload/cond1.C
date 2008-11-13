@@ -2,7 +2,7 @@
 // bitwise copy a class with a nontrivial copy constructor (and thus a
 // compiler abort).
 
-// { dg-options "-O" }
+// { dg-options "" }
 
 struct A {
   virtual ~A() { }

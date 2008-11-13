@@ -1,5 +1,5 @@
 // PR c++/25010
-// { dg-options "-O2" }
+// { dg-options "" }
 
 #pragma interface
 

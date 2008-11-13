@@ -2,8 +2,8 @@
 // Origin: Michal Ostrowski <mostrows@watson.ibm.com>
 // Testcase by Alan Modra <amodra@bigpond.net.au>
 // { dg-do run }
-// { dg-options "-O" }
-// { dg-options "-O -mtune=i686" { target { { i?86-*-* x86_64-*-* } && ilp32 } } }
+// { dg-options "" }
+// { dg-options "-mtune=i686" { target { { i?86-*-* x86_64-*-* } && ilp32 } } }
 
 struct thread_info
 {

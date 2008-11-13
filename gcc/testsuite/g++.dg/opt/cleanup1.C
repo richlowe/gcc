@@ -3,7 +3,7 @@
 // was used for 2 different variables at the same time.
 // The function H::h1 was miscompiled.
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" void abort (void);
 extern "C" void exit (int);

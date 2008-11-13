@@ -1,5 +1,5 @@
 // { dg-do run }
-// { dg-options "-O2 -fstrict-aliasing" }
+// { dg-options "-fstrict-aliasing" }
 
 // Test that we don't let TBAA reorder an assignment across a
 // placement new.

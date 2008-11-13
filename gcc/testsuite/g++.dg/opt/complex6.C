@@ -1,6 +1,6 @@
 // PR 30168
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct aaa
 {

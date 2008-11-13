@@ -5,7 +5,7 @@
 //  into the abnormal PHI
 
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "" }
 
 struct LeveLogger
 {

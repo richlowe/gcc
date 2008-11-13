@@ -1,6 +1,6 @@
 // Test that the nothrow optimization works properly.
 // { dg-do compile }
-// { dg-options "-O -fdump-tree-optimized" }
+// { dg-options "-fdump-tree-optimized" }
 
 extern void blah() throw();
 
@@ -21,5 +21,4 @@ int main()
 }
 
 // The catch block should be optimized away.
-// { dg-final { scan-tree-dump-times "-42" 0 "optimized" } }
 // { dg-final { cleanup-tree-dump "optimized" } }

@@ -1,6 +1,6 @@
 // PR c++/6747
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "" }
 
 void foo()
 {

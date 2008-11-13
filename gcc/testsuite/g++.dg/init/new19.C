@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -fstrict-aliasing -fdump-tree-pre-details" }
+// { dg-options "-fstrict-aliasing -fdump-tree-pre-details" }
 
 // Make sure we hoist invariants out of the loop even in the presence
 // of placement new.  This is similar to code in tramp3d.

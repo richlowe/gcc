@@ -1,6 +1,6 @@
 // PR c++/35056
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 enum EBorderStyle { bla = 1 };
 inline bool compare_ref(const unsigned int &t, const EBorderStyle &u)

@@ -1,6 +1,6 @@
 // PR c/23075
 // { dg-do compile }
-// { dg-options "-O2 -Wreturn-type" }
+// { dg-options "-Wreturn-type" }
 
 int
 foo (void)

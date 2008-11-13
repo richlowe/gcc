@@ -6,7 +6,7 @@
 // without updating the CFG.
 
 // { dg-do compile }
-// { dg-options "-O2 -fnon-call-exceptions" }
+// { dg-options "-fnon-call-exceptions" }
 
 struct D1 {
     float l;

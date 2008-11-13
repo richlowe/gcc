@@ -1,5 +1,5 @@
 // PR c++/13081
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 // { dg-final { scan-assembler-not "\n_?_Z3fooIlET_S0_\[: \t\n\]" } }
 
 template<typename T> T foo(T);

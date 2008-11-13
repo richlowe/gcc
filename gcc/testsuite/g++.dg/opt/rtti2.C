@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 // We used to ICE in compare_values as the types for a comparison
 // were not the same kind of types.
 

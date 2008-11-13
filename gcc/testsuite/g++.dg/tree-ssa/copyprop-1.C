@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-dce2" } */
+/* { dg-options "" } */
 
 /* Verify that we can eliminate the useless conversions to/from
    const qualified pointer types
@@ -25,5 +25,3 @@ int foo(Object&o)
   return o[0];
 }
 
-/* { dg-final { scan-tree-dump-not ".* = \[^>;\]*;" "dce2" } } */
-/* { dg-final { cleanup-tree-dump "dce2" } } */

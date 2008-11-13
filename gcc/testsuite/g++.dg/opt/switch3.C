@@ -1,6 +1,6 @@
 // PR c++/20023
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 void f (void);
 typedef __SIZE_TYPE__ size_t;

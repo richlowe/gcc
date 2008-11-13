@@ -3,7 +3,7 @@
 // to the addressable vars list, because this may cause false aliasing
 // with the subvars leading to the subvars not being renamed when they should
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 typedef int ptrdiff_t;
 typedef unsigned int size_t;
 namespace std
@@ -22,7 +22,7 @@ namespace __gnu_internal
 }
 namespace std
 {
-  template<typename _Tp> struct ___is_pod
+  template<typename _Tp> struct __is_pod
   {
     enum { __value = (sizeof(__gnu_internal::__test_type<_Tp>(0))!= sizeof(__gnu_internal::__one)) };
   };
@@ -103,15 +103,15 @@ namespace std
   };
   template<typename _Key, typename _Val, typename _KeyOfValue, typename _Compare, typename _Alloc = allocator<_Val> > struct _Rb_tree
   {
-    typedef typename _Alloc::template rebind<std::_Rb_tree_node<_Val> >::other _Node_allocator;
+    typedef typename _Alloc::template rebind<_Rb_tree_node<_Val> >::other _Node_allocator;
     typedef _Rb_tree_node_base* _Base_ptr;
     typedef const _Rb_tree_node_base* _Const_Base_ptr;
-    typedef std::_Rb_tree_node<_Val> _Rb_tree_node;
+    typedef _Rb_tree_node<_Val> _Rb_tree_node;
     typedef _Key key_type;
     typedef _Val value_type;
     typedef value_type* pointer;
     typedef _Rb_tree_node* _Link_type;
-    template<typename _Key_compare, bool _Is_pod_comparator = std::___is_pod<_Key_compare>::__value> struct _Rb_tree_impl
+    template<typename _Key_compare, bool _Is_pod_comparator = std::__is_pod<_Key_compare>::__value> struct _Rb_tree_impl
       : _Node_allocator
     {
       _Rb_tree_node_base _M_header;

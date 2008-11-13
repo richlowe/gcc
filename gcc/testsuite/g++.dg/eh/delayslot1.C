@@ -7,7 +7,7 @@
 // it in a delay slot.
 
 // { dg-do run }
-// { dg-options "-O" }
+// { dg-options "" }
 
 struct S{
   char *c;

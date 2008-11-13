@@ -1,7 +1,7 @@
 /* Check that gcov doesn't abort when a static object is defined
    within a header file.  */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-fprofile-arcs -ftest-coverage -frtl-backend" } */
 /* { dg-do run { target native } } */
 
 #include "gcov-3.h"

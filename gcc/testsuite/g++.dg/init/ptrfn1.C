@@ -1,5 +1,5 @@
 // PR c++/29016
-// { dg-options "-O2" }
+// { dg-options "" }
 
 class A;
 class B

@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -fuse-cxa-atexit" }
+// { dg-options "-fuse-cxa-atexit" }
 
 # 1 "cxa-atexit1.C"
 struct A

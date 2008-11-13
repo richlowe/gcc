@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* Test provided by Brian Ryner in PR 14511.  The alias analyzer was
    not handling structures containing arrays properly.  In this case,

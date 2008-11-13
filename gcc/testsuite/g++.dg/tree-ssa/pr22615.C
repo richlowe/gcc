@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* Ensure that we don't crash when people decide to return the address of padding.  */
 

@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options { -O -fdump-tree-optimized } } */
+/* { dg-options { } } */
 
 int a[4][8];
 
@@ -17,6 +17,3 @@ double bar(int i)
 	return *(&b[0].x + i*2); // b[i].x
 }
 
-/* { dg-final { scan-tree-dump "a\\\[.*i.*\\\]\\\[0\\\]" "optimized" { xfail *-*-* } } } */
-/* { dg-final { scan-tree-dump "b\\\[.*i.*\\\].x" "optimized" } } */
-/* { dg-final { cleanup-tree-dump "optimized" } } */

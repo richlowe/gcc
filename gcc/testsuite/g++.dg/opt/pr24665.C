@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 typedef unsigned long T;
 typedef volatile T* const hwreg_t;

@@ -4,9 +4,9 @@ void foo()
 {
   bad1:				// { dg-error "jump to label" }
   #pragma omp parallel
-    goto bad1;			// { dg-error "from here|exits OpenMP" }
+    goto bad1;			// { dg-error "from here|exits OpenMP|invalid exit" }
 
-  goto bad2;			// { dg-error "from here" }
+  goto bad2;			// { dg-error "from here|invalid entry" }
   #pragma omp parallel
     {
       bad2: ;			// { dg-error "jump to label|enters OpenMP" }

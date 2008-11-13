@@ -15,4 +15,4 @@ int main()
         return i;
 }
 
-/* { dg-final { scan-assembler ".stabs.*foobar:(c=i|S)" } } */
+/* { dg-final { scan-assembler ".stabs.*foobar:(c=i|S)" { xfail sparc*-*-solaris* } } } */

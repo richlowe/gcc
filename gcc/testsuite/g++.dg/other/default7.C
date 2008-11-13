@@ -1,5 +1,5 @@
 /* { dg-do assemble } */
-/* { dg-options "-O1" }*/
+/* { dg-options "" }*/
 // This was PR C++/31165
 // We used to copy the whole decl when we just wantted to
 // unshare some expressions for the default argument.

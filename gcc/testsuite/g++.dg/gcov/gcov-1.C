@@ -1,7 +1,7 @@
 /* Check that execution counts and branch probabilities for various C
    constructs are reported correctly by gcov. */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-fprofile-arcs -ftest-coverage -frtl-backend" } */
 /* { dg-do run { target native } } */
 
 extern "C" void abort (void);

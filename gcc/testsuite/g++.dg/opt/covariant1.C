@@ -1,6 +1,6 @@
 // PR c++/20206
 // { dg-do run }
-// { dg-options "-O0" }
+// { dg-options "" }
 
 void
 bar (int x)

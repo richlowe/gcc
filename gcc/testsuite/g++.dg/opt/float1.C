@@ -6,7 +6,7 @@
 // from a bogus REG_EQUAL note not removed by the combiner.
 
 // { dg-do assemble }
-// { dg-options "-O2 -fnon-call-exceptions" }
+// { dg-options "-fnon-call-exceptions" }
 
 void f(long int seed);
 

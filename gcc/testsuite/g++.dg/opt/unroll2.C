@@ -3,7 +3,7 @@
 // which meant we ICEd in add_virtual_operand.
 
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 
 class SHA256

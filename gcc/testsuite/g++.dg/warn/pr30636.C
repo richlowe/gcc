@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -Warray-bounds" } */
+/* { dg-options "-Warray-bounds" } */
 
 typedef char one_buffer[512];
 static one_buffer emergency_buffer[4];

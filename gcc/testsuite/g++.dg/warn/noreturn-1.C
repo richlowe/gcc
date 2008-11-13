@@ -1,7 +1,7 @@
 // Test that noreturn attributes are properly set.
 // Origin: Kaveh Ghazi <ghazi@caip.rutgers.edu> 2002-06-18.
 // { dg-do compile }
-// { dg-options "-Wall -O2" }
+// { dg-options "-Wall" }
 
 #include <cstdlib>
 

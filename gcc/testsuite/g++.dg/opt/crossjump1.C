@@ -1,7 +1,7 @@
 // PR middle-end/21492
 // { dg-do compile }
-// { dg-options "-Os" }
-// { dg-options "-Os -fPIC" { target fpic } }
+// { dg-options "" }
+// { dg-options "-fPIC" { target fpic } }
 
 extern char *bar (const char *, const char *);
 extern char *baz (char *, const char *);

@@ -1,6 +1,6 @@
 // PR 10202
 // { dg-do compile }
-// { dg-options -O0 }
+// { dg-options "" }
 
 extern struct _smtp_account smtp_accounts[];
 typedef struct _smtp_account {

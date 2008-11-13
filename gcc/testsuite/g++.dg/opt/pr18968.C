@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O1" }
+// { dg-options "" }
 struct X
 {
   int i;

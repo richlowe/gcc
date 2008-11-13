@@ -1,4 +1,4 @@
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct BOOL {
     int nVal:1, bSet:1;

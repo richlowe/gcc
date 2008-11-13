@@ -2,7 +2,7 @@
 // Test for the named return value optimization with inlining.
 // Contributed by Jakub Jelinek <jakub@redhat.com>.
 // { dg-do run }
-// { dg-options -O2 }
+// { dg-options "" }
 
 enum E { E0, E1, E2, E3 };
 

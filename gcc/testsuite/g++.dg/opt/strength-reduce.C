@@ -2,7 +2,7 @@
 // did not see biv in C::foo as used after loop, but it was used
 // in a REG_EQUAL note.
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" void abort (void);
 

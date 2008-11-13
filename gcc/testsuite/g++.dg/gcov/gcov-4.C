@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-/* { dg-options "-fprofile-arcs -ftest-coverage -fno-exceptions" } */
+/* { dg-options "-fprofile-arcs -ftest-coverage -fno-exceptions -frtl-backend" } */
 /* { dg-do run { target native } } */
 
 class foo {
