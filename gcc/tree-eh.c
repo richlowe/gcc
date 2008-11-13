@@ -121,6 +121,13 @@ add_stmt_to_eh_region_fn (struct function *ifun, gimple t, int num)
   slot = htab_find_slot (get_eh_throw_stmt_table (ifun), n, INSERT);
   gcc_assert (!*slot);
   *slot = n;
+
+  /* ??? For the benefit of calls.c, converting all this to rtl,
+     we need to record the call expression, not just the outer
+     modify statement.  */
+  if (TREE_CODE (t) == GIMPLE_MODIFY_STMT
+      && (t = get_call_expr_in (t)))
+    add_stmt_to_eh_region_fn (ifun, t, num);
 }
 
 
@@ -151,6 +158,12 @@ remove_stmt_from_eh_region_fn (struct function *ifun, gimple t)
   if (slot)
     {
       htab_clear_slot (get_eh_throw_stmt_table (ifun), slot);
+      /* ??? For the benefit of calls.c, converting all this to rtl,
+         we need to record the call expression, not just the outer
+         modify statement.  */
+      if (TREE_CODE (t) == GIMPLE_MODIFY_STMT 
+          && (t = get_call_expr_in (t)))
+        remove_stmt_from_eh_region_fn (ifun, t);
       return true;
     }
   else
