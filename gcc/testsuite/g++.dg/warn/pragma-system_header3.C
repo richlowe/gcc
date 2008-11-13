@@ -1,5 +1,5 @@
 // PR c++/32368
-// { dg-options "-Wall -O" }
+// { dg-options "-Wall" }
 
 #include "pragma-system_header3.h"
 

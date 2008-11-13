@@ -3,7 +3,7 @@
 // note was note stored back and fold_rtx left invalid rtx
 // in it.
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct A
 {

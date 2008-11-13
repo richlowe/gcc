@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-optimized" } */
+/* { dg-options "" } */
 
 int a[4];
 int *x, *y, *z;
@@ -18,7 +18,3 @@ void bar(int i)
 	z = 1 + &a[i];
 }
 
-/* { dg-final { scan-tree-dump-times "&a\\\[2\\\]" 3 "optimized" } } */
-/* { dg-final { scan-tree-dump-times "&a\\\[.* \\+ -1\\\]" 1 "optimized" } } */
-/* { dg-final { scan-tree-dump-times "&a\\\[.* \\+ 1\\\]" 1 "optimized" } } */
-/* { dg-final { cleanup-tree-dump "optimized" } } */

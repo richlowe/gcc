@@ -1,5 +1,5 @@
 // Test that attributes work in a variety of situations.
-// { dg-options -O }
+// { dg-options "" }
 // { dg-do run }
 
 #define attrib __attribute ((mode (QI)))

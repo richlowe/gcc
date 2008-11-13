@@ -1,17 +1,25 @@
 /* { dg-do run { target i?86-*-* x86_64-*-* } } */
-/* { dg-options "-msse2" } */
+/* { dg-options "-march=pentium4" } */
+/* { dg-require-effective-target ilp32 } */
 
 #include <xmmintrin.h>
+#include <stdio.h>
+#include "../../gcc.dg/i386-cpuid.h"
 
-#include "cpuid.h"
-
-static void
-sse2_test (void)
-{
+int main(int argc, char** argv) {
   float a = 1.0f;
   float b = 2.0f;
   float c = 3.0f;
   float r;
+
+  unsigned long cpu_facilities;
+
+  cpu_facilities = i386_cpuid ();
+
+  if ((cpu_facilities & (bit_MMX | bit_SSE | bit_SSE2 | bit_CMOV))
+      != (bit_MMX | bit_SSE | bit_SSE2 | bit_CMOV))
+    /* If host has no vector support, pass.  */
+    return 0;
 
   __m128 v = _mm_set_ps(a, b, c, 0);
   
@@ -19,19 +27,5 @@ sse2_test (void)
   _mm_store_ss(&r, v);
   if (r != 3.0f)
     abort ();
-}
-
-int
-main ()
-{
-  unsigned int eax, ebx, ecx, edx;
- 
-  if (!__get_cpuid (1, &eax, &ebx, &ecx, &edx))
-    return 0;
-
-  /* Run SSE2 test only if host has SSE2 support.  */
-  if (edx & bit_SSE2)
-    sse2_test ();
-
-  return 0;
+  exit (0);
 }

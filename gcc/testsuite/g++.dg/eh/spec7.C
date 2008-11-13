@@ -1,6 +1,6 @@
 // PR 14535
 // { dg-do run }
-// { dg-options "-O -finline" }
+// { dg-options "-finline" }
 //
 // Original test case failure required that Raiser constructor be inlined.
 

@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* VRP was miscompiling the following as it thought &a->b was a dereference
    and therfore a was non-null.  

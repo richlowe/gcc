@@ -1,6 +1,6 @@
 // Origin: reichelt@igpm.rwth-aachen.de
 // PR 5571
-// { dg-options "-O2" }
+// { dg-options "" }
 
 template <class T> struct A {};
 

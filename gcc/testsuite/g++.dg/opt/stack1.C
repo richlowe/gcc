@@ -8,7 +8,7 @@
 // stack may not alias and thus may be reordered by the scheduling passes.
 
 // { dg-do run }
-// { dg-options "-O2 -frename-registers" }
+// { dg-options "-frename-registers" }
 
 
 double zero_;

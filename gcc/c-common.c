@@ -868,7 +868,8 @@ fname_decl (unsigned int rid, tree id)
       tree stmts;
       location_t saved_location = input_location;
 #ifdef USE_MAPPED_LOCATION
-      input_location = UNKNOWN_LOCATION;
+      if (flag_use_rtl_backend == -1)
+        input_location = UNKNOWN_LOCATION;
 #else
       input_line = 0;
 #endif

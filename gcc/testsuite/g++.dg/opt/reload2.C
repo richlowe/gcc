@@ -1,6 +1,6 @@
 // PR 10352
 // { dg-do compile }
-// { dg-options -O2 }
+// { dg-options "" }
 
 extern double fabs(double x);
 

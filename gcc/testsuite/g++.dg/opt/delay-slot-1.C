@@ -2,7 +2,7 @@
 /* Testcase by Matti Rintala <matti.rintala@iki.fi> */
 
 /* { dg-do run } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 template <class _Ret, class _Tp>
 class const_mem_fun_t

@@ -1,6 +1,6 @@
 // PR rtl-optimization/16590
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" void abort(); 
  

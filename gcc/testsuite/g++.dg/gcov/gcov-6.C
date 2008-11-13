@@ -1,6 +1,6 @@
 // PR gcov-profile/34609
 // { dg-do compile }
-// { dg-options "-O -ftest-coverage" }
+// { dg-options "-ftest-coverage -frtl-backend" }
 
 struct A
 {

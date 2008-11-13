@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -fnon-call-exceptions" }
+// { dg-options "-fnon-call-exceptions" }
 
 void run (void) {
   float stack[1];

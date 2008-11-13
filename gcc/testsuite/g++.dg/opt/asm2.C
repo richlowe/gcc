@@ -1,6 +1,6 @@
 /* PR inline-asm/15740 */
 /* { dg-do compile } */
-/* { dg-options "-O" } */
+/* { dg-options "" } */
 
 void foo(void)
 {

@@ -7,7 +7,7 @@
 // which subsequently fooled the unroller.
 
 // { dg-do run }
-// { dg-options "-O2 -fno-exceptions -funroll-loops" }
+// { dg-options "-fno-exceptions -funroll-loops" }
 
 typedef __SIZE_TYPE__ size_t;
 

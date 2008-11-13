@@ -1,6 +1,6 @@
 // PR 11767
 // { dg-do run }
-// { dg-options "-fnon-call-exceptions -fprofile-arcs" }
+// { dg-options "-fnon-call-exceptions" }
 
 #include <string>
 

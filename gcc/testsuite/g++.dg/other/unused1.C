@@ -1,6 +1,6 @@
 /* { dg-do compile } */
 /* { dg-options "-g" } */
-/* { dg-skip-if "" { { hppa*-*-hpux* *-*-solaris2.[56]* } && { ! hppa*64*-*-* } } { "*" } { "" } } */
+/* { dg-skip-if "" { { hppa*-*-hpux* sparc*-*-solaris* } && { ! hppa*64*-*-* } } { "*" } { "" } } */
 
 /* Make sure we didn't eliminate casted types because we thought they were
    unused.  */
@@ -44,6 +44,5 @@ int bar5 (void)
 /* { dg-final { scan-assembler "foo" } } */
 /* { dg-final { scan-assembler "boo" } } */
 /* { dg-final { scan-assembler "cue" } } */
-/* The xfail below is for PR33429.  */
-/* { dg-final { scan-assembler "(string|ascii?)z?\[\t \]\"class2(\"|\\\\0)" { xfail *-*-* } } } */
-/* { dg-final { scan-assembler "(string|ascii?)z?\[\t \]\"printer(\"|\\\\0)" } } */
+/* { dg-final { scan-assembler "(string|ascii?)z?\t\"class2(\"|\\\\000)" } } */
+/* { dg-final { scan-assembler "(string|ascii?)z?\t\"printer(\"|\\\\000)" } } */

@@ -1,6 +1,6 @@
 // PR middle-end/13696
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern void x(unsigned long*);
 

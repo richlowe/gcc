@@ -1,7 +1,7 @@
 // PR c++/12519
 
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "" }
 
 struct A
 {

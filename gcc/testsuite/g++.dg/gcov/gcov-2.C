@@ -1,6 +1,6 @@
 /* Verify line coverage counts for simple member functions. */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-fprofile-arcs -ftest-coverage -frtl-backend" } */
 /* { dg-do run { target native } } */
 
 class C {

@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 namespace sigc {
     template <class T_type>     struct type_trait     {
     	typedef T_type& pass;

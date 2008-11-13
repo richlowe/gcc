@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* This code ends up taking the address of part of the structure that is padding, 
    and because there is no real field there, the structure alias analyzer would 

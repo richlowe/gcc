@@ -1,7 +1,7 @@
 // Test that terminate gets run when a catch filter fails to match while
 // running destructors.  Original bug depended on a::~a being inlined.
 // { dg-do run }
-// { dg-options -O }
+// { dg-options ""}
 
 #include <exception>
 #include <cstdlib>

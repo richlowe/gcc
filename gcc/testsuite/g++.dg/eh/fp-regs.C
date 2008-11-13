@@ -2,7 +2,7 @@
 // registers are properly saved and restored by defining 20 different FP
 // local variables.
 // { dg-do run }
-// { dg-options "-O" }
+// { dg-options "" }
 #include <stdlib.h>
  
 double zero = 0.0;

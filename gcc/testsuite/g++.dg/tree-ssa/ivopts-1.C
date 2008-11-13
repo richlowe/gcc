@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-ivopts" } */
+/* { dg-options "" } */
 
 struct Foo {
   Foo() : s(1) {}
@@ -12,7 +12,3 @@ void bar(void)
   foo(x[0]);
 }
 
-/* { dg-final { scan-tree-dump-not "-&x" "ivopts" } } */
-/* { dg-final { scan-tree-dump-not "offset: (4294967292|0x0f+fc)" "ivopts" } } */
-/* { dg-final { scan-tree-dump-not "&x\\\[5\\\]" "ivopts" } } */
-/* { dg-final { cleanup-tree-dump "ivopts" } } */

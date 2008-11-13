@@ -1,4 +1,4 @@
-/* { dg-options "-O1 -ffast-math -fdump-tree-recip" } */
+/* { dg-options "-ffast-math" } */
 /* { dg-do compile } */
 
 struct MIOFILE {
@@ -15,5 +15,3 @@ int make_scheduler_request(double a, double b)
   f1(b/prrs);
 }
 
-/* { dg-final { scan-tree-dump-times " / " 1 "recip" } } */
-/* { dg-final { cleanup-tree-dump "recip" } } */

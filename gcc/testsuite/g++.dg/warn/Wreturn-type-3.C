@@ -1,5 +1,5 @@
 // PR middle-end/19583
-// { dg-options "-Wreturn-type -O" }
+// { dg-options "-Wreturn-type" }
 
 struct E{};
 

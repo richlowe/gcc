@@ -2,7 +2,7 @@
 // This testcase segfaulted on x86 because a dangling REG_EQUAL note
 // resulted in incorrect substitutions later.
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 template<typename _CharT> class basic_iterator
 {

@@ -1,7 +1,7 @@
 // Test PR 17517.  Test case provided by Serge Belyshev.
  
  /* { dg-do compile } */
- /* { dg-options "-O2" } */
+ /* { dg-options "" } */
 
 
 extern void foo ();

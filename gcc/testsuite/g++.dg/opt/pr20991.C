@@ -1,5 +1,5 @@
 // PR middle-end/20991
-// { dg-options "-O2" }
+// { dg-options "" }
 // { dg-do compile }
 
 struct S

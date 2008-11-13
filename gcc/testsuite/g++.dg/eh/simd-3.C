@@ -1,4 +1,4 @@
-// { dg-options "-O" }
+// { dg-options "" }
 // { dg-options "-O -maltivec" { target { powerpc*-*-darwin* && powerpc_altivec_ok } } }
 // { dg-do run }
 

@@ -1,6 +1,6 @@
 // PR c++/32260
 // { dg-do compile }
-// { dg-options "-O2 -W -Wall" }
+// { dg-options "-W -Wall" }
 
 #include <typeinfo>
 

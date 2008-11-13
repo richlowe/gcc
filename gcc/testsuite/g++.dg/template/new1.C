@@ -1,5 +1,5 @@
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 // Copyright (C) 2004 Free Software Foundation, Inc.
 // Contributed by Nathan Sidwell 2 Dec 2004 <nathan@codesourcery.com>

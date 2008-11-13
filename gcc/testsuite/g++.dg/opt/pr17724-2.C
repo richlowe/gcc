@@ -1,6 +1,6 @@
 // PR tree-optimization/17724
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 namespace N { char *strcpy (char *, const char *); }
 extern "C" char *strcpy (char *, const char *);

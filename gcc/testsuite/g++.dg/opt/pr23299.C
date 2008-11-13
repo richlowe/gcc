@@ -1,6 +1,6 @@
 // PR rtl-optimization/23299
 // { dg-do run }
-// { dg-options "-Os" }
+// { dg-options "" }
 
 extern "C" void abort ();
 

@@ -1,6 +1,6 @@
 // PR 6764
 // { dg-do run }
-// { dg-options "-O -fomit-frame-pointer" }
+// { dg-options "-fomit-frame-pointer" }
 
 extern "C" void abort ();
 

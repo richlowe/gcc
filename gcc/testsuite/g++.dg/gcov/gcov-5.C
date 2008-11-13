@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* { dg-options "-fprofile-arcs -ftest-coverage -fno-inline" } */
+/* { dg-options "-fprofile-arcs -ftest-coverage -fno-inline -frtl-backend" } */
 /* { dg-do run { target native } } */
 
 class A {

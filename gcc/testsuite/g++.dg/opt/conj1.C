@@ -2,7 +2,7 @@
 // This testcase ICEd on SPARC -m64 because emit_group_load tried
 // to move a DFmode register into DImode register directly.
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct C
 {

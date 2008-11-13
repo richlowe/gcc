@@ -1,4 +1,4 @@
-// { dg-options "-O1" }
+// { dg-options "" }
 
 #include <stdio.h>
 struct A {

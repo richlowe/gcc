@@ -1,7 +1,7 @@
 /* This used to ICE due to a backend problem on s390.  */
 
 /* { dg-do compile } */
-/* { dg-options "-O1" } */
+/* { dg-options "" } */
 
 class ReferenceCounted
 {

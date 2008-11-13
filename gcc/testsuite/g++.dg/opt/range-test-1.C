@@ -1,6 +1,6 @@
 // Test fold-const.c (fold_range_test) optimizations.
 // { dg-do run } */
-// { dg-options "-O2" } */
+// { dg-options "" } */
 
 #ifndef __RANGE_TEST_HDR_INCL
 #define __RANGE_TEST_HDR_INCL

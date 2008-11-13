@@ -1,5 +1,4 @@
 // { dg-do compile }
-// { dg-options "-fshort-enums -w" }
 
 // PR c++/20008
 

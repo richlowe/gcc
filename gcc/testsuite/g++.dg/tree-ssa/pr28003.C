@@ -3,7 +3,7 @@
 // changes around the tags and variables in a way that makes our
 // call clobbering computation incorrect.
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 extern "C" void abort(void);
 struct A
 {

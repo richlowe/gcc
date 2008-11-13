@@ -1,4 +1,4 @@
-// { dg-options "-O2" }
+// { dg-options "" }
 
 void a (void (*f)())
 {

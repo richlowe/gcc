@@ -3,7 +3,7 @@
 // were wrongly swapped in the constructor.
 
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" void abort(void);
 

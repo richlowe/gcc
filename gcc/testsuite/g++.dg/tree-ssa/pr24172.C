@@ -1,4 +1,4 @@
-// { dg-options "-O2" }
+// { dg-options "" }
 void IOException( char);
 inline int* dummy( const char* const mode )
 {

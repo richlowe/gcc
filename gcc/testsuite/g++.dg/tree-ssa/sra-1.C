@@ -4,7 +4,7 @@
    mismatches.  */
 
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 struct A
 {

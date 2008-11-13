@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "-fdump-tree-optimized" } */
 
 struct S {};
 S bar (const S &a)
@@ -10,5 +10,4 @@ S bar (const S &a)
 }
 
 /* Test whether memcpy call has been optimized out.  */
-/* { dg-final { scan-tree-dump-times "memcpy" 0 "optimized"} } */
 /* { dg-final { cleanup-tree-dump "optimized" } } */

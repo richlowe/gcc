@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* We were not getting the offset of a in B and a in C::B correct, 
    causing an abort.  */

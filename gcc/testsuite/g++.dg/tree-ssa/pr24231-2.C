@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 /* FRE testcase for PR 24231, problem with PRE coalescing abnormal phis.  */
 struct f
 {

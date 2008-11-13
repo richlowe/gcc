@@ -1,4 +1,4 @@
-// { dg-options "-O2" }
+// { dg-options "" }
 // { dg-do compile }
 // PR rtl-opt/27883
 // MIPS used to ICE because local flow update

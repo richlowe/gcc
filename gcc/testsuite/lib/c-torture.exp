@@ -36,11 +36,11 @@ if [info exists TORTURE_OPTIONS] {
 	{ -O0 } \
 	{ -O1 } \
 	{ -O2 } \
+	{ -O3 } \
 	{ -O3 -finline-functions } \
 	{ -fast } \
 	{ -fast -xipo=2 } \
 	{ -O2 -g } \
-	{ -O3 -g } \
 	{ -Os } ]
 }
 

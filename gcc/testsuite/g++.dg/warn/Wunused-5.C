@@ -1,6 +1,6 @@
 /* PR opt/14288 */
 /* { dg-do compile } */
-/* { dg-options "-O -Wall" } */
+/* { dg-options "-Wall" } */
 
 volatile int sink;
 extern int foo(int);

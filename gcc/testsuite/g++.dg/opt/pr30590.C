@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O" } */
+/* { dg-options "" } */
 struct test
 {
   int type;

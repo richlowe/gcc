@@ -1,5 +1,5 @@
 // PR target/25005
-// { dg-options "-O2 -funroll-loops" }
+// { dg-options "-funroll-loops" }
 // { dg-do compile }
 
 inline void *operator new (__SIZE_TYPE__, void *__p) throw() { return __p; }

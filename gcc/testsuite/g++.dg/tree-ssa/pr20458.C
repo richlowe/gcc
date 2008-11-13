@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* The tail call optimization would inapproriately tail call the 
    destructors due to not recognizing a call clobbered variable */

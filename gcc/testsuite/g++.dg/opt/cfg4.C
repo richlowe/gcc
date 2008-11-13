@@ -7,7 +7,7 @@
 //  val will be set to null, then later dereferenced.  Bad.
 
 // { dg-do compile }
-// { dg-options "-Os" }
+// { dg-options "" }
 
 
 

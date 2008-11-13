@@ -1,6 +1,6 @@
 // PR c++/33025
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 typedef __SIZE_TYPE__ size_t;
 inline void *operator new (size_t, void *p) throw () { return p; }

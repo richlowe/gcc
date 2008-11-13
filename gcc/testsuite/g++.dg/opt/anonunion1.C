@@ -3,7 +3,7 @@
 // was not propagated back to the anon union itself, causing addressof
 // not to be replaced with stack slot.
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct A {
   A ();

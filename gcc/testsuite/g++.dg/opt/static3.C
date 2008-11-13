@@ -1,5 +1,5 @@
 // { dg-do link }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 class Foo {
 public:

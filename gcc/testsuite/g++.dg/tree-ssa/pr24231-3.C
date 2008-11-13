@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 /* PRE testcase for PR 24231, problem with PRE coalescing abnormal phis.  */
 struct MemoryManager {
       virtual void deallocate() = 0;

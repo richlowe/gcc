@@ -3,7 +3,7 @@
 // It gives the appearance to the middle end that the fields exist twice
 // which resulted in a very confused structure analyzer
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "" }
 struct X
 {
     int i0, i1;

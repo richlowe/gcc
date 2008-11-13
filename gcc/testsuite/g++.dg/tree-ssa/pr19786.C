@@ -1,5 +1,5 @@
 // { dg-do run }
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 // We used to get alias grouping wrong on this one, hoisting accesses
 // to the vector's end out of the loop.

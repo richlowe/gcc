@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 
 /* This was causing a failure in the out of SSA pass because VRP was
    trying to insert assertions for SSA names that flow through

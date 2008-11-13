@@ -1,4 +1,4 @@
-// { dg-options "-O2" }
+// { dg-options "" }
 
 // Contributed by Nathan Sidwell 22 Dec 2003 <nathan@codesourcery.com>
 // Origin: rsandifo@redhat.com

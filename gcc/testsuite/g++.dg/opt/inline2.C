@@ -1,5 +1,5 @@
 // { dg-do link }
-// { dg-options "-O1 -finline-functions" }
+// { dg-options "-finline-functions" }
 
 static void g ();
 

@@ -1,6 +1,6 @@
 // PR optimization/14669
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" void abort (void);
 extern "C" void exit (int);

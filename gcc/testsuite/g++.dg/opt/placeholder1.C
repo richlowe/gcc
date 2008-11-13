@@ -1,5 +1,5 @@
 // PR rtl-optimization/15159
-// { dg-options "-O2" }
+// { dg-options "" }
 struct S { S (); };
 struct P { P (S *); };
 void foo (const P &);

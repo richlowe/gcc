@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-optimized" } */
+/* { dg-options "" } */
 
 template <class T>
 struct Bar
@@ -17,5 +17,3 @@ int foo(Foo& f)
         return f.get();
 }
 
-/* { dg-final { scan-tree-dump "return f->x;" "optimized" } } */
-/* { dg-final { cleanup-tree-dump "optimized" } } */

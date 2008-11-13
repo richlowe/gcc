@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O2" } */
+/* { dg-options "" } */
 extern "C" void abort(void);
 struct T1 {int a, b; virtual void f(){}};
 struct T : T1 { struct T1 w;  int b; };

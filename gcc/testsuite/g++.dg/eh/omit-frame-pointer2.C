@@ -1,5 +1,5 @@
 // Reduced from PR c++/5246, PR c++/2447
-// { dg-options "-O -fomit-frame-pointer" }
+// { dg-options "-fomit-frame-pointer" }
 // { dg-do run }
 
 void step (int)

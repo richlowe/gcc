@@ -1,6 +1,6 @@
 // PR inline-asm/32109
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 struct A { int i[3]; ~A (); };
 struct A a;

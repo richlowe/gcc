@@ -3,7 +3,7 @@
 // the store to w.p was dead.
 
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 int N = 1;
 

@@ -2,7 +2,7 @@
 // This used to abort due to not handing RANGE_EXPR in SRA.
 
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "" }
 
 struct A
 {

@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O" } */
+/* { dg-options "" } */
 
 struct gc{};
 struct transform:public gc

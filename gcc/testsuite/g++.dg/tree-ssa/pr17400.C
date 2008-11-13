@@ -1,7 +1,7 @@
 // Test PR 17400.  Test case provided by Serge Belyshev.  
 
 /* { dg-do compile } */
-/* { dg-options "-O1" } */
+/* { dg-options "" } */
 
 
 void inc (int &);

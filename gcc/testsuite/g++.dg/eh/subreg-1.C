@@ -3,7 +3,7 @@
    notes correctly.  This is reduced from interpret.cc in libjava.  */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -fnon-call-exceptions" } */
+/* { dg-options "-fnon-call-exceptions" } */
 
 union _Jv_word
 {

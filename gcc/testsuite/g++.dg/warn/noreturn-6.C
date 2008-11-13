@@ -1,6 +1,6 @@
 // PR c++/30988
 // { dg-do compile }
-// { dg-options "-O2 -Wall" }
+// { dg-options "-Wall" }
 
 void f (const char *);
 

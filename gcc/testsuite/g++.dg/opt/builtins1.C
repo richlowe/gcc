@@ -1,6 +1,6 @@
 // PR c++/14791
 // Test if builtins with FILE * arguments work
-// { dg-options "-O2 -Wformat" }
+// { dg-options "-Wformat" }
 
 typedef struct _FILE FILE;
 FILE *stderr;

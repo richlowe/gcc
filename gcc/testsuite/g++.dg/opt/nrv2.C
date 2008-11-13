@@ -1,6 +1,6 @@
 // Test for the named return value optimization, this time with inlining.
 // { dg-do run }
-// { dg-options -O2 }
+// { dg-options "" }
 
 int c;
 int d;

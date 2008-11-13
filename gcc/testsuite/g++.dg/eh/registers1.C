@@ -1,6 +1,6 @@
 // Try to check that registers are preserved when the stack is unwound.
 // { dg-do run }
-// { dg-options -O2 }
+// { dg-options "" }
 
 extern "C" void exit(int);
 extern "C" void abort();

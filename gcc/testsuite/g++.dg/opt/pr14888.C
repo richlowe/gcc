@@ -2,7 +2,7 @@
 // This used to ICE because the truncdfsf2 isn't completely eliminated
 
 // { dg-do compile }
-// { dg-options "-O2 -ffast-math" }
+// { dg-options "-ffast-math" }
 
 class xcomplex
 {

@@ -1,6 +1,6 @@
 // PR tree-optimization/27549
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 typedef __SIZE_TYPE__ size_t;
 

@@ -2,7 +2,7 @@
 // foo() has two successors, one normal and one exceptional, and both
 // successors use &a[0] and x.  Expressions involving &a[0] can be hoisted
 // before the call but those involving x cannot.
-// { dg-options "-Os" }
+// { dg-options "" }
 // { dg-do run }
 
 int a[4];

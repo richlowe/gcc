@@ -6,7 +6,7 @@
 // insns around a no-return call.
 
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 template <typename _Alloc> class allocator;
 template <class _CharT> struct char_traits;

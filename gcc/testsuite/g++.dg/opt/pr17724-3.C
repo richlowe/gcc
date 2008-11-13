@@ -1,6 +1,6 @@
 // PR tree-optimization/17724
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 extern "C" char *strcpy (char* d, const char* s) throw ();
 

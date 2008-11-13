@@ -1,5 +1,5 @@
 // { dg-do link }
-// { dg-options "-Os" }
+// { dg-options "" }
 /* PR target/28014: main references unsigned divide, and the unwinder
    references signed divide.
    If libgcc contains an object which defines both, and linking is done with

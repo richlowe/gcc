@@ -1,4 +1,4 @@
-// { dg-options "-O" }
+// { dg-options "" }
 
 struct Outer {
   struct Inner { virtual bool f() = 0; };

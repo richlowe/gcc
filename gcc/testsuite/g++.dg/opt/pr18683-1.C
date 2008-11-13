@@ -1,6 +1,6 @@
 // PR middle-end/18683
 // { dg-do compile }
-// { dg-options "-O0" }
+// { dg-options "" }
 
 template<typename _CharT>
 struct basic_ostream

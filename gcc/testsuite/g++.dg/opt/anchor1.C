@@ -1,5 +1,5 @@
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 // The size of the construction vtable for YFont in YCoreFont was not
 // updated to reflect its actual size.  On targets with section anchor

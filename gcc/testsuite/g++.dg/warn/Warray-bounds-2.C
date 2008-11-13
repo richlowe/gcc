@@ -1,6 +1,6 @@
 /* { dg-do compile } */
 /* Test that -Warray-bounds is enabled by -Wall */
-/* { dg-options "-O2 -Wall" } */
+/* { dg-options "-Wall -frtl-backend" } */
 
 int a[10];
 

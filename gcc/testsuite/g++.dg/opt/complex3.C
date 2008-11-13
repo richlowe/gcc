@@ -1,6 +1,6 @@
 // PR 22022
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
 
 _Complex float f();
 _Complex float g();

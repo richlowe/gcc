@@ -1,4 +1,4 @@
-/* { dg-options "-O1" } */
+/* { dg-options "" } */
 struct A
 {
   ERROR; /* { dg-error "ERROR" } */

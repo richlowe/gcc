@@ -2,7 +2,7 @@
 // This testcase ICEd because fold checking saw a type change which
 // is allowed as TYPE_CONTAINS_PLACEHOLDER_INTERNAL could change.
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "" }
   
 int
 __finite (double __x) throw ()

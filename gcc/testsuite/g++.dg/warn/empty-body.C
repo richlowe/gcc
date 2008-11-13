@@ -1,5 +1,5 @@
 // PR c++/5520
-// { dg-options "-O2 -Wempty-body" }
+// { dg-options "-O3 -Wextra" }
 
 void breakme()
 {

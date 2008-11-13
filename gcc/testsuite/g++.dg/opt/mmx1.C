@@ -2,8 +2,8 @@
 // This testcase ICEd because movsi was not supporting direct
 // mmx -> mmx register moves.
 // { dg-do compile }
-// { dg-options "-O2" }
-// { dg-options "-fno-exceptions -O2 -mmmx -fPIC" { target { { i?86-*-* x86_64-*-* } && { ilp32 && fpic } } } }
+// { dg-options "" }
+// { dg-options "-fno-exceptions -mmmx -fPIC" { target { { i?86-*-* x86_64-*-* } && ilp32 }  } }
 
 struct A {
   unsigned a0;
