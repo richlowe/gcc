@@ -216,7 +216,7 @@ build-sparc-S2	:= BUILDTOOLSV9 = $(BUILDTOOLSV9-$(CHIP))
 $(DONEDIR)/build-v9 :
 	cd $(BUILDDIR)/lang && \
 	$(DMAKE) -j $(JOBS) \
-		export headers libs tools acomp \
+		export headers libs tools \
 		$(ENVPARMS)	\
         	CC="$(CC)" \
         	CCC="$(CCC)" \
