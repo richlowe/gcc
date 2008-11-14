@@ -176,11 +176,12 @@ build-sparc-S2	:= BUILDTOOLS = $(BUILDTOOLS-$(CHIP))
 $(DONEDIR)/build-v8 :
 	cd $(BUILDDIR)/lang && \
 	$(DMAKE) -j $(JOBS) \
-		common shared libs ctools tools \
+		export libs tools acomp\
 		$(ENVPARMS) \
         	CC="$(CC)" \
         	CCC="$(CCC)" \
 		BM_CTCOMMON="$(BUILDDIR)/lang/ct-common" \
+		BM_COMMON_EXPORT="$(BM_COMMON_EXPORT)" \
 		MAKE="$(DMAKE) -j $(JOBS)" \
 		COMMON_COMPONENTS=	\
 		LIBS="$(BUILDLIBS)" \
@@ -215,11 +216,12 @@ build-sparc-S2	:= BUILDTOOLSV9 = $(BUILDTOOLSV9-$(CHIP))
 $(DONEDIR)/build-v9 :
 	cd $(BUILDDIR)/lang && \
 	$(DMAKE) -j $(JOBS) \
-		common shared headers libs ctools tools \
+		export headers libs tools acomp \
 		$(ENVPARMS)	\
         	CC="$(CC)" \
         	CCC="$(CCC)" \
 		BM_CTCOMMON="$(BUILDDIR)/lang/ct-common" \
+		BM_COMMON_EXPORT="$(BM_COMMON_EXPORT)" \
 		CPU="$(CPUV9)" \
 		MAKE="$(DMAKE) -j $(JOBS)" \
 		COMMON_COMPONENTS=	\
