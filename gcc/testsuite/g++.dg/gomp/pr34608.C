@@ -1,6 +1,6 @@
 // PR middle-end/34608
 // { dg-do compile }
-// { dg-options "-ftest-coverage -fopenmp" }
+// { dg-options "-frtl-backend -ftest-coverage -fopenmp" }
 
 struct A
 {

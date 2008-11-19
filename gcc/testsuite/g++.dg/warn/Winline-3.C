@@ -1,4 +1,4 @@
-// { dg-options "-Winline" }
+// { dg-options "-Winline -O3" }
 
 #include <vector>
 

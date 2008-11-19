@@ -1,4 +1,4 @@
-// { dg-options "-Winline" }
+// { dg-options "-O3 -Winline" }
 
 static inline int foo(int x);
 
