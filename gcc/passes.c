@@ -479,8 +479,8 @@ init_optimization_passes (void)
     backend might produce already lowered functions that are not processed
     by these passes.  */
   p = &all_lowering_passes;
-  NEXT_PASS (pass_regimple);  
   NEXT_PASS (pass_remove_useless_stmts);
+  NEXT_PASS (pass_regimple);  
   NEXT_PASS (pass_mudflap_1);
   NEXT_PASS (pass_lower_omp);
   NEXT_PASS (pass_lower_cf);

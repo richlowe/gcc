@@ -1,6 +1,6 @@
 g++.sum:FAIL: g++.dg/abi/rtti3.C scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/gomp/pr29965-3.C (test for excess errors)
-g++.sum:FAIL: g++.dg/gomp/tls-3.C  (test for errors, line 16)
+g++.sum:FAIL: g++.dg/gomp/pr35244.C (test for excess errors)
 g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison

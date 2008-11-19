@@ -1,6 +1,6 @@
 // PR c++/34198
 // { dg-do compile }
-// { dg-options "-O2 -Wconversion -Wsign-conversion" }
+// { dg-options "-O3 -Wconversion -Wsign-conversion" }
 
 signed char sc;
 unsigned char uc;

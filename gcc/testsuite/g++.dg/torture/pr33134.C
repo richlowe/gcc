@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "-O3" } */
 
 /* Used to crash in VRP.  */
 /* Testcase by Martin Michlmayr <tbm@cyrius.com> */
