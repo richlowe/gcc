@@ -349,6 +349,13 @@ cgraph_check_inline_limits (struct cgraph_node *to, struct cgraph_node *what,
   int limit;
   HOST_WIDE_INT stack_size_limit, inlined_stack;
 
+  if ( DECL_DONT_GENERATE_SUNIR (what->decl) != DECL_DONT_GENERATE_SUNIR (to->decl))
+    {
+      if (reason)
+        *reason = N_("Do not across inline between IR and RTL functions");
+      return false;
+    }
+
   if (one_only)
     times = 1;
   else
@@ -1425,7 +1432,7 @@ cgraph_decide_inlining_incrementally (struct cgraph_node *node,
 static bool
 cgraph_gate_inlining (void)
 {
-  return flag_inline_trees && gate_generate_rtl();
+  return flag_inline_trees;
 }
 
 struct tree_opt_pass pass_ipa_inline = 

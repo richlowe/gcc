@@ -2813,6 +2813,15 @@ expand_call_inline (basic_block bb, tree stmt, tree *tp, void *data,
   /* Turn forward declarations into real ones.  */
   fn = cgraph_node (fn)->decl;
 
+  /* Do not inline across IR and RTL functions. */
+  if (DECL_DONT_GENERATE_SUNIR (fn) != DECL_DONT_GENERATE_SUNIR (current_function_decl) )
+    {
+      struct cgraph_node *node = cgraph_node (fn);
+      if (node) 
+        cgraph_mark_needed_node (node);
+      goto egress;
+    }
+
   /* If fn is a declaration of a function in a nested scope that was
      globally declared inline, we don't set its DECL_INITIAL.
      However, we can't blindly follow DECL_ABSTRACT_ORIGIN because the
