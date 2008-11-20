@@ -1,5 +1,6 @@
 // PR c++/35332
 // { dg-do compile }
+// { dg-option "-fno-fast-math" }
 
 void foo (double x, double y)
 {

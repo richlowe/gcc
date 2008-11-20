@@ -1,6 +1,6 @@
 // { PR tree-optimization/34063 }
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 struct S
 {

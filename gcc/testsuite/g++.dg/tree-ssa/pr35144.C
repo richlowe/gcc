@@ -1,6 +1,6 @@
 // PR c++/35144
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 struct A
 {

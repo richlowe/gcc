@@ -1,6 +1,6 @@
 // PR c++/31809
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 struct S
 {

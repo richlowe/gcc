@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-forwprop1" } */
+/* { dg-options "-O3 -frtl-backend -fdump-tree-forwprop1" } */
 
 #include <new>
 

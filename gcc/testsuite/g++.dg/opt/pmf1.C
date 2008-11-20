@@ -1,6 +1,6 @@
 // PR c++/37016
 // { dg-do run }
-// { dg-options "-O2 -Wall" }
+// { dg-options "-O3 -Wall" }
 
 /*                                                                              
   Basic design concept is that WorldObject implements remote method call        

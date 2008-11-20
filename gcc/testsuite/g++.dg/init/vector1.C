@@ -1,6 +1,6 @@
 // PR c++/19263
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 typedef signed char v8qi __attribute__ ((vector_size (8)));
 

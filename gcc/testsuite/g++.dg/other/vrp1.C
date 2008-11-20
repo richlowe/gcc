@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 // This caused a crash in VRP because TREE_OVERFLOW was set for MIN.
 
 template<long long MIN>

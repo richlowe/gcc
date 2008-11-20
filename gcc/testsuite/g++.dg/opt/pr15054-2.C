@@ -1,7 +1,7 @@
 // PR middle-end/15054
 
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 extern "C" void abort (void);
 

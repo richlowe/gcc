@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O1 -fnon-call-exceptions -fdump-tree-optimized" } */
+/* { dg-options "-O3 -fnon-call-exceptions -fdump-tree-optimized" } */
 
 #include <stdio.h>
 

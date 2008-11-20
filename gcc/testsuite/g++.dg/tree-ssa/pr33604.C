@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O -fdump-tree-forwprop1" } */
+/* { dg-options "-O3 -fdump-tree-forwprop1" } */
 
 struct Value
 {

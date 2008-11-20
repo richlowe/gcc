@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -fnon-call-exceptions" }
+// { dg-options "-O3 -fnon-call-exceptions" }
 
 struct S { ~S () throw () {} };
 double bar ();

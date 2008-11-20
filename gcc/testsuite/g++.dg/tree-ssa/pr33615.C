@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fnon-call-exceptions -fdump-tree-lim-details -w" } */
+/* { dg-options "-O3 -fnon-call-exceptions -fdump-tree-lim-details -w" } */
 
 extern volatile int y;
 

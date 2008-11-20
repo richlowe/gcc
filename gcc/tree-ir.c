@@ -6965,6 +6965,10 @@ conv_c99_treecode2ir (tree node)
     CASE_FLT_FN (BUILT_IN_ISNAN):
       return IR_ISNAN;
     CASE_FLT_FN (BUILT_IN_ISFINITE):
+    CASE_FLT_FN (BUILT_IN_FINITE):
+    case BUILT_IN_FINITED32:
+    case BUILT_IN_FINITED64:
+    case BUILT_IN_FINITED128:
       return IR_ISFINITE;
     CASE_FLT_FN (BUILT_IN_ISNORMAL):
       return IR_ISNORMAL;
@@ -7001,6 +7005,10 @@ dump_ir_builtin_call (tree stmt, int need_return)
     CASE_FLT_FN (BUILT_IN_ISINF):
     CASE_FLT_FN (BUILT_IN_ISNAN):
     CASE_FLT_FN (BUILT_IN_ISFINITE):
+    CASE_FLT_FN (BUILT_IN_FINITE):
+    case BUILT_IN_FINITED32:
+    case BUILT_IN_FINITED64:
+    case BUILT_IN_FINITED128:
     CASE_FLT_FN (BUILT_IN_ISNORMAL):
     CASE_FLT_FN (BUILT_IN_FPCLASSIFY):
       /* signbit, isinf, isnan, isfinite, isnormal, fpclassify are library micro defined in 'iso/math_c99.h'. */

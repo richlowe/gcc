@@ -1,4 +1,5 @@
 // PR c++/35315
+// { dg-options "-frtl-backend" }
 
 typedef union { int i; } U __attribute__((transparent_union));
 

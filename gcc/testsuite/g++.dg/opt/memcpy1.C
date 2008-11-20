@@ -2,7 +2,7 @@
 // Origin: Martin Michlmayr <tbm@cyrius.com>
 
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "-O3" }
 
 typedef unsigned char uint8_t;
 typedef uint8_t uint8;

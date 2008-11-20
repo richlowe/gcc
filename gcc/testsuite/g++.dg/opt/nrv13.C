@@ -1,6 +1,6 @@
 // PR tree-optimization/32353
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 extern "C" void abort ();
 

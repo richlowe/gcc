@@ -2,7 +2,7 @@
 /* Origin: Janis Johnson <janis@gcc.gnu.org> */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -fnon-call-exceptions -ffast-math -fno-gcse" } */
+/* { dg-options "-O3 -fnon-call-exceptions -ffast-math -fno-gcse" } */
 
 class One {
 public:

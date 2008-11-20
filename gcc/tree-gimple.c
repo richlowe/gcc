@@ -589,7 +589,7 @@ get_call_expr_in (tree t)
   if (TREE_CODE (t) == GIMPLE_MODIFY_STMT)
     t = GIMPLE_STMT_OPERAND (t, 1);
   if (TREE_CODE (t) == WITH_SIZE_EXPR
-      || (flag_use_rtl_backend == 0 && TREE_CODE (t) == NOP_EXPR))
+      || TREE_CODE (t) == NOP_EXPR)
     t = TREE_OPERAND (t, 0);
   if (TREE_CODE (t) == CALL_EXPR)
     return t;
