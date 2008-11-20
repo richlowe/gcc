@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-phiopt1" } */
+/* { dg-options "-O3 -frtl-backend -fdump-tree-phiopt1" } */
 
 template <class T>
 static inline const T&

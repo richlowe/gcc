@@ -1,5 +1,5 @@
 // PR c++/34196
-// { dg-options "-Wuninitialized" }
+// { dg-options "-O3 -Wuninitialized" }
 
 template <class _Tp> class AutoPtr
 {

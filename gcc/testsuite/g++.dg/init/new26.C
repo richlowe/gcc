@@ -1,6 +1,6 @@
 // PR c++/33407
 // { dg-do run }
-// { dg-options "-fstrict-aliasing" }
+// { dg-options "-W2,-xalias_level=any -fstrict-aliasing" }
 
 extern "C" void * malloc(__SIZE_TYPE__);
 extern "C" void abort(void);

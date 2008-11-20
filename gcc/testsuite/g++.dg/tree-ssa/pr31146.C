@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-forwprop" } */
+/* { dg-options "-O3 -frtl-backend -fdump-tree-forwprop" } */
 
 /* We should be able to optimize this to i[j] = 1 during
    early optimizations.  */

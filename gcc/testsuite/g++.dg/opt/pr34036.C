@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fnon-call-exceptions -ffast-math -fsignaling-nans" } */
+/* { dg-options "-O3 -fnon-call-exceptions -ffast-math -fsignaling-nans" } */
 /* { dg-warning "-fassociative-math disabled" "" { target *-*-* } 1 } */
 
 template <class T>

@@ -1,7 +1,7 @@
 // Testcase by Volker Reichelt <reichelt@gcc.gnu.org>
 
 // { dg-do compile }
-// { dg-options "-O -ffast-math" }
+// { dg-options "-O3 -ffast-math" }
 
 struct A
 {

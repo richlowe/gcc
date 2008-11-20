@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-optimized" } */
+/* { dg-options "-O3 -frtl-backend -fdump-tree-optimized" } */
 
 union MY_M128
 {

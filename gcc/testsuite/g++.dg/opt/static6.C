@@ -1,6 +1,6 @@
 // PR c++/31806
 // { dg-do run }
-// { dg-options "-O2 -fno-inline -fno-threadsafe-statics" }
+// { dg-options "-O3 -fno-inline -fno-threadsafe-statics" }
 
 extern "C" void abort(void);
 

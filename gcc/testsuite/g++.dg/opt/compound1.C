@@ -1,6 +1,6 @@
 // PR c++/33709
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "-O3" }
 
 class S {
   virtual void foo ();

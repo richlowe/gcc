@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O" } */
+/* { dg-options "-O3" } */
 /* Verify that a cleanup marked "inline" gets inlined.  */
 
 static inline void xyzzy(void *p __attribute__((unused)))
