@@ -1,7 +1,7 @@
 // PR c++/19238
 // Test that hidden visibility on an inline function is inherited by static
 // local variables and local classes.
-
+// { dg-options "-O0 -Wd,-w" }
 // { dg-require-visibility "" }
 // { dg-final { scan-hidden "_Z1fv" } }
 // { dg-final { scan-hidden "_ZZ1fvE1i" } }

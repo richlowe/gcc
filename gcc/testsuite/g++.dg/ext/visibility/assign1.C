@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-options "-W0,-O0 -W2,-O0" } */
 /* { dg-require-visibility "" } */
 /* { dg-final { scan-hidden "_ZN1DaSERKS_" } } */
 

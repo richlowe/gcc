@@ -1,7 +1,7 @@
 /* Test that -fvisibility-inlines-hidden affects class members. */
 /* { dg-do compile } */
 /* { dg-require-visibility "" } */
-/* { dg-options "-fvisibility-inlines-hidden" } */
+/* { dg-options "-W0,-O0 -W2,-O0 -fvisibility-inlines-hidden" } */
 /* { dg-final { scan-hidden "_ZN3Foo6methodEv" } } */
 
 class Foo

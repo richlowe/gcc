@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O" } */ // such that static functions are optimized out
+/* { dg-options "-O1 -Wd,-w" } */ // such that static functions are optimized out
 /* { dg-final { scan-assembler-not "func1" } } */
 /* { dg-final { scan-assembler-not "func2" } } */
 /* { dg-final { scan-assembler-not "func3" } } */

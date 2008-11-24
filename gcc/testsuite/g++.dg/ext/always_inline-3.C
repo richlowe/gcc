@@ -1,4 +1,4 @@
-// { dg-options "-O0" }
+// { dg-options "" }
 // { dg-do compile }
 // PR C++/34715
 

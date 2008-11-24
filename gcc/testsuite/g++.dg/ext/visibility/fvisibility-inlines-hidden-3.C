@@ -1,6 +1,6 @@
 /* { dg-do compile } */
 /* { dg-require-visibility "" } */
-/* { dg-options "-fvisibility-inlines-hidden" } */
+/* { dg-options "-O0 -Wd,-w -fvisibility-inlines-hidden" } */
 /* { dg-final { scan-not-hidden "_ZN1IIiE3fooEv" } } */
 /* { dg-final { scan-not-hidden "_ZN1OIiE3fooEv" } } */
 /* { dg-final { scan-hidden "_ZN1S3fooEv" } } */

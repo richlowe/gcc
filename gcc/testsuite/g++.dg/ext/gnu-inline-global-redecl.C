@@ -6,7 +6,7 @@
  */
 
 /* { dg-do link } */
-/* { dg-options "-O" } */ // such that static functions are optimized out
+/* { dg-options "-O3" } */ // such that static functions are optimized out
 
 #include "gnu-inline-common.h"
 

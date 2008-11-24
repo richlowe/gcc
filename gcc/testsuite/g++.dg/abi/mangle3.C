@@ -1,5 +1,6 @@
 // Test mangling of type casts
 // { dg-do compile }
+// { dg-options "-O0 -Wd,-w" }
 
 template<int i> class A {};
 template<bool b> class B {};
