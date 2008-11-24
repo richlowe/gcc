@@ -1,6 +1,6 @@
 // Test that 'extern template' suppresses instantiations.
 // { dg-do compile }
-// { dg-options "" }
+// { dg-options "-O0 -Wd,-w" }
 
 template <class T> void f (T) { }
 extern template void f (int);

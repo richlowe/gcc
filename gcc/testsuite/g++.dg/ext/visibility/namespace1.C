@@ -1,6 +1,7 @@
 // PR c++/21764
 // Test for namespace visibility attribute semantics.
 
+// { dg-options { "-O0 -Wd,-w" }
 // { dg-require-visibility "" }
 // { dg-final { scan-hidden "_ZN3foo1fEv" } }
 // { dg-final { scan-hidden "_ZN3foo1gEv" } }

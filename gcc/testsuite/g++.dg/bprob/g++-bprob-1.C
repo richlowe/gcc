@@ -1,3 +1,4 @@
+/* { dg-options "-frtl-backend" } */
 /* Check that various C constructs (in C++) don't cause problems for
  * profile-directed block ordering.
 

@@ -1,4 +1,12 @@
-g++.sum:FAIL: g++.dg/abi/rtti3.C scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O0  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O1  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O2  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O3  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O3 -finline-functions  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -fast  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -fast -xipo=2  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O2 -g  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -Os  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/gomp/pr29965-3.C (test for excess errors)
 g++.sum:FAIL: g++.dg/gomp/pr35244.C (test for excess errors)
 g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison

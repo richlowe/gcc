@@ -2,7 +2,7 @@
 // -fvisibility-inlines-hidden doesn't apply to non-inline specializations
 
 // { dg-require-visibility "" }
-// { dg-options "-fvisibility-inlines-hidden" }
+// { dg-options "-O0 -Wd,-w -fvisibility-inlines-hidden" }
 // { dg-final { scan-not-hidden "_ZN1AIiE3fooEv" } }
 // { dg-final { scan-not-hidden "_ZN1AIiE3barEv" } }
 // { dg-final { scan-hidden "_ZN1AIlE3fooEv" } }

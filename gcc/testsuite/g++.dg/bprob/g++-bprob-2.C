@@ -1,3 +1,4 @@
+/* { dg-options "-frtl-backend" } */
 namespace {
 
 int calc(int j)

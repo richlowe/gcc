@@ -3,6 +3,7 @@
 // Copyright (C) 2004 Free Software Foundation, Inc.
 // Contributed by Nathan Sidwell 21 Jul 2004 <nathan@codesourcery.com>
 
+// { dg-options "-g0" }
 // { dg-final { scan-assembler "_ZNK1AcviEv" } }
 // { dg-final { scan-assembler-not "_ZNK1VcviEv" } }
 

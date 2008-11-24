@@ -2,6 +2,7 @@
 
 // { dg-do compile }
 // { dg-require-visibility "" }
+// { dg-options "-O0 -Wd,-w" }
 // { dg-final { scan-hidden "_Z1fIN1N1AEEvT_" } }
 // { dg-final { scan-hidden "_Z1hIXadL_ZN1N1iEEEEvv" } }
 
