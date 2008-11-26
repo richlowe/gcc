@@ -2895,6 +2895,9 @@ is_gimple_reg (tree t)
   if (!is_gimple_variable (t))
     return false;
 
+  if (is_gimple4ss_lvalue (t))
+    return false;
+
   if (!is_gimple_reg_type (TREE_TYPE (t)))
     return false;
 
