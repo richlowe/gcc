@@ -1222,6 +1222,7 @@ static const char *iropt_ipo_options =
  %{xalias_level=*} %{Zalias_level=*: -xalias_level=%*}\
  %{fstrict-aliasing: -xalias_level=basic }\
  %{fno-strict-aliasing: -xalias_level=any }\
+ %{fno-optimize-sibling-calls: -Rtail }\
  %{xdepend=yes: -depend ; \
    xdepend=no: }\
  %{xcache=* : -xcache=%* ; \
