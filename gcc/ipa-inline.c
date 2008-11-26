@@ -484,7 +484,10 @@ cgraph_maybe_hot_edge_p (struct cgraph_edge *edge)
     return false;
   if (lookup_attribute ("hot", DECL_ATTRIBUTES (edge->caller->decl)))
     return true;
+
+  /* for IR backend we don't build cfg, so edge->frequency always be 0. */
   if (flag_guess_branch_prob
+      && DECL_DONT_GENERATE_SUNIR (edge->caller->decl)
       && edge->frequency < (CGRAPH_FREQ_MAX
       			    / PARAM_VALUE (HOT_BB_FREQUENCY_FRACTION)))
     return false;
