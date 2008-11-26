@@ -1,6 +1,6 @@
 /* PR middle-end/34088 */
 /* { dg-do compile } */
-/* { dg-options "-O -Wall -Werror" } */
+/* { dg-options "-O -Wall -Werror -frtl-backend" } */
 
 int F0 (int);
 int F1 (int t) { return F0(t); }

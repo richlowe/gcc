@@ -5233,18 +5233,15 @@ diagnose_sb_1 (tree *tp, int *walk_subtrees, void *data)
     input_location = EXPR_LOCATION (t);
     
   /* Check the OpenMP nesting restrictions.  */
-  if (flag_use_rtl_backend == 0 && prev_ctx != NULL)
+  if (prev_ctx != NULL)
     {
       if (OMP_DIRECTIVE_P (t))
         check_omp_nesting_restrictions (t, prev_ctx);
       else if (TREE_CODE(t) == CALL_EXPR)
         {
-          if (TREE_CODE (TREE_OPERAND (t, 0)) == ADDR_EXPR
-              && (TREE_CODE (TREE_OPERAND (TREE_OPERAND (t, 0), 0))
-                  == FUNCTION_DECL)
-              && DECL_BUILT_IN (TREE_OPERAND (TREE_OPERAND (t, 0), 0)))
+          tree fndecl = get_callee_fndecl (t);  
+          if (fndecl && DECL_BUILT_IN (fndecl))
             {
-              tree fndecl = get_callee_fndecl (t);  
               enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
               if (fcode == BUILT_IN_GOMP_BARRIER)
                 {

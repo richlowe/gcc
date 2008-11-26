@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fprofile-use" } */
+/* { dg-options "-O -frtl-backend -fprofile-use" } */
 /* { dg-options "-O -m4 -fprofile-use" { target sh-*-* } } */
 
 void foo (int *p)
