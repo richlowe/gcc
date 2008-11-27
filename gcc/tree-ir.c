@@ -7274,6 +7274,12 @@ dump_ir_builtin_call (tree stmt, int need_return)
           ret = dump_ir_call (stmt, need_return);
         break;
       }
+    case BUILT_IN_VA_ARG_PACK:
+    case BUILT_IN_VA_ARG_PACK_LEN:
+      /* All valid uses of __builtin_va_arg_pack () are removed during
+         inlining.  */
+      error ("%Kinvalid use of %<__builtin_va_arg_pack ()%>", stmt);
+      break;
     CASE_FLT_FN (BUILT_IN_LCEIL):
     CASE_FLT_FN (BUILT_IN_LLCEIL):
     CASE_FLT_FN (BUILT_IN_LFLOOR):
