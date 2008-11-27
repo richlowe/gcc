@@ -1402,7 +1402,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
   if (TREE_CODE (op0) == VAR_DECL || TREE_CODE (op0) == PARM_DECL)
     {
       const char * name;
-      IR_TYPE_NODE * ir_type;
+      IR_TYPE_NODE * ir_type, *ptr_ir_type;
       LEAF * ir_parent_struct;
       
       TYPE sue_type = map_gnu_type_to_TYPE (TREE_TYPE (op0));
@@ -1422,6 +1422,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
               argtype = map_gnu_type_to_TYPE (stmt_type);
             }
         }
+      ptr_ir_type = make_ptr_to_ir_type_node(ir_type);
       
       ir_parent_struct = (LEAF*) dump_ir_expr (op0, TREE_CODE (op0) == VAR_DECL 
                                                     ? MAP_FOR_VALUE : MAP_FOR_ADDR);
@@ -1443,12 +1444,13 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
           /* variable length structs are always pointers. need to decref once
            * ot get to struct information */
           ir_type = ir_suembr2 (sue_ir_type, fld_name);
+          ptr_ir_type = make_ptr_to_ir_type_node(ir_type);
 
           if (ir_offset)
-            ret = build_ir_triple (IR_PLUS, ret, ir_offset, ptr_argtype, ir_type);
+            ret = build_ir_triple (IR_PLUS, ret, ir_offset, ptr_argtype, ptr_ir_type);
 
           ret = build_ir_triple (IR_PLUS, ret, build_ir_int_const (offset, offsettype, 0), 
-                            ptr_argtype, ir_type);
+                            ptr_argtype, ptr_ir_type);
           
           ret->triple.ldst_ir_type = ir_type;
           ret->triple.ldst_type = argtype;
@@ -1598,9 +1600,9 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
 
           if (is_field_array != 1)
                       ret = build_ir_triple (IR_PLUS, ret, build_ir_int_const (offset, offsettype, 0), 
-                                      ir_parent_struct->type, ir_type);
+                                      ir_parent_struct->type, ptr_ir_type);
           else /* Workaround for 186:utility.c:239 pos.board[i] */
-            ret = build_ir_triple (IR_PLUS, ret, build_ir_int_const (0, offsettype, 0), ir_parent_struct->type, ir_type);
+            ret = build_ir_triple (IR_PLUS, ret, build_ir_int_const (0, offsettype, 0), ir_parent_struct->type, ptr_ir_type);
           
           ret->triple.ldst_ir_type = ir_type;
           ret->triple.ldst_type = argtype;
@@ -1615,7 +1617,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
   else if (TREE_CODE (op0) == INDIRECT_REF || TREE_CODE (op0) == ARRAY_REF)
     {
       IR_NODE * ir_op0 = 0;
-      IR_TYPE_NODE * ir_type;
+      IR_TYPE_NODE * ir_type, * ptr_ir_type;
       
       IR_TYPE_NODE * sue_ir_type = map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (op0));
       tree ptr_stmt_type = build_pointer_type (stmt_type);
@@ -1665,6 +1667,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
           if (t)
             ir_type = t;
         }
+      ptr_ir_type = make_ptr_to_ir_type_node(ir_type);
 
 #ifdef FIX_MISMATCH_WARNING
       /* to get rid of "mismatch" warning in iropt */
@@ -1693,14 +1696,15 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
 	    if (TREE_CODE (op0) == INDIRECT_REF)
 	      {
 		IR_TYPE_NODE * ir_type = compute_field_array_ir_type(outer_tree);
+                IR_TYPE_NODE * ptr_ir_type = make_ptr_to_ir_type_node(ir_type);
 
 		if (TREE_CODE (TREE_TYPE (op0)) == RECORD_TYPE)
 		  ret = build_ir_triple (IR_PLUS, ir_op0, build_ir_int_const (offset, offsettype, 0),
-				map_gnu_type_to_TYPE (ptr_stmt_type), ir_type);
+				map_gnu_type_to_TYPE (ptr_stmt_type), ptr_ir_type);
 		else
 		  {
 		    gcc_assert (gir_offset != NULL);
-		    ret = build_ir_triple (IR_PLUS, ir_op0, gir_offset, map_gnu_type_to_TYPE (ptr_stmt_type), ir_type);
+		    ret = build_ir_triple (IR_PLUS, ir_op0, gir_offset, map_gnu_type_to_TYPE (ptr_stmt_type), ptr_ir_type);
 		    gir_offset = NULL;
 		  }
 	      }
@@ -1708,9 +1712,9 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
 	else
 	  {
             ret = build_ir_triple (IR_PLUS, ir_op0, build_ir_int_const (offset, offsettype, 0), 
-                          map_gnu_type_to_TYPE (ptr_stmt_type), ir_type);
+                          map_gnu_type_to_TYPE (ptr_stmt_type), ptr_ir_type);
             if (ir_offset)
-              ret = build_ir_triple (IR_PLUS, ret, ir_offset, map_gnu_type_to_TYPE (ptr_stmt_type), ir_type);
+              ret = build_ir_triple (IR_PLUS, ret, ir_offset, map_gnu_type_to_TYPE (ptr_stmt_type), ptr_ir_type);
 	  }
  
       ret->triple.ldst_ir_type = ir_type;
@@ -1723,7 +1727,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
            /*|| TREE_CODE (op0) == VAR_DECL*/)
     {
       IR_NODE * ir_op0 = 0;
-      IR_TYPE_NODE * ir_type;
+      IR_TYPE_NODE * ir_type, * ptr_ir_type;
       ir_ADDRESS addr;
       
       /* variable length struct */
@@ -1791,6 +1795,7 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
 
           if (ir_type == 0)
             ir_type = map_gnu_type_to_IR_TYPE_NODE (stmt_type);
+          ptr_ir_type = make_ptr_to_ir_type_node(ir_type);
 
 #ifdef FIX_MISMATCH_WARNING
           /* to get rid of "mismatch" warning in iropt */
@@ -1804,11 +1809,11 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
 	  else
 	    {
               ret = build_ir_triple (IR_PLUS, ir_op0, build_ir_int_const (offset, offsettype, 0), 
-                            map_gnu_type_to_TYPE (ptr_stmt_type), ir_type);
+                            map_gnu_type_to_TYPE (ptr_stmt_type), ptr_ir_type);
           
               if (ir_offset)
                 ret = build_ir_triple (IR_PLUS, ret, ir_offset,
-                              map_gnu_type_to_TYPE (ptr_stmt_type), ir_type);
+                              map_gnu_type_to_TYPE (ptr_stmt_type), ptr_ir_type);
 	    }
 
           ret->triple.ldst_ir_type = ir_type;
