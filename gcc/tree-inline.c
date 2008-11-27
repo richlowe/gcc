@@ -1298,7 +1298,7 @@ copy_body_nocfg (copy_body_data *id, tree_stmt_iterator * callsite_tsi_p)
           tsi_link_after (&copy_tsi, stmt, TSI_NEW_STMT);
 	  call = get_call_expr_in (stmt);
 
-          if ( call && CALL_EXPR_VA_ARG_PACK (call) && id->call_expr)
+          if ( 0 && call && CALL_EXPR_VA_ARG_PACK (call) && id->call_expr)
 	    {
 	      /* __builtin_va_arg_pack () should be replaced by
 	         all arguments corresponding to ... in the caller.  */
