@@ -151,6 +151,7 @@ along with GCC; see the file COPYING3.  If not see
                                 :-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib}}} \
              } \
      %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}}} \
+     %{fstack-protector|fstack-protector-all: -R %H} \
     } "
 
 #undef LINK_ARCH32_SPEC
