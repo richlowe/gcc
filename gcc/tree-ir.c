@@ -5214,6 +5214,22 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
 
   op0 = CALL_EXPR_FN (stmt); /* The call expression */
   op2 = CALL_EXPR_STATIC_CHAIN (stmt); /* chain reg. if not zero it's a call to nested function */
+
+  {
+    tree fndecl = get_callee_fndecl (stmt), attr;
+    if (fndecl
+        && (attr = lookup_attribute ("error",
+                                     DECL_ATTRIBUTES (fndecl))) != NULL)
+      error ("%Kcall to %qs declared with attribute error: %s",
+                 stmt, lang_hooks.decl_printable_name (fndecl, 1),
+                 TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
+    if (fndecl
+        && (attr = lookup_attribute ("warning",
+                                     DECL_ATTRIBUTES (fndecl))) != NULL)
+      warning (0, "%Kcall to %qs declared with attribute warning: %s",
+                   stmt, lang_hooks.decl_printable_name (fndecl, 1),
+                   TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
+  }
  
   /* look for list of arg types. 
      triple.param_info field is used in v9 to correctly pass floating point types,
