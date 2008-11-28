@@ -197,7 +197,8 @@
                    Zarchm64=v9c: -Y P,%J/v9c:%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
                    Zarchm64=v9d: -Y P,%J/v9d:%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9 ; \
                        : -Y P,%J/v9:/usr/ccs/lib/sparcv9:/usr/lib/sparcv9}}}} \
-     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %Hsparcv9}}}} } " 
+     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %Hsparcv9}}}} \
+     %{fstack-protector|fstack-protector-all: -R %Hsparcv9} } " 
 
 #define LINK_ARCH64_SPEC LINK_ARCH64_SPEC_BASE
 

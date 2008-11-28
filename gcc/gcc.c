@@ -794,6 +794,7 @@ proper position among the other output files.  */
                                m32: %J/libtha.so.1; \
                                   : %J/libtha.so.1} }\
     %{fopenmp|xopenmp|xopenmp=noopt|xopenmp=parallel: -lmtsk} \
+    %{fstack-protector|fstack-protector-all: -lssp_nonshared -lssp} \
     %{xvector: -lmvec} %{xvector=yes: -lmvec} \
     %{xgccdriver=*:}\
 " LINK_COMMAND_LIB

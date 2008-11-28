@@ -772,6 +772,11 @@ decode_options (unsigned int argc, const char **argv)
         {
           flag_use_rtl_backend = -1;
         }
+      else if (!strncmp (argv[i], "-fstack-protector", sizeof ("-fstack-protector")))
+        {
+          /* gccfss doesn't support the feature in tree2ir. */
+          flag_use_rtl_backend = -1;
+        }
     }
     
   if (flag_use_rtl_backend != -1)
