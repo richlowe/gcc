@@ -1,6 +1,6 @@
 // Test that 'inline template' instantiates the vtable.
 // { dg-do compile }
-// { dg-options "-O -fno-implicit-templates" }
+// { dg-options "-O -fno-implicit-templates -Wd,-w" }
 
 template <class T> struct A {
   virtual void f () { }
