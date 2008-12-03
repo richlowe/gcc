@@ -947,6 +947,10 @@ decode_options (unsigned int argc, const char **argv)
 
   handle_options (argc, argv, lang_mask);
 
+  /* use rtl to finish the profiling. */
+  if (flag_test_coverage || profile_arc_flag || flag_profile_values || flag_branch_probabilities) 
+    flag_use_rtl_backend = -1;
+
   if (flag_pie)
     flag_pic = flag_pie;
   if (flag_pic && !flag_pie)
