@@ -1048,6 +1048,9 @@ decode_options (unsigned int argc, const char **argv)
 	       " is disabled");
       flag_section_anchors = 0;
     }
+  /* use rtl to finish the profiling. */
+  if (flag_test_coverage || profile_arc_flag || flag_profile_values || flag_branch_probabilities) 
+    flag_use_rtl_backend = -1;
 
   if (first_time_p)
     {

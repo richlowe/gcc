@@ -138,7 +138,7 @@ struct simple_ipa_opt_pass pass_early_local_passes =
   0,					/* properties_provided */
   0,					/* properties_destroyed */
   0,					/* todo_flags_start */
-  TODO_remove_functions	 		/* todo_flags_finish */
+  0,/* TODO_remove_functions */		/* todo_flags_finish */
  }
 };
 
