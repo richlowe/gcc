@@ -5202,7 +5202,6 @@ omp_add_variable (struct gimplify_omp_ctx *ctx, tree decl, unsigned int flags)
 	    nflags = flags & GOVD_PRIVATE ? GOVD_PRIVATE : GOVD_FIRSTPRIVATE;
 	  else
 	    nflags = flags & GOVD_PRIVATE ? GOVD_PRIVATE : (flags & GOVD_SHARED ? GOVD_SHARED : GOVD_FIRSTPRIVATE);
-	  nflags = flags & GOVD_PRIVATE ? GOVD_PRIVATE : GOVD_FIRSTPRIVATE;
 	  nflags |= flags & GOVD_SEEN;
 	  t = DECL_VALUE_EXPR (decl);
 	  gcc_assert (TREE_CODE (t) == INDIRECT_REF);
