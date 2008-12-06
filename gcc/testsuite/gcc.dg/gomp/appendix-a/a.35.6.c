@@ -9,7 +9,7 @@ wrong6 (int n)
     {
       work (n, 0);
 /* incorrect nesting of barrier region in a single region */
-#pragma omp barrier
+#pragma omp barrier /* { dg-warning "not permitted in the dynamic extent" } */
       work (n, 1);
     }
   }
