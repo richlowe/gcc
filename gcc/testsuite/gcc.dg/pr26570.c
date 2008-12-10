@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fprofile-generate -fprofile-use" } */
+/* { dg-options "-O2 -frtl-backend -fprofile-generate -fprofile-use" } */
 
 unsigned test (unsigned a, unsigned b)
 {

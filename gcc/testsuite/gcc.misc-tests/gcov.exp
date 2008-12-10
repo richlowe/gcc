@@ -39,6 +39,6 @@ if { $files != "" } {
 }
 
 # Main loop.
-dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/gcov-*.c]] "" ""
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/gcov-*.c]] "" "-frtl-backend"
 
 dg-finish

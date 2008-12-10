@@ -1,6 +1,6 @@
 /* Check for various valid and erroneous "noreturn" cases. */
 /* { dg-do compile } */
-/* { dg-options "-O2 -Wmissing-noreturn" } */
+/* { dg-options "-O2 -frtl-backend -Wmissing-noreturn" } */
 
 extern void exit (int);
 

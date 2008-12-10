@@ -1,4 +1,4 @@
-/* { dg-options "-O2 -fdump-tree-optimized -fdump-tree-tree_profile" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized -fdump-tree-tree_profile" } */
 
 static int a1 (void)
 {
