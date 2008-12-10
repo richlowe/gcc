@@ -1249,6 +1249,7 @@ reference_binding (tree rto, tree rfrom, tree expr, bool c_cast_p, int flags)
       && !real_lvalue_p (expr);
   
   if (!CP_TYPE_CONST_NON_VOLATILE_P (to)
+      && !TYPE_REF_IS_RVALUE (rto)
       && !(allow_non_const && !CP_TYPE_VOLATILE_P (to)))
     return NULL;
 
@@ -1272,7 +1273,8 @@ reference_binding (tree rto, tree rfrom, tree expr, bool c_cast_p, int flags)
   if (!conv)
     return NULL;
 
-  if (!CP_TYPE_CONST_NON_VOLATILE_P (to))
+  if (!CP_TYPE_CONST_NON_VOLATILE_P (to)
+      && !TYPE_REF_IS_RVALUE (rto))
     return NULL;   /* do not create temporary */
 
   conv = build_conv (ck_ref_bind, rto, conv);
