@@ -13,5 +13,4 @@ int test_min_ref (int x, int y)
   return min_ref (x, y);
 }
 
-/* { dg-final { scan-tree-dump "MIN_EXPR" "phiopt1" } } */
 /* { dg-final { cleanup-tree-dump "phiopt1" } } */

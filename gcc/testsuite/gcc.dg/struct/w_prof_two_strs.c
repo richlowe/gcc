@@ -1,3 +1,5 @@
+/* { dg-options "-frtl-backend" } */
+
 #include <stdlib.h>
 
 typedef struct

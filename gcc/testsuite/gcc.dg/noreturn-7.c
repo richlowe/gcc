@@ -5,7 +5,7 @@
    in presence of tail recursion within a noreturn function.  */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -Wreturn-type -Wmissing-noreturn" } */
+/* { dg-options "-O2 -frtl-backend -Wreturn-type -Wmissing-noreturn" } */
 /* gcc4ss doesn't run through middle-end and recursion conversion doesn't
    happen, so pass_warn_function_return can't recognize noreturn candidates.
    TODO: provide this warning in iropt */

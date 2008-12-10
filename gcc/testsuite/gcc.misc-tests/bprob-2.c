@@ -1,3 +1,5 @@
+/* { dg-options "-frtl-backend" } */
+
 /* Test profile-directed block ordering with computed gotos.
  *
    This is the same as test gcc.c-torture/execute/980526-1.c and

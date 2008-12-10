@@ -15,26 +15,26 @@ g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -O2 -g assembly comparison
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O1 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 -finline-functions 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 -g 
-gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 -g 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -Os 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O1 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O3 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O3 -finline-functions 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O2 -g 
-gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O3 -g 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -Os 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O1 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -finline-functions 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O2 -g 
-gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -g 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -Os 
 gcc.sum:FAIL: gcc.c-torture/execute/pr35456.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/pr35456.c execution,  -fast -xipo=2 

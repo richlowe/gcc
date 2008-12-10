@@ -1,3 +1,5 @@
+/* { dg-options "-frtl-backend" } */
+
 /* Check that various C constructs are handled correctly by profile-directed
    block ordering.
   
