@@ -1,6 +1,6 @@
 /* Test Gcov basics.  */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage -g" } */
+/* { dg-options "-frtl-backend -fprofile-arcs -ftest-coverage -g" } */
 /* { dg-do run { target native } } */
 
 void noop ()

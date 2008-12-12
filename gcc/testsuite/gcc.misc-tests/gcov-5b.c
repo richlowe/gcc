@@ -1,7 +1,7 @@
 /* Check that branch percentages are calculated in variables
    that are large enough to hold the count. */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-frtl-backend -fprofile-arcs -ftest-coverage" } */
 /* { dg-do run { target native } } */
 
 #define LIMIT1 7000

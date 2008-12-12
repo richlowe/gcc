@@ -1,7 +1,7 @@
 /* Test Gcov with computed gotos.
    This is the same as test gcc.c-torture/execute/980526-1.c */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-frtl-backend -fprofile-arcs -ftest-coverage" } */
 /* { dg-do run { target native } } */
 
 extern void abort (void);
