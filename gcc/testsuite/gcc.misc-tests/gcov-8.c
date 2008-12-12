@@ -5,7 +5,7 @@
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-frtl-backend -fprofile-arcs -ftest-coverage" } */
 /* { dg-do run { target native } } */
 
 int proxy (int i)

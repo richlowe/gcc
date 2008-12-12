@@ -1,7 +1,7 @@
 /* Check that gcov correctly reports line counts, branch percentages,
  * and call return percentages for functions that call longjmp. */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-frtl-backend -fprofile-arcs -ftest-coverage" } */
 /* { dg-do run { target native } } */
 
 #include <setjmp.h>

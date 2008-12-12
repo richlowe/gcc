@@ -3,7 +3,7 @@
    meant to be simple, as it was added at the same time that checking
    for call return percentages was added.  */
 
-/* { dg-options "-fprofile-arcs -ftest-coverage" } */
+/* { dg-options "-frtl-backend -fprofile-arcs -ftest-coverage" } */
 /* { dg-do run { target native } } */
 
 extern void exit (int);
