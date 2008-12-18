@@ -6,6 +6,7 @@
    Written by Kaveh Ghazi, 2004-03-23.  */
 
 /* { dg-do link } */
+/* { dg-options "-frtl-backend" } */
 
 
 void test(int i)

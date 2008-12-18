@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -w -fdump-tree-dse-vops" } */
+/* { dg-options "-frtl-backend -O -w -fdump-tree-dse-vops" } */
 
 typedef unsigned int size_t;
 typedef struct _IO_FILE FILE;

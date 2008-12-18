@@ -2,7 +2,7 @@
 // { dg-do run { xfail { hppa*-*-hpux* && { ! hppa*64*-*-* } } } }
 // { dg-require-weak-override "" }
 // { dg-additional-sources "weak1-a.cc" }
-// { dg-options "" }
+// { dg-options "-O2 -Wd,-w" }
 
 extern __attribute__((weak)) 
 void f() {

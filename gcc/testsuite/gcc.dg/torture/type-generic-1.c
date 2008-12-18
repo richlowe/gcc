@@ -3,6 +3,7 @@
 
 /* { dg-do run } */
 /* { dg-options "-mieee" { target alpha*-*-* sh*-*-* } } */
+/* { dg-options "-fno-fast-math" } */
 /* { dg-skip-if "No Inf/NaN support" { spu-*-* } } */
 
 #include "../tg-tests.h"

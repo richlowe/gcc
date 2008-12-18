@@ -1,5 +1,5 @@
 /* { dg-do link }  */
-/* { dg-options "-O2 -fdump-tree-vrp1" }  */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-vrp1" }  */
 
 static inline void do_thing(char *s, int *p, char *q)
 {

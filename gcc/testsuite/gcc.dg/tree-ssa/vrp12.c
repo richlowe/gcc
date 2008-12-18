@@ -1,5 +1,5 @@
 /* { dg-do link } */
-/* { dg-options -O2 } */
+/* { dg-options "-frtl-backend -O2" } */
 
 foo (int i)
 {

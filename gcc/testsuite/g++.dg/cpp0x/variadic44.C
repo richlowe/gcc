@@ -1,4 +1,4 @@
-// { dg-options "-std=gnu++0x" }
+// { dg-options "-std=gnu++0x -O1 -Wd,-w" }
 // { dg-do compile }
 template<typename... Args>
 int f(const Args&...);
