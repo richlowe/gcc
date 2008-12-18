@@ -1,7 +1,7 @@
 /* Wide string literals should not be allowed in asm.  */
 /* Origin: Joseph Myers <joseph@codesourcery.com> */
 /* { dg-do compile } */
-/* { dg-options "" } */
+/* { dg-options "-frtl-backend" } */
 
 int foo asm (L"bar"); /* { dg-error "wide string literal in 'asm'" } */
 
