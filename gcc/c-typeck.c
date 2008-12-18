@@ -2419,14 +2419,14 @@ build_function_call (tree function, tree params)
       if (flag_tm_mode)
         c_check_tm_calling_rules (function);
         
+      /* GCCFSS cannot currently handle all types of builtin functions */
+      sunir_check_builtin_handling (function);
+
       /* Implement type-directed function overloading for builtins.
 	 resolve_overloaded_builtin and targetm.resolve_overloaded_builtin
 	 handle all the type checking.  The result is a complete expression
 	 that implements this function call.  */
       tem = resolve_overloaded_builtin (function, params);
-
-      /* GCCFSS cannot currently handle all types of builtin functions */
-      sunir_check_builtin_handling (tem ? tem : function);
 
       if (tem)
 	return tem;
