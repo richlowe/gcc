@@ -6,6 +6,7 @@
    Origin: Kaveh R. Ghazi,  February 22, 2007.  */
 
 /* { dg-do link } */
+/* { dg-options "-fno-fast-math" } */
 /* { dg-options "-fno-finite-math-only" { target sh*-*-* } } */
 /* In order to fold algebraic exprs below, targets with "composite"
    floating point formats need -funsafe-math-optimizations.  */

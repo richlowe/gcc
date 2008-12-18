@@ -13,6 +13,7 @@ g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/tree-ssa/pr22444.C (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O1 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 
@@ -78,6 +79,7 @@ gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
+gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/attr-may-alias-1.c scan-assembler dont_delete
 gcc.sum:FAIL: gcc.dg/attr-weakref-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/fold-abs-3.c scan-tree-dump-times ABS 1
@@ -130,6 +132,17 @@ gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/tree-prof/inliner-1.c scan-tree-dump cold_function ..;
 gcc.sum:FAIL: gcc.dg/tree-prof/update-loopch.c scan-tree-dump count:33333
 gcc.sum:FAIL: gcc.dg/tree-prof/val-prof-5.c scan-tree-dump Div.mod by constant b.*=997 transformation on insn
+gcc.sum:FAIL: gcc.dg/torture/builtin-noret-1.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/torture/builtin-noret-2.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 9)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 12)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 24)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 27)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 9)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 12)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 23)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 26)
+gcc.sum:FAIL: gcc.dg/tree-ssa/useless-1.c scan-tree-dump-times useless "goto" 3
 gcc.sum:FAIL: compiler driver --coverage option(s) (compiler options)
 gcc.sum:FAIL: gcc.target/sparc/combined-1.c scan-assembler-times fandnot1	% 4
 gcc.sum:FAIL: gcc.target/sparc/fand.c scan-assembler-times fand	% 3

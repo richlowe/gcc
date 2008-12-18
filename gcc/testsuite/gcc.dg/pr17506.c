@@ -3,7 +3,7 @@
    line 11, which is very confusing.  Make sure we print out a note to
    make it less confusing.  */
 /* { dg-do compile } */
-/* { dg-options "-O1 -frtl-backend -Wuninitialized" } */
+/* { dg-options "-O1 -Wuninitialized" } */
 
 inline int
 foo (int i)

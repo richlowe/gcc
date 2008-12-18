@@ -3,7 +3,7 @@
 // to the addressable vars list, because this may cause false aliasing
 // with the subvars leading to the subvars not being renamed when they should
 // { dg-do compile }
-// { dg-options "" }
+// { dg-options "-O2" }
 typedef int ptrdiff_t;
 typedef unsigned int size_t;
 namespace std

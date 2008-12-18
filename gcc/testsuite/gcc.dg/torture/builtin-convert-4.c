@@ -6,7 +6,7 @@
    Written by Kaveh ghazi, 2007-03-04.  */
 
 /* { dg-do compile } */
-/* { dg-options "-ftrapping-math -fdump-tree-original" } */
+/* { dg-options "-fno-fast-math -ftrapping-math -fdump-tree-original" } */
 /* { dg-add-options c99_runtime } */
 
 #include "../builtins-config.h"

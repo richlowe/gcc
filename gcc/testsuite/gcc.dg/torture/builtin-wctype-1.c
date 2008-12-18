@@ -6,6 +6,7 @@
    Written by Kaveh Ghazi, 2004-03-25.  */
 
 /* { dg-do link } */
+/* { dg-options "-frtl-backend" } */
 
 /* Use the target type definitions if we can.  */ 
 #ifndef __WINT_TYPE__

@@ -6,7 +6,7 @@
    Origin: Kaveh R. Ghazi,  November 13, 2006.  */
 
 /* { dg-do link } */
-/* { dg-options "-fno-math-errno" } */
+/* { dg-options "-frtl-backend -fno-math-errno" } */
 
 /* All references to link_error should go away at compile-time.  */
 extern void link_error(int);

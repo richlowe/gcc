@@ -1,5 +1,5 @@
 // { dg-do assemble  }
-// { dg-options "-Wno-deprecated -Wreturn-type" }
+// { dg-options "-Wno-deprecated -Wreturn-type -frtl-backend" }
 // GROUPS passed i960
 /*
   Bug Id: bnr

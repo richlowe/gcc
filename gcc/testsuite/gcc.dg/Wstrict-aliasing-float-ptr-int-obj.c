@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -Wstrict-aliasing -fstrict-aliasing" } */
+/* { dg-options "-frtl-backend -O -Wstrict-aliasing -fstrict-aliasing" } */
 
 extern int flag;
 
