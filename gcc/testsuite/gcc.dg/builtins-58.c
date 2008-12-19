@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -ffast-math -std=c99" } */
+/* { dg-options "-frtl-backend -O -ffast-math -std=c99" } */
 
 #include "builtins-config.h"
 

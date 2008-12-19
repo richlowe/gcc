@@ -6,7 +6,7 @@
    Written by Roger Sayle, 11th July 2002.  */
 
 /* { dg-do compile } */
-/* { dg-options "" } */
+/* { dg-options "-frtl-backend" } */
 /* { dg-final { scan-assembler-not "__builtin_" } } */
 
 /* These helper macros ensure we also check the float and long double
