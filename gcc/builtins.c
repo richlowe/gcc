@@ -7535,7 +7535,7 @@ fold_builtin_sqrt (tree arg, tree type)
 {
 
   enum built_in_function fcode;
-  tree res;
+  tree res, op0;
 
   if (!validate_arg (arg, REAL_TYPE))
     return NULL_TREE;
@@ -7544,6 +7544,16 @@ fold_builtin_sqrt (tree arg, tree type)
   if ((res = do_mpfr_arg1 (arg, type, mpfr_sqrt, &dconst0, NULL, true)))
     return res;
   
+  /* Optimize sqrt(x*x) = abs(x).  */
+  if (flag_unsafe_math_optimizations 
+      && TREE_CODE (arg) == MULT_EXPR 
+      && (op0 = TREE_OPERAND (arg, 0))
+      && TREE_CODE (op0) == VAR_DECL
+      && TREE_OPERAND (arg, 1) == op0)
+    {
+      return fold_build1 (ABS_EXPR, TREE_TYPE (op0), op0);
+    }
+
   /* Optimize sqrt(expN(x)) = expN(x*0.5).  */
   fcode = builtin_mathfn_code (arg);
   if (flag_unsafe_math_optimizations && BUILTIN_EXPONENT_P (fcode))
