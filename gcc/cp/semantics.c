@@ -4056,7 +4056,7 @@ finish_omp_threadprivate (tree vars)
 	       "or block scope variable", v);
       /* If V had already been marked threadprivate, it doesn't matter
 	 whether it had been used prior to this point.  */
-      if (TREE_USED (v)
+      else if (TREE_USED (v)
           && !TYPE_HAS_USER_CONSTRUCTOR (TREE_TYPE (v))
           && !TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (v))
 	  && (DECL_LANG_SPECIFIC (v) == NULL
