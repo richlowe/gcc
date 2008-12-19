@@ -5,6 +5,7 @@
 
    Origin: Kaveh R. Ghazi,  October 23, 2006.  */
 
+/* { dg-options "-frtl-backend" } */
 /* { dg-do link } */
 
 /* Define "e" with as many bits as found in builtins.c:dconste.  */
