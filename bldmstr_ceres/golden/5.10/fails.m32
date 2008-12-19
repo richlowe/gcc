@@ -132,6 +132,9 @@ gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/tree-prof/inliner-1.c scan-tree-dump cold_function ..;
 gcc.sum:FAIL: gcc.dg/tree-prof/update-loopch.c scan-tree-dump count:33333
 gcc.sum:FAIL: gcc.dg/tree-prof/val-prof-5.c scan-tree-dump Div.mod by constant b.*=997 transformation on insn
+gcc.sum:FAIL: gcc.dg/struct/w_prof_global_var.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
+gcc.sum:FAIL: gcc.dg/struct/w_prof_local_var.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
+gcc.sum:FAIL: gcc.dg/struct/w_prof_two_strs.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
 gcc.sum:FAIL: gcc.dg/torture/builtin-noret-1.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/torture/builtin-noret-2.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 9)
