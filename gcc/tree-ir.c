@@ -5193,7 +5193,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
   IR_NODE * chain_reg = 0;
   TYPE fncalltype;
   tree op0, op1, op2;
-  int is_fake_call = 0;
+  int is_fake_call = 0, is_pure_call = 0;
   int has_hidden_result = 0;
   tree formal_type = 0;
   int formals_unknown = 0;
@@ -5297,10 +5297,18 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
       is_fake_call = 0;
     }
 
+  /* recognize pure function. */
+  if (TREE_CODE (op0) == ADDR_EXPR
+      && TREE_CODE (TREE_OPERAND (op0, 0)) == FUNCTION_DECL
+      && DECL_IS_PURE (TREE_OPERAND (op0, 0)))
+    is_pure_call = 1;
+
   op1 = CALL_EXPR_ARGS (stmt);
   for (; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
     {
       ir_argp = dump_ir_genargs (TREE_VALUE (op1));
+      if (ir_argp == 0) continue;
+
       if (formal_type && TREE_VALUE (formal_type) != void_type_node)
         {
           ir_argp->triple.param_info = IrParamIsDeclared;
@@ -5310,7 +5318,9 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
         ir_argp->triple.param_info = formal_type || formals_unknown
                                      ? IrParamNotDeclared: IrParamIsEllipsis;
 
-      if (ir_argp == 0) continue;
+      /* mark PM_IN for pure function's parameters. */
+      if (is_pure_call)
+        ir_argp->triple.param_mode = PM_IN;
 
       if (ir_arglist == 0)
         ir_arglist = ir_argp;
@@ -5377,6 +5387,11 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
   if (TREE_THIS_VOLATILE (stmt))
     ir_callnode->triple.is_volatile = IR_TRUE;
 
+  /* mark __attribute__ ((__pure__)) funcs as never_writes_global
+     to help iropt do some optimization. */
+  if (is_pure_call)
+    ir_callnode->triple.never_writes_globals = 1; 
+      
   /* do not tail call throw functions */
   /* mark throw calls as no-return and rarely-executed */
   if (TREE_CODE (op0) == ADDR_EXPR 
@@ -5385,7 +5400,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
       tree fn = TREE_OPERAND (op0, 0);
       const char *name = (* targetm.strip_name_encoding) (
                     IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (fn)));
-      
+
       if (flag_tm_mode) 
         if (DECL_IS_TM_CALLABLE_P (fn)
             || DECL_IS_TM_ABORT_OK_P (fn))
