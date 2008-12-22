@@ -674,6 +674,8 @@ map_gnu_type_to_IR_TYPE_NODE_internal (tree node, IR_TYPE_NODE * parent, const c
           /* set alias_level of pointers to 'standard' 
              which is the 1st level of strictness of -fstrict-aliasing flag */
           ir_type->alias_level = ALIAS_C_STD; 
+        else if (TYPE_REF_CAN_ALIAS_ALL (node))
+          ir_type->alias_level = ALIAS_ANY;
         else
           ir_type->alias_level = default_alias_level;
 	ret = ir_type;
@@ -762,6 +764,8 @@ map_gnu_type_to_IR_TYPE_NODE_internal (tree node, IR_TYPE_NODE * parent, const c
             && tag_name && strncmp (tag_name + 2, "__gnu_cxx", 9) == 0)
           /* iterators in libstdc++ satisfy -fstrict-aliasing rules */
           ir_type->alias_level = ALIAS_C_STD;
+        else if (lookup_attribute ("may_alias", TYPE_ATTRIBUTES (node)))
+          ir_type->alias_level = ALIAS_ANY;
         else
           ir_type->alias_level = default_alias_level;
         SAVE_IF_NEEDED;
@@ -1104,6 +1108,8 @@ map_gnu_type_to_IR_TYPE_NODE_internal (tree node, IR_TYPE_NODE * parent, const c
       ir_type->t.b.offset = 0;
       if (parent)
         ir_type->alias_level = parent->alias_level;
+      else if (lookup_attribute ("may_alias", TYPE_ATTRIBUTES (node)))
+        ir_type->alias_level = ALIAS_ANY;
       else
         ir_type->alias_level = default_alias_level;
       SAVE_IF_NEEDED;
