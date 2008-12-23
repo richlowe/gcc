@@ -75,6 +75,7 @@ struct diagnostic_info;
       DECL_INITIALIZED_BY_CONSTANT_EXPRESSION_P (in VAR_DECL)
       STATEMENT_LIST_TRY_BLOCK (in STATEMENT_LIST)
       TYPENAME_IS_RESOLVING_P (in TYPE_NAME_TYPE)
+      CALLEXPR_IS_PUBLIC (in CALL_EXPR)
    3: (TREE_REFERENCE_EXPR) (in NON_LVALUE_EXPR) (commented-out).
       ICS_BAD_FLAG (in _CONV)
       FN_TRY_BLOCK_P (in TRY_BLOCK)
@@ -2472,6 +2473,10 @@ extern void decl_shadowed_for_var_insert (tree, tree);
 /* In a CALL_EXPR appearing in a template, true if Koenig lookup
    should be performed at instantiation time.  */
 #define KOENIG_LOOKUP_P(NODE) TREE_LANG_FLAG_0 (CALL_EXPR_CHECK (NODE))
+
+/* Nonzero if a CALL_EXPR is calling a public function used to initial 
+   aggregate type variable. internal convention for gen IR. */
+#define CALLEXPR_IS_PUBLIC(NODE) TREE_LANG_FLAG_2 (CALL_EXPR_CHECK (NODE))
 
 /* Indicates whether a string literal has been parenthesized. Such
    usages are disallowed in certain circumstances.  */

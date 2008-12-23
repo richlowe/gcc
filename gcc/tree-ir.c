@@ -5586,7 +5586,7 @@ dump_ir_modify (tree stmt)
         {
           /* paranoid check to make sure we don't screw up return_slot_opt
              convention */
-          gcc_assert (TREE_PUBLIC (op1));
+          gcc_assert (CALLEXPR_IS_PUBLIC (op1));
         }
     }
   
@@ -5594,7 +5594,7 @@ dump_ir_modify (tree stmt)
      since we want to emit it even if it returns an empty class
      see CR 6601435 */
   if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
-      && TREE_PUBLIC (op1) /* internal convention. see cp/semantics.c */)
+      && CALLEXPR_IS_PUBLIC (op1) /* internal convention. see cp/semantics.c */)
     {
       /* using extended IR to pass struct values out of funcs */
       return dump_ir_call_main (op1, 0, op0);
