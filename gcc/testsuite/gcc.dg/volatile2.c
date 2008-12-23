@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-gimple -fdump-tree-optimized" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-gimple -fdump-tree-optimized" } */
 
 struct GTeth_desc
 {

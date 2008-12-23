@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-fdump-tree-gimple -fwrapv" } */
+/* { dg-options "-frtl-backend -fdump-tree-gimple -fwrapv" } */
 #define ABS(x) (x > 0 ? x : -x)
 int f (int a) {
 	return ABS (ABS(a));
