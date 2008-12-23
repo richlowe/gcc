@@ -1882,7 +1882,7 @@ static const struct option_map option_map[] =
    {"-xinline=%auto", "-xinline=@auto", "*j"},
    /* because TARGET_OPTION_TRANSLATION_TABLE can't handle complex stuff */
    {"-fns", "-Zfns=", "*j"},
-   {"-ftrap", "-Zftrap=", "*j"},
+   {"-ftrap=", "-Zftrap=", "*j"},
    {"-keeptmp", "-save-temps", 0},
    {"-mt", "-Zmt", 0},
    {"-Wd,-pec","-Zpec=", "*j"}
@@ -2787,10 +2787,10 @@ delete_duplicate_options (int *argcp, char ***argvp)
         j++;
       } /* while (j < argc ) */
     }
-    else if (argv[i] && strncmp(argv[i], "-Zftrap", 7) == 0) {
+    else if (argv[i] && strncmp(argv[i], "-Zftrap=", 8) == 0) {
       j = i + 1;
       while (j < argc) {
-        if (argv[j] && strncmp(argv[j], "-Zftrap", 7) == 0) {
+        if (argv[j] && strncmp(argv[j], "-Zftrap=", 8) == 0) {
           /* set the old one to NULL, and try another option */
           argv[i] = NULL;
 	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);

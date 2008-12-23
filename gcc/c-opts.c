@@ -283,7 +283,7 @@ use_rtl_backend (const char *arg)
       last_rtl_backend = ~(0U);
       flag_use_dbg_gen = false;
       /* enable optimizations that are disabled for Sun backend */
-      /*flag_preir_tree_optimizations = 1;*/
+      flag_preir_tree_optimizations = 1;
     }
 }
 

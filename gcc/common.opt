@@ -1093,7 +1093,7 @@ Enable dead store elimination
 ftree-fre
 Common Report Var(flag_tree_fre) Optimization
 Enable Full Redundancy Elimination (FRE) on trees
-tree
+
 ftree-loop-im
 Common Report Var(flag_tree_loop_im) Init(1) Optimization
 Enable loop invariant motion on trees

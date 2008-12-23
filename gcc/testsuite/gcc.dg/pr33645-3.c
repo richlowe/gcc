@@ -1,6 +1,6 @@
 /* PR tree-optimization/33645 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -fno-unit-at-a-time" } */
+/* { dg-options "-O2 -frtl-backend -fno-unit-at-a-time" } */
 
 __attribute__((noinline)) int
 bar (int *x)

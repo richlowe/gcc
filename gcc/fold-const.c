@@ -10018,7 +10018,7 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 	    /* Only create rotates in complete modes.  Other cases are not
 	       expanded properly.  */
 	    && TYPE_PRECISION (rtype) == GET_MODE_PRECISION (TYPE_MODE (rtype))
-            && 0) /* SunIR */
+            && flag_use_rtl_backend == -1) /* SunIR */
 	  {
 	    tree tree01, tree11;
 	    enum tree_code code01, code11;
@@ -13188,7 +13188,7 @@ fold_ternary (enum tree_code code, tree type, tree op0, tree op1, tree op2)
       if (COMPARISON_CLASS_P (arg0)
 	  && operand_equal_for_comparison_p (TREE_OPERAND (arg0, 0),
 					     arg1, TREE_OPERAND (arg0, 1))
-	  && !HONOR_SIGNED_ZEROS (TYPE_MODE (TREE_TYPE (arg1))) && 0) /* Sun IR */
+	  && !HONOR_SIGNED_ZEROS (TYPE_MODE (TREE_TYPE (arg1))) && flag_use_rtl_backend == -1) /* Sun IR */
 	{
 	  tem = fold_cond_expr_with_comparison (type, arg0, op1, op2);
 	  if (tem)

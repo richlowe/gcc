@@ -82,17 +82,9 @@ gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
 gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/attr-may-alias-1.c scan-assembler dont_delete
 gcc.sum:FAIL: gcc.dg/attr-weakref-1.c (test for excess errors)
-gcc.sum:FAIL: gcc.dg/fold-abs-3.c scan-tree-dump-times ABS 1
-gcc.sum:FAIL: gcc.dg/noreturn-1.c detect falling off end of noreturn (test for warnings, line 11)
-gcc.sum:FAIL: gcc.dg/noreturn-1.c detect noreturn candidate (test for warnings, line 29)
-gcc.sum:FAIL: gcc.dg/noreturn-1.c detect return from noreturn (test for warnings, line 38)
-gcc.sum:FAIL: gcc.dg/noreturn-1.c detect return from tail call (test for warnings, line 59)
-gcc.sum:FAIL: gcc.dg/noreturn-4.c warn for main (test for warnings, line 8)
-gcc.sum:FAIL: gcc.dg/noreturn-7.c  (test for warnings, line 45)
+gcc.sum:FAIL: gcc.dg/funcorder.c scan-assembler-not link_error
 gcc.sum:FAIL: gcc.dg/pr17506.c  (test for warnings, line 11)
 gcc.sum:FAIL: gcc.dg/pr17506.c  (test for warnings, line 21)
-gcc.sum:FAIL: gcc.dg/pr23075.c  (test for warnings, line 14)
-gcc.sum:FAIL: gcc.dg/pr23584.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pr26570.c  (test for warnings, line 7)
 gcc.sum:FAIL: gcc.dg/pr26570.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 13)
@@ -103,16 +95,13 @@ gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 13)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 15)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 16)
-gcc.sum:FAIL: gcc.dg/pr29254.c  (test for warnings, line )
-gcc.sum:FAIL: gcc.dg/pr29254.c  (test for warnings, line 21)
 gcc.sum:FAIL: gcc.dg/pr30643.c scan-assembler-not undefined
+gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/return-type-1.c warning for falling off end of non-void function (test for warnings, line 9)
 gcc.sum:FAIL: gcc.dg/return-type-3.c warning for falling off end of non-void function (test for warnings, line 14)
-gcc.sum:FAIL: gcc.dg/sibcall-7.c execution test
-gcc.sum:FAIL: gcc.dg/struct-alias-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
 gcc.sum:FAIL: gcc.dg/gomp/pr29965-3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -fast -xipo=2  assembly comparison
@@ -129,9 +118,9 @@ gcc.sum:FAIL: gcc.dg/pch/static-3.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O0  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/system-1.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  assembly comparison
-gcc.sum:FAIL: gcc.dg/tree-prof/inliner-1.c scan-tree-dump cold_function ..;
-gcc.sum:FAIL: gcc.dg/tree-prof/update-loopch.c scan-tree-dump count:33333
-gcc.sum:FAIL: gcc.dg/tree-prof/val-prof-5.c scan-tree-dump Div.mod by constant b.*=997 transformation on insn
+gcc.sum:FAIL: gcc.dg/tree-prof/inliner-1.c scan-tree-dump optimized "cold_function ..;"
+gcc.sum:FAIL: gcc.dg/tree-prof/tracer-1.c scan-tree-dump-times tracer "goto <bb 6>;" 2
+gcc.sum:FAIL: gcc.dg/tree-prof/val-prof-5.c scan-tree-dump tree_profile "Div.mod by constant b.*=997 transformation on insn"
 gcc.sum:FAIL: gcc.dg/struct/w_prof_global_var.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
 gcc.sum:FAIL: gcc.dg/struct/w_prof_local_var.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
 gcc.sum:FAIL: gcc.dg/struct/w_prof_two_strs.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate

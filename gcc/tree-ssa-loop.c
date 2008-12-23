@@ -119,7 +119,7 @@ tree_ssa_loop_im (void)
 static bool
 gate_tree_ssa_loop_im (void)
 {
-  return /*flag_tree_loop_im != 0;*/ 0;
+  return flag_tree_loop_im != 0;
 }
 
 struct tree_opt_pass pass_lim = 

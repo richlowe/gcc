@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O1 -fdump-tree-useless" } */
+/* { dg-options "-O1 -frtl-backend -fdump-tree-useless" } */
 
 void
 arf ()

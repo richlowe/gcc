@@ -6,7 +6,7 @@
    the parser's state.)  */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -std=c99" } */
+/* { dg-options "-O2 -std=c99 -frtl-backend" } */
 /* { dg-final { scan-assembler-not "L\\\$?C\[^A-Z\]" } } */
 
 #define I (__extension__ 1.0iF)
