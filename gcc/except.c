@@ -664,9 +664,6 @@ find_eh_region (tree stmt)
     region = region->outer;
   if (region->type == ERT_CATCH)
     return 0;  /* no handler */
-  /* NOTE: no-throw statements do not need exception handlers in IR */
-  if (region->type == ERT_MUST_NOT_THROW)
-    return 0;
   if (!region->landing_label)
     region->landing_label = gen_ir_label ();
   return region;
@@ -815,7 +812,7 @@ build_ir_eh_type_index (int filter)
       return call_node;
 }
 
-static void
+void
 generate_one_landing_pad (struct eh_region *region, int exit_label)
 {
   /* this function is based on build_post_landing_pads */
@@ -956,10 +953,10 @@ generate_one_landing_pad (struct eh_region *region, int exit_label)
       }
       break;
     case ERT_CLEANUP:
+    case ERT_MUST_NOT_THROW:
       build_ir_goto (get_ir_label_of_tree (region->tree_label));
       break;
     case ERT_CATCH:
-    case ERT_MUST_NOT_THROW:
     case ERT_THROW:
       abort (); /* do not need landing pad  */
       break;
@@ -4537,7 +4534,7 @@ void *
 build_eh_leaf (int action_num)
 {
   void *tmp;
-  if (action_num == 0)
+  if (action_num == 0 || action_num == -2)
     {
       if (clean_up_ehnode == NULL)
         clean_up_ehnode = build_ir_eh_node (IR_CLEANUP);
