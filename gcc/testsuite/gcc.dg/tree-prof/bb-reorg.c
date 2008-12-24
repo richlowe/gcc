@@ -1,5 +1,5 @@
 /* { dg-require-effective-target freorder } */
-/* { dg-options "-O2 -frtl-backend -freorder-blocks-and-partition" } */
+/* { dg-options "-O2 -freorder-blocks-and-partition" } */
 
 #include <string.h>
 

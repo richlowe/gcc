@@ -239,7 +239,7 @@ rhs_predicate_for (tree lhs)
 {
   if (is_gimple_formal_tmp_var (lhs))
     return is_gimple_formal_tmp_rhs;
-  else if (flag_use_rtl_backend == 0)
+  else if (gate_generate_ir ())
     return is_gimple_reg_rhs;
   else if (is_gimple_reg (lhs))
     return is_gimple_reg_rhs;
@@ -376,10 +376,10 @@ is_gimple_variable (tree t)
 	  || TREE_CODE (t) == PARM_DECL
 	  || TREE_CODE (t) == RESULT_DECL
 	  || TREE_CODE (t) == SSA_NAME
-          || (flag_use_rtl_backend != 0 
+          || (gate_generate_rtl () 
               /* 2nd pass of gimplifier may see those */
               && (TREE_CODE (t) == FILTER_EXPR || TREE_CODE (t) == EXC_PTR_EXPR))
-          || (flag_use_rtl_backend == 0 && is_gimple4ss_lvalue (t)));
+          || (gate_generate_ir () && is_gimple4ss_lvalue (t)));
 }
 
 /*  Return true if T is a GIMPLE identifier (something with an address).  */
@@ -426,7 +426,7 @@ is_gimple_reg (tree t)
   if (is_gimple4ss_lvalue (t))
     return false;
 
-  if (flag_use_rtl_backend != 0 && !is_gimple_reg_type (TREE_TYPE (t)))
+  if (gate_generate_rtl () && !is_gimple_reg_type (TREE_TYPE (t)))
     return false;
 
   /* A volatile decl is not acceptable because we can't reuse it as
@@ -437,7 +437,7 @@ is_gimple_reg (tree t)
   /* We define "registers" as things that can be renamed as needed,
      which with our infrastructure does not apply to memory.  */
   if ((TREE_CODE_CLASS (TREE_CODE (t)) == tcc_declaration
-       || flag_use_rtl_backend != 0)
+       || gate_generate_rtl ())
       && needs_to_live_in_memory (t))
     return false;
 
@@ -507,7 +507,7 @@ is_gimple_non_addressable (tree t)
              and coupled with tree inliner may generate wrong code.
              see CR 6578077 for further details */
           (TREE_CODE_CLASS (TREE_CODE (t)) == tcc_declaration
-           || flag_use_rtl_backend)
+           || gate_generate_rtl ())
           && is_gimple_variable (t) && ! needs_to_live_in_memory (t));
 }
 
@@ -517,7 +517,7 @@ bool
 is_gimple_val (tree t)
 {
   /* Make loads from volatiles and memory vars explicit.  */
-  if (flag_use_rtl_backend == 0) /* SunIR mode */
+  if (gate_generate_ir ()) /* SunIR mode */
     {
       if (is_gimple_variable (t)
           /* don't gimplify memory vars. They are ok to be addressed as-is in SunIR
@@ -539,7 +539,7 @@ is_gimple_val (tree t)
     return true;
 
   return (is_gimple_variable (t) || is_gimple_min_invariant (t) 
-          || (flag_use_rtl_backend == 0 && is_gimple4ss_rvalue (t)));
+          || (gate_generate_ir () && is_gimple4ss_rvalue (t)));
 }
 
 /* Similarly, but accept hard registers as inputs to asm statements.  */
