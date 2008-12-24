@@ -1,3 +1,4 @@
+/* { dg-do compile { target { ! "*-*-solaris2.*" } } } */
 #define LBR1 ( ( ( ( ( ( ( ( ( (
 #define LBR2 LBR1 LBR1 LBR1 LBR1 LBR1 LBR1 LBR1 LBR1 LBR1 LBR1
 #define LBR3 LBR2 LBR2 LBR2 LBR2 LBR2 LBR2 LBR2 LBR2 LBR2 LBR2

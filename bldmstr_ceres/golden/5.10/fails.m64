@@ -8,7 +8,6 @@ g++.sum:FAIL: g++.dg/abi/rtti3.C  -fast -xipo=2  scan-assembler .weak[ \t]_?_ZTS
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -O2 -g  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -Os  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/gomp/pr29965-3.C (test for excess errors)
-g++.sum:FAIL: g++.dg/gomp/pr35244.C (test for excess errors)
 g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
@@ -80,7 +79,6 @@ gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xi
 gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
 gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)
-gcc.sum:FAIL: gcc.dg/attr-may-alias-1.c scan-assembler dont_delete
 gcc.sum:FAIL: gcc.dg/attr-weakref-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/funcorder.c scan-assembler-not link_error
 gcc.sum:FAIL: gcc.dg/pr17506.c  (test for warnings, line 11)
@@ -96,6 +94,8 @@ gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 15)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 16)
 gcc.sum:FAIL: gcc.dg/pr30643.c scan-assembler-not undefined
+gcc.sum:FAIL: gcc.dg/pr32773.c  (test for warnings, line 9)
+gcc.sum:FAIL: gcc.dg/pr32773.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
@@ -104,6 +104,12 @@ gcc.sum:FAIL: gcc.dg/return-type-1.c warning for falling off end of non-void fun
 gcc.sum:FAIL: gcc.dg/return-type-3.c warning for falling off end of non-void function (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
 gcc.sum:FAIL: gcc.dg/gomp/pr29965-3.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/matrix/transpose-1.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-2.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-3.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-4.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-5.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-6.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
 gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O0  assembly comparison

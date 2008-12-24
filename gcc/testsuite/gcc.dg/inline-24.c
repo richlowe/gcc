@@ -1,6 +1,6 @@
 /* Verify that gnu_inline inlines disregard inlining limits.  */
 /* { dg-do link } */
-/* { dg-options "-O2" } */
+/* { dg-options "-O2 -frtl-backend" } */
 
 extern int foo (int);
 extern int baz (int);
