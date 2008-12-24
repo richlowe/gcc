@@ -3493,7 +3493,7 @@ rhs_predicate_for (tree lhs)
 {
   if (is_gimple_formal_tmp_var (lhs))
     return is_gimple_formal_tmp_or_call_rhs;
-  else if (flag_use_rtl_backend == 0)
+  else if (gate_generate_ir ())
     return is_gimple_reg_rhs;
   else if (is_gimple_reg (lhs))
     return is_gimple_reg_or_call_rhs;

@@ -2851,7 +2851,11 @@ is_gimple_variable (tree t)
   return (TREE_CODE (t) == VAR_DECL
 	  || TREE_CODE (t) == PARM_DECL
 	  || TREE_CODE (t) == RESULT_DECL
-	  || TREE_CODE (t) == SSA_NAME);
+	  || TREE_CODE (t) == SSA_NAME
+          || (gate_generate_rtl ()
+              /* 2nd pass of gimplifier may see those */
+              && (TREE_CODE (t) == FILTER_EXPR || TREE_CODE (t) == EXC_PTR_EXPR))
+          || (gate_generate_ir () && is_gimple4ss_lvalue (t)));
 }
 
 /*  Return true if T is a GIMPLE identifier (something with an address).  */
@@ -2898,7 +2902,7 @@ is_gimple_reg (tree t)
   if (is_gimple4ss_lvalue (t))
     return false;
 
-  if (!is_gimple_reg_type (TREE_TYPE (t)))
+  if (gate_generate_rtl () && !is_gimple_reg_type (TREE_TYPE (t)))
     return false;
 
   /* A volatile decl is not acceptable because we can't reuse it as
@@ -2971,7 +2975,14 @@ is_gimple_non_addressable (tree t)
   if (TREE_CODE (t) == SSA_NAME)
     t = SSA_NAME_VAR (t);
 
-  return (is_gimple_variable (t) && ! needs_to_live_in_memory (t));
+  return (/* needs_to_live_in_memory() is only valid for decls
+             otherwise we may incorrectly allow
+             *ptr = call() to be marked as 'return slot opt'
+             and coupled with tree inliner may generate wrong code.
+             see CR 6578077 for further details */
+          (TREE_CODE_CLASS (TREE_CODE (t)) == tcc_declaration
+           || gate_generate_rtl ())
+           && is_gimple_variable (t) && ! needs_to_live_in_memory (t));
 }
 
 /* Return true if T is a GIMPLE rvalue, i.e. an identifier or a constant.  */
@@ -2980,17 +2991,29 @@ bool
 is_gimple_val (tree t)
 {
   /* Make loads from volatiles and memory vars explicit.  */
-  if (is_gimple_variable (t)
-      && is_gimple_reg_type (TREE_TYPE (t))
-      && !is_gimple_reg (t))
-    return false;
+  if (gate_generate_ir ()) /* SunIR mode */
+    {
+      if (is_gimple_variable (t)
+          /* don't gimplify memory vars. They are ok to be addressed as-is in SunIR
+             && is_gimple_reg_type (TREE_TYPE (t))
+             && !is_gimple_reg (t)) */
+          /* gimplify volatile vars: copy them into temp vars, before using */
+          && TREE_THIS_VOLATILE (t))
+        return false;
+    }
+  else
+    if (is_gimple_variable (t)
+        && is_gimple_reg_type (TREE_TYPE (t))
+        && !is_gimple_reg (t))
+      return false;
 
   /* FIXME make these decls.  That can happen only when we expose the
      entire landing-pad construct at the tree level.  */
   if (TREE_CODE (t) == EXC_PTR_EXPR || TREE_CODE (t) == FILTER_EXPR)
     return true;
 
-  return (is_gimple_variable (t) || is_gimple_min_invariant (t));
+  return (is_gimple_variable (t) || is_gimple_min_invariant (t)
+          || (gate_generate_ir () && is_gimple4ss_rvalue (t)));
 }
 
 /* Similarly, but accept hard registers as inputs to asm statements.  */
