@@ -2182,7 +2182,7 @@ build_array_ref (tree array, tree index)
           TREE_THIS_VOLATILE (rval) |= TYPE_VOLATILE (TREE_TYPE (TREE_TYPE (array)));
 
           /* still build indirect_ref when rtl backend used. */
-          if (flag_use_rtl_backend == 1)
+          if (gate_generate_rtl ())
             value = /*require_complete_type*/ (fold (t));
           else
             value = /*require_complete_type*/ (fold (rval));
