@@ -1,5 +1,5 @@
 // { dg-do assemble  }
-// { dg-options "-Wreturn-type" }
+// { dg-options "-Wreturn-type -frtl-backend" }
 // GROUPS passed old-abort
 class gen_op
 {

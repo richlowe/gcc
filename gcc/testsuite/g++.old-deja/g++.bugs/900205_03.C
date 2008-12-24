@@ -1,5 +1,5 @@
 // { dg-do assemble  }
-// { dg-options "-Wreturn-type -pedantic-errors" }
+// { dg-options "-frtl-backend -Wreturn-type -pedantic-errors" }
 // g++ 1.36.1 bug 900205_03
 
 // Section 6.6.3 of the cfront 2.0 Reference Manual says "A return statement
