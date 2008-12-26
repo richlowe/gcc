@@ -5215,6 +5215,11 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
   op0 = CALL_EXPR_FN (stmt); /* The call expression */
   op2 = CALL_EXPR_STATIC_CHAIN (stmt); /* chain reg. if not zero it's a call to nested function */
 
+  if (0)
+  /* The messages of __attribute__ "error" or "warning" are to be issued after
+     dead code elimination or other optimizations. Seen in rfe 6788857. 
+     Use rtl as backend to workaround the issue before gccfss propose a way 
+     to pass the attributes to iropt. */ 
   {
     tree fndecl = get_callee_fndecl (stmt), attr;
     if (fndecl
