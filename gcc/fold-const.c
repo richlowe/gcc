@@ -10356,7 +10356,10 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
                /* Avoid this transformation if B is a positive REAL_CST.  */
 	       && (TREE_CODE (arg1) != REAL_CST
 		   ||  REAL_VALUE_NEGATIVE (TREE_REAL_CST (arg1))))
-	      || INTEGRAL_TYPE_P (type)))
+	      || (INTEGRAL_TYPE_P (type)
+               /* Avoid this if B is a positive INTEGER_CST.  */
+                 && (TREE_CODE (arg1) != INTEGER_CST 
+                     || tree_int_cst_sgn (arg1) < 0))))
 	return fold_build2 (PLUS_EXPR, type,
 			    fold_convert (type, arg0),
 			    fold_convert (type, negate_expr (arg1)));

@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -Wd,-w" }
+// { dg-options "-O2 -frtl-backend -Wd,-w" }
 
 int bar (int, const char *, int, ...);
 int baz (int, const char *, long int);

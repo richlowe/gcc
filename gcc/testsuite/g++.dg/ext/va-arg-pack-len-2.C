@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O2 -Wd,-w" }
+// { dg-options "-O2 -frtl-backend -Wd,-w" }
 
 #include <stdarg.h>
 
