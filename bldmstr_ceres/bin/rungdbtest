@@ -2,10 +2,10 @@
 
 CC=gcc
 export CC
-GNU_TOOL_BIN=/import/dr3/gnu/bin
+GNU_TOOL_BIN=/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/dr3/gnu/bin
 PATH=$GNU_TOOL_BIN:/usr/dist/exe:/usr/bin:/usr/sbin:/sbin:/usr/ccs/bin:/bin:/set/mars/cbe/sparc-S2/bin
 export PATH
-LD_LIBRARY_PATH=/import/dr3/gnu/lib
+LD_LIBRARY_PATH=/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/dr3/gnu/lib
 export LD_LIBRARY_PATH
 
 function run_tests {
