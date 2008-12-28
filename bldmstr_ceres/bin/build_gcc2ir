@@ -33,6 +33,8 @@ case "$OS_NAME" in
 	TEAMWARE_BIN=/ws/onnv-tools/SUNWspro/SC6.2/bin
 	BRINGOVER=$TEAMWARE_BIN/bringover
         GIT=/import/pkg/local/bin/git
+        #TEST_TOOLS=/import/dr3/gnu
+        TEST_TOOLS=/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/dr3/gnu
 	# EXPECT will be set later.
 	EXPECT=
 	CPUS=`/usr/sbin/psrinfo | wc -l`
@@ -68,7 +70,8 @@ NIGHTLY_BUILD_MODE=0
 PARALLEL_BUILD_OPTION="-j $JOBS"
 BOOTSTRAP_OPTION=
 DEBUG_MODE=0
-LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
+#LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
+LIBMTSK_DIR=/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/latest_libmtsk
 trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
 
 usage()
@@ -253,13 +256,12 @@ do_copy_gnu_tools()
     # use 'perl' from PATH
     # but always copy pod2man, to create man pages
     mkdir -p $ROOT/tools/bin
-    cp -pf /import/dr3/gnu/bin/pod2man $ROOT/tools/bin
+    cp -pf $TEST_TOOLS/bin/pod2man $ROOT/tools/bin
 
     # need to use 'objdump' during configure otherwise "--traditional-format" flag
     # will be added
-    cp -pf /import/dr3/gnu/bin/objdump $ROOT/tools/bin
-
-    cp -pf /import/dr1/tools/bin/c++filt $ROOT/tools/bin
+    cp -pf $TEST_TOOLS/bin/objdump $ROOT/tools/bin
+    cp -pf $TEST_TOOLS/bin/c++filt $ROOT/tools/bin
 
     echo "==== copied gnu tools"
     date
@@ -281,7 +283,7 @@ do_copy_gnu_tools_cross()
     cp -pf /ws/gccfss/cross-compiler/gnu-i386/bin/objdump $ROOT/tools/bin
 
     # copy c++ name demangler
-    cp -pf /import/dr1/tools/bin/c++filt $ROOT/tools/bin
+    cp -pf $TEST_TOOLS/bin/c++filt $ROOT/tools/bin
 
     echo "==== copied i386 gnu tools"
     date
@@ -405,7 +407,7 @@ install_crosscompiler_suncomponents ()
 	# install solaris linker
 	echo "Copying Solaris linker"
 	( cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ;
-	  bzip2 -cd /ws/gccfss/cross-compiler/ldcross_x86.tar.bz2 | tar xvf - )
+	  bzip2 -cd /ws/gccfss/cross-compiler/ldcross_x86.tar.bz2 | tar xf - )
         
 	echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
 }
@@ -505,20 +507,20 @@ prepare_tests()
   mkdir -p $ROOT/tools/share
 
   rm -f $ROOT/tools/bin/runtest
-  cp -p /import/dr3/gnu/bin/runtest $ROOT/tools/bin/runtest
+  cp -p $TEST_TOOLS/bin/runtest $ROOT/tools/bin/runtest
   rm -f $ROOT/tools/bin/objdump
   rm -f $ROOT/tools/bin/expect*
   rm -f $ROOT/tools/bin/tcl*
 
-  (cd /import/dr3/gnu/share ; tar -cf - dejagnu) \
+  (cd $TEST_TOOLS/share ; tar -cf - dejagnu) \
     | (cd $ROOT/tools/share; tar -xf -)
 
   if [ "$OS_NAME" != "Linux" ]
   then
-    cp -p /import/dr3/gnu/bin/objdump $ROOT/tools/bin/objdump
-    cp -p /import/dr3/gnu/bin/expect* $ROOT/tools/bin
-    cp -p /import/dr3/gnu/bin/tcl* $ROOT/tools/bin
-    (cd /import/dr3/gnu/lib ; tar -cf - tcl* libtcl* expect*) \
+    cp -p $TEST_TOOLS/bin/objdump $ROOT/tools/bin/objdump
+    cp -p $TEST_TOOLS/bin/expect* $ROOT/tools/bin
+    cp -p $TEST_TOOLS/bin/tcl* $ROOT/tools/bin
+    (cd $TEST_TOOLS/lib ; tar -cf - tcl* libtcl* expect*) \
       | (cd $ROOT/tools/lib; tar -xf -)
   fi
 
@@ -899,8 +901,8 @@ do_bringover()
         echo "Bringing over the gcc2ir source workspace $src_ws ...."
         $GIT clone -q --depth 1 $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir
         echo "Untarring gmp amd mpfr into the source area ...."
-        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/gmp-4.2.1-renamed.tar.bz2 | tar xvf -)
-        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/mpfr-2.3.0-renamed.tar.bz2 | tar xvf - )
+        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/gmp-4.2.1-renamed.tar.bz2 | tar xf -)
+        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/mpfr-2.3.0-renamed.tar.bz2 | tar xf - )
         echo "Bringover from $src_ws completed at $(date)" > \
              $ROOT/done/bringover.gcc2ir
     fi
