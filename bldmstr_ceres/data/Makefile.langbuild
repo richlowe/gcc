@@ -33,7 +33,8 @@ CHIP:sh = /bin/uname -p
 OSNAME:sh = /bin/uname -s
 
 CBE-i386 = /shared/dp/sstrunk/cbe/inst/intel-S2
-CBE-sparc = /shared/dp/sstrunk/cbe/inst/sparc-S2
+#CBE-sparc = /shared/dp/sstrunk/cbe/inst/sparc-S2
+CBE-sparc = /net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/cbe/sparc-S2
 CBE-unknown = /shared/dp/sstrunk/cbe/inst/sparc-S2
 SPARCCBE = $(CBE-$(CHIP))
 
