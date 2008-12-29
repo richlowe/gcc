@@ -908,6 +908,11 @@ thread.lo: thread.cc
 thread.o: thread.cc
 	$(CXXCOMPILE) -std=gnu++0x -c $<
 
+fstream-inst.lo: fstream-inst.cc
+	$(LTCXXCOMPILE) -O0 -c -o $@ $<
+fstream-inst.o: fstream-inst.cc
+	$(CXXCOMPILE) -O0 -c -o $@ $<
+
 # Use special rules for compatibility-ldbl.cc compilation, as we need to
 # pass -mlong-double-64.
 @GLIBCXX_LDBL_COMPAT_TRUE@compatibility-ldbl.lo: compatibility-ldbl.cc
