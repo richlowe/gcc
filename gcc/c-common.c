@@ -1956,7 +1956,7 @@ c_common_type_for_size (unsigned int bits, int unsignedp)
 
   if (bits == TYPE_PRECISION (widest_integer_literal_type_node))
     {
-      if (bits == 128 
+      if (bits == 128 && !TARGET_ARCH64
 	  && !in_builtin_def_phase
 	  && flag_use_rtl_backend != -1)
 	/* GCCFSS cannot handle 128 bits */
@@ -2043,6 +2043,7 @@ c_common_type_for_mode (enum machine_mode mode, int unsignedp)
   if (mode == TYPE_MODE (widest_integer_literal_type_node))
     {
       if (TYPE_PRECISION(widest_integer_literal_type_node) == 128 
+          && !TARGET_ARCH64
 	  && !in_builtin_def_phase
 	  && flag_use_rtl_backend != -1)
 	/* GCCFSS cannot handle 128 bits */

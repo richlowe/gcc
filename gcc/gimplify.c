@@ -1709,6 +1709,7 @@ gimplify_var_or_parm_decl (tree *expr_p)
   if (current_function_decl
       && flag_use_rtl_backend != -1 
       && TYPE_MODE (TREE_TYPE (*expr_p)) == TImode 
+      && !TARGET_ARCH64
       && TYPE_PRECISION (TREE_TYPE (*expr_p)) == 128)
     DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
 
@@ -6785,6 +6786,7 @@ gimplify_function_tree (tree fndecl)
   if (current_function_decl
       && flag_use_rtl_backend != -1
       && TYPE_MODE (TREE_TYPE (TREE_TYPE (current_function_decl))) == TImode
+      && !TARGET_ARCH64
       && TYPE_PRECISION (TREE_TYPE (TREE_TYPE (current_function_decl))) == 128)
     DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
 
