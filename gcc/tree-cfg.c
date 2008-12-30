@@ -7024,7 +7024,7 @@ gimplify_build1 (block_stmt_iterator *bsi, enum tree_code code, tree type,
 /* Emit return warnings.  */
 
 static unsigned int
-execute_warn_function_return (void)
+execute_warn_function_return_withcfg (void)
 {
 #ifdef USE_MAPPED_LOCATION
   source_location location;
@@ -7099,6 +7099,95 @@ execute_warn_function_return (void)
   return 0;
 }
 
+static unsigned int
+execute_warn_function_return_nocfg (void)
+{
+#ifdef USE_MAPPED_LOCATION
+  source_location location;
+#else
+  location_t *locus;
+#endif
+  int has_return;
+  tree_stmt_iterator tsi;
+
+#ifdef USE_MAPPED_LOCATION
+  location = UNKNOWN_LOCATION;
+#else
+  locus = NULL;
+#endif
+  has_return = 0;
+  for (tsi = tsi_start (DECL_SAVED_TREE (cfun->decl));
+       !tsi_end_p (tsi); tsi_next (&tsi))
+    {
+      tree stmt = tsi_stmt (tsi);
+      if (TREE_CODE (stmt) == RETURN_EXPR 
+#ifdef USE_MAPPED_LOCATION
+	      && (location = EXPR_LOCATION (stmt)) != UNKNOWN_LOCATION)
+#else
+	      && (locus = EXPR_LOCUS (stmt)) != NULL)
+#endif
+        {
+          has_return = 1;
+	  break;
+        }
+    }
+
+  /* If we have a path to EXIT, then we do return.  */
+  if (TREE_THIS_VOLATILE (cfun->decl) && has_return)
+    {
+#ifdef USE_MAPPED_LOCATION
+      if (location == UNKNOWN_LOCATION)
+	location = cfun->function_end_locus;
+      warning (0, "%H%<noreturn%> function does return", &location);
+#else
+      if (!locus)
+	locus = &cfun->function_end_locus;
+      warning (0, "%H%<noreturn%> function does return", locus);
+#endif
+    }
+
+  /* If we see "return;" in some basic block, then we do reach the end
+     without returning a value.  */
+  else if (warn_return_type
+	   && !TREE_NO_WARNING (cfun->decl)
+	   && has_return
+	   && !VOID_TYPE_P (TREE_TYPE (TREE_TYPE (cfun->decl))))
+    {
+      for (tsi = tsi_start (DECL_SAVED_TREE (cfun->decl));
+           !tsi_end_p (tsi); tsi_next (&tsi))
+	{
+          tree stmt = tsi_stmt (tsi);
+	  if (TREE_CODE (stmt) == RETURN_EXPR
+	      && TREE_OPERAND (stmt, 0) == NULL
+	      && !TREE_NO_WARNING (stmt))
+	    {
+#ifdef USE_MAPPED_LOCATION
+	      location = EXPR_LOCATION (stmt);
+	      if (location == UNKNOWN_LOCATION)
+		  location = cfun->function_end_locus;
+	      warning (OPT_Wreturn_type, "%Hcontrol reaches end of non-void function", &location);
+#else
+	      locus = EXPR_LOCUS (stmt);
+	      if (!locus)
+		locus = &cfun->function_end_locus;
+	      warning (OPT_Wreturn_type, "%Hcontrol reaches end of non-void function", locus);
+#endif
+	      TREE_NO_WARNING (cfun->decl) = 1;
+	      break;
+	    }
+	}
+    }
+  return 0;
+}
+
+static unsigned int
+execute_warn_function_return (void)
+{
+  if (gate_generate_ir ())
+    return execute_warn_function_return_nocfg ();
+  else
+    return execute_warn_function_return_withcfg ();
+}
 
 /* Given a basic block B which ends with a conditional and has
    precisely two successors, determine which of the edges is taken if
@@ -7127,7 +7216,7 @@ extract_true_false_edges_from_block (basic_block b,
 struct tree_opt_pass pass_warn_function_return =
 {
   NULL,					/* name */
-  gate_generate_rtl,                    /* gate */
+  NULL,                    		/* gate */
   execute_warn_function_return,		/* execute */
   NULL,					/* sub */
   NULL,					/* next */
