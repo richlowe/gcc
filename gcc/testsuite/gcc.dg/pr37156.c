@@ -1,6 +1,6 @@
 /* PR debug/37156 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -g" } */
+/* { dg-options "-O2 -frtl-backend -g" } */
 
 __attribute__ ((warning ("is experimental"))) int bar (int, int *, int *, int);
 

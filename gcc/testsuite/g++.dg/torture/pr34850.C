@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O3" } */
+/* { dg-options "-frtl-backend -O3" } */
 
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
