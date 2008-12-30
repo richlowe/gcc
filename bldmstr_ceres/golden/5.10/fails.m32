@@ -112,6 +112,10 @@ gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/return-type-1.c warning for falling off end of non-void function (test for warnings, line 9)
 gcc.sum:FAIL: gcc.dg/return-type-3.c warning for falling off end of non-void function (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 16)
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 28)
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 34)
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 40)
 gcc.sum:FAIL: gcc.dg/gomp/pr29965-3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/matrix/transpose-1.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
 gcc.sum:FAIL: gcc.dg/matrix/transpose-2.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
@@ -141,6 +145,8 @@ gcc.sum:FAIL: gcc.dg/struct/w_prof_local_var.c execution,    -O3 -fwhole-program
 gcc.sum:FAIL: gcc.dg/struct/w_prof_two_strs.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
 gcc.sum:FAIL: gcc.dg/torture/builtin-noret-1.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/torture/builtin-noret-2.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr14490-2.c scan-tree-dump-times gimple "\+ -10"
+1
 gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 9)
 gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 12)
 gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 24)
