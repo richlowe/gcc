@@ -109,8 +109,6 @@ gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
-gcc.sum:FAIL: gcc.dg/return-type-1.c warning for falling off end of non-void function (test for warnings, line 9)
-gcc.sum:FAIL: gcc.dg/return-type-3.c warning for falling off end of non-void function (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 16)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 28)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 34)
@@ -137,17 +135,12 @@ gcc.sum:FAIL: gcc.dg/pch/static-3.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O0  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/system-1.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/torture/builtin-noret-1.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/torture/builtin-noret-2.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/tree-prof/inliner-1.c scan-tree-dump optimized "cold_function ..;"
 gcc.sum:FAIL: gcc.dg/tree-prof/tracer-1.c scan-tree-dump-times tracer "goto <bb 6>;" 2
 gcc.sum:FAIL: gcc.dg/tree-prof/val-prof-5.c scan-tree-dump tree_profile "Div.mod by constant b.*=997 transformation on insn"
-gcc.sum:FAIL: gcc.dg/struct/w_prof_global_var.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
-gcc.sum:FAIL: gcc.dg/struct/w_prof_local_var.c execution,    -O3 -fwhole-program -combine -fipa-type-escape -fprofile-generate
-gcc.sum:FAIL: gcc.dg/struct/w_prof_two_strs.c execution,    -O3 -fwhole-program
--combine -fipa-type-escape -fprofile-generate
-gcc.sum:FAIL: gcc.dg/torture/builtin-noret-1.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/torture/builtin-noret-2.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/tree-ssa/pr14490-2.c scan-tree-dump-times gimple "\+ -10"
-1
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr14490-2.c scan-tree-dump-times gimple "\+ -10" 1
 gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 9)
 gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 12)
 gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 24)
