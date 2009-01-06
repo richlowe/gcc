@@ -5194,7 +5194,12 @@ handle_error_attribute (tree *node, tree name, tree args,
       || TREE_CODE (TREE_VALUE (args)) == STRING_CST)
     /* Do nothing else, just set the attribute.  We'll get at
        it later with lookup_attribute.  */
-    ;
+    {
+      /* workaround for rfe 6788857. */
+      flag_use_rtl_backend = -1;
+      if (optimize >= 3)
+        flag_inline_functions = 1;
+    }
   else
     {
       warning (OPT_Wattributes, "%qE attribute ignored", name);
