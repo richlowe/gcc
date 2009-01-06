@@ -80,11 +80,4 @@ do
 	compareFailureFiles $RESULTFILE $GOLDENFILE
 done
 
-# Compare putback test results.
-RESULTFILE=$BUILDDIR/test_results/pbtest.failures
-GOLDENFILE=$GOLDENDIR/$OS/pbtest.failures
-echo
-echo "Comparing putback test results:"
-compareFailureFiles $RESULTFILE $GOLDENFILE
-
 rm -f /tmp/compare.$$.*.tmp

@@ -33,9 +33,8 @@ case "$OS_NAME" in
 	TEAMWARE_BIN=/ws/onnv-tools/SUNWspro/SC6.2/bin
 	BRINGOVER=$TEAMWARE_BIN/bringover
         GIT=/import/pkg/local/bin/git
-        #TEST_TOOLS=/import/dr3/gnu
-        TEST_TOOLS=/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/dr3/gnu
-	# EXPECT will be set later.
+        TEST_TOOLS=/import/dr3/gnu
+        	# EXPECT will be set later.
 	EXPECT=
 	CPUS=`/usr/sbin/psrinfo | wc -l`
 	ERROR_TRAP=ERR
@@ -70,8 +69,7 @@ NIGHTLY_BUILD_MODE=0
 PARALLEL_BUILD_OPTION="-j $JOBS"
 BOOTSTRAP_OPTION=
 DEBUG_MODE=0
-#LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
-LIBMTSK_DIR=/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/latest_libmtsk
+LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
 trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
 
 usage()

@@ -169,31 +169,8 @@ fi
 if [ $RUNTESTS = 1 ]
 then
 
-# Run the putback tests and record the results of the putback tests
-#( \
-#  (/import/dr3/gcc2ir_putbacktest/bin/gcc2ir_putbacktest.new \
-#    -b $INSTALLDIR/$GCCINSTSUBDIR/bin \
-#    -d $BUILDDIR/pbtests > $BUILDDIR/logs/putbacktest.log 2>&1 ); \
-#  (/bin/ksh ${SCRIPTDIR}/hydra_failures \
-#    $BUILDDIR/pbtests > $BUILDDIR/logs/pbtest.failures); \
-#  FAILURES=$(wc -l $BUILDDIR/logs/pbtest.failures); \
-#  echo "Number of test failures: $FAILURES" ; \
-#) &
-
-# Run the putback tests and record the results of the putback tests
-( \
-  (/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/gcc2ir_putbacktest/bin/gcc2ir_putbacktest.new \
-    -b $INSTALLDIR/$GCCINSTSUBDIR/bin \
-    -d $BUILDDIR/pbtests > $BUILDDIR/logs/putbacktest.log 2>&1 ); \
-  (/bin/ksh ${SCRIPTDIR}/hydra_failures \
-    $BUILDDIR/pbtests > $BUILDDIR/logs/pbtest.failures); \
-  FAILURES=$(wc -l $BUILDDIR/logs/pbtest.failures); \
-  echo "Number of test failures: $FAILURES" ; \
-) &
-
 # Run gdb testsuite with -m32 option
-#/bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /import/dr3/gnu/bin/gdb -T /import/backend-src/gdb6.3/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
-/bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/dr3/gnu/bin/gdb -T /net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/gdb6.3/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
+/bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /import/dr3/gnu/bin/gdb -T /import/backend-src/gdb6.3/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
 
 wait
 
