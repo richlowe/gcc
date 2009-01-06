@@ -24,9 +24,7 @@ export SUNPACKAGE=SUNW0scgfss
 export GCCPACKAGE=SUNW0gccfss
 
 # Lang workspaces used by gcc4ss builds
-#export LANGWSINT=/shared/dp/sstrunk/latest/src/lang
-#export LANGWSLISTDEFAULT="$LANGWSINT /import/backend-src/ceres/lang /ws/gccfss/source/opt-debug" 
-export LANGWSINT=/net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/sstrunk_lang
-export LANGWSLISTDEFAULT="$LANGWSINT /net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/ceres/lang /net/gccsvn/export/gccfss_disk1/MPK_power_outage_stuff/opt-debug"
+export LANGWSINT=/shared/dp/sstrunk/latest/src/lang
+export LANGWSLISTDEFAULT="$LANGWSINT /import/backend-src/ceres/lang /ws/gccfss/source/opt-debug" 
 export GCC2IRWS="/ws/gccfss/source/gcc.git"
 export GCC_VERSION="4.3.2" 
