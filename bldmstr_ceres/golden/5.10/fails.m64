@@ -165,8 +165,6 @@ gcc.sum:FAIL: gcc.target/sparc/fpsub32s.c scan-assembler fpsub32s\t%
 gcc.sum:FAIL: gcc.target/sparc/fxnor.c scan-assembler-times fxnor	% 6
 gcc.sum:FAIL: gcc.target/sparc/fxnors.c scan-assembler-times fxnors	% 4
 gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
-gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[^\n]*ld[ \t]*\\[%sp\\+96\\]
-gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[^\n]*nop
 gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -fast -xipo=2  (test for excess errors)
 gfortran.sum:FAIL: gfortran.dg/cray_pointers_2.f90  -O3  execution test
 gfortran.sum:FAIL: gfortran.dg/cray_pointers_2.f90  -O3 -finline-functions  execution test
