@@ -813,7 +813,6 @@ proper position among the other output files.  */
 
 #ifdef __linux__
 #define LINK_ANNOTATE_GCCFSS ""
-#define LINK_XPROFILE_GCCFSS "%{xprofile=collect=*: -lxprof -lpthread }"
 #else
 #define LINK_ANNOTATE_GCCFSS \
 "  %{xannotate=no: ; \
@@ -822,7 +821,6 @@ proper position among the other output files.  */
      !xannotate=*: \
 	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/v9/libld_annotate.so  \
 }"
-#define LINK_XPROFILE_GCCFSS "%{xprofile=collect=*: -lxprof -lthread }"
 #endif
 
 /* these options are passed only to iropt and not to ipo */
@@ -1207,8 +1205,8 @@ static const char *xtarget =
 static const char *iropt_ipo_options =
 " %(ssbe_xarch_xchip) %(xtarget) %(ssiropt_optlevel) \
  %{m64} \
- %{xprofile=use=* : -u %b.o %+profile%* } \
- %{Zprofile=use=* : -u2 %+profile%* } \
+ %{xprofile=use=* : -xprofile=use:%+profile%* } \
+ %{Zprofile=use=* : -xprofile=use:%+profile%* } \
  %{xprofile=collect=*: -xprofile=collect:%+profile%* }   \
  %{Zfprofile-arcs: \
 	%{Zfprofile-values: ; \
