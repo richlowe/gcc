@@ -1196,8 +1196,22 @@ internal_make_floatmap (tree type, unsigned int bitoff)
       {
         TWORD tword;
         unsigned int off = bitoff / 8;
+
+        /* Proposal for Extending or Enhancing the SPARC ABI. on SPARC V9
+		type		size	align
+	float _Complex		8	4
+	double _Complex		16	8
+	long double _Complex	32 	16
+	*/
+	/* misaligend float. */
+        if (TREE_CODE (type) == COMPLEX_TYPE
+            && off != ((off * 2/ get_type_size (type)) *get_type_size (type)
+/ 2))
+          return 0;
+
         /* misaligned float */
-        if (off != ((off / get_type_size (type)) * get_type_size (type)))
+        if (TREE_CODE (type) != COMPLEX_TYPE
+            && off != ((off / get_type_size (type)) * get_type_size (type)))
           return 0;
 
         tword = map_gnu_type_to_tword (type);
