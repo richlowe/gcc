@@ -14,7 +14,7 @@ template<int j>
 int foo (void)
 {
   int i;
-  asm ("# foo on %[third] %[second] %[fourth] %[first]"
+  asm ("! foo on %[third] %[second] %[fourth] %[first]"
        : [first] "=r" (i)
        : [second] "i" (j),
          [third] "i" (j + 2),
@@ -25,7 +25,7 @@ int foo (void)
 template<class TYPE>
 TYPE bar (TYPE t)
 {
-  asm ("# bar on %[first] %[second] %[third]"
+  asm ("! bar on %[first] %[second] %[third]"
        : [first] "=r" (t.value)
        : [second] "i[first]" (t.value),
          [third] "i" (t.info));
@@ -36,7 +36,7 @@ template<class TYPE>
 struct S {
   static void frob (TYPE t)
   {
-    asm ("# frob on %[arg]" :: [arg] "i" (t.info));
+    asm ("! frob on %[arg]" :: [arg] "i" (t.info));
   }
 };
 
