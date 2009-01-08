@@ -109,11 +109,11 @@ gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
-gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 16)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 28)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 34)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 40)
+gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
 gcc.sum:FAIL: gcc.dg/gomp/pr29965-3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/matrix/transpose-1.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
 gcc.sum:FAIL: gcc.dg/matrix/transpose-2.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
