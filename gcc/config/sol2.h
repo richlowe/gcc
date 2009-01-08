@@ -150,7 +150,8 @@ along with GCC; see the file COPYING3.  If not see
                           Zarchm32=v8:-Y P,%J/v8:%J:/usr/ccs/lib:/usr/lib ; \
                                 :-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib}}} \
              } \
-     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}}} \
+     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}} \
+                 %{xprofile=collect=*: -L %J/../usr/lib -R %J/../usr/lib}} \
      %{fstack-protector|fstack-protector-all: -R %H} \
     } "
 

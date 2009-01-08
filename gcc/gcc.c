@@ -757,21 +757,19 @@ proper position among the other output files.  */
     %{!xlibmopt: %{O3: -lmopt } }\
     %{xautopar: -lmtsk -lthread} %{Zmt: -lthread}\
     %{!shared: %{xprofile=collect* : \
-       %{m64 : %J/v9/prof_lib.o %J/v9/prof_tsd.o \
-                     -M %J/v9/prof_lib.map -M %J/v9/prof_tsd.map ; \
-        m32 :  %J/prof_lib.o %J/prof_tsd.o -M %J/prof_lib.map -M %J/prof_tsd.map ; \
-            : %J/prof_lib.o %J/prof_tsd.o -M %J/prof_lib.map -M %J/prof_tsd.map } \
-         -Bdynamic -ldl } } \
+      %{m64 : %J/v9/xprof_fini.o ; \
+        m32 : %J/xprof_fini.o ; \
+            : %J/xprof_fini.o } \ 
+        -Bdynamic -lxprof -lthread } } \
 "
 #else
 #define LINK_COMMAND_LIB "\
     %{xautopar: -lmtsk -lpthread} %{Zmt: -lpthread}\
     %{!shared: %{xprofile=collect* : \
-       %{m64 : %J/v9/prof_lib.o %J/v9/prof_tsd.o \
-                        --version-script=%J/v9/prof.map ; \
-        m32 : %J/prof_lib.o %J/prof_tsd.o --version-script=%J/prof.map ; \
-            : %J/prof_lib.o %J/prof_tsd.o --version-script=%J/prof.map } \
-         -Bdynamic -ldl -lm -lpthread} } \
+    %{m64 : %J/v9/xprof_fini.o ; \
+      m32 : %J/xprof_fini.o ; \
+          : %J/xprof_fini.o } \
+         -Bdynamic -lxprof -lpthread} } \
 "
 #endif
 
@@ -807,6 +805,7 @@ proper position among the other output files.  */
 
 #ifdef __linux__
 #define LINK_ANNOTATE_GCCFSS ""
+#define LINK_XPROFILE_GCCFSS "%{xprofile=collect=*: -lxprof -lpthread }"
 #else
 #define LINK_ANNOTATE_GCCFSS \
 "  %{xannotate=no: ; \
@@ -815,7 +814,16 @@ proper position among the other output files.  */
      !xannotate=*: \
 	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/v9/libld_annotate.so  \
 }"
+#define LINK_XPROFILE_GCCFSS "%{xprofile=collect=*: -lxprof -lthread }"
 #endif
+
+/* these options are passed only to iropt and not to ipo */
+static const char *iropt_only_options =
+" %{xprofile=*: \
+        -xlibxprof -xlibxprof_tls=yes \
+        %{!S: %{c:%{!o*:-oo %w%b%O}%W{o*:-oo %*}}%{!c: %{Zpec=*: -oo %d%w%U%O; :-oo %d%w%u%O} }} \
+        %{xipo=1|xipo=2: -xprofile_replace=program } \
+   }";
 
 /* -u* was put back because both BSD and SysV seem to support it.  */
 /* %{static:} simply prevents an error message if the target machine
@@ -1192,7 +1200,7 @@ static const char *iropt_ipo_options =
  %{m64} \
  %{xprofile=use=* : -u %b.o %+profile%* } \
  %{Zprofile=use=* : -u2 %+profile%* } \
- %{xprofile=collect=*: -s }\
+ %{xprofile=collect=*: -xprofile=collect:%+profile%* }   \
  %{Zfprofile-arcs: \
 	%{Zfprofile-values: ; \
 	  Zfvpt: ; \
@@ -1341,7 +1349,7 @@ static const char *cg_ipo_options =
  %{xbinopt=noprepare: } \
  %{xbinopt=prepare} \
  %{xprofile=use*: -ip } \
- %{xprofile=collect=*: -oe %+profile%* -op %b%O }\
+ %{xprofile=collect=*: } \
  %{xhwcprof} %{xhwcprof=enable: -xhwcprof}\
  %{xunroll=*} \
  %{xsafe=unboundsym} \
@@ -1379,7 +1387,7 @@ static const char *cg_ipo_options =
 /* the namelist file which is the -N option to iropt and -n option to ipo
    is not created by the sgcc front end so use /dev/null */
 static const char *invoke_iropt =
-"|\n iropt -F %(iropt_ipo_options) \
+"|\n iropt -F %(iropt_ipo_options) %(iropt_only_options) \
  -o %{save-temps: %b.ircg} %{!save-temps: %d%u.ircg} \
   %{save-temps:%b.ir} %{!save-temps:%d%U.ir} \
  -N/dev/null \
@@ -3376,6 +3384,7 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("invoke_cppipo1",		&invoke_cppipo1),
   INIT_STATIC_SPEC ("invoke_ipo2",		&invoke_ipo2),
   INIT_STATIC_SPEC ("iropt_ipo_options",        &iropt_ipo_options),
+  INIT_STATIC_SPEC ("iropt_only_options",       &iropt_only_options),
   INIT_STATIC_SPEC ("cg_ipo_options",           &cg_ipo_options),
   INIT_STATIC_SPEC ("mvis_il",                  &mvis_il),
   INIT_STATIC_SPEC ("asm_name",			&asm_name),
