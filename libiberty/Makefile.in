@@ -595,9 +595,9 @@ $(CONFIGURED_OFILES): stamp-picdir
 	$(srcdir)/cp-demangle.h $(INCDIR)/demangle.h \
 	$(INCDIR)/dyn-string.h $(INCDIR)/getopt.h $(INCDIR)/libiberty.h
 	if [ x"$(PICFLAG)" != x ]; then \
-	  $(COMPILE.c) $(PICFLAG) -O0 $(srcdir)/cp-demangle.c -o pic/$@; \
+	  $(COMPILE.c) $(PICFLAG) $(srcdir)/cp-demangle.c -o pic/$@; \
 	else true; fi
-	$(COMPILE.c) $(srcdir)/cp-demangle.c $(OUTPUT_OPTION) -O0
+	$(COMPILE.c) $(srcdir)/cp-demangle.c $(OUTPUT_OPTION) 
 
 ./cp-demint.o: $(srcdir)/cp-demint.c stamp-h $(INCDIR)/ansidecl.h \
 	$(srcdir)/cp-demangle.h $(INCDIR)/demangle.h \
