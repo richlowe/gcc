@@ -63,9 +63,11 @@ then
 fi
 
 XSUFFIX=x
+S11SUFFIX=_s11
 
 case $OS in
 	5.10)	INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION;;
+        5.11)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$S11SUFFIX;;
 	Linux)	INSTALLAREA=/net/perftech-064/data/compilers;;
         i386)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$XSUFFIX;;
 	*)	echo >&2 "Error:  Unknown OS"
@@ -90,8 +92,13 @@ INSTALLDIR=$INSTALLAREA/$BUILDNAME
 if [ $OS == i386 ]
 then
     # cross compiler still waits for the sparc build to complete
-    waitForFile /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/gxx_eh_supported
+    waitForFile /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/xprof_fini.o
     ${SCRIPTDIR}/gcc2ir_master_build -n -i $INSTALLDIR -p /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION -v $GCC_VERSION -t $BUILDDIR
+elif [ $OS == 5.11 ]
+then
+    # Solaris 11 FE build needs to have the backend build ready
+    waitForFile /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/xprof_fini.o
+    ${SCRIPTDIR}/gcc2ir_master_build -n -i $INSTALLDIR -v $GCC_VERSION -s /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR $BUILDDIR
 else
     # specify -n to tell about Nightly build mode
     ${SCRIPTDIR}/gcc2ir_master_build -n -i $INSTALLDIR -v $GCC_VERSION $BUILDDIR
@@ -108,6 +115,18 @@ case $OS in
 		if [ 1 = `testsHaveFailures $BUILDDIR/logs/test.comparison` ]
 		then
 			echo "The Solaris 10 build had new test failures."
+			echo "Current has not been updated."
+			exit 1;
+		fi
+		# If we get here we know that both Solaris 9 and 10 builds
+		# finished and found no new test failures.
+		# Update the current link.
+		${SCRIPTDIR}/newcurrent gcc
+		;;
+        5.11)	# Check the test results for new failures.
+		if [ 1 = `testsHaveFailures $BUILDDIR/logs/test.comparison` ]
+		then
+			echo "The Solaris 11 build had new test failures."
 			echo "Current has not been updated."
 			exit 1;
 		fi

@@ -3,6 +3,7 @@ export BUILDMACHINE_s9=perftech-057
 export BUILDMACHINE_s10=clpt-v490-1
 export BUILDMACHINE_Linux=perftech-064
 export BUILDMACHINE_s10x=clpt-v490-1
+export BUILDMACHINE_s11x=gccfss-v890-1
 
 # Official build areas (note that machine-name part of variable has '-' removed
 export BUILDAREA_sacrum=/net/sacrum/export/home/bldmstr/nightly
@@ -14,6 +15,8 @@ export BUILDAREA_perftech064=/net/perftech-064/data/bldmstr/nightly
 export BUILDAREA_clptv4901=/net/clpt-v490-1/export/data1/bldmstr
 export BUILDAREA_perftech057=/net/perftech-057/export/home/gccbuilds
 export BUILDAREA_clptgccx861=/net/clpt-gccx86-1/export/home/nightlybuilds
+
+export BUILDAREA_gccfssv8901=/net/gccsvn/export/gccfss_disk1/nevadabuilds
 
 # Subdirectories under which Studio and gcc components are installed
 export SUNINSTSUBDIR=SUNW0scgfss
