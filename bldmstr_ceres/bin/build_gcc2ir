@@ -838,6 +838,29 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
     rm -f $ROOT/done/sed$$
 }
 
+# Since we use $PREFIX to build the compilers, the gmake install
+# installs it with the whole prefix. Get Rid of it from the
+# install area
+manipulate_install_area ()
+{
+    if [`uname -r` == 5.11 ]
+    then
+        # layer the fortran and objc drivers
+        ( cd $INSTALL_DIR/.. ;
+          bzip2 -cd /ws/gccfss/source/gfortran_objc.tar.bz2 | tar xf - )
+
+        # On solaris 11 we want to keep the install structure
+        # as it is, however, we do need to copy the backend
+        # components
+        ( cd $INSTALL_DIR/.. ; \
+          mv $SUNINSTSUBDIR usr/compilers ;
+          /bin/rm -rf gcc) ;
+        
+        # we need to create the packages here.
+        # Fix me TODO!
+    fi
+}
+
 # Parse the command-line options
 get_options $@
 
@@ -966,6 +989,27 @@ then
 	    --with-gnu-as \
             --with-ld=/usr/ccs/bin/ld \
 	    --without-gnu-ld > $ROOT/logs/config.gcc2ir.log 2>&1
+    elif [ `uname -r` = 5.11 ]
+    then
+	# building for OpenSolaris, use different configure options
+        # mainly enable prefix and objective C
+	export AS="/usr/ccs/bin/as"
+        export AS_FOR_TARGET="/usr/ccs/bin/as"
+	$SOURCE_WS/configure \
+            --prefix=/usr/compilers/gcc432 \
+            --enable-shared \
+            --disable-static \
+            --with-system-zlib \
+            --enable-checking=release \
+            --enable-languages=c,c++,objc \
+            --disable-libobjc \
+            --with-cpu=v9 \
+            --with-ld=/usr/ccs/bin/ld \
+            --without-gnu-ld \
+            --with-as=/usr/ccs/bin/as \
+	    --without-gnu-as \
+	    --disable-gnattools \
+            --enable-tls > $ROOT/logs/config.gcc2ir.log 2>&1
     else
 	if [ "$OS_NAME" = "Linux" ]
 	then
@@ -974,7 +1018,7 @@ then
 	    # use system 'as' during configure, gccfss driver will use 'fbe'
 	    export AS="/usr/ccs/bin/as"
 	    export AS_FOR_TARGET="/usr/ccs/bin/as"
-	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --enable-tls"
+	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --enable-tls --with-as=/usr/ccs/bin/as --without-gnu-as"
 	fi
 
 	# make sure $CONFIG_FLAGS is the last parameter on the list
@@ -1083,6 +1127,8 @@ then
 
         else
 		$GMAKE install DESTDIR=$INSTALL_DIR > $ROOT/logs/install.gcc2ir.log 2>&1
+
+                manipulate_install_area
 
 	        patch_la_files
 	fi
