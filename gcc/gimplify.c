@@ -1893,9 +1893,8 @@ gimplify_var_or_parm_decl (tree *expr_p)
 
   if (current_function_decl
       && flag_use_rtl_backend != -1 
-      && TYPE_MODE (TREE_TYPE (*expr_p)) == TImode 
-      && TYPE_PRECISION (TREE_TYPE (*expr_p)) == 128)
-    DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
+      && TYPE_MODE (TREE_TYPE (*expr_p)) == TImode) 
+    sunir_check_128bits_handling (TREE_TYPE (*expr_p));
 
   /* ??? If this is a local variable, and it has not been seen in any
      outer BIND_EXPR, then it's probably the result of a duplicate
@@ -6643,6 +6642,10 @@ gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 
 	  /* Constants need not be gimplified.  */
 	case INTEGER_CST:
+          if (current_function_decl
+              && flag_use_rtl_backend != -1
+              && TYPE_MODE (TREE_TYPE (*expr_p)) == TImode)
+            sunir_check_128bits_handling (TREE_TYPE (*expr_p)); 
 	case REAL_CST:
 	case FIXED_CST:
 	case STRING_CST:
@@ -7536,9 +7539,8 @@ gimplify_function_tree (tree fndecl)
 
   if (current_function_decl
       && flag_use_rtl_backend != -1
-      && TYPE_MODE (TREE_TYPE (TREE_TYPE (current_function_decl))) == TImode
-      && TYPE_PRECISION (TREE_TYPE (TREE_TYPE (current_function_decl))) == 128)
-    DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
+      && TYPE_MODE (TREE_TYPE (TREE_TYPE (current_function_decl))) == TImode)
+    sunir_check_128bits_handling (TREE_TYPE (TREE_TYPE (current_function_decl)));
 
   for (parm = DECL_ARGUMENTS (fndecl); parm ; parm = TREE_CHAIN (parm))
     {
