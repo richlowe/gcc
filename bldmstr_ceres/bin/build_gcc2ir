@@ -468,10 +468,13 @@ install_suncomponents()
 	fi
 
 	# Create the links for the user tools and their man pages.
-	mkdir -p $INSTALL_DIR/man/man1
-	mkdir -p $INSTALL_DIR/bin
-	for TOOL in bit ats discover
-	do
+        # Dont bother on Solaris 11 (OpenSolaris)
+        if [ `uname -r` == 5.10 ]
+        then
+	    mkdir -p $INSTALL_DIR/man/man1
+	    mkdir -p $INSTALL_DIR/bin
+	    for TOOL in bit ats discover
+	    do
 		# Create the link for the binary.
 		rm -f $INSTALL_DIR/bin/${TOOL}
 		ln -s ../../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin/${TOOL} \
@@ -480,7 +483,8 @@ install_suncomponents()
 		rm -fr $INSTALL_DIR/man/man1/${TOOL}.1
 		ln -s ../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/man/man1/${TOOL}.1 \
 			$INSTALL_DIR/man/man1/${TOOL}.1
-	done
+	    done
+        fi
 
 	# create soft links for v8plusc/v9c subdirectories
 	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
@@ -838,26 +842,39 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
     rm -f $ROOT/done/sed$$
 }
 
-# Since we use $PREFIX to build the compilers, the gmake install
-# installs it with the whole prefix. Get Rid of it from the
-# install area
+# On OpenSolaris we want the install structure to resemble what we will
+# see on the system, so that we can create packages easily
+# Basically we install everything into
+# /ws/gccfss/builds/4.3.2_s11/<date>/gcc/usr/compilers/gcc432/{bin,lib...}
+# /ws/gccfss/builds/4.3.2_s11/<date>/SUNW0scgfss
+#
+# We will move SUNW0scgfss also into /usr/compilers first
 manipulate_install_area ()
 {
     if [`uname -r` == 5.11 ]
     then
-        # layer the fortran and objc drivers
-        ( cd $INSTALL_DIR/.. ;
+        # layer the fortran and objc binaries
+        ( cd $INSTALL_DIR ;
           bzip2 -cd /ws/gccfss/source/gfortran_objc.tar.bz2 | tar xf - )
 
-        # On solaris 11 we want to keep the install structure
-        # as it is, however, we do need to copy the backend
-        # components
-        ( cd $INSTALL_DIR/.. ; \
-          mv $SUNINSTSUBDIR usr/compilers ;
-          /bin/rm -rf gcc) ;
+        # Move the SUNWscgfss firectory also into usr/compilers
+        mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
         
-        # we need to create the packages here.
-        # Fix me TODO!
+        # Lets create the packages
+        # 1. SUNWgcc432
+        /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+        
+        # 2. SUNWgccruntime432
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       
+       # 3. SUNWscgfss432
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       
+       # 4. SUNWgcclink432
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgcclink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       
+       # 4. SUNWgccruntimelink432
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgcclink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
     fi
 }
 
