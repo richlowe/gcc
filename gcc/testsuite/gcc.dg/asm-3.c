@@ -6,4 +6,4 @@ void f()
   asm ("foo%%bar");
 }
 
-/* { dg-final { scan-assembler "foo%%bar" } } */
+/* { dg-final { scan-assembler "foo%%bar" { xfail sparc*-*-* } } } */

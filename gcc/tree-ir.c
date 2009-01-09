@@ -11743,4 +11743,46 @@ sunir_check_builtin_handling (tree function)
     }
 }
 
+void
+sunir_check_128bits_handling (tree node)
+{
+  if (TYPE_IR_TWORD (node)) 
+    return;
+
+  if (TREE_CODE (node) != ENUMERAL_TYPE 
+      && TREE_CODE (node) != INTEGER_TYPE)
+    return;
+
+  if (TARGET_ARCH64)
+    {
+      const char *name = 0;
+      tree type = TYPE_MAIN_VARIANT (node);
+      /* Carefully distinguish all the standard types of C,
+         without messing up if the language is not C. */
+      if (TYPE_NAME (type) != 0
+          && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL
+          && DECL_NAME (TYPE_NAME (type)) != 0
+          && TREE_CODE (DECL_NAME (TYPE_NAME (type))) == IDENTIFIER_NODE)
+        name = IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (type)));
+      else
+        {
+          type = TREE_TYPE (type);
+          if (type && TYPE_NAME (type) != 0
+              && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL
+              && DECL_NAME (TYPE_NAME (type)) != 0
+              && TREE_CODE (DECL_NAME (TYPE_NAME (type))) == IDENTIFIER_NODE)
+            name = IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (type)));
+        }
+
+      if (name
+          && (!strcmp (name, "long int")
+             || !strcmp (name, "long unsigned int")))
+        return;
+      if (node == bitsizetype || TYPE_PRECISION (node) != 128)
+        return;
+    }
+  DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
+  return;
+}
+
 #include "gt-tree-ir.h"

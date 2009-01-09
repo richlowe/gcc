@@ -136,7 +136,10 @@ map_gnu_type_to_tword (tree node)
               if (node == bitsizetype)
                 ret = PCC_ULONG;
               else if (TYPE_PRECISION (node) == 128)
-		ret = 0; /* zero TYPE_IR_TWORD (node). Don't cache it */
+		{
+                  ret = 0; /* zero TYPE_IR_TWORD (node). Don't cache it */
+                  abort();
+                }
               else /* for others let's hope that llong will fit */
                 ret = (TYPE_UNSIGNED (node) ? PCC_ULLONG : PCC_LLONG);
             }
