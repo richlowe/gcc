@@ -851,7 +851,7 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
 # We will move SUNW0scgfss also into /usr/compilers first
 manipulate_install_area ()
 {
-    if [`uname -r` == 5.11 ]
+    if [ `uname -r` == 5.11 ]
     then
         # layer the fortran and objc binaries
         ( cd $INSTALL_DIR ;
@@ -862,19 +862,19 @@ manipulate_install_area ()
         
         # Lets create the packages
         # 1. SUNWgcc432
-        /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+        /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
         
         # 2. SUNWgccruntime432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
        
        # 3. SUNWscgfss432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
        
        # 4. SUNWgcclink432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgcclink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcclink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
        
        # 4. SUNWgccruntimelink432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/SUNWgcclink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntimelink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
     fi
 }
 
