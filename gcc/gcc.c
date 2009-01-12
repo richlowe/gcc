@@ -1041,6 +1041,22 @@ static const char *cpp_debug_options = "%{d*}";
 
 /* NB: This is shared amongst all front-ends.  */
 static const char *cc1_options =
+"%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}}\
+ %1 %{!Q:-quiet} -dumpbase %B %{d*} %{m*} %{a*}\
+ %{c|S:%{o*:-auxbase-strip %*}%{!o*:-auxbase %b}}%{!c:%{!S:-auxbase %b}}\
+ %{g*} %{O*} %{W*&pedantic*} %{w} %{std*&ansi&trigraphs}\
+ %{v:-version} %{pg:-p} %{p} %{f*} %{undef}\
+ %{Qn:-fno-ident} %{--help:--help}\
+ %{--target-help:--target-help}\
+ %{--help=*:--help=%(VALUE)}\
+ %{!fsyntax-only:%{S:%W{o*}%{!o*:-o %b.s}}}\
+ %{fsyntax-only:-o %j} %{-param*}\
+ %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants}\
+ %{coverage:-fprofile-arcs -ftest-coverage}";
+
+/* NB: This is shared amongst front-ends which invoke IR backend. 
+   Now they are C, C++. */
+static const char *gccfss_cc1_options =
  UNSUPPORTED_OPTIONS_SPEC
  COMMON_CC1_OPTIONS_SPEC
 "%{xipo=1|xipo=2: -ftree-ir-crossfile} \
@@ -1137,8 +1153,17 @@ const char *ssiropt_lang_spec_fortran =
 const char *sscg_lang_spec_fortran =
 "";           
 
-
+/* NB: This is shared amongst all front-ends.  */
 static const char *invoke_as =
+#ifdef AS_NEEDS_DASH_FOR_PIPED_INPUT
+"%{!S:-o %|.s |\n as %(asm_options) %|.s %A }";
+#else
+"%{!S:-o %|.s |\n as %(asm_options) %m.s %A }";
+#endif
+
+/* NB: This is shared amongst front-ends which invoke IR backend. 
+   Now they are C, C++. */
+static const char *gccfss_invoke_as =
 #ifdef AS_NEEDS_DASH_FOR_PIPED_INPUT
 "%{!S: |\n %(asm_name) %(asm_options)  \
      %{xforceas: %U.s; \
@@ -1617,15 +1642,15 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i} \n\
 		    cc1 -fpreprocessed %{save-temps:%b.i} %{!save-temps:%g.i} \
-			%(cc1_options) %(cc1_unique_options)}\
+			%(gccfss_cc1_options) %(cc1_unique_options)}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options) %(cc1_unique_options)}}}\
+		cc1 %(cpp_unique_options) %(gccfss_cc1_options) %(cc1_unique_options)}}}\
           %{!fsyntax-only: \
-             %{frtl-backend: %(invoke_as) ; \
+             %{frtl-backend: %(gccfss_invoke_as) ; \
                : %(invoke_iropt) %(ssiropt_spec) %Q \
                  %(invoke_cg) %(sscg_spec) %T } \
                 %{!S: \
-                  %{!frtl-backend: %{xforceas : %(invoke_as)}} \
+                  %{!frtl-backend: %{xforceas : %(gccfss_invoke_as)}} \
                   %{Zpec=*: %(invoke_ipo1) ; \
                     xpec: %(invoke_ipo1); \
                     xipo=1|xipo=2:%{!xprofile=collect*:%(invoke_ipo1) } } } }\
@@ -1634,13 +1659,13 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i}}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options) %(cc1_unique_options)}}\
+		cc1 %(cpp_unique_options) %(gccfss_cc1_options) %(cc1_unique_options)}}\
                 %{!fsyntax-only:\
-                   %{frtl-backend: %(invoke_as) ;\
+                   %{frtl-backend: %(gccfss_invoke_as) ;\
                      : %(invoke_iropt) %(ssiropt_spec) %Q \
                        %(invoke_cg) %(sscg_spec) %T }\
 			%{!S: \
-                          %{!frtl-backend: %{xforceas: %(invoke_as)}} \
+                          %{!frtl-backend: %{xforceas: %(gccfss_invoke_as)}} \
                           %{Zpec=*: %(invoke_ipo1) ; \
                             xpec: %(invoke_ipo1); \
                             xipo=1|xipo=2:%{!xprofile=collect*:%(invoke_ipo1) } } }\
@@ -1666,13 +1691,13 @@ static const struct compiler default_compilers[] =
                     %W{o*:--output-pch=%*}%V}}}}}}", 0, 0, 0},
   {".i", "@cpp-output", 0, 1, 0},
   {"@cpp-output",
-   "%{!M:%{!MM:%{!E:cc1 -fpreprocessed %i %(cc1_options) %(cc1_unique_options) \
+   "%{!M:%{!MM:%{!E:cc1 -fpreprocessed %i %(gccfss_cc1_options) %(cc1_unique_options) \
                 %{!fsyntax-only:\
-                  %{frtl-backend: %(invoke_as) ; \
+                  %{frtl-backend: %(gccfss_invoke_as) ; \
                     : %(invoke_iropt) %(ssiropt_spec) %Q \
                       %(invoke_cg) %(sscg_spec) %T }\
 		     %{!S: \
-                       %{!frtl-backend: %{xforceas: %(invoke_as)}} \
+                       %{!frtl-backend: %{xforceas: %(gccfss_invoke_as)}} \
                        %{Zpec=*: %(invoke_ipo1) ; \
                          xpec: %(invoke_ipo1); \
                          xipo=1|xipo=2:%{!xprofile=collect*:%(invoke_ipo1) } } }\
@@ -3328,6 +3353,7 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("asm_final",		&asm_final_spec),
   INIT_STATIC_SPEC ("asm_options",		&asm_options),
   INIT_STATIC_SPEC ("invoke_as",		&invoke_as),
+  INIT_STATIC_SPEC ("gccfss_invoke_as",		&gccfss_invoke_as),
   INIT_STATIC_SPEC ("cpp",			&cpp_spec),
   INIT_STATIC_SPEC ("cpp_options",		&cpp_options),
   INIT_STATIC_SPEC ("cpp_debug_options",	&cpp_debug_options),
@@ -3335,6 +3361,7 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("trad_capable_cpp",		&trad_capable_cpp),
   INIT_STATIC_SPEC ("cc1",			&cc1_spec),
   INIT_STATIC_SPEC ("cc1_options",		&cc1_options),
+  INIT_STATIC_SPEC ("gccfss_cc1_options",	&gccfss_cc1_options),
   INIT_STATIC_SPEC ("cc1_unique_options",	&cc1_unique_options),
   INIT_STATIC_SPEC ("oldstyle_cc1_options",	&oldstyle_cc1_options),
   INIT_STATIC_SPEC ("cc1plus",			&cc1plus_spec),
