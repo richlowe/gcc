@@ -49,7 +49,7 @@ along with GCC; see the file COPYING3.  If not see
 		%(cpp_options) %2 -o %{save-temps:%b.ii} %{!save-temps:%g.ii} \n}\
       cc1plus %{save-temps|no-integrated-cpp:-fpreprocessed %{save-temps:%b.ii} %{!save-temps:%g.ii}}\
 	      %{!save-temps:%{!no-integrated-cpp:%(cpp_unique_options)}}\
-	%(cc1_options) %2 %{+e1*}\
+	%(gccfss_cc1_options) %2 %{+e1*}\
 	%{!fsyntax-only:%{usertl:-o %g.s} %{!o*:--output-pch=%i.gch} %W{o*:--output-pch=%*}%V}}}}",
      CPLUSPLUS_CPP_SPEC, 0, 0},
   {"@c++",
@@ -59,14 +59,14 @@ along with GCC; see the file COPYING3.  If not see
 		%(cpp_options) %2 -o %{save-temps:%b.ii} %{!save-temps:%g.ii} \n}\
       cc1plus %{save-temps|no-integrated-cpp:-fpreprocessed %{save-temps:%b.ii} %{!save-temps:%g.ii}}\
 	      %{!save-temps:%{!no-integrated-cpp:%(cpp_unique_options)}}\
-	%(cc1_options) %2 %{+e1*}\
+	%(gccfss_cc1_options) %2 %{+e1*}\
         %{!usertl: %{ipo=* : -ftree-ir-crossfile } }\
        %{!fsyntax-only: \
-         %{frtl-backend: %(invoke_as) ; \
+         %{frtl-backend: %(gccfss_invoke_as) ; \
            : %(invoke_iropt) %(ssiropt_spec_gxx) %Q \
 		 %(invoke_cg) %(sscg_spec_gxx) %T} \
            %{!S: \
-              %{!frtl-backend: %{xforceas: %(invoke_as) }} \
+              %{!frtl-backend: %{xforceas: %(gccfss_invoke_as) }} \
               %{Zpec=*: %(invoke_cppipo1) ; \
                 xpec : %(invoke_cppipo1); \
                 xipo=1|xipo=2: %{!xprofile=collect*: %(invoke_cppipo1)} }  }  }}}}",
@@ -74,13 +74,13 @@ along with GCC; see the file COPYING3.  If not see
   {".ii", "@c++-cpp-output", 0, 0, 0},
   {"@c++-cpp-output",
    "%{!M:%{!MM:%{!E:\
-    cc1plus -fpreprocessed %i %(cc1_options) %2 %{+e*}\
+    cc1plus -fpreprocessed %i %(gccfss_cc1_options) %2 %{+e*}\
     %{!fsyntax-only: \
-      %{frtl-backend: %(invoke_as) ; \
+      %{frtl-backend: %(gccfss_invoke_as) ; \
         :  %(invoke_iropt) %(ssiropt_spec_gxx) %Q \
 		%(invoke_cg) %(sscg_spec_gxx) %T}\
          %{!S: \
-            %{!frtl-backend: %{xforceas: %(invoke_as) }} \
+            %{!frtl-backend: %{xforceas: %(gccfss_invoke_as) }} \
             %{Zpec=*: %(invoke_cppipo1) ; \
               xpec: %(invoke_cppipo1); \
               xipo=1|xipo=2: %{!xprofile=collect*: %(invoke_cppipo1)} } } }}}}", 0, 0, 0},
