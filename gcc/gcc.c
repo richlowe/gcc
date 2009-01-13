@@ -818,12 +818,7 @@ proper position among the other output files.  */
 /* these options are passed only to iropt and not to ipo */
 static const char *iropt_only_options =
 " %{xprofile=*: \
-        -xlibxprof -xlibxprof_tls=yes \
-        %{c:%{!o*:-oo %b.o}     \
-                  %{o* :-oo %*  }}   \
-        %{!c: %{Zpec=*:-oo %d%w%U%O;  \ 
-                      :-oo %b.o} }  \
-        %{xipo=1|xipo=2: -xprofile_replace=program } \
+        -xlibxprof_tls=yes \
    }";
 
 /* -u* was put back because both BSD and SysV seem to support it.  */
@@ -1224,9 +1219,20 @@ static const char *xtarget =
 static const char *iropt_ipo_options =
 " %(ssbe_xarch_xchip) %(xtarget) %(ssiropt_optlevel) \
  %{m64} \
- %{xprofile=use=* : -xprofile=use:%+profile%* } \
- %{Zprofile=use=* : -xprofile=use:%+profile%* } \
- %{xprofile=collect=*: -xprofile=collect:%+profile%* }   \
+ %{xprofile=use=* | Zprofile=use=*: \
+        -xlibxprof \
+        %{c:%{!o*:-oo %b.o}     \
+                  %{o* :-oo %*  }}   \
+        %{!c: %{Zpec=*:-oo %d%w%U%O;  \ 
+                      :-oo %b.o} }  \
+	 -xprofile=use:%+profile%* } \
+ %{xprofile=collect=*: \
+        -xlibxprof \
+        %{c:%{!o*:-oo %b.o}     \
+                  %{o* :-oo %*  }}   \
+        %{!c: %{Zpec=*:-oo %d%w%U%O;  \ 
+                      :-oo %b.o} }  \
+	-xprofile=collect:%+profile%* }   \
  %{Zfprofile-arcs: \
 	%{Zfprofile-values: ; \
 	  Zfvpt: ; \
