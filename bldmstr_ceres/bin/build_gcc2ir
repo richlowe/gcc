@@ -858,7 +858,9 @@ manipulate_install_area ()
           bzip2 -cd /ws/gccfss/source/gfortran_objc.tar.bz2 | tar xf - )
 
         # Move the SUNWscgfss firectory also into usr/compilers
-        mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
+        #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
+	( cd $INSTALL_DIR/../$SUNINSTSUBDIR;
+	  find . | cpio -pdum $INSTALL_DIR/usr/compilers )
         
         # Lets create the packages
         # 1. SUNWgcc432
