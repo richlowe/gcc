@@ -819,10 +819,10 @@ proper position among the other output files.  */
 static const char *iropt_only_options =
 " %{xprofile=*: \
         -xlibxprof -xlibxprof_tls=yes \
-        %{!S: %{c:%{!o*:-oo %b.o}     \
-                  %{o* :-oo %*  } }   \
+        %{c:%{!o*:-oo %b.o}     \
+                  %{o* :-oo %*  }}   \
         %{!c: %{Zpec=*:-oo %d%w%U%O;  \ 
-                      :-oo %b.o} } }  \
+                      :-oo %b.o} }  \
         %{xipo=1|xipo=2: -xprofile_replace=program } \
    }";
 
