@@ -4003,6 +4003,7 @@ install-gccbuiltins.il: installdirs gccbuiltins.il sparcv9/gccbuiltins.il
 	rm -f $(DESTDIR)$(libsubdir)/gccbuiltins.il
 	$(INSTALL_DATA) gccbuiltins.il $(DESTDIR)$(libsubdir)/gccbuiltins.il
 	rm -f $(DESTDIR)$(libsubdir)/sparcv9/gccbuiltins.il
+	(cd $(DESTDIR)$(libsubdir); if [ ! -d sparcv9 ];then mkdir sparcv9;fi)
 	$(INSTALL_DATA) sparcv9/gccbuiltins.il $(DESTDIR)$(libsubdir)/sparcv9/gccbuiltins.il
 
 # Handle cpp installation.
