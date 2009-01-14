@@ -7,6 +7,7 @@ else
 	COMPILERDIR=/ws/gccfss/builds/4.3.2
 fi
 
+VERSION=432
 MAIL_LIST=
 
 if [ $# -ne 1 -a $# -ne 2 ]
@@ -18,7 +19,7 @@ then
 	exit 1
 fi
 
-TRAIN=$1
+TRAIN=$1$VERSION
 
 cd $COMPILERDIR
 
