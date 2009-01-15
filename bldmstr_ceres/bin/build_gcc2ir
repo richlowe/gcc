@@ -575,6 +575,34 @@ prepare_tests_cross()
   export SN_SERIAL_FILE
 }
 
+run_tests_installed()
+{
+  # Running test for Objc and Fortran
+  echo "Running tests for Objc and Fortran"
+
+  FINAL_INSTALL_DIR=$INSTALL_DIR/usr/compilers/gcc432
+  cd $ROOT/build.gcc2ir/gcc
+
+  rm -rf testsuite.objc-fortran.m32
+  mkdir testsuite.objc-fortran.m32
+  if [ ! -d $ROOT/logs/result.m32 ]
+  then
+    mkdir -p $ROOT/logs/result.m32 
+  fi
+
+  export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/sys:$LD_LIBRARY_PATH
+  export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib:$LD_LIBRARY_PATH
+
+  cd testsuite.objc-fortran.m32
+
+  # NB: use stock gcc's testsuit.
+  ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
+    --with-testsuite=/net/gccfss-v890-1/export/prash/gcc-4.3.2/gcc/testsuite \
+    --without-gcc --without-g++ \
+	> $ROOT/logs/tests.objc-fortran.m32.log 2>&1); \
+    mv *.log *.sum $ROOT/logs/result.m32 
+}
+
 run_tests_parallel()
 {
   # test both -m32 and -m64 at the same time
@@ -620,15 +648,21 @@ then
 	> $ROOT/logs/tests.g++.m64.log 2>&1 &
   
   sleep 3
-  $GMAKE  -k check-fortran EXPECT=$EXPECT  \
+  
+  if [ `uname -r` == 5.11 ]
+  then
+    run_tests_installed &
+  else
+    $GMAKE  -k check-fortran EXPECT=$EXPECT  \
       TESTSUITEDIR="testsuite.gfortran.m32" \
       RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
       	> $ROOT/logs/tests.gfortran.m32.log 2>&1 &
-  sleep 3
-  $GMAKE  -k check-fortran EXPECT=$EXPECT  \
+    sleep 3
+    $GMAKE  -k check-fortran EXPECT=$EXPECT  \
       TESTSUITEDIR="testsuite.gfortran.m64" \
       RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
       	> $ROOT/logs/tests.gfortran.m64.log 2>&1 &
+  fi
 
   # libstdc++ must be tested in the testsuite directory
   # So, we cannot run both -m32 and -m64 in parallel.
@@ -709,12 +743,12 @@ fi
 
 run_tests()
 {
-if [ `uname -p` != i386 ]
-then
-  prepare_tests
-else
-  prepare_tests_cross
-fi
+  if [ `uname -p` != i386 ]
+  then
+    prepare_tests
+  else
+    prepare_tests_cross
+  fi
 
   run_tests_parallel
 }
@@ -859,24 +893,32 @@ manipulate_install_area ()
 
         # Move the SUNWscgfss firectory also into usr/compilers
         #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
-	( cd $INSTALL_DIR/../$SUNINSTSUBDIR;
-	  find . | cpio -pdum $INSTALL_DIR/usr/compilers )
+	( cd $INSTALL_DIR/..;
+	  find $SUNINSTSUBDIR | cpio -pdum $INSTALL_DIR/usr/compilers )
         
         # Lets create the packages
+	echo "Create packages ..."
         # 1. SUNWgcc432
-        /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+        /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	  > $ROOT/logs/packages.log 2>&1
+
         
         # 2. SUNWgccruntime432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	  >> $ROOT/logs/packages.log 2>&1
+	  
        
        # 3. SUNWscgfss432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	  >> $ROOT/logs/packages.log 2>&1
        
        # 4. SUNWgcclink432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcclink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcclink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	  >> $ROOT/logs/packages.log 2>&1
        
        # 4. SUNWgccruntimelink432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntimelink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/..
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntimelink432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	  >> $ROOT/logs/packages.log 2>&1
     fi
 }
 
