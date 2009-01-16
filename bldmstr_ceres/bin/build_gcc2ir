@@ -590,17 +590,30 @@ run_tests_installed()
     mkdir -p $ROOT/logs/result.m32 
   fi
 
+  rm -rf testsuite.objc-fortran.m64
+  mkdir testsuite.objc-fortran.m64
+  if [ ! -d $ROOT/logs/result.m64 ]
+  then
+    mkdir -p $ROOT/logs/result.m64 
+  fi
+
   export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/sys:$LD_LIBRARY_PATH
   export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib:$LD_LIBRARY_PATH
 
-  cd testsuite.objc-fortran.m32
-
   # NB: use stock gcc's testsuit.
+  (cd testsuite.objc-fortran.m32; \
   ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
     --with-testsuite=/net/gccfss-v890-1/export/prash/gcc-4.3.2/gcc/testsuite \
     --without-gcc --without-g++ \
 	> $ROOT/logs/tests.objc-fortran.m32.log 2>&1); \
-    mv *.log *.sum $ROOT/logs/result.m32 
+    mv *.log *.sum $ROOT/logs/result.m32 )
+
+  (cd testsuite.objc-fortran.m64; \
+  ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
+    --with-testsuite=/net/gccfss-v890-1/export/prash/gcc-4.3.2/gcc/testsuite \
+    --without-gcc --without-g++ --target_board=unix/-m64 \
+	> $ROOT/logs/tests.objc-fortran.m64.log 2>&1); \
+    mv *.log *.sum $ROOT/logs/result.m64 )
 }
 
 run_tests_parallel()
