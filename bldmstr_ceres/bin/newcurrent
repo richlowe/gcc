@@ -4,7 +4,12 @@ if [ `uname -s` = Linux ]
 then
 	COMPILERDIR=/net/perftech-064/data/compilers
 else
-	COMPILERDIR=/ws/gccfss/builds/4.3.2
+	if [ `uname -r` == 5.11 ]
+	then
+	  COMPILERDIR=/ws/gccfss/builds/4.3.2_s11
+	else
+	  COMPILERDIR=/ws/gccfss/builds/4.3.2
+	fi
 fi
 
 VERSION=432

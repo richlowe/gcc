@@ -51,7 +51,7 @@ function waitForFile {
 }
 
 
-# OS should either be "Linux" or the SunOS version number (e.g. "5.10")
+# OS should either be "Linux" "i386" or the SunOS version number (e.g. "5.10")
 OS=`uname -s`
 if [ $OS = SunOS ]
 then

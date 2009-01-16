@@ -12,7 +12,7 @@ TEMPFILE1=/tmp/compare.$$.1.tmp
 function usage {
 	echo >&2 "Usage: $0 <OS> <builddir>"
 	echo >&2 "where <builddir> is the top directory of the gcc4ss build"
-	echo >&2 "and <OS> is either 5.10, or Linux"
+	echo >&2 "and <OS> is either 5.10, 5.11 or Linux"
 	exit 1
 }
 
@@ -59,7 +59,7 @@ OS=$1
 BUILDDIR=$2
 
 case $OS in
-	5.10|Linux)	;;
+	5.10|5.11|Linux)	;;
 	*)	usage;;
 esac
 

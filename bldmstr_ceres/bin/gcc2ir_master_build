@@ -169,13 +169,16 @@ fi
 if [ $RUNTESTS = 1 ]
 then
 
-# Run gdb testsuite with -m32 option
-/bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /import/dr3/gnu/bin/gdb -T /import/backend-src/gdb6.3/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
+  if [ `uname -r` != 5.11 ]
+  then
+    # Run gdb testsuite with -m32 option
+    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /import/dr3/gnu/bin/gdb -T /import/backend-src/gdb6.3/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
+  fi
 
-wait
+  wait
 
-# Compare test results with the golden files
-/bin/ksh ${SCRIPTDIR}/compareTestResults $OS_NAME $BUILDDIR > $BUILDDIR/logs/test.comparison 2>&1
+  # Compare test results with the golden files
+  /bin/ksh ${SCRIPTDIR}/compareTestResults $OS_NAME $BUILDDIR > $BUILDDIR/logs/test.comparison 2>&1
 
 fi
 
