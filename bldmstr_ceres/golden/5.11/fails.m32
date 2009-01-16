@@ -1,0 +1,669 @@
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O0  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O1  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O2  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O3  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O3 -finline-functions  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -fast  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -fast -xipo=2  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -O2 -g  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/abi/rtti3.C  -Os  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O1  (test for excess errors)
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O2  (test for excess errors)
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O3  (test for excess errors)
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O3 -finline-functions  (test for excess errors)
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast  (test for excess errors)
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast -xipo=2  (test for excess errors)
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O2 -g  (test for excess errors)
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -Os  (test for excess errors)
+g++.sum:FAIL: g++.dg/gomp/pr29965-3.C (test for excess errors)
+g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/system-2.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/tree-ssa/pr22444.C (test for excess errors)
+g++.sum:FAIL: g++.old-deja/g++.mike/eh16.C (test for excess errors)
+g++.sum:FAIL: g++.old-deja/g++.mike/eh17.C (test for excess errors)
+g++.sum:FAIL: g++.old-deja/g++.mike/p5571.C (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O1 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 -finline-functions 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 -g 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -Os 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -O1 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -O3 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -O3 -finline-functions 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -O2 -g 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strcpy-2.c execution,  -Os 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O1 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O3 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O3 -finline-functions 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -O2 -g 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-2.c execution,  -Os 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O1 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -finline-functions 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -O2 -g 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/strlen-3.c execution,  -Os 
+gcc.sum:FAIL: gcc.c-torture/execute/pr35456.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/pr35456.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/20000320-1.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/20000320-1.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/compare-fp-4.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/compare-fp-4.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-1.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-1.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-2.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-2.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-3.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-3.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-4.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-4.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-4f.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-4f.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-4l.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-4l.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-5.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-5.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-8.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-8.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-8f.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-8f.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-8l.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/fp-cmp-8l.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/mul-subnormal-single-1.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/mul-subnormal-single-1.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.dg/cpp/_Pragma3.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
+gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/attr-weakref-1.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/funcorder.c scan-assembler-not link_error
+gcc.sum:FAIL: gcc.dg/pr17506.c  (test for warnings, line 11)
+gcc.sum:FAIL: gcc.dg/pr17506.c  (test for warnings, line 21)
+gcc.sum:FAIL: gcc.dg/pr26570.c  (test for warnings, line 7)
+gcc.sum:FAIL: gcc.dg/pr26570.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 13)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 14)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 15)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 16)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 13)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 14)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 15)
+gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 16)
+gcc.sum:FAIL: gcc.dg/pr30643.c scan-assembler-not undefined
+gcc.sum:FAIL: gcc.dg/pr32773.c  (test for warnings, line 9)
+gcc.sum:FAIL: gcc.dg/pr32773.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
+gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
+gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 16)
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 28)
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 34)
+gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 40)
+gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
+gcc.sum:FAIL: gcc.dg/gomp/pr29965-3.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/matrix/transpose-1.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-2.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-3.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-4.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-5.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/matrix/transpose-6.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
+gcc.sum:FAIL: gcc.dg/pch/common-1.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/common-1.c  -O3  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/common-1.c  -Os  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-1.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c -O0 -g (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/cpp-1.c -O0 -g (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/cpp-1.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/cpp-2.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O1   (test for warnings, line )
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -fast   (test for warnings, line )
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O2 -g   (test for warnings, line )
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -Os   (test for warnings, line )
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -Os  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/decl-2.c  -O2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/decl-3.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/decl-3.c  -Os  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/decl-4.c -O0 -g (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/decl-5.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/empty.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/empty.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/global-1.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/global-1.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/import-1.c  -O3  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/import-2.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/import-2.c  -O3  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-1.c -O0 -g (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-2.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-2.c  -O2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -O2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-1.c -O0 -g (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/macro-2.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -O3  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O0  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -Os  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/static-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-1.c  -O0  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O0  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-3.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O0  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O3  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -O2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/system-1.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/valid-1b.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast   (test for warnings, line 5)
+gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: largefile.c -O0 -g (test for excess errors)
+gcc.sum:FAIL: largefile.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/torture/builtin-noret-1.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/torture/builtin-noret-2.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/tree-prof/inliner-1.c scan-tree-dump optimized "cold_function ..;"
+gcc.sum:FAIL: gcc.dg/tree-prof/tracer-1.c scan-tree-dump-times tracer "goto <bb 6>;" 2
+gcc.sum:FAIL: gcc.dg/tree-prof/val-prof-5.c scan-tree-dump tree_profile "Div.mod by constant b.*=997 transformation on insn"
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr14490-2.c scan-tree-dump-times gimple "\+ -10" 1
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 9)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 12)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 24)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-1.c  (test for warnings, line 27)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 9)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 12)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 23)
+gcc.sum:FAIL: gcc.dg/tree-ssa/pr19210-2.c  (test for warnings, line 26)
+gcc.sum:FAIL: gcc.dg/tree-ssa/useless-1.c scan-tree-dump-times useless "goto" 3
+gcc.sum:FAIL: compiler driver --coverage option(s) (compiler options)
+gcc.sum:FAIL: gcc.target/sparc/combined-1.c scan-assembler-times fandnot1	% 4
+gcc.sum:FAIL: gcc.target/sparc/fand.c scan-assembler-times fand	% 3
+gcc.sum:FAIL: gcc.target/sparc/fandnot.c scan-assembler-times fandnot1	% 6
+gcc.sum:FAIL: gcc.target/sparc/fandnots.c scan-assembler-times fandnot1s	% 4
+gcc.sum:FAIL: gcc.target/sparc/fnand.c scan-assembler-times fnand	% 6
+gcc.sum:FAIL: gcc.target/sparc/fnands.c scan-assembler-times fnands	% 4
+gcc.sum:FAIL: gcc.target/sparc/fnot.c scan-assembler-times fnot1	% 3
+gcc.sum:FAIL: gcc.target/sparc/for.c scan-assembler-times for	% 3
+gcc.sum:FAIL: gcc.target/sparc/fornot.c scan-assembler-times fornot1	% 6
+gcc.sum:FAIL: gcc.target/sparc/fornots.c scan-assembler-times fornot1s	% 4
+gcc.sum:FAIL: gcc.target/sparc/fpadd32s.c scan-assembler fpadd32s\t%
+gcc.sum:FAIL: gcc.target/sparc/fpmerge-2.c scan-assembler-not fpmerge\t%
+gcc.sum:FAIL: gcc.target/sparc/fpmul-2.c scan-assembler-not fmul8x16\t%
+gcc.sum:FAIL: gcc.target/sparc/fpsub32s.c scan-assembler fpsub32s\t%
+gcc.sum:FAIL: gcc.target/sparc/fxnor.c scan-assembler-times fxnor	% 6
+gcc.sum:FAIL: gcc.target/sparc/fxnors.c scan-assembler-times fxnors	% 4
+gcc.sum:FAIL: gcc.target/sparc/fxor.c scan-assembler-times fxor	% 3
+gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
+gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[^\n]*ld[ \t]*\\[%sp\\+96\\]
+gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[^\n]*nop
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_coms.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_dts_2.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_10.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_usage_16.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bind_c_vars.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/bom_UTF-8_F.F90  -O  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_assoc.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_char_tests.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_complex.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_logical.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_shape_tests_2.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_f_pointer_tests.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_3.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_funloc_tests_4.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_test.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_loc_tests_2.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_7.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_ptr_tests_8.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/c_size_t_test.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/do_3.F90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/enum_10.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_4.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/f2c_5.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_c_init.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/global_vars_f90_init.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/gnu_logical_1.F  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O0   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O0   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O1   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O1   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O2   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O2   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer -funroll-loops   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer -funroll-loops   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -g   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -g   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -Os   (test for warnings, line 167)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -Os   (test for warnings, line 169)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_3.F90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/integer_exponentiation_5.F90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_1.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/iso_c_binding_rename_2.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_2.F90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_3.F90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_x.F  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_y.F  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/literal_character_constant_1_z.F  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/lrshift_1.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/mixed_io_1.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/pr32627.f03  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/test_only_clause.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/value_4.f90  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp.F  -O  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp2.F  -O  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp3.F  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O0  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O0  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O1  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O1  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O2  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O2  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer -funroll-loops  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer -funroll-loops  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -g  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -g  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -Os  const (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -Os  conversion (test for warnings, line 6)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp4.F  -Os  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -O0  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -O1  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -O2  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -O3 -fomit-frame-pointer  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -O3 -fomit-frame-pointer -funroll-loops  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -O3 -g  (test for excess errors)
+gfortran.sum:FAIL: gfortran.dg/g77/cpp5.F  -Os  (test for excess errors)
+libstdc++.sum:FAIL: 27_io/basic_ofstream/cons/char/2.cc execution test
+libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
+objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-loops  -fgnu-runtime
+objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  -fgnu-runtime
