@@ -597,8 +597,8 @@ run_tests_installed()
     mkdir -p $ROOT/logs/result.m64 
   fi
 
-  export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/sys:$LD_LIBRARY_PATH
-  export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib:$LD_LIBRARY_PATH
+  export LD_LIBRARY_PATH_32=$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/sys:$LD_LIBRARY_PATH_32
+  export LD_LIBRARY_PATH_32=$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib:$LD_LIBRARY_PATH_32
 
   # NB: use stock gcc's testsuit.
   (cd testsuite.objc-fortran.m32; \
