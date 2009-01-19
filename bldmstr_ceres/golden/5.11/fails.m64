@@ -16,6 +16,7 @@ g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast -xipo=2  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O2 -g  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -Os  (test for excess errors)
 g++.sum:FAIL: g++.dg/gomp/pr29965-3.C (test for excess errors)
+g++.sum:FAIL: g++.dg/libgomp/pr30703.C execution test
 g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
@@ -234,3 +235,5 @@ gcc.sum:FAIL: gcc.target/sparc/fxnors.c scan-assembler-times fxnors	% 4
 gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
 libstdc++.sum:FAIL: 27_io/basic_ofstream/cons/char/2.cc execution test
 libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
+objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-loops  -fgnu-runtime
+objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  -fgnu-runtime
