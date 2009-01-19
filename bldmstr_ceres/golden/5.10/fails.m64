@@ -17,6 +17,7 @@ g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast -xipo=2  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O2 -g  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -Os  (test for excess errors)
 g++.sum:FAIL: g++.dg/gomp/pr29965-3.C (test for excess errors)
+g++.sum:FAIL: g++.dg/libgomp/pr30703.C execution test
 g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
