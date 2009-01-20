@@ -347,7 +347,7 @@ chrec_fold_plus (tree type,
   if (integer_zerop (op1))
     return chrec_convert (type, op0, NULL_TREE);
 
-  if (POINTER_TYPE_P (type))
+  if (POINTER_TYPE_P (type) && ! POINTER_TYPE_P (TREE_TYPE (op1)))
     code = POINTER_PLUS_EXPR;
   else
     code = PLUS_EXPR;
