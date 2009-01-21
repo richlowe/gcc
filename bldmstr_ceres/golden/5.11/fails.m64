@@ -233,6 +233,8 @@ gcc.sum:FAIL: gcc.target/sparc/fpsub32s.c scan-assembler fpsub32s\t%
 gcc.sum:FAIL: gcc.target/sparc/fxnor.c scan-assembler-times fxnor	% 6
 gcc.sum:FAIL: gcc.target/sparc/fxnors.c scan-assembler-times fxnors	% 4
 gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
+gfortran.sum:FAIL: gfortran.dg/deallocate_stat.f90  -O1  (internal compiler error)
+gfortran.sum:FAIL: gfortran.dg/deallocate_stat.f90  -O1  (test for excess errors)
 libstdc++.sum:FAIL: 27_io/basic_ofstream/cons/char/2.cc execution test
 libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
 objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-loops  -fgnu-runtime
