@@ -238,5 +238,6 @@ gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[
 gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[^\n]*nop
 libstdc++.sum:FAIL: 27_io/basic_ofstream/cons/char/2.cc execution test
 libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
+libstdc++.sum:FAIL: tr1/2_general_utilities/shared_ptr/thread/default_weaktoshared.cc execution test
 objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-loops  -fgnu-runtime
 objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  -fgnu-runtime
