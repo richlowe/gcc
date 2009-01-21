@@ -236,6 +236,8 @@ gcc.sum:FAIL: gcc.target/sparc/fxor.c scan-assembler-times fxor	% 3
 gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
 gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[^\n]*ld[ \t]*\\[%sp\\+96\\]
 gcc.sum:FAIL: gcc.target/sparc/sparc-ret.c scan-assembler return[ \t]*%i7\\+8\n[^\n]*nop
+libstdc++.sum:FAIL: 20_util/shared_ptr/thread/default_weaktoshared.cc execution
+test
 libstdc++.sum:FAIL: 27_io/basic_ofstream/cons/char/2.cc execution test
 libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
 libstdc++.sum:FAIL: tr1/2_general_utilities/shared_ptr/thread/default_weaktoshared.cc execution test
