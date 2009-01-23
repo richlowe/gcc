@@ -321,6 +321,7 @@ c_common_handle_option (size_t scode, const char *arg, int value)
 
     case OPT__output_pch_:
       pch_file = arg;
+      flag_use_rtl_backend = -1;
       break;
 
     case OPT_A:
