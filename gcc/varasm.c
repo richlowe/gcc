@@ -6758,4 +6758,28 @@ default_elf_asm_output_external (FILE *file ATTRIBUTE_UNUSED,
     maybe_assemble_visibility (decl);
 }
 
+/* Output initializer or finalizer entries for DECL to FILE.  */
+
+void
+sunir_output_init_fini (FILE *file, tree decl)
+{
+  if (lookup_attribute ("init", DECL_ATTRIBUTES (decl)))
+    {
+      fprintf (file, "\t.pushsection\t\".init\"\n");
+      fprintf (asm_out_file, "\tcall\t");
+      fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
+      fprintf (asm_out_file, "\n\tnop\n");
+      fprintf (file, "\t.popsection\n");
+    }
+
+  if (lookup_attribute ("fini", DECL_ATTRIBUTES (decl)))
+    {
+      fprintf (file, "\t.pushsection\t\".fini\"\n");
+      fprintf (asm_out_file, "\tcall\t");
+      fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
+      fprintf (asm_out_file, "\n\tnop\n");
+      fprintf (file, "\t.popsection\n");
+    }
+}
+
 #include "gt-varasm.h"

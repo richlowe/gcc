@@ -617,6 +617,7 @@ extern bool default_valid_pointer_mode (enum machine_mode);
 extern void default_elf_asm_output_external (FILE *file, tree,
 					     const char *);
 extern int maybe_assemble_visibility (tree);
+extern void sunir_output_init_fini (FILE *file, tree);
 
 extern int default_address_cost (rtx);
 

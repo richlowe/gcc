@@ -8792,6 +8792,7 @@ dump_function_ir (tree fn)
   /* and make sure that the current sections is a ".text" section after
      function definition */
   switch_to_section (function_section (fn)); 
+  sunir_output_init_fini(asm_out_file, fn);
 
   return;
 }
