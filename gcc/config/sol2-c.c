@@ -182,8 +182,6 @@ solaris_pragma_init (cpp_reader *pfile ATTRIBUTE_UNUSED)
 #ifndef __linux__
           if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0)
             {
-              if (!TREE_PUBLIC (decl))
-                error ("%qs referenced in #pragma should be global and previously declared.", IDENTIFIER_POINTER (t));
               fprintf (asm_out_file, "\t.pushsection\t\".init\"\n");
               fprintf (asm_out_file, "\tcall\t");
               fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
@@ -266,8 +264,6 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
 #ifndef __linux__
           if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0)
             {
-              if (!TREE_PUBLIC (decl))
-                error ("%qs referenced in #pragma should be global and previously declared.", IDENTIFIER_POINTER (t));
               fprintf (asm_out_file, "\t.pushsection\t\".fini\"\n");
               fprintf (asm_out_file, "\tcall\t");
               fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
