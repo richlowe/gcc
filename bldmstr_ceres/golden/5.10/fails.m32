@@ -7,6 +7,7 @@ g++.sum:FAIL: g++.dg/abi/rtti3.C  -fast  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -fast -xipo=2  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -O2 -g  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -Os  scan-assembler .weak[ \t]_?_ZTSPP1A
+g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O0  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O1  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O2  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O3  (test for excess errors)
