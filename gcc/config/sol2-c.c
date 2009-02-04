@@ -180,7 +180,7 @@ solaris_pragma_init (cpp_reader *pfile ATTRIBUTE_UNUSED)
 	  tree attrs = tree_cons (get_identifier ("used"), NULL, init_list);
 	  decl_attributes (&decl, attrs, 0);
 #ifndef __linux__
-          if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0)
+          if (flag_unit_at_a_time == 0)
             {
               fprintf (asm_out_file, "\t.pushsection\t\".init\"\n");
               fprintf (asm_out_file, "\tcall\t");
@@ -188,22 +188,6 @@ solaris_pragma_init (cpp_reader *pfile ATTRIBUTE_UNUSED)
               fprintf (asm_out_file, "\n\tnop\n");
               fprintf (asm_out_file, "\t.popsection\n");
             }
-          else
-            {
-              fprintf (asm_out_file, "\t.pushsection\t\".init\"\n");
-              fprintf (asm_out_file, "\tcall\t");
-              fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (t));
-              fprintf (asm_out_file, "\n\tnop\n");
-              fprintf (asm_out_file, "\t.popsection\n");
-            }
-	}
-      else if ( globalize_flag = 0 && strcmp (lang_hooks.name, "GNU C") == 0)
-        {
-          fprintf (asm_out_file, "\t.pushsection\t\".init\"\n");
-          fprintf (asm_out_file, "\tcall\t");
-          fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (t));
-          fprintf (asm_out_file, "\n\tnop\n");
-          fprintf (asm_out_file, "\t.popsection\n");
 #endif
         }
       else
@@ -264,7 +248,7 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
 	  tree attrs = tree_cons (get_identifier ("used"), NULL, fini_list);
 	  decl_attributes (&decl, attrs, 0);
 #ifndef __linux__
-          if (globalize_flag || strcmp (lang_hooks.name, "GNU C++") == 0)
+          if (flag_unit_at_a_time == 0)
             {
               fprintf (asm_out_file, "\t.pushsection\t\".fini\"\n");
               fprintf (asm_out_file, "\tcall\t");
@@ -272,22 +256,6 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
               fprintf (asm_out_file, "\n\tnop\n");
               fprintf (asm_out_file, "\t.popsection\n");
             }
-          else
-            {
-              fprintf (asm_out_file, "\t.pushsection\t\".fini\"\n");
-              fprintf (asm_out_file, "\tcall\t");
-              fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (t));
-              fprintf (asm_out_file, "\n\tnop\n");
-              fprintf (asm_out_file, "\t.popsection\n");
-            }
-	}
-      else  if (globalize_flag == 0 && strcmp (lang_hooks.name, "GNU C") == 0)
-        {
-          fprintf (asm_out_file, "\t.pushsection\t\".fini\"\n");
-          fprintf (asm_out_file, "\tcall\t");
-          fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (t));
-          fprintf (asm_out_file, "\n\tnop\n");
-          fprintf (asm_out_file, "\t.popsection\n");
 #endif
         }
       else
