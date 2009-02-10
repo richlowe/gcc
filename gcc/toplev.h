@@ -147,6 +147,8 @@ extern int flag_ira_coalesce;
 extern int flag_ira_move_spills;
 extern int flag_ira_share_save_slots;
 extern int flag_ira_share_spill_slots;
+extern char *tree_ir_noinline_list;
+extern char *tree_ir_inline_list;
 
 /* Things to do with target switches.  */
 extern void print_version (FILE *, const char *);
