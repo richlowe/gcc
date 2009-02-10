@@ -135,6 +135,8 @@ extern int flag_unroll_all_loops;
 extern int flag_unswitch_loops;
 extern int flag_cprop_registers;
 extern int time_report;
+extern char *tree_ir_noinline_list;
+extern char *tree_ir_inline_list;
 
 /* Things to do with target switches.  */
 extern void print_version (FILE *, const char *);

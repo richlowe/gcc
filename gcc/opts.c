@@ -374,6 +374,7 @@ static void complain_wrong_lang (const char *, const struct cl_option *,
 static void handle_options (unsigned int, const char **, unsigned int);
 static void set_debug_level (enum debug_info_type type, int extended,
 			     const char *arg);
+static void handle_xinline_option (const char *);
 
 /* If ARG is a non-negative integer made up solely of digits, return its
    value, otherwise return -1.  */
@@ -1843,7 +1844,9 @@ common_handle_option (size_t scode, const char *arg, int value,
       break;
       
     case OPT_xinline_:
-      /* TODO */
+      /* -xinline= only has an effect on -O2 or higher.*/
+      if (optimize >= 2)
+        handle_xinline_option (arg);
       break;
 
     case OPT_xpagesize_stack_:
@@ -2195,4 +2198,61 @@ enable_warning_as_error (const char *arg, int value, unsigned int lang_mask)
 	*(int *) cl_options[option_index].flag_var = 1;
     }
   free (new_option);
+}
+
+/* The format of the list for -xinline is as follows:
+   [{%auto,func_name,no%func_name}[,{%auto,func_name,no%func_name}]...]
+
+   .If there is no %auto, set flag_tree_ir_no_inline as 1.
+   .Record all function names which specifies to be inlined in tree_ir_inline_list.
+   .Record all function names which specifies not to be inlined in tree_ir_noinline_list.
+   Note: The value accumulates from left to right.
+*/
+
+static void
+handle_xinline_option (const char *arg)
+{
+  int n = strlen(arg);
+  char *rest = arg;
+  char *list;
+
+  tree_ir_noinline_list = (char *)xmalloc (n+1);
+  tree_ir_inline_list = (char *)xmalloc (n+1);
+
+  /* If there is no %auto, set flag_tree_ir_no_inline as 1. */
+  if (!strstr (arg,"%auto")) flag_tree_ir_no_inline = 1; 
+
+  /* Seperate arguments into two lists. 
+     TODO: Check the format. Delete duplicate item. */
+  while (*rest)
+  {
+    if (!strncmp (rest,"%auto",5))
+      rest = rest + 5;
+    else if ( *rest == ',')
+      rest = rest + 1; 
+    else
+      {
+        if (!strncmp (rest,"no%",3))
+          {
+            rest = rest + 3;
+            list = tree_ir_noinline_list;
+          }
+        else /* Record the func_name in the list of tree_ir_inline_list. */
+          list = tree_ir_inline_list;
+
+        if (strstr (rest,",") == 0)
+          n = strlen (rest);
+        else
+          n = strstr (rest,",") - rest;
+
+        if (!*list)
+          strncpy (list, rest, n);
+        else
+          {
+            strcat (list,",");
+            strncat (list, rest, n);
+          }
+        rest = rest + n;
+      }
+  }
 }

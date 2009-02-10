@@ -3075,6 +3075,7 @@ delete_duplicate_options (int *argcp, char ***argvp)
     }
     else if (argv[i] && strncmp(argv[i], "-xinline=", 9) == 0) {
       j = i + 1;
+      /* The last -xinline on the command line is used. */
       while (j < argc) {
         if (argv[j] && strncmp(argv[j], "-xinline=", 9) == 0) {
           /* set the old one to NULL, and try another option */

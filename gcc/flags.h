@@ -180,6 +180,10 @@ extern int flag_complex_method;
 
 extern int flag_really_no_inline;
 
+/* Nonzero means that we don't want backend auto inlining by -xinline=. */
+
+extern int flag_tree_ir_no_inline;
+
 /* Nonzero if we are only using compiler to check syntax errors.  */
 
 extern int rtl_dump_and_exit;
