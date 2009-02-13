@@ -637,7 +637,8 @@ dump_ir_funcname (tree fn)
   if (strcmp (real_name, "_Znwj") == 0
       || strcmp (real_name, "_Znaj") == 0
       || strcmp (real_name, "_ZdlPv") == 0
-      || strcmp (real_name, "_ZdaPv") == 0)
+      || strcmp (real_name, "_ZdaPv") == 0
+      || strcmp (real_name, "_ZSt9terminatev") == 0)
     {
         /* Mark operator new and delete and some
            other exception related routines as support
