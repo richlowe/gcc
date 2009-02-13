@@ -1770,7 +1770,10 @@ finish_stmt_expr (tree stmt_expr, bool do_scope, bool has_no_scope)
       TREE_SIDE_EFFECTS (result) = 1;
       STMT_EXPR_NO_SCOPE (result) = has_no_scope;
     }
-  else if (CLASS_TYPE_P (type))
+  /* else if (CLASS_TYPE_P (type)) */
+  else if (!VOID_TYPE_P (type)) 
+           /* fix 6803951: need wrap it in a TARGET_EXPR so that 
+              is_unshareable_expr_r won't issue any complaints. */
     {
       /* Wrap the statement-expression in a TARGET_EXPR so that the
 	 temporary object created by the final expression is destroyed at
