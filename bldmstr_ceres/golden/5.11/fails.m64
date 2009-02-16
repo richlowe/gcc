@@ -137,190 +137,74 @@ gcc.sum:FAIL: gcc.dg/matrix/transpose-4.c compilation,  -fprofile-use -fipa-matr
 gcc.sum:FAIL: gcc.dg/matrix/transpose-5.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
 gcc.sum:FAIL: gcc.dg/matrix/transpose-6.c compilation,  -fprofile-use -fipa-matrix-reorg -O3 -fwhole-program -combine
 gcc.sum:FAIL: gcc.dg/pch/common-1.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/common-1.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/common-1.c  -O3  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/common-1.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/counter-1.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/counter-1.c  -O3  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/counter-1.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/counter-1.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/counter-3.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-1.c  -fast -xipo=2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-1.c  -O2 -g  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-2.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-2.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O3   (test for warnings, line )
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O3  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -fast   (test for warnings, line )
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -O2 -g  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-1.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-1.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-2.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-2.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c -O0 -g  (test for warnings, line )
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O2   (test for warnings, line )
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -fast -xipo=2   (test for warnings, line )
-gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/cpp-3.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/decl-1.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -fast -xipo=2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -O2 -g  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/decl-2.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/decl-2.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/decl-2.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/decl-2.c  -O3  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-2.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-3.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-3.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-3.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-3.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/decl-5.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/empty.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/decl-4.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/decl-4.c  -O1  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/decl-4.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/decl-5.c  -O2  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/empty.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/empty.c  -O3  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/empty.c  -fast  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/empty.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/except-1.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/except-1.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/except-1.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/except-1.c  -O3  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/except-1.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/except-1.c  -fast -xipo=2  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/except-1.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/except-1.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/global-1.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/global-1.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/global-1.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/global-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/global-1.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/global-1.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/import-1.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/import-1.c  -O2 -g  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/import-2.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-2.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-2.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -fast -xipo=2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -O2 -g  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/import-1.c  -Os  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/import-2.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/import-2.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/import-2.c  -O1  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/import-2.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/inline-1.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -O3  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -fast  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/inline-3.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -O3  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/inline-4.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/inline-4.c -O0 -g (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -Os  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/macro-1.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/macro-1.c  -O2 -g  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/macro-1.c  -Os  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/macro-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/macro-2.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/macro-2.c  -fast -xipo=2  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/macro-2.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/macro-3.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -fast -xipo=2  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -Os  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/macro-4.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/macro-4.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/macro-4.c  -O3 -finline-functions  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/macro-4.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/macro-4.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/macro-1.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/macro-1.c  -fast -xipo=2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/macro-2.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/macro-2.c  -fast  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O0  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O1  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O3 -finline-functions  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast -xipo=2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-1.c  -O0  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/static-1.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/static-2.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/static-2.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O0  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O1  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O2  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O3  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O3 -finline-functions  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-2.c  -fast  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/static-2.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O0  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-2.c  -fast -xipo=2  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-2.c  -Os  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-3.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O0  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O1  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/static-3.c  -Os  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/struct-1.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -O3  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/system-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/system-1.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/system-1.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/valid-1b.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -O0  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-1b.c  -fast  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c -O0 -g  (test for warnings, line 5)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -O2   (test for warnings, line 5)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2   (test for warnings, line 5)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-5.c  -O2  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-5.c  -O3  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-6.c -O0 -g (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -O3 -finline-functions   (test for warnings, line 5)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-4.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -O2 -g  assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -Os   (test for warnings, line 5)
-gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -Os  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/valid-5.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/valid-5.c  -fast -xipo=2  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/valid-5.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-6.c -O0 -g assembly comparison
-gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O1  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O3 -finline-functions  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O2 -g  (test for excess errors)
-gcc.sum:FAIL: largefile.c  -O0  (test for excess errors)
-gcc.sum:FAIL: largefile.c  -O3  (test for excess errors)
-gcc.sum:FAIL: largefile.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pch/valid-6.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/torture/builtin-noret-1.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/torture/builtin-noret-2.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/tree-prof/inliner-1.c scan-tree-dump optimized "cold_function ..;"
