@@ -1635,6 +1635,16 @@ dbg_gen_begin_function_decl (tree fn)
           dbggendata.func_sym = dbg_func_begin (1, dbggendata.link_name, 
                                             func_type, flags);	
         }
+      else if (dbggendata.lang_flag == DBG_LANG_ANSI_CC
+                && DECL_LANG_SPECIFIC (fn)
+                && DECL_LANGUAGE (fn) == lang_cplusplus
+                && !DECL_FUNCTION_MEMBER_P(fn)
+                && strcmp(dbggendata.link_name, dbggendata.func_name))
+        {
+          dbggendata.func_sym = dbg_func_begin (scope, dbggendata.func_name, 
+                                            func_type, flags);	
+          dbg_sym_linker_name (dbggendata.func_sym, dbggendata.link_name);
+        }
       else
         {
           dbggendata.func_sym = dbg_func_begin (scope, dbggendata.link_name, 
