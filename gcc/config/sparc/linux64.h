@@ -129,7 +129,7 @@ along with GCC; see the file COPYING3.  If not see
 #define LIB_SPEC \
   "%{pthread:-lpthread} \
    %{shared:-lc} \
-   %{!shared: %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc} -lcplxsupp}"
+   %{!shared: %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
 
 /* Provide a LINK_SPEC appropriate for GNU/Linux.  Here we provide support
    for the special GCC options -static and -shared, which allow us to
