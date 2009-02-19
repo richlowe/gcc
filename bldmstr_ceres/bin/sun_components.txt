@@ -34,7 +34,6 @@ lib/ipo/ats/sweep
 lib/ipo/v9/ipo_ld_support.so
 lib/lib_I_dbg_gen.so
 lib/lib_I_dbg_gen.so.1
-lib/libcplxsupp.a
 lib/libdwarf.so
 lib/libdwarf.so.1
 lib/libfast.a
@@ -45,7 +44,6 @@ lib/libmopt.a
 lib/libmvec.a
 lib/libmvec_mt.a
 lib/libtha.so.1
-lib/libp/libcplxsupp.a
 lib/libp/libfast.a
 lib/libp/libmopt.a
 lib/libp/libmvec.a
@@ -81,26 +79,8 @@ lib/sys/liblni.so
 lib/sys/liblni.so.1
 lib/sys/libsunir.so
 lib/v7/libm.il
-lib/v7/libmopt.a
-lib/v7/libmvec.a
-lib/v7/libmvec_mt.a
-lib/v7/libp/libmopt.a
-lib/v7/libp/libmvec.a
-lib/v7/libp/libmvec_mt.a
 lib/v8/libm.il
-lib/v8/libmopt.a
-lib/v8/libmvec.a
-lib/v8/libmvec_mt.a
-lib/v8/libp/libmopt.a
-lib/v8/libp/libmvec.a
-lib/v8/libp/libmvec_mt.a
 lib/v8a/libm.il
-lib/v8a/libmopt.a
-lib/v8a/libmvec.a
-lib/v8a/libmvec_mt.a
-lib/v8a/libp/libmopt.a
-lib/v8a/libp/libmvec.a
-lib/v8a/libp/libmvec_mt.a
 lib/v8plus/libm.il
 lib/v8plus/libmopt.a
 lib/v8plus/libmvec.a
@@ -126,7 +106,6 @@ lib/v8plusb/libp/libmvec.a
 lib/v8plusb/libp/libmvec_mt.a
 lib/v8plusb/libprism32.so
 lib/v8plusb/vis.il
-lib/v9/libcplxsupp.a
 lib/v9/libdwarf.so
 lib/v9/libdwarf.so.1
 lib/v9/liblv.a
@@ -135,7 +114,6 @@ lib/v9/libm.il
 lib/v9/libmopt.a
 lib/v9/libmvec.a
 lib/v9/libmvec_mt.a
-lib/v9/libp/libcplxsupp.a
 lib/v9/libp/libmopt.a
 lib/v9/libp/libmvec.a
 lib/v9/libp/libmvec_mt.a
@@ -165,8 +143,6 @@ lib/v9b/libp/libmopt.a
 lib/v9b/libp/libmvec.a
 lib/v9b/libp/libmvec_mt.a
 lib/v9b/vis.il
-lib/sparcfmaf/libcx.a
-lib/sparcfmaf/libcx.so.1
 lib/sparcfmaf/libl2amm.a
 lib/sparcfmaf/libm.il
 lib/sparcfmaf/libmopt.a
@@ -174,7 +150,6 @@ lib/sparcfmaf/libmvec.a
 lib/sparcfmaf/libmvec_mt.a
 lib/sparcfmaf/libprism32.so
 lib/sparcfmaf/libsunimath.a
-lib/sparcfmaf/libp/libcx.a
 lib/sparcfmaf/libp/libmopt.a
 lib/sparcfmaf/libp/libmvec.a
 lib/sparcfmaf/libp/libmvec_mt.a
