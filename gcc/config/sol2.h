@@ -97,7 +97,7 @@ along with GCC; see the file COPYING3.  If not see
      %{!symbolic:\
        %{pthreads|pthread:-lpthread} \
        %{!pthreads:%{!pthread:%{threads:-lthread}}} \
-       %{p|pg:-ldl} -lcplxsupp -lc}}"
+       %{p|pg:-ldl} -lc}}"
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC "crtend.o%s crtn.o%s"
