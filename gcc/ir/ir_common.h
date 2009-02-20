@@ -25,9 +25,9 @@ Boston, MA 02111-1307, USA.  */
 #define CONSZ long long
 #define OFFSZ long
 
-#define IR_MAJOR_VERS 8
-#define IR_MINOR_VERS 3
-#define IR_DEV_VERS   1
+#define IR_MAJOR_VERS 9
+#define IR_MINOR_VERS 0
+#define IR_DEV_VERS   0
 
 typedef long long IR_OFFSZ;
 
@@ -156,7 +156,7 @@ typedef struct segment {
 	char *name;
 	struct segdescr_st descr;
 	short base;
-	unsigned int align:5;
+	unsigned int align:8;
 	BOOLEAN visited:1;
 	BOOLEAN noalias:1;
 	BOOLEAN readonly:1;
