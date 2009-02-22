@@ -1689,10 +1689,16 @@ dbg_gen_function_decl (tree fn)
     {
       if (dbggendata.lang_flag == DBG_LANG_ANSI_CC
           && DECL_ABSTRACT_ORIGIN (fn))
-        func_decl = DECL_ABSTRACT_ORIGIN (fn);
+        {
+          func_decl = DECL_ABSTRACT_ORIGIN (fn);
+          func_scope = BLOCK_ABSTRACT_ORIGIN (DECL_INITIAL (fn));
+        }
+      else
+        {
+          func_scope = DECL_INITIAL (func_decl);
+        }
       dbg_gen_begin_function_decl (func_decl);
       dbg_gen_function_args (func_decl);
-      func_scope = DECL_INITIAL (func_decl);
       if (dbggendata.lang_flag == DBG_LANG_ANSI_CC)
         { /* In c++ functions, the outermost scope is for ctor/dtors,
              go one level deeper to find function body scope.  */
