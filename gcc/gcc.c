@@ -11314,6 +11314,8 @@ translate_native_options (int *argcp, char ***argvp)
               argv[i] = xstrdup("-xarch=v8plus");
             else if (strcmp(xtarget_string,"-xtarget=ultraT2") == 0 )
               argv[i] = xstrdup("-xarch=v8plusb");
+            else if (strcmp(xtarget_string,"-xtarget=ultraT2plus") == 0 )
+              argv[i] = xstrdup("-xarch=sparcvis2");
             else if (strcmp(xtarget_string,"-xtarget=sparc64vii") == 0 )
               argv[i] = xstrdup("-xarch=v8plusd");
             else if (strcmp(xtarget_string,"-xtarget=sparc64vi") == 0 )
@@ -11340,6 +11342,8 @@ translate_native_options (int *argcp, char ***argvp)
             else if (strcmp(xtarget_string,"-xtarget=ultraT1") == 0 )
               argv[i] = xstrdup("-xarch=v9");
             else if (strcmp(xtarget_string,"-xtarget=ultraT2") == 0 )
+              argv[i] = xstrdup("-xarch=v9b");
+            else if (strcmp(xtarget_string,"-xtarget=ultraT2plus") == 0 )
               argv[i] = xstrdup("-xarch=v9b");
             else if (strcmp(xtarget_string,"-xtarget=sparc64vii") == 0 )
               argv[i] = xstrdup("-xarch=v9d");

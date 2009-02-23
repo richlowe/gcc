@@ -257,6 +257,7 @@ extern enum cmodel sparc_cmodel;
 #define TARGET_CPU_ultraT2      22
 #define TARGET_CPU_sparc64vi      23
 #define TARGET_CPU_sparc64vii   24
+#define TARGET_CPU_ultraT2plus      25
 
 #if TARGET_CPU_DEFAULT == TARGET_CPU_v9 \
  || TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc \
