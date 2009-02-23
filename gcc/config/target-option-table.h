@@ -106,6 +106,7 @@ Boston, MA 02111-1307, USA.  */
   { "-mcpu=ultraT1", "-mcpu=ultraT1 -Zarch=v8plus -Zarchm32=v8plus -Zarchm64=v9 -xchip=ultraT1 -xcache=8/16/4/4:3072/64/12/32"}, \
   { "-mcpu=niagara2", "-mcpu=ultraT2 -Zarch=v8plusb -Zarchm32=v8plusb -Zarchm64=v9b -xchip=ultraT2 -xcache=8/16/4:4096/64/16"}, \
   { "-mcpu=ultraT2", "-mcpu=ultraT2 -Zarch=v8plusb -Zarchm32=v8plusb -Zarchm64=v9b -xchip=ultraT2 -xcache=8/16/4:4096/64/16"}, \
+  { "-mcpu=ultraT2plus", "-mcpu=ultraT2plus -Zarch=sparcvis2 -Zarchm32=sparcvis2 -Zarchm64=v9b -xchip=ultraT2plus -xcache=8/16/4:4096/64/16"}, \
   { "-mcpu=sparc64vii", "-mcpu=sparc64vii -Zarch=v8plusd -Zarchm32=v8plusd -Zarchm64=v9d -xchip=sparc64vii -xcache=128/64/2:5120/64/10"}, \
   { "-mcpu=sparc64vi", "-mcpu=sparc64vi -Zarch=v8plusc -Zarchm32=v8plusc -Zarchm64=v9c -xchip=sparc64vi -xcache=128/64/2:5120/256/4"}, \
   { "-mcypress", "-mcpu=cypress -mno-vis -Zarch=v7 -Zarchm32=v7 -xchip=generic -xcache=generic"}, \
@@ -139,6 +140,7 @@ Boston, MA 02111-1307, USA.  */
   { "-mtune=niagara2", "-mtune=niagara2 -xchip=ultraT2" }, \
   { "-mtune=ultraT1", "-mtune=ultraT1 -xchip=ultraT1" }, \
   { "-mtune=ultraT2", "-mtune=ultraT2 -xchip=ultraT2" }, \
+  { "-mtune=ultraT2plus", "-mtune=ultraT2plus -xchip=ultraT2plus" }, \
   { "-mtune=sparc64vii", "-mtune=sparc64vii -xchip=sparc64vii" },\
   { "-mtune=sparc64vi", "-mtune=sparc64vi -xchip=sparc64vi" },\
   { "-mv8", "-mcpu=v8 -Zarch=v8 -Zarchm32=v8 -Zarchm64=v9 -mno-vis -xchip=generic -xcache=generic"}, \
@@ -192,6 +194,7 @@ Boston, MA 02111-1307, USA.  */
   { "-xtarget=ultra3iplus", "-mcpu=ultrasparc3iplus -Zarch=v8plusb -Zarchm32=v8plusb -Zarchm64=v9b -xchip=ultra3iplus -xcache=64/32/4:4096/64/4"}, \
   { "-xtarget=ultraT1", "-mcpu=ultraT1 -Zarch=v8plus -Zarchm32=v8plus -Zarchm64=v9 -xchip=ultraT1 -xcache=8/16/4/4:3072/64/12/32"}, \
   { "-xtarget=ultraT2", "-mcpu=ultraT2 -Zarch=v8plusb -Zarchm32=v8plusb -Zarchm64=v9b -xchip=ultraT2 -xcache=8/16/4:4096/64/16"}, \
+  { "-xtarget=ultraT2plus", "-mcpu=ultraT2plus -Zarch=sparcvis2 -Zarchm32=sparcvis2 -Zarchm64=v9b -xchip=ultraT2plus -xcache=8/16/4:4096/64/16"}, \
   { "-xtarget=generic", "-Zarch=generic -Zarchm32=generic -Zarchm64=v9 -xchip=generic -xcache=generic -Zm=32"}, \
   { "-xtarget=generic64", "-Zarch=generic -Zarchm32=generic -Zarchm64=v9 -xchip=generic -xcache=generic -Zm=64"}, \
   { "-xvector", "-xvector=yes"}, \

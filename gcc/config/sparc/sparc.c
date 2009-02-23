@@ -664,6 +664,7 @@ sparc_override_options (void)
     { TARGET_CPU_ultrasparc4plus, "ultrasparc4plus" },
     { TARGET_CPU_ultraT1, "ultraT1" },
     { TARGET_CPU_ultraT2, "ultraT2" },
+    { TARGET_CPU_ultraT2plus, "ultraT2plus" },
     { TARGET_CPU_sparc64vi, "sparc64vi" },
     { TARGET_CPU_sparc64vii, "sparc64vii" },
     { 0, 0 }
@@ -716,6 +717,7 @@ sparc_override_options (void)
     { "ultrasparc4plus", PROCESSOR_ULTRASPARC3, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
     { "ultraT1", PROCESSOR_NIAGARA, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
     { "ultraT2", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
+    { "ultraT2plus", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
     { "sparc64vi", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
     { "sparc64vii", PROCESSOR_ULTRASPARC, MASK_ISA, MASK_V9|MASK_DEPRECATED_V8_INSNS},
     
