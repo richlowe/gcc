@@ -5739,6 +5739,15 @@ process_command (int argc, const char **argv)
         {
         /* nothing to do */
         }
+     else if (directory_exists (concat ("/usr/lib/gcc/", spec_machine,
+                                         "/gccfss/", spec_version,
+                                         "/prod", NULL) ) )
+        {
+           /* the usual OpenSolaris place */
+           studioproddir = concat ("/usr/lib/gcc/", spec_machine,
+                                   "/gccfss/", spec_version,
+                                   "/prod", NULL);
+        }
       else if (directory_exists (concat (path_to_driver_wo_driver,
                                          "/../../SUNW0scgfss/", 
                                          spec_version, "/prod", NULL) ) )
