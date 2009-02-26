@@ -253,14 +253,6 @@ int flag_pcc_struct_return = DEFAULT_PCC_STRUCT_RETURN;
 
 int flag_complex_method = 1;
 
-/* Nonzero means that we don't want backend auto inlining by -xinline=. */
-
-int flag_tree_ir_no_inline = 0;
-
-/* Record the functions specified by -xinline=. */
-
-char *tree_ir_noinline_list, *tree_ir_inline_list;
-
 /* Nonzero means we should be saving declaration info into a .X file.  */
 
 int flag_gen_aux_info = 0;
