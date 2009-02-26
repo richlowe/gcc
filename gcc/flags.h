@@ -183,6 +183,10 @@ extern int flag_really_no_inline;
 /* Nonzero means that we don't want backend auto inlining by -xinline=. */
 
 extern int flag_tree_ir_no_inline;
+extern int flag_xinline;
+extern char *tree_ir_noinline_list;
+extern char *tree_ir_inline_list;
+extern int in_xinline_string (char *func_name, char *list); 
 
 /* Nonzero if we are only using compiler to check syntax errors.  */
 

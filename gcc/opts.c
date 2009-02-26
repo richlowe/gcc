@@ -64,6 +64,15 @@ HOST_WIDE_INT larger_than_size;
 /* Hack for cooperation between set_Wunused and set_Wextra.  */
 static bool maybe_warn_unused_parameter;
 
+/* Nonzero means that -xinline= is used, only valid with -O2 or above level. */
+int flag_xinline = 0;
+
+/* Nonzero means that we don't want backend auto inlining by -xinline=. */
+int flag_tree_ir_no_inline = 0;
+
+/* Record the functions specified by -xinline=. */
+char *tree_ir_noinline_list, *tree_ir_inline_list;
+
 /* Type(s) of debugging information we are producing (if any).  See
    flags.h for the definitions of the different possible types of
    debugging information.  */
@@ -1846,7 +1855,10 @@ common_handle_option (size_t scode, const char *arg, int value,
     case OPT_xinline_:
       /* -xinline= only has an effect on -O2 or higher.*/
       if (optimize >= 2)
-        handle_xinline_option (arg);
+        {
+          handle_xinline_option (arg);
+          flag_xinline = 1;
+        }
       break;
 
     case OPT_xpagesize_stack_:
@@ -2214,16 +2226,17 @@ handle_xinline_option (const char *arg)
 {
   int n = strlen(arg);
   char *rest = arg;
-  char *list;
+  char *list,*fn_name,*tmp_name;
 
   tree_ir_noinline_list = (char *)xmalloc (n+1);
   tree_ir_inline_list = (char *)xmalloc (n+1);
+  fn_name = (char *)xmalloc (n+1);
+  tmp_name = (char *)xmalloc (n+1);
 
   /* If there is no %auto, set flag_tree_ir_no_inline as 1. */
   if (!strstr (arg,"%auto")) flag_tree_ir_no_inline = 1; 
 
-  /* Seperate arguments into two lists. 
-     TODO: Check the format. Delete duplicate item. */
+  /* Seperate arguments into two lists.*/ 
   while (*rest)
   {
     if (!strncmp (rest,"%auto",5))
@@ -2245,14 +2258,55 @@ handle_xinline_option (const char *arg)
         else
           n = strstr (rest,",") - rest;
 
-        if (!*list)
-          strncpy (list, rest, n);
-        else
+        strcpy (tmp_name, "no%");
+        tmp_name[3] = 0;
+        strncpy (fn_name, rest, n);
+        fn_name[n] = 0;
+        strcat (tmp_name, fn_name);
+        if ( !in_xinline_string (fn_name, rest + n)
+             && !in_xinline_string (tmp_name, rest + n)) 
           {
-            strcat (list,",");
-            strncat (list, rest, n);
+            if (!*list)
+              {
+                strncpy (list, rest, n);
+                list[n] = 0;
+              }
+            else
+              {
+                strcat (list,",");
+                strncat (list, rest, n);
+              }
           }
         rest = rest + n;
       }
   }
+
+  free (fn_name);
+  free (tmp_name);
 }
+
+int
+in_xinline_string (char *func_name, char *list)
+{
+  char *p;
+  int length;
+
+  if (list == NULL || *list == 0 ) return 0;
+  length = strlen(func_name);
+
+  p = strstr (list, func_name);
+  while (p)
+  {
+    /* The left of p should be ',' or p is the beginning of the string.
+       The right of func_name should be ',' or '\n' */
+    if ((p == list || *(p-1) == ',')
+       && ( *(p + length) == ','
+          || *(p + length) == '\0'))
+      return 1;
+
+    p = strstr (p + length, func_name);
+  }
+
+  return 0;
+}
+

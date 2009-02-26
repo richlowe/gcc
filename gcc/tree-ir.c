@@ -8459,6 +8459,15 @@ dump_function_ir (tree fn)
 
   /* IR optimizer does not have enough EH information to 
      inline C++ functions with eh regions. */
+  if ( flag_xinline)
+    {
+    if (in_xinline_string (IDENTIFIER_POINTER (DECL_NAME (fn)), tree_ir_noinline_list)
+         || (flag_tree_ir_no_inline && !in_xinline_string (IDENTIFIER_POINTER (DECL_NAME (fn)), tree_ir_inline_list)))
+      ir_proc_set_inline_control (irProc, DO_NOT_INLINE_CALL);
+    else if (in_xinline_string(IDENTIFIER_POINTER (DECL_NAME (fn)), tree_ir_inline_list))
+      ir_proc_set_inline_control (irProc, HIGH_PRIORITY_INLINE_CALL);
+    }
+
   if (lookup_attribute ("noinline", DECL_ATTRIBUTES (fn))
       || strcmp (func_name, "__init_task_common") == 0) /* Fix 6588138 */
     ir_proc_set_inline_control (irProc, DO_NOT_INLINE_CALL);
@@ -8839,6 +8848,11 @@ global_ir_fini (void)
 {
   sparc_output_scratch_registers (asm_out_file);
   ir_backend_fini ();
+  if (flag_xinline)
+    {
+      free (tree_ir_noinline_list);
+      free (tree_ir_inline_list);
+    }
 }
 
 static void
