@@ -11,7 +11,7 @@ SCRIPTDIR=$(dirname $0)
 . $SCRIPTDIR/commonconfig
 if [ `uname -p` == i386 ]
 then
-	LANGWSLISTDEFAULT="$LANGWSLISTDEFAULT /ws/gccfss/cross-compiler/ceres-lang-solarisld"
+	LANGWSLISTDEFAULT="$LANGWSLISTDEFAULT /ws/gccfss/cross-compiler/ceres-lang"
 fi
 
 OS_NAME=`uname -s`

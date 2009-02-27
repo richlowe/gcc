@@ -1123,7 +1123,7 @@ build_ir_float_const (const REAL_VALUE_TYPE *val, TYPE type)
       long lval[2], tmp;
       /* gcc_assert (sizeof (long) * 2 == type.size); */
       REAL_VALUE_TO_TARGET_DOUBLE (*val, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[1];
       lval[1] = lval[0];
       lval[0] = tmp;
@@ -1134,7 +1134,7 @@ build_ir_float_const (const REAL_VALUE_TYPE *val, TYPE type)
     {
       long lval[4], tmp;
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (*val, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[0];
       lval[0] = lval[3];
       lval[3] = tmp;
@@ -1170,7 +1170,7 @@ build_ir_int_complex_const (long long real_val, long long imag_val, TYPE type)
       /* assume that target long double can hold all size of __complex__ int */
       REAL_VALUE_FROM_INT(ld_value, real_val, (real_val<0)?(~0L):0L, VOIDmode);
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (ld_value, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[0];
       lval[0] = lval[3];
       lval[3] = tmp;
@@ -1181,7 +1181,7 @@ build_ir_int_complex_const (long long real_val, long long imag_val, TYPE type)
       cnst.c.fp[0] = build_ir_byte_array (lval, type.size/2);
       REAL_VALUE_FROM_INT(ld_value, imag_val, (imag_val<0)?(~0L):0L, VOIDmode);
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (ld_value, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[0];
       lval[0] = lval[3];
       lval[3] = tmp;
@@ -1218,14 +1218,14 @@ build_ir_complex_const (const REAL_VALUE_TYPE *real_val,
       long lval[2], tmp;
       /* gcc_assert (sizeof (long) * 2 * 2 == type.size); */
       REAL_VALUE_TO_TARGET_DOUBLE (*real_val, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[1];
       lval[1] = lval[0];
       lval[0] = tmp;
 #endif
       cnst.c.fp[0] = build_ir_byte_array (lval, type.size/2);
       REAL_VALUE_TO_TARGET_DOUBLE (*imag_val, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[1];
       lval[1] = lval[0];
       lval[0] = tmp;
@@ -1237,7 +1237,7 @@ build_ir_complex_const (const REAL_VALUE_TYPE *real_val,
       long lval[4], tmp;
       /* gcc_assert (sizeof (long) * 4 * 2 == type.size); */
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (*real_val, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[0];
       lval[0] = lval[3];
       lval[3] = tmp;
@@ -1247,7 +1247,7 @@ build_ir_complex_const (const REAL_VALUE_TYPE *real_val,
 #endif
       cnst.c.fp[0] = build_ir_byte_array (lval, type.size/2);
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (*imag_val, lval);
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
       tmp = lval[0];
       lval[0] = lval[3];
       lval[3] = tmp;

@@ -15,7 +15,7 @@ export BUILDAREA_perftech064=/net/perftech-064/data/bldmstr/nightly
 export BUILDAREA_clptv4901=/net/clpt-v490-1/export/data1/bldmstr
 export BUILDAREA_perftech057=/net/perftech-057/export/home/gccbuilds
 export BUILDAREA_clptgccx861=/net/clpt-gccx86-1/export/home/nightlybuilds
-
+export BUILDAREA_gccv20zs01=/export/home/gccbldmstr
 export BUILDAREA_gccfssv8901=/net/gccsvn/export/gccfss_disk1/nevadabuilds
 
 # Subdirectories under which Studio and gcc components are installed

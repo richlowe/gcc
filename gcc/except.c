@@ -4279,7 +4279,6 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
   int tt_format, cs_format, lp_format, i, n;
   char ttype_label[32];
 #ifdef HAVE_AS_LEB128
-  char ttype_label[32];
   char cs_after_size_label[32];
   char cs_end_label[32];
 #endif

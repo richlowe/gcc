@@ -951,7 +951,7 @@ static const char *cpp_options =
 static const char *cpp_debug_options = "%{d*}";
 
 /* These are options not supported by cross compiler on x86 */
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
 #define UNSUPPORTED_OPTIONS_SPEC \
 "%{xlinkopt: %e-xlinkopt not supported by cross compiler } \
 "
@@ -5808,20 +5808,10 @@ process_command (int argc, const char **argv)
                     PREFIX_PRIORITY_LAST, 0, 0);
 
       add_iropt_option ("-h_gen_eh_table", sizeof ("-h_gen_eh_table"));
-#ifdef CROSS_COMPILE
-      if (!getenv ("LD_ALTEXEC"))
-      {
-        /* If LD_ALTEXEC is not already set, specify where to pick it from. */
-        char *solaris_ldpath = concat ("LD_ALTEXEC=", studioproddir, "/root_i386/usr/bin/ld", NULL);
-        putenv (solaris_ldpath);
-        if (debug_driver_val & 0x02)
-          fprintf (stderr, "cross compile solaris ld path %s\n", solaris_ldpath);
-      }
-#endif
     }
 
 
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
   /* GCCFSS_SOLARIS_SPARC_INCLUDE, GCCFSS_SOLARIS_SPARC_LIB,
      GCCFSS_LINUX_SPARC_INCLUDE and GCCFSS_LINUX_SPARC_LIB have values
      that are lists of directory names with colons.  */
@@ -7857,7 +7847,7 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
                 /* if no --enable-version-specific-runtime-libs given 
                  * do_spec_1( standard_libdir_prefix, 1, NULL);
                 */
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
                 /* libstdc++.so is located in different directory between local and cross compilers. 
                    so we have to re-direct it to right path. 
                    given 
@@ -11016,7 +11006,7 @@ include_spec_function (int argc, const char **argv)
   return NULL;
 }
 
-#ifdef CROSS_COMPILE
+#ifdef CROSS_DIRECTORY_STRUCTURE
 /* Handle -xtarget=native and -xarch=native */
 /* Returns 0: no -xtarget/-xarch=native
  *         1: saw -xtarget/-xarch=native

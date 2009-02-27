@@ -401,11 +401,6 @@ install_crosscompiler_suncomponents ()
 	then
             add_cross_libs
 	fi
-	
-	# install solaris linker
-	echo "Copying Solaris linker"
-	( cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ;
-	  bzip2 -cd /ws/gccfss/cross-compiler/ldcross_x86.tar.bz2 | tar xf - )
         
 	echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
 }
