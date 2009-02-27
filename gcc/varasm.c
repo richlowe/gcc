@@ -33,7 +33,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 
 /*this is to workaround weakref issue on linux and cross gccfss.*/
-#if defined(__linux__) || defined(CROSS_COMPILE)
+#if defined(__linux__) || defined(CROSS_DIRECTORY_STRUCTURE)
 #undef HAVE_GAS_WEAKREF
 #endif
 

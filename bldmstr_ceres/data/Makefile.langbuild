@@ -208,7 +208,7 @@ BUILDLIBSV9-i386 =
 BUILDLIBSV9-sparc = csu liblv libm libxprof libtdf
 BUILDLIBSV9-unknown = 
 
-BUILDTOOLSV9-i386 = ipo postopt
+BUILDTOOLSV9-i386 = ipo 
 BUILDTOOLSV9-sparc = proflib ipo postopt
 BUILDTOOLSV9-unknown = proflib 
 
