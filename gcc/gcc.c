@@ -11429,6 +11429,7 @@ static const char *print_orig_cmdline(int dummy __attribute__ ((unused)),
            (void)strncat (cmdlinestr, p, pn - p); 
            length += pn - p;
            cmdlinestr[length ++] = '\'';
+           cmdlinestr[length] = 0;
            p = pn + 1;
         }
       if (p != orig_argv[i])
