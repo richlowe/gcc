@@ -11759,15 +11759,15 @@ sunir_check_builtin_handling (tree function)
     }
 }
 
-void
+int
 sunir_check_128bits_handling (tree node)
 {
   if (TYPE_IR_TWORD (node)) 
-    return;
+    return 0;
 
   if (TREE_CODE (node) != ENUMERAL_TYPE 
       && TREE_CODE (node) != INTEGER_TYPE)
-    return;
+    return 0;
 
   if (TARGET_ARCH64)
     {
@@ -11793,12 +11793,13 @@ sunir_check_128bits_handling (tree node)
       if (name
           && (!strcmp (name, "long int")
              || !strcmp (name, "long unsigned int")))
-        return;
+        return 0;
       if (node == bitsizetype || TYPE_PRECISION (node) != 128)
-        return;
+        return 0;
     }
-  DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
-  return;
+  if (current_function_decl)
+    DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
+  return 1;
 }
 
 #include "gt-tree-ir.h"

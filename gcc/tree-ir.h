@@ -270,6 +270,6 @@ extern void pop_lni_inline_context (tree stmt);
 
 extern ir_eh_node_hdl_t build_ir_eh_node (ir_eh_node_kind_t);
 extern void sunir_check_builtin_handling (tree function);
-extern void sunir_check_128bits_handling (tree node);
+extern int sunir_check_128bits_handling (tree node);
 
 #endif  /* GCC_TREE_IR_H  */

@@ -1707,6 +1707,7 @@ gimplify_var_or_parm_decl (tree *expr_p)
   tree decl = *expr_p;
 
   if (current_function_decl
+      && DECL_DONT_GENERATE_SUNIR (current_function_decl) != 1
       && flag_use_rtl_backend != -1 
       && TYPE_MODE (TREE_TYPE (*expr_p)) == TImode) 
     sunir_check_128bits_handling (TREE_TYPE (*expr_p));
@@ -6023,6 +6024,7 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 	case INTEGER_CST:
           if (current_function_decl
               && flag_use_rtl_backend != -1
+              && DECL_DONT_GENERATE_SUNIR (current_function_decl) != 1
               && TYPE_MODE (TREE_TYPE (*expr_p)) == TImode)
             sunir_check_128bits_handling (TREE_TYPE (*expr_p)); 
 	case REAL_CST:
@@ -6787,6 +6789,7 @@ gimplify_function_tree (tree fndecl)
 
   if (current_function_decl
       && flag_use_rtl_backend != -1
+      && DECL_DONT_GENERATE_SUNIR (current_function_decl) != 1
       && TYPE_MODE (TREE_TYPE (TREE_TYPE (current_function_decl))) == TImode)
     sunir_check_128bits_handling (TREE_TYPE (TREE_TYPE (current_function_decl)));
 
