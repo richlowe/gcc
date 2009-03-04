@@ -1981,6 +1981,10 @@ dbg_gen_global_var_decl (tree decl)
       /* Dont generate debug info for extern variables declarations.  */
       if (DECL_EXTERNAL (decl))
         return;
+
+      /* Don't generate debug info for 128 bits variables delaratons. */
+      if (sunir_check_128bits_handling (TREE_TYPE (decl)))
+        return;
       
       if (!dbg_gen_global_scope_var_p (decl)) 
         {
