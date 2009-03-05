@@ -1182,6 +1182,7 @@ static const char *ssbe_xarch_xchip =
 static const char *sscg_xarch_xchip =
 "%(ssbe_xarch) \
  %{xchip=ultraT2: -xchip=rock ; \
+   xchip=ultraT2plus: -xchip=rock ; \
    xchip=*: -xchip=%* ; \
           : -xchip=generic } \
  %{xprefetch=* : -xprefetch=%* } \
