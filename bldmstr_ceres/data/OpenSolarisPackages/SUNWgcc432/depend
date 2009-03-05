@@ -1,5 +1,5 @@
 #
-# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 # CDDL HEADER START
@@ -21,7 +21,6 @@
 #
 # CDDL HEADER END
 #
-#ident	"@(#)depend	1.6	06/10/11 SMI"
 #
 # This package information file defines software dependencies associated
 # with the pkg.  You can define three types of pkg dependencies with this file:
@@ -51,6 +50,6 @@ P SUNWcsd	Core Solaris Devices
 P SUNWcsl	Core Solaris Libraries
 P SUNWarc	Archive libraries
 P SUNWgcmn	Common GNU package
-P SUNWgccruntime432	GCC 4.3.2 Runtime libraries
-P SUNWbinutils219	GNU binutils 2.19
+P SUNWgccruntime	GCC 4.3.2 Runtime libraries
+P SUNWbinutils	GNU binutils 
 P SUNWscgfss432	Sun Code Generator for GCC For Sun Systems

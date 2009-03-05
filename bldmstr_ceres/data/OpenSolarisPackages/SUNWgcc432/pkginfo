@@ -19,10 +19,9 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-#ident	"@(#)pkginfo.tmpl	1.6	06/03/30 SMI"
 #
 # This required package information file describes characteristics of the
 # package, such as package abbreviation, full package name, package version,
