@@ -456,10 +456,11 @@ install_suncomponents()
 			find . -name "$file*" |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib ;\
 		done)
 	else
+		# Do not need install developing libmtsk.so.1.
 		# Install libmtsk.so.1 from current_ceres build area.
-		cd $LIBMTSK_DIR
-		ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib
-		cd sparcv9; ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9
+		# cd $LIBMTSK_DIR
+		# ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib
+		# cd sparcv9; ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9
 	fi
 
 	# Create the links for the user tools and their man pages.
@@ -529,9 +530,10 @@ prepare_tests()
   SN_SERIAL_FILE=
   export SN_SERIAL_FILE
 
+  # Do not need link developing libmtsk.so.1.
   # for libmtsk.so
-  cd $ROOT/build.gcc2ir/gcc; ln -s $LIBMTSK_DIR/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
-  cd $ROOT/build.gcc2ir/gcc/sparcv9; ln -s $LIBMTSK_DIR/sparcv9/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
+  #cd $ROOT/build.gcc2ir/gcc; ln -s $LIBMTSK_DIR/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
+  #cd $ROOT/build.gcc2ir/gcc/sparcv9; ln -s $LIBMTSK_DIR/sparcv9/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
 }
 
 prepare_tests_cross()
