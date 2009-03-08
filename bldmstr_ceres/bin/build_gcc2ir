@@ -455,7 +455,7 @@ install_suncomponents()
 		do \
 			find . -name "$file*" |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib ;\
 		done)
-	else
+		#else
 		# Do not need install developing libmtsk.so.1.
 		# Install libmtsk.so.1 from current_ceres build area.
 		# cd $LIBMTSK_DIR
