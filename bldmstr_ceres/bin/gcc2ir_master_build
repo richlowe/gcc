@@ -172,7 +172,7 @@ then
   if [ `uname -r` != 5.11 ]
   then
     # Run gdb testsuite with -m32 option
-    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /import/dr3/gnu/bin/gdb -T /import/backend-src/gdb6.3/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
+    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparc-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
   fi
 
   wait
