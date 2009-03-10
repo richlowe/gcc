@@ -1031,6 +1031,16 @@ static const char *cpp_debug_options = "%{d*}";
  %{tm_mode=phtm} \
  %{tm_mode=stm} \
  %{xexplicitpar:} \
+ %{xprofile=*: \
+    %{O: ;\
+      O0: -O1 %N`-xprofile' requires `-O1', `-O2', `-O3' or `-fast', assuming `-O1' option ;\
+      O1: ;\
+      O2: ;\
+      Os: ;\
+      O3: ;\
+      O*: ;\
+      Zfast: ;\
+        : -O1 %N`-xprofile' requires `-O1', `-O2', `-O3' or `-fast', assuming `-O1' option } }\
  %{ftest-coverage: %{xipo*: %<xipo* %e`-ftest-coverage' and `-xipo' are incompatible}}\
  %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants}"
 
@@ -1190,19 +1200,23 @@ static const char *sscg_xarch_xchip =
 
 static const char *ssbe_optlevel =
 "%{O:-O3;\
-   O0:-OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 -gen_loclist_gcc=0;\
+   O0: %{xprofile=* : -O3  ;\
+                    : -OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 \
+                           -gen_loclist_gcc=0} ;\
    O1:-O3;\
    O2:-O3;\
    O3:-O5;\
    Os:-O3; \
    O*:-O5; \
    Zfast:-O5 ;\
-     :-OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 -gen_loclist_gcc=0} ";
+     : %{xprofile=* : -O3 ; \
+                    : -OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 \
+                           -gen_loclist_gcc=0} }";
 
 /* some slightly different stuff for iropt */
 static const char *ssiropt_optlevel =
 "%{O:-O3 %{xinline=*: -I} ;\
-   O0:-O1 %{xinline=*: -I} ;\
+   O0: %{xprofile=*: -O3 ; : -O1} %{xinline=*: -I} ;\
    O1:-O3 %{xinline=*: -I} ;\
    O2:-O3 %{xinline=*: -I} ;\
    O3:-O5 %{xinline=@auto*: ; \
@@ -1212,7 +1226,7 @@ static const char *ssiropt_optlevel =
             xinline=*: -I} ; \
    Zfast: -O5 %{xinline=@auto*: ; \
                 xinline=*: -I} ;\
-     :-O1 %{xinline=*: -I} } ";
+     : %{xprofile=*: -O3 ; : -O1} %{xinline=*: -I} } ";
 
 static const char *xtarget =
 "%{xtarget=*: %einvalid value of <target> in -xtarget=<target>}";
