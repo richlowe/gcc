@@ -115,7 +115,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef STARTFILE_ARCH32_SPEC
 #define STARTFILE_ARCH32_SPEC "%{ansi:values-Xc.o%s} \
-			    %{!ansi:values-Xa.o%s}"
+			    %{!ansi:values-Xa.o%s} \
+			%{std=c99|std=c9x|std=gnu99|std=gnu9x:values-xpg6.o%s}"
 
 #undef STARTFILE_ARCH_SPEC
 #define STARTFILE_ARCH_SPEC STARTFILE_ARCH32_SPEC
