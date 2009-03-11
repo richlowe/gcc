@@ -19,305 +19,252 @@
 #
 # CDDL HEADER END
 #
-# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
-#
-#ident  "@(#)prototype_sparc.tmpl 1.2     08/12/23 SMI"
 #
 # This required package information file contains a list of package contents.
 # The 'pkgmk' command uses this file to identify the contents of a package
 # and their location on the development machine when building the package.
 # Can be created via a text editor or through use of the 'pkgproto' command.
 
-#!search <pathname pathname ...>      # where to find pkg objects
-#!include <filename>                  # include another 'prototype' file
-#!default <mode> <owner> <group>      # default used if not specified on entry
-#!<param>=<value>                     # puts parameter in pkg environment
-
-# packaging files
 i pkginfo
 i copyright
 i depend
-# source locations relative to the prototype file
+
 #
 # SUNWscgfss432
 #
 
 d none usr 0775 root sys
-d none usr/compilers 0775 root bin
-d none usr/compilers/SUNW0scgfss 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/bin 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/cg 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/debug 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/debug/sys 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/v9 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C/LC_MESSAGES 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/v9 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sys 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libp 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/man 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/man/man1 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/usr 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib 0775 root bin
-d none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/v9 0775 root bin
+d none usr/lib 0775 root bin
+d none usr/lib/gcc 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/LEGAL 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/debug 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/debug/sys 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/ipo 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/ipo/v9 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C/LC_MESSAGES 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sys 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v7 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8a 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/man 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/man/man1 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/v9 0775 root bin
 
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/LEGAL/819-0764-11.multi.pdf 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/LEGAL/SGCFSS4.3.2_Entitlement_27Jan09.txt 0664 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/LEGAL/SGCFSS4.3.2_distributionREADME_27Jan09.txt 0664 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/cg 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/fbe 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/fpversion 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/ipo 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/iropt 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/postopt 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/version 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/annotate.map 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg/model_cg_rock.so.3 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg/model_cg_sparc64vi.so.3 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg/model_cg_ultra.so.3 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg/model_cg_ultra3.so.3 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg/model_cg_ultraT1.so.3 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/debug/lib_I_dbg_gen.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/debug/sys/dbg_ddwrap.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/ipo/ipo_ld_support.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/ipo/pec_dummy.c 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/ipo/pec_dummy.cc 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/ipo/pec_dummy.f 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/ipo/v9/ipo_ld_support.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/lib_I_dbg_gen.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libdwarf.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libfast.a 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libld_annotate.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/liblv.a 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/liblv_iropt.a 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libp/libfast.a 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libtha.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_ipo.cat 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_ipo.msg 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_iropt.cat 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_iropt.msg 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_postopt.cat 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_postopt.msg 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/misalign.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/pagesize.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/binprof_obj_2.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/bit.rc 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/bit_driver.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/bitdl.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/discover_wrapper.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/libdiscover.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/race_detect_wrapper.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/binprof_obj_2.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/bit_driver.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/bitdl.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/discover_wrapper.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/libdiscover.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/race_detect_wrapper.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_lib.map 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_lib.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_tsd.map 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_tsd.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sys/liblni.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sys/libsunir.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8a/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libp/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libp/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plus/libp/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libp/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libp/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/vis.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libl2amm.a 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libp/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libp/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libp/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libprism32.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/vis.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/annotate.map 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libdwarf.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libld_annotate.so 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/liblv.a 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/liblv_iropt.a 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libp/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libp/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libp/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libtha.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/misalign.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/pagesize.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_lib.map 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_lib.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_tsd.map 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_tsd.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/wordalignI8.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/xprof_fini.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libp/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libp/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/vis.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libm.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp/libmopt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp/libmvec.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp/libmvec_mt.a 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/vis.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/xprof_fini.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libtdf.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libxprof.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libxprof_audit.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/v9/libtdf.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/v9/libxprof.so.1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/v9/libxprof_audit.so.1 0755 root bin
 
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/ats 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/ats_server 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/bit 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/cg 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/discover 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/fbe 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/fpversion 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/ipo 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/iropt 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/postopt 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/bin/version 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/annotate.map 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/cg/model_cg_rock.so.3 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/cg/model_cg_sparc64vi.so.3 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/cg/model_cg_ultra.so.3 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/cg/model_cg_ultra3.so.3 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/cg/model_cg_ultraT1.so.3 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/debug/lib_I_dbg_gen.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/debug/sys/dbg_ddwrap.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/ats.html 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/ats_info.html 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/autotuning 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/binarysearch 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/combo 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/deepsweep 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/findbug 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/fixbug 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/modulesearch 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ats/sweep 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/ipo_ld_support.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/pec_dummy.c 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/pec_dummy.cc 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/pec_dummy.f 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/ipo/v9/ipo_ld_support.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/lib_I_dbg_gen.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libcplxsupp.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libdwarf.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libfast.a 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libld_annotate.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/liblv.a 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/liblv_iropt.a 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libmtsk.so.1 0555 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libp/libcplxsupp.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libp/libfast.a 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libtha.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_ipo.cat 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_ipo.msg 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_iropt.cat 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_iropt.msg 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_postopt.cat 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/locale/C/LC_MESSAGES/SUNW_SPRO_SC_postopt.msg 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/misalign.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/pagesize.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/binprof_obj_2.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/bit.rc 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/bit_driver.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/bitdl.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/discover_wrapper.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/libdiscover.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/race_detect_wrapper.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/v9/binprof_obj_2.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/v9/bit_driver.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/v9/bitdl.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/v9/discover_wrapper.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/v9/libdiscover.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/postopt/v9/race_detect_wrapper.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/prof_lib.map 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/prof_lib.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/prof_tsd.map 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/prof_tsd.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sys/liblni.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sys/libsunir.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libp/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libp/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8/libp/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libp/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libp/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plus/libp/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libp/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libp/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/vis.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libl2amm.a 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libp/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libp/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libp/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/libprism32.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusb/vis.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/annotate.map 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libcplxsupp.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libdwarf.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libld_annotate.so 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/liblv.a 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/liblv_iropt.a 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libmtsk.so.1 0555 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libp/libcplxsupp.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libp/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libp/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libp/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libtha.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/misalign.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/pagesize.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/prof_lib.map 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/prof_lib.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/prof_tsd.map 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/prof_tsd.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/wordalignI8.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/xprof_fini.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libp/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libp/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/vis.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libm.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libp/libmopt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libp/libmvec.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/libp/libmvec_mt.a 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9b/vis.il 0644 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/xprof_fini.o 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/man/man1/ats.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/man/man1/bit.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/man/man1/discover.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/libtdf.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/libxprof.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/libxprof_audit.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/v9/libtdf.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/v9/libxprof.so.1 0755 root bin
-f none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/v9/libxprof_audit.so.1 0755 root bin
-
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/debug/lib_I_dbg_gen.so=lib_I_dbg_gen.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/lib_I_dbg_gen.so=lib_I_dbg_gen.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libdwarf.so=libdwarf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libm.il=v8/libm.il
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libmopt.a=v8/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libmtsk.so=libmtsk.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libmvec.a=v8/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libmvec_mt.a=v8/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libp/libmopt.a=../v8/libp/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libp/libmvec.a=../v8/libp/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libp/libmvec_mt.a=../v8/libp/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libtdf.so.1=../usr/lib/libtdf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libtdf.so=libtdf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libxprof.so.1=../usr/lib/libxprof.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libxprof.so=libxprof.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libxprof_audit.so.1=../usr/lib/libxprof_audit.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/libxprof_audit.so=libxprof_audit.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libmopt.a=../../v9b/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libmvec.a=../../v9b/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libmvec_mt.a=../../v9b/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libp/libmopt.a=../../../v9b/libp/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libp/libmvec.a=../../../v9b/libp/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libp/libmvec_mt.a=../../../v9b/libp/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libp/libsunimath.a=../../../v9b/libp/libsunimath.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/64/libsunimath.a=../../v9b/libsunimath.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libcx.a=../v8plusb/libcx.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libcx.so.1=../v8plusb/libcx.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libl2amm.a=../v8plusb/libl2amm.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libmopt.a=../v8plusb/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libmvec.a=../v8plusb/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libmvec_mt.a=../v8plusb/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libp/libcx.a=../../v8plusb/libp/libcx.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libp/libmopt.a=../../v8plusb/libp/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libp/libmvec.a=../../v8plusb/libp/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libp/libmvec_mt.a=../../v8plusb/libp/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libp/libsunimath.a=../../v8plusb/libp/libsunimath.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libprism32.so=../v8plusb/libprism32.so
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcfmaf/libsunimath.a=../v8plusb/libsunimath.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sparcima=sparcfmaf
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/sys/liblni.so=liblni.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libm.il=../v8/libm.il
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libmopt.a=../v8/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libmvec.a=../v8/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libmvec_mt.a=../v8/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libp/libmopt.a=../../v8/libp/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libp/libmvec.a=../../v8/libp/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v7/libp/libmvec_mt.a=../../v8/libp/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libmopt.a=../v8/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libmvec.a=../v8/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libmvec_mt.a=../v8/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libp/libmopt.a=../../v8/libp/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libp/libmvec.a=../../v8/libp/libmvec.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8a/libp/libmvec_mt.a=../../v8/libp/libmvec_mt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libmopt.a=../v8plus/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusa/libp/libmopt.a=../../v8plus/libp/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusc=sparcfmaf
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v8plusd=sparcima
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libdwarf.so=libdwarf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libmtsk.so=libmtsk.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libtdf.so.1=../../usr/lib/v9/libtdf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libtdf.so=libtdf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libxprof.so.1=../../usr/lib/v9/libxprof.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libxprof.so=libxprof.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libxprof_audit.so.1=../../usr/lib/v9/libxprof_audit.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9/libxprof_audit.so=libxprof_audit.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libmopt.a=../v9/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9a/libp/libmopt.a=../../v9/libp/libmopt.a
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9c=sparcfmaf/64
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/lib/v9d=sparcima/64
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/libtdf.so=libtdf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/libxprof.so=libxprof.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/libxprof_audit.so=libxprof_audit.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/v9/libtdf.so=libtdf.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/v9/libxprof.so=libxprof.so.1
-s none usr/compilers/SUNW0scgfss/4.3.2/prod/usr/lib/v9/libxprof_audit.so=libxprof_audit.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/debug/lib_I_dbg_gen.so=lib_I_dbg_gen.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/lib_I_dbg_gen.so=lib_I_dbg_gen.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libdwarf.so=libdwarf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libm.il=v8plus/libm.il
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libmopt.a=v8plus/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libmvec.a=v8plus/libmvec.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libmvec_mt.a=v8plus/libmvec_mt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libp/libmopt.a=../v8plus/libp/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libp/libmvec.a=../v8plus/libp/libmvec.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libp/libmvec_mt.a=../v8plus/libp/libmvec_mt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libtdf.so.1=../usr/lib/libtdf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libtdf.so=libtdf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libxprof.so.1=../usr/lib/libxprof.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libxprof.so=libxprof.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libxprof_audit.so.1=../usr/lib/libxprof_audit.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/libxprof_audit.so=libxprof_audit.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libmopt.a=../../v9b/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libmvec.a=../../v9b/libmvec.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libmvec_mt.a=../../v9b/libmvec_mt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libp/libmopt.a=../../../v9b/libp/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libp/libmvec.a=../../../v9b/libp/libmvec.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libp/libmvec_mt.a=../../../v9b/libp/libmvec_mt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libp/libsunimath.a=../../../v9b/libp/libsunimath.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/64/libsunimath.a=../../v9b/libsunimath.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libl2amm.a=../v8plusb/libl2amm.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libmopt.a=../v8plusb/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libmvec.a=../v8plusb/libmvec.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libmvec_mt.a=../v8plusb/libmvec_mt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libp/libmopt.a=../../v8plusb/libp/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libp/libmvec.a=../../v8plusb/libp/libmvec.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libp/libmvec_mt.a=../../v8plusb/libp/libmvec_mt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libp/libsunimath.a=../../v8plusb/libp/libsunimath.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libprism32.so=../v8plusb/libprism32.so
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcfmaf/libsunimath.a=../v8plusb/libsunimath.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sparcima=sparcfmaf
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/sys/liblni.so=liblni.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v7/libm.il=../v8/libm.il
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libmopt.a=../v8plus/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libp/libmopt.a=../../v8plus/libp/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusc=sparcfmaf
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusd=sparcima
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libdwarf.so=libdwarf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libtdf.so.1=../../usr/lib/v9/libtdf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libtdf.so=libtdf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libxprof.so.1=../../usr/lib/v9/libxprof.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libxprof.so=libxprof.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libxprof_audit.so.1=../../usr/lib/v9/libxprof_audit.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libxprof_audit.so=libxprof_audit.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libmopt.a=../v9/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libp/libmopt.a=../../v9/libp/libmopt.a
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9c=sparcfmaf/64
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9d=sparcima/64
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libtdf.so=libtdf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libxprof.so=libxprof.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libxprof_audit.so=libxprof_audit.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/v9/libtdf.so=libtdf.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/v9/libxprof.so=libxprof.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/v9/libxprof_audit.so=libxprof_audit.so.1

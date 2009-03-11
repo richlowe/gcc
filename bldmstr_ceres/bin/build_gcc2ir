@@ -911,8 +911,8 @@ manipulate_install_area ()
 
         # Move the SUNWscgfss firectory also into usr/compilers
         #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
-	( cd $INSTALL_DIR/..;
-	  mv $SUNINSTSUBDIR usr/lib/gcc/sparc-sun-solaris2.11/gccfss )
+	( cd $INSTALL_DIR;
+	  mv ../$SUNINSTSUBDIR usr/lib/gcc/sparc-sun-solaris2.11/gccfss )
         
         # Lets create the packages
 	echo "Create packages ..."
@@ -1068,21 +1068,17 @@ then
         export AS_FOR_TARGET="/usr/ccs/bin/as"
 	$SOURCE_WS/configure \
             --prefix=/usr \
-            --program-suffix=$GCC_VERSION \
+            --program-suffix=-$GCC_VERSION \
             --infodir=/usr/share/info \
 	    --mandir=/usr/share/man \
 	    --libexecdir=/usr/lib \
             --enable-shared \
             --disable-static \
-            --disable-libtool-lock \
-            --enable-objc-gc \
-	    --enable-concept-checks \
-	    --disable-libada \
-	    --enable-libssp \
+            --with-system-zlib \
+            --enable-checking=release \
             --enable-languages=c,c++,objc \
-            --enable-threads=posix \
-	    --enable-tls=yes \
-	    --with-system-zlib \
+            --disable-libobjc \
+            --with-cpu=v9 \
 	    --without-gnu-ld \
 	    --with-ld=/usr/ccs/bin/ld \
 	    --without-gnu-as \
@@ -1091,11 +1087,15 @@ then
 	    --with-gmp-lib=/usr/lib \
 	    --with-mpfr-include=/usr/include/mpfr \
 	    --with-mpfr-lib=/usr/lib \
+            --disable-libtool-lock \
+            --enable-threads=posix \
+	    --enable-tls=yes \
 	    --enable-c99 \
-	    --enable-nls \
-	    --enable-wchar_t \
-	    --enable-libstdcxx-allocator=mt \
-	    --with-pic > $ROOT/logs/config.gcc2ir.log 2>&1
+            --enable-libssp \
+            --enable-nls \
+            --enable-wchar_t \
+            --enable-libstdcxx-allocator=mt \
+            --with-pic > $ROOT/logs/config.gcc2ir.log 2>&1
     else
 	if [ "$OS_NAME" = "Linux" ]
 	then
