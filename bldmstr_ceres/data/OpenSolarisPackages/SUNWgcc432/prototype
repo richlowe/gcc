@@ -168,8 +168,7 @@ f none usr/bin/g++-4.3.2 0755 root bin
 f none usr/bin/gcc-4.3.2 0755 root bin
 f none usr/bin/gccbug-4.3.2 0755 root bin
 f none usr/bin/gcov-4.3.2 0755 root bin
-f none usr/bin/gfortran4.3.2 0775 root bin
-f none usr/bin/sparc-sun-solaris2.11-gfortran4.3.2 0775 root bin
+f none usr/bin/gfortran-4.3.2 0775 root bin
 f none usr/include/c++/4.3.2/algorithm 0644 root bin
 f none usr/include/c++/4.3.2/array 0644 root bin
 f none usr/include/c++/4.3.2/backward/auto_ptr.h 0644 root bin
@@ -974,18 +973,24 @@ f none usr/share/man/man1/cpp-4.3.2.1 0644 root bin
 f none usr/share/man/man1/g++-4.3.2.1 0644 root bin
 f none usr/share/man/man1/gcc-4.3.2.1 0644 root bin
 f none usr/share/man/man1/gcov-4.3.2.1 0644 root bin
-f none usr/share/man/man1/gfortran4.3.2.1 0644 root bin
+f none usr/share/man/man1/gfortran-4.3.2.1 0644 root bin
 f none usr/share/man/man7/fsf-funding.7 0644 root bin
 f none usr/share/man/man7/gfdl.7 0644 root bin
 f none usr/share/man/man7/gpl.7 0644 root bin
 
+s none usr/bin/gcc=gcc-4.3.2
+s none usr/bin/g++=g++-4.3.2
+s none usr/bin/gfortran=gfortran-4.3.2
+s none usr/bin/c++=g++-4.3.2
 s none usr/bin/c++-4.3.2=g++-4.3.2
 s none usr/bin/sparc-sun-solaris2.11-c++-4.3.2=g++-4.3.2
 s none usr/bin/sparc-sun-solaris2.11-g++-4.3.2=g++-4.3.2
 s none usr/bin/sparc-sun-solaris2.11-gcc-4.3.2=gcc-4.3.2
-s none usr/bin/sparc-sun-solaris2.11-gcc-tmp=gcc-4.3.2
+s none usr/bin/sparc-sun-solaris2.11-gfortran-4.3.2=gfortran-4.3.2
+
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/X11=root/usr/openwin/include/X11
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/Xm=root/usr/dt/include/Xm
+
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgcc_s.so=../../../libgcc_s.so.1
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgfortran.so=../../../libgfortran.so.3.0.0
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgomp.so=../../../libgomp.so.1.0.0
