@@ -22,33 +22,26 @@
 # Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-#
 # This required package information file contains a list of package contents.
 # The 'pkgmk' command uses this file to identify the contents of a package
 # and their location on the development machine when building the package.
 # Can be created via a text editor or through use of the 'pkgproto' command.
 
-#!search <pathname pathname ...>      # where to find pkg objects
-#!include <filename>                  # include another 'prototype' file
-#!default <mode> <owner> <group>      # default used if not specified on entry
-#!<param>=<value>                     # puts parameter in pkg environment
-
-# packaging files
 i pkginfo
 i copyright
 i depend
-# source locations relative to the prototype file
+
 #
 # SUNWgcc432
 #
 
-d none usr 0755 root sys
+d none usr 0775 root sys
 d none usr/bin 0775 root bin
 d none usr/include 0775 root bin
 d none usr/include/c++ 0775 root bin
 d none usr/include/c++/4.3.2 0775 root bin
 d none usr/include/c++/4.3.2/backward 0775 root bin
-d none usr/include/c++/4.3.2/bits 0775 root bin
+d none usr/include/c++/4.3.2/bits 0775 root binx1
 d none usr/include/c++/4.3.2/debug 0775 root bin
 d none usr/include/c++/4.3.2/ext 0775 root bin
 d none usr/include/c++/4.3.2/ext/pb_ds 0775 root bin
@@ -83,9 +76,7 @@ d none usr/include/c++/4.3.2/sparc-sun-solaris2.11/sparcv9 0775 root bin
 d none usr/include/c++/4.3.2/sparc-sun-solaris2.11/sparcv9/bits 0775 root bin
 d none usr/include/c++/4.3.2/tr1 0775 root bin
 d none usr/include/c++/4.3.2/tr1_impl 0775 root bin
-d none usr/share 0775 root bin
-d none usr/share/info 0775 root bin
-d none usr/lib 0755 root bin
+d none usr/lib 0775 root bin
 d none usr/lib/gcc 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2 0775 root bin
@@ -103,9 +94,11 @@ d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/firefox/nss 0775 ro
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/gc 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/iso 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/lcms 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/libical 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/libpisock 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/mps 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet 0775 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/openssl 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pgsql 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pgsql/internal 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pgsql/server 0775 root bin
@@ -129,15 +122,9 @@ d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include/ssp 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/include 0775 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9 0775 root bin
-d none usr/libexec 0775 root bin
-d none usr/libexec/gcc 0775 root bin
-d none usr/libexec/gcc/sparc-sun-solaris2.11 0775 root bin
-d none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2 0775 root bin
-d none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/install-tools 0775 root bin
-d none usr/share/man 0775 root bin
-d none usr/share/man/man1 0775 root bin
-d none usr/share/man/man7 0775 root bin
+d none usr/lib/sparcv9 0775 root bin
 d none usr/share 0775 root bin
+d none usr/share/info 0775 root bin
 d none usr/share/locale 0775 root bin
 d none usr/share/locale/be 0775 root bin
 d none usr/share/locale/be/LC_MESSAGES 0775 root bin
@@ -173,14 +160,16 @@ d none usr/share/locale/zh_CN 0775 root bin
 d none usr/share/locale/zh_CN/LC_MESSAGES 0775 root bin
 d none usr/share/locale/zh_TW 0775 root bin
 d none usr/share/locale/zh_TW/LC_MESSAGES 0775 root bin
-
-f none usr/bin/cpp 0755 root bin
-f none usr/bin/g++ 0755 root bin
-f none usr/bin/gcc 0755 root bin
-f none usr/bin/gccbug 0755 root bin
-f none usr/bin/gcov 0755 root bin
-f none usr/bin/gfortran 0755 root bin
-
+d none usr/share/man 0775 root bin
+d none usr/share/man/man1 0775 root bin
+d none usr/share/man/man7 0775 root bin
+f none usr/bin/cpp-4.3.2 0755 root bin
+f none usr/bin/g++-4.3.2 0755 root bin
+f none usr/bin/gcc-4.3.2 0755 root bin
+f none usr/bin/gccbug-4.3.2 0755 root bin
+f none usr/bin/gcov-4.3.2 0755 root bin
+f none usr/bin/gfortran4.3.2 0775 root bin
+f none usr/bin/sparc-sun-solaris2.11-gfortran4.3.2 0775 root bin
 f none usr/include/c++/4.3.2/algorithm 0644 root bin
 f none usr/include/c++/4.3.2/array 0644 root bin
 f none usr/include/c++/4.3.2/backward/auto_ptr.h 0644 root bin
@@ -821,20 +810,17 @@ f none usr/include/c++/4.3.2/unordered_set 0644 root bin
 f none usr/include/c++/4.3.2/utility 0644 root bin
 f none usr/include/c++/4.3.2/valarray 0644 root bin
 f none usr/include/c++/4.3.2/vector 0644 root bin
-f none usr/share/info/cpp.info 0644 root bin
-f none usr/share/info/cppinternals.info 0644 root bin
-f none usr/share/info/dir 0664 root bin
-f none usr/share/info/gcc.info 0644 root bin
-f none usr/share/info/gccinstall.info 0644 root bin
-f none usr/share/info/gccint.info 0644 root bin
-f none usr/share/info/gfortran.info 0644 root bin
-f none usr/share/info/libgomp.info 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/cc1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/cc1obj 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/cc1plus 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/collect2 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/crt1.o 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/crtbegin.o 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/crtend.o 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/crtfastmath.o 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/crti.o 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/crtn.o 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/f951 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/finclude/omp_lib.f90 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/finclude/omp_lib.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/finclude/omp_lib.mod 0644 root bin
@@ -853,6 +839,7 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/firefox/nss/secport
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/gc/gc_config_macros.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/iso/math_c99.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/lcms/lcms.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/libical/icaltz-util.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/libpisock/pi-usb.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/limits.h 0664 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/math.h 0644 root bin
@@ -865,6 +852,7 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet/ip_nat.h 06
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet/ip_pool.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet/ip_proxy.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet/ip_state.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/openssl/opensslconf.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pgsql/internal/c.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pgsql/server/c.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pixman-1/pixman.h 0644 root bin
@@ -916,12 +904,16 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include/stdfix.h 0664 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include/tgmath.h 0664 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include/unwind.h 0664 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include/varargs.h 0664 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/fixinc.sh 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/fixinc_list 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/fixincl 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/gsyslimits.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/include/README 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/include/limits.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/macro_list 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/mkheaders 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/mkheaders.conf 0664 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/mkinstalldirs 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgcc.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgcc_eh.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgcov.a 0644 root bin
@@ -941,23 +933,14 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libgcc_eh.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libgcov.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libgfortranbegin.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libgfortranbegin.la 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/cc1 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/cc1obj 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/cc1plus 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/collect2 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/f951 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/fixinc.sh 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/fixincl 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/mkheaders 0755 root bin
-f none usr/libexec/gcc/sparc-sun-solaris2.11/4.3.2/install-tools/mkinstalldirs 0755 root bin
-f none usr/share/man/man1/cpp.1 0644 root bin
-f none usr/share/man/man1/g++.1 0644 root bin
-f none usr/share/man/man1/gcc.1 0644 root bin
-f none usr/share/man/man1/gcov.1 0644 root bin
-f none usr/share/man/man1/gfortran.1 0644 root bin
-f none usr/share/man/man7/fsf-funding.7 0644 root bin
-f none usr/share/man/man7/gfdl.7 0644 root bin
-f none usr/share/man/man7/gpl.7 0644 root bin
+f none usr/share/info/cpp.info 0644 root bin
+f none usr/share/info/cppinternals.info 0644 root bin
+f none usr/share/info/dir 0664 root bin
+f none usr/share/info/gcc.info 0644 root bin
+f none usr/share/info/gccinstall.info 0644 root bin
+f none usr/share/info/gccint.info 0644 root bin
+f none usr/share/info/gfortran.info 0644 root bin
+f none usr/share/info/libgomp.info 0644 root bin
 f none usr/share/locale/be/LC_MESSAGES/cpplib.mo 0644 root bin
 f none usr/share/locale/be/LC_MESSAGES/gcc.mo 0644 root bin
 f none usr/share/locale/ca/LC_MESSAGES/cpplib.mo 0644 root bin
@@ -987,13 +970,33 @@ f none usr/share/locale/zh_CN/LC_MESSAGES/cpplib.mo 0644 root bin
 f none usr/share/locale/zh_CN/LC_MESSAGES/gcc.mo 0644 root bin
 f none usr/share/locale/zh_TW/LC_MESSAGES/cpplib.mo 0644 root bin
 f none usr/share/locale/zh_TW/LC_MESSAGES/gcc.mo 0644 root bin
+f none usr/share/man/man1/cpp-4.3.2.1 0644 root bin
+f none usr/share/man/man1/g++-4.3.2.1 0644 root bin
+f none usr/share/man/man1/gcc-4.3.2.1 0644 root bin
+f none usr/share/man/man1/gcov-4.3.2.1 0644 root bin
+f none usr/share/man/man1/gfortran4.3.2.1 0644 root bin
+f none usr/share/man/man7/fsf-funding.7 0644 root bin
+f none usr/share/man/man7/gfdl.7 0644 root bin
+f none usr/share/man/man7/gpl.7 0644 root bin
 
-l none usr/bin/c++=g++
-l none usr/bin/sparc-sun-solaris2.11-c++=g++
-l none usr/bin/sparc-sun-solaris2.11-g++=g++
-l none usr/bin/sparc-sun-solaris2.11-gcc-4.3.2=gcc
-l none usr/bin/sparc-sun-solaris2.11-gcc=gcc
-l none usr/bin/sparc-sun-solaris2.11-gfortran=gfortran
-
+s none usr/bin/c++-4.3.2=g++-4.3.2
+s none usr/bin/sparc-sun-solaris2.11-c++-4.3.2=g++-4.3.2
+s none usr/bin/sparc-sun-solaris2.11-g++-4.3.2=g++-4.3.2
+s none usr/bin/sparc-sun-solaris2.11-gcc-4.3.2=gcc-4.3.2
+s none usr/bin/sparc-sun-solaris2.11-gcc-tmp=gcc-4.3.2
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/X11=root/usr/openwin/include/X11
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/Xm=root/usr/dt/include/Xm
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgcc_s.so=../../../libgcc_s.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgfortran.so=../../../libgfortran.so.3.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgomp.so=../../../libgomp.so.1.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libobjc.so=../../../libobjc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libobjc_gc.so=../../../libobjc_gc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libssp.so=../../../libssp.so.0.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libstdc++.so=../../../libstdc++.so.6.0.10
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libgcc_s.so=../../../sparcv9/libgcc_s.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libgfortran.so=../../../sparcv9/libgfortran.so.3.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libgomp.so=../../../sparcv9/libgomp.so.1.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libobjc.so=../../../sparcv9/libobjc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libobjc_gc.so=../../../sparcv9/libobjc_gc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libssp.so=../../../sparcv9/libssp.so.0.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/sparcv9/libstdc++.so=../../../sparcv9/libstdc++.so.6.0.10
