@@ -1,5 +1,6 @@
 /* { dg-do compile } */
 /* { dg-options "-fprofile-arcs" } */
+/* { dg-warning "assuming `-O1' option" } */
 
 extern void bar(void) __attribute__((noreturn));
 int foo (void) { bar(); }

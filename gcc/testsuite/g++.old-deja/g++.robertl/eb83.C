@@ -1,5 +1,6 @@
 // { dg-do run { target native } }
 // { dg-options "-fprofile-arcs -ftest-coverage" }
+/* { dg-warning "assuming `-O1' option" } */
 void
 test_swap(int& x, int& y) throw()
 {
