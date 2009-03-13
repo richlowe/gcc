@@ -6,7 +6,7 @@
 
 /* { dg-options "-fprofile-arcs" } */
 /* { dg-do run { target native } } */
-/* { dg-warning "assuming `-O1' option" } */
+/* { dg-excess-errors "assuming `-O1' option" } */
 
 extern void abort (void);
 extern void exit (int);
