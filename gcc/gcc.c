@@ -988,7 +988,7 @@ static const char *cpp_debug_options = "%{d*}";
  %{xcode=pic13: -fpic} \
  %{xcode=pic32: -fPIC} \
  %{xhwcprof | xhwcprof=enable: -g} \
- %{Zfast: -O3} \
+ %{Zfast: -O3} %:add-sun-prefetch() \
  %{xrestrict*} \
  %{xinline=@auto*: -xinline=%%auto%*; \
    xinline=@none : ; \
@@ -1183,7 +1183,8 @@ static const char *gccfss_invoke_as =
 
 static const char *ssbe_xarch_xchip =
 "%(ssbe_xarch) \
- %{xchip=*: -xchip=%* ; \
+ %{xchip=realT2: -xchip=ultraT2 ; \
+   xchip=*: -xchip=%* ; \
           : -xchip=generic } \
  %{xprefetch=* : -xprefetch=%* } \
  %{xprefetch_level=* : -xprefetch_level=%* }";
@@ -1193,6 +1194,7 @@ static const char *sscg_xarch_xchip =
 "%(ssbe_xarch) \
  %{xchip=ultraT2: -xchip=rock ; \
    xchip=ultraT2plus: -xchip=rock ; \
+   xchip=realT2: -xchip=ultraT2 ; \
    xchip=*: -xchip=%* ; \
           : -xchip=generic } \
  %{xprefetch=* : -xprefetch=%* } \
@@ -2211,6 +2213,14 @@ translate_options (int *argcp, const char *const **argvp)
 static int xprefetch_auto = 1; /* 1=> xprefetch=auto 0=> xprefetch=no%auto */
 static int xprefetch_explicit = 1; /* likewise for explicit */
 static char *xprefetch_latx = NULL;
+
+static const char *add_sun_prefetch(int dummy __attribute__ ((unused)), 
+                           const char** dummy2 __attribute__ ((unused)) ) {
+  if (xprefetch_explicit == 1) 
+     return xstrdup("-D__SUN_PREFETCH");
+  else
+     return xstrdup(" ");
+}
 
 static int
 crack_xprefetch (char * p)
@@ -3472,6 +3482,7 @@ static const struct spec_function static_spec_functions[] =
   { "verify-sunir-backend",	verify_sunir_backend},
   { "add-user-il-routines",	add_user_il_routines},
   { "print-asm-header",		print_asm_header_spec_function },
+  { "add-sun-prefetch",		add_sun_prefetch },
 #ifdef EXTRA_SPEC_FUNCTIONS
   EXTRA_SPEC_FUNCTIONS
 #endif
