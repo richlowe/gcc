@@ -3820,7 +3820,6 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
     case GE_EXPR:
     case EQ_EXPR:
     case NE_EXPR:
-    case UNORDERED_EXPR:
       {
         tree op0 = TREE_OPERAND (stmt, 0); /* left */
         tree op1 = TREE_OPERAND (stmt, 1); /* right operand of binary operation */
@@ -4104,6 +4103,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
       break;
     
     case ORDERED_EXPR:
+    case UNORDERED_EXPR:
       {
         tree op0 = TREE_OPERAND (stmt, 0); /* left */
         tree op1 = TREE_OPERAND (stmt, 1); /* right operand of binary operation */
@@ -4116,7 +4116,8 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
         ir_op1 = dump_ir_expr (op1, MAP_FOR_VALUE);
 
         ret = build_ir_triple (IR_QUO, ir_op0, ir_op1, inttype, NULL);
-        ret = build_ir_triple (IR_NOT, ret, 0, inttype, NULL);
+        if (TREE_CODE (stmt) == ORDERED_EXPR)
+          ret = build_ir_triple (IR_NOT, ret, 0, inttype, NULL);
       }
       break;
 
