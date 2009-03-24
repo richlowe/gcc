@@ -43,6 +43,7 @@ i depend
 #
 
 d none usr 0755 root sys
+d none usr/lib 0755 root bin
 d none usr/lib/sparcv9 0755 root bin
 
 f none usr/lib/libgcc_s.so.1 0644 root bin
