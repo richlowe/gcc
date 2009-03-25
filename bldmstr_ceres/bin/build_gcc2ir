@@ -388,6 +388,9 @@ install_crosscompiler_suncomponents ()
         # create soft links for v8plusd/v9d subdirectories
         ln -s sparcima v8plusd
         ln -s sparcima/64 v9d
+        # create links for sparcvis and sparcvis2
+        ln -s v8plusa sparcvis
+        ln -s v8plusb sparcvis2
 
         # copy solaris include files
         echo "Linking Solaris include header files, for build purpose only"

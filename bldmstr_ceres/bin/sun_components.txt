@@ -28,6 +28,7 @@ lib/ipo/ats/binarysearch
 lib/ipo/ats/combo
 lib/ipo/ats/deepsweep
 lib/ipo/ats/findbug
+lib/ipo/ats/findculprit
 lib/ipo/ats/fixbug
 lib/ipo/ats/modulesearch
 lib/ipo/ats/sweep
@@ -69,6 +70,7 @@ lib/postopt/v9/bit_driver.so
 lib/postopt/v9/discover_wrapper.o
 lib/postopt/v9/libdiscover.so
 lib/postopt/v9/race_detect_wrapper.o
+lib/prof_func.o
 lib/prof_lib.map
 lib/prof_lib.o
 lib/prof_tsd.map
@@ -106,6 +108,7 @@ lib/v8plusb/libp/libmvec.a
 lib/v8plusb/libp/libmvec_mt.a
 lib/v8plusb/libprism32.so
 lib/v8plusb/vis.il
+lib/v8plusd/vis.il
 lib/v9/libdwarf.so
 lib/v9/libdwarf.so.1
 lib/v9/liblv.a
@@ -121,6 +124,7 @@ lib/v9/libtha.so.1
 lib/v9/pagesize.o
 lib/v9/misalign.o
 lib/v9/wordalignI8.o
+lib/v9/prof_func.o
 lib/v9/prof_lib.map
 lib/v9/prof_lib.o
 lib/v9/prof_tsd.map
@@ -143,6 +147,7 @@ lib/v9b/libp/libmopt.a
 lib/v9b/libp/libmvec.a
 lib/v9b/libp/libmvec_mt.a
 lib/v9b/vis.il
+lib/v9d/vis.il
 lib/sparcfmaf/libl2amm.a
 lib/sparcfmaf/libm.il
 lib/sparcfmaf/libmopt.a
