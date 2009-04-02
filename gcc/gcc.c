@@ -759,7 +759,7 @@ proper position among the other output files.  */
     %{!shared: %{xprofile=collect* : \
       %{m64 : %J/v9/xprof_fini.o ; \
         m32 : %J/xprof_fini.o ; \
-            : %J/xprof_fini.o } \ 
+            : %J/xprof_fini.o } \
         -Bdynamic -lxprof -lthread } } \
 "
 #else
@@ -934,6 +934,7 @@ static const char *cpp_unique_options =
         %{Zarchm32=v8plusd: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
    m64: %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
         %{Zarchm64=v9d: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } } \
+ %:prod-dir-include() \
 ";
 
 /* This contains cpp options which are common with cc1_options and are passed
@@ -1240,14 +1241,14 @@ static const char *iropt_ipo_options =
         -xlibxprof \
         %{c:%{!o*:-oo %b.o}     \
                   %{o* :-oo %*  }}   \
-        %{!c: %{Zpec=*:-oo %d%w%U%O;  \ 
+        %{!c: %{Zpec=*:-oo %d%w%U%O;  \
                       :-oo %b.o} }  \
 	 -xprofile=use:%+profile%* } \
  %{xprofile=collect=*: \
         -xlibxprof \
         %{c:%{!o*:-oo %b.o}     \
                   %{o* :-oo %*  }}   \
-        %{!c: %{Zpec=*:-oo %d%w%U%O;  \ 
+        %{!c: %{Zpec=*:-oo %d%w%U%O;  \
                       :-oo %b.o} }  \
 	-xprofile=collect:%+profile%* }   \
  %{Zfprofile-arcs: \
@@ -3338,6 +3339,16 @@ static char *studioproddir_lib = NULL;
 static char *sunw_studio_path = NULL;
 static char *sunw_scgfss_path = NULL;
 
+static const char *prod_dir_include(int dummy __attribute__ ((unused)), 
+                           const char** dummy2 __attribute__ ((unused)) ) {
+  char * ptr;
+  ptr = concat(studioproddir, "/include", NULL);
+  if (directory_exists(ptr))
+     return xstrdup(concat("-I",ptr,NULL));
+  else
+     return xstrdup(" ");
+}
+
 static char *alternate_as = NULL;
 static char *alternate_iropt = NULL;
 static char *alternate_cg = NULL;
@@ -3483,6 +3494,7 @@ static const struct spec_function static_spec_functions[] =
   { "add-user-il-routines",	add_user_il_routines},
   { "print-asm-header",		print_asm_header_spec_function },
   { "add-sun-prefetch",		add_sun_prefetch },
+  { "prod-dir-include",		prod_dir_include },
 #ifdef EXTRA_SPEC_FUNCTIONS
   EXTRA_SPEC_FUNCTIONS
 #endif
