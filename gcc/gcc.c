@@ -935,6 +935,7 @@ static const char *cpp_unique_options =
    m64: %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
         %{Zarchm64=v9d: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } } \
  %:prod-dir-include() \
+ %{!frtl-backend: %:add-sun-prefetch()} \
 ";
 
 /* This contains cpp options which are common with cc1_options and are passed
@@ -989,7 +990,7 @@ static const char *cpp_debug_options = "%{d*}";
  %{xcode=pic13: -fpic} \
  %{xcode=pic32: -fPIC} \
  %{xhwcprof | xhwcprof=enable: -g} \
- %{Zfast: -O3} %:add-sun-prefetch() \
+ %{Zfast: -O3} \
  %{xrestrict*} \
  %{xinline=@auto*: -xinline=%%auto%*; \
    xinline=@none : ; \
@@ -1733,12 +1734,12 @@ static const struct compiler default_compilers[] =
   {".S", "@assembler-with-cpp", 0, 1, 0},
   {"@assembler-with-cpp",
 #ifdef AS_NEEDS_DASH_FOR_PIPED_INPUT
-   "%(trad_capable_cpp) -lang-asm %(cpp_options) -fno-directives-only\
+   "%(trad_capable_cpp) -lang-asm %:reset-xprefetch-explicit() %(cpp_options) -fno-directives-only\
       %{E|M|MM:%(cpp_debug_options)}\
       %{!M:%{!MM:%{!E:%{!S:-o %|.s |\n\
        %(asm_name) %(asm_debug) %(asm_options) %|.s %A }}}}"
 #else
-   "%(trad_capable_cpp) -lang-asm %(cpp_options) -fno-directives-only\
+   "%(trad_capable_cpp) -lang-asm %:reset-xprefetch-explicit() %(cpp_options) -fno-directives-only\
       %{E|M|MM:%(cpp_debug_options)}\
       %{!M:%{!MM:%{!E:%{!S:-o %|.s |\n\
        %(asm_name) %(asm_debug) %(asm_options) %m.s %A }}}}"
@@ -2215,10 +2216,16 @@ static int xprefetch_auto = 1; /* 1=> xprefetch=auto 0=> xprefetch=no%auto */
 static int xprefetch_explicit = 1; /* likewise for explicit */
 static char *xprefetch_latx = NULL;
 
+static const char *reset_xprefetch_explicit (int dummy __attribute__ ((unused)),
+                           const char** dummy2 __attribute__ ((unused)) ) {
+  xprefetch_explicit = 0;
+  return xstrdup(" ");
+}
+
 static const char *add_sun_prefetch(int dummy __attribute__ ((unused)), 
                            const char** dummy2 __attribute__ ((unused)) ) {
   if (xprefetch_explicit == 1) 
-     return xstrdup("-D__SUN_PREFETCH");
+     return xstrdup("-D__SUN_PREFETCH -include sun_prefetch.h");
   else
      return xstrdup(" ");
 }
@@ -3495,6 +3502,7 @@ static const struct spec_function static_spec_functions[] =
   { "print-asm-header",		print_asm_header_spec_function },
   { "add-sun-prefetch",		add_sun_prefetch },
   { "prod-dir-include",		prod_dir_include },
+  { "reset-xprefetch-explicit", reset_xprefetch_explicit},
 #ifdef EXTRA_SPEC_FUNCTIONS
   EXTRA_SPEC_FUNCTIONS
 #endif

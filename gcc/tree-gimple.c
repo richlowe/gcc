@@ -436,8 +436,7 @@ is_gimple_reg (tree t)
 
   /* We define "registers" as things that can be renamed as needed,
      which with our infrastructure does not apply to memory.  */
-  if ((TREE_CODE_CLASS (TREE_CODE (t)) == tcc_declaration
-       || gate_generate_rtl ())
+  if (TREE_CODE_CLASS (TREE_CODE (t)) == tcc_declaration
       && needs_to_live_in_memory (t))
     return false;
 
