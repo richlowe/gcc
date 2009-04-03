@@ -1,3 +1,4 @@
+include/cc/sun_prefetch.h
 bin/cg
 bin/discover
 bin/fbe
