@@ -70,6 +70,8 @@ PARALLEL_BUILD_OPTION="-j $JOBS"
 BOOTSTRAP_OPTION=
 DEBUG_MODE=0
 LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
+INCLUDE_HEADERS=/ws/gccfss/source/Studio12U1_include_headers
+
 trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
 
 usage()
@@ -484,6 +486,11 @@ install_suncomponents()
 			$INSTALL_DIR/man/man1/${TOOL}.1
 	    done
         fi
+
+        # copy specific header files from the Studio install area to our
+        # install area
+        mkdir -p  $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
+        cp -r $INCLUDE_HEADERS $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
 
 	# create soft links for v8plusc/v9c subdirectories
 	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/

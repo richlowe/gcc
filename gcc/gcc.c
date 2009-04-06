@@ -2225,7 +2225,7 @@ static const char *reset_xprefetch_explicit (int dummy __attribute__ ((unused)),
 static const char *add_sun_prefetch(int dummy __attribute__ ((unused)), 
                            const char** dummy2 __attribute__ ((unused)) ) {
   if (xprefetch_explicit == 1) 
-     return xstrdup("-D__SUN_PREFETCH -include cc/sun_prefetch.h");
+     return xstrdup("-D__SUN_PREFETCH");
   else
      return xstrdup(" ");
 }
