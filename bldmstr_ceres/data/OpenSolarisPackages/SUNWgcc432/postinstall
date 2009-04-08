@@ -1,0 +1,60 @@
+#! /usr/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+#ident	"@(#)postinstall	1.1	09/04/03 SMI"
+#
+# generate "plain" links in usr/bin after installation
+#
+
+GCCVER=4.3.2
+
+case "$ARCH" in
+sparc)	GCCARCH=sparc-sun-solaris2.11
+	;;
+i386)	GCCARCH=i386-pc-solaris2.11
+	;;
+*)	echo "$ARCH is unknown"
+	exit 2
+	;;
+esac
+	
+rm -f $BASEDIR/usr/bin/c++
+rm -f $BASEDIR/usr/bin/g++
+rm -f $BASEDIR/usr/bin/gcc
+rm -f $BASEDIR/usr/bin/gfortran
+rm -f $BASEDIR/usr/bin/cpp
+rm -f $BASEDIR/usr/bin/gccbug
+
+ln -s ./$GCCARCH-c++-$GCCVER $BASEDIR/usr/bin/c++
+ln -s ./$GCCARCH-g++-$GCCVER $BASEDIR/usr/bin/g++
+ln -s ./$GCCARCH-gcc-$GCCVER $BASEDIR/usr/bin/gcc
+ln -s ./$GCCARCH-gfortran-$GCCVER $BASEDIR/usr/bin/gfortran
+ln -s ./cpp-$GCCVER $BASEDIR/usr/bin/cpp
+ln -s ./gccbug-$GCCVER $BASEDIR/usr/bin/gccbug
+
+exit 0
