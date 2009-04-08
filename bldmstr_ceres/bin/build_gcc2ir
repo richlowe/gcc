@@ -932,7 +932,7 @@ manipulate_install_area ()
 
         
         # 2. SUNWgccruntime
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
 	  >> $ROOT/logs/packages.log 2>&1
 	  
        
