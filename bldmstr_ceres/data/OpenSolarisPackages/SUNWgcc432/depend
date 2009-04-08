@@ -50,6 +50,6 @@ P SUNWcsd	Core Solaris Devices
 P SUNWcsl	Core Solaris Libraries
 P SUNWarc	Archive libraries
 P SUNWgcmn	Common GNU package
-P SUNWgccruntime	GCC 4.3.2 Runtime libraries
+P SUNWgccruntime432	GCC 4.3.2 Runtime libraries
 P SUNWbinutils	GNU binutils 
 P SUNWscgfss432	Sun Code Generator for GCC For Sun Systems

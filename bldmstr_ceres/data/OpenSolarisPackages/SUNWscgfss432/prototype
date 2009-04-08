@@ -44,6 +44,8 @@ d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/LEGAL 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/sys 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/debug 0755 root bin
@@ -70,12 +72,14 @@ d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa 0755 root
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libp 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libp 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusd 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libp 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libp 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9d 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/man 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/man/man1 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr 0755 root bin
@@ -92,6 +96,17 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/ipo 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/iropt 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/postopt 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/bin/version 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/sun_prefetch.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/sunw_mp_misc.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/sys/vis_asi.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/sys/vis_define.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/sys/vis_proto.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/sys/vis_types.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/tha_interface.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/vis.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/vis_asi.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/vis_proto.h 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/include/vis_types.h 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/annotate.map 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg/model_cg_rock.so.3 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/cg/model_cg_sparc64vi.so.3 0755 root bin
@@ -134,6 +149,7 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/bitdl.
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/discover_wrapper.o 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/libdiscover.so 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/postopt/v9/race_detect_wrapper.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_func.o 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_lib.map 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_lib.o 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/prof_tsd.map 0755 root bin
@@ -167,6 +183,7 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libp/libm
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libp/libmvec_mt.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/libprism32.so 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusb/vis.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusd/vis.il 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/annotate.map 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libdwarf.so.1 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libld_annotate.so 0755 root bin
@@ -182,6 +199,7 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libp/libmvec_m
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libtha.so.1 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/misalign.o 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/pagesize.o 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_func.o 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_lib.map 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_lib.o 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/prof_tsd.map 0755 root bin
@@ -202,6 +220,7 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp/libmopt.
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp/libmvec.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/libp/libmvec_mt.a 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9b/vis.il 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9d/vis.il 0644 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/xprof_fini.o 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libtdf.so.1 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libxprof.so.1 0755 root bin
@@ -250,7 +269,6 @@ s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v7/libm.il=../v8/
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libmopt.a=../v8plus/libmopt.a
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusa/libp/libmopt.a=../../v8plus/libp/libmopt.a
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusc=sparcfmaf
-s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v8plusd=sparcima
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libdwarf.so=libdwarf.so.1
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libtdf.so.1=../../usr/lib/v9/libtdf.so.1
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libtdf.so=libtdf.so.1
@@ -261,7 +279,6 @@ s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9/libxprof_audit
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libmopt.a=../v9/libmopt.a
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9a/libp/libmopt.a=../../v9/libp/libmopt.a
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9c=sparcfmaf/64
-s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/lib/v9d=sparcima/64
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libtdf.so=libtdf.so.1
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libxprof.so=libxprof.so.1
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.2/prod/usr/lib/libxprof_audit.so=libxprof_audit.so.1

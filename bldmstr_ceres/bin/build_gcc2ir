@@ -388,8 +388,8 @@ install_crosscompiler_suncomponents ()
         # create soft links for sparcima subdirectory
         ln -s sparcfmaf sparcima
         # create soft links for v8plusd/v9d subdirectories
-        ln -s sparcima v8plusd
-        ln -s sparcima/64 v9d
+        #ln -s sparcima v8plusd
+        #ln -s sparcima/64 v9d
         # create links for sparcvis and sparcvis2
         ln -s v8plusa sparcvis
         ln -s v8plusb sparcvis2
@@ -490,7 +490,7 @@ install_suncomponents()
         # copy specific header files from the Studio install area to our
         # install area
         mkdir -p  $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
-        cp -r $INCLUDE_HEADERS $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
+        cp -r $INCLUDE_HEADERS/* $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
 
 	# create soft links for v8plusc/v9c subdirectories
 	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
