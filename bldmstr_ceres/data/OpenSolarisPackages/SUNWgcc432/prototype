@@ -110,10 +110,8 @@ d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr 0755 root 
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/dt 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/dt/include 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/dt/include/Xm 0755 root bin
-d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin 0755 root bin
-d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include 0755 root bin
-d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11 0755 root bin
-d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/DPS 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/scim-1.0 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/sys 0755 root bin
 d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/tidy 0755 root bin
@@ -853,21 +851,18 @@ f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet/ip_pool.h 0
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet/ip_proxy.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/netinet/ip_state.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/openssl/opensslconf.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pgsql/internal/c.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pgsql/server/c.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/pixman-1/pixman.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/dt/include/Xm/XmosP.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/dt/include/Xm/Xmos_r.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/DPS/dpsconfig.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xalloca.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xarch.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xfuncs.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xlibint.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xmd.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xos.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xos_r.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xosdefs.h 0444 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/openwin/include/X11/Xthreads.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xalloca.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xarch.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xfuncs.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xlibint.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xmd.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xos.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xos_r.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xosdefs.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/root/usr/X11/include/X11/Xthreads.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/scim-1.0/scim_types.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/slang.h 0444 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/sys/byteorder.h 0444 root bin
@@ -984,7 +979,7 @@ s none usr/bin/sparc-sun-solaris2.11-g++-4.3.2=g++-4.3.2
 s none usr/bin/sparc-sun-solaris2.11-gcc-4.3.2=gcc-4.3.2
 s none usr/bin/sparc-sun-solaris2.11-gfortran-4.3.2=gfortran-4.3.2
 
-s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/X11=root/usr/openwin/include/X11
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/X11=root/usr/X11/include/X11
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/include-fixed/Xm=root/usr/dt/include/Xm
 
 s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.2/libgcc_s.so=../../../libgcc_s.so.1
