@@ -344,6 +344,7 @@ maybe_catch_exception (tree *stmt_p)
 static void
 lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
 {
+#if 0 /* FIXME:  Using gsi as new parameter after 4.4 merge */
   if (flag_use_rtl_backend == 0)
     {
       tree stmt, bind;
@@ -379,6 +380,7 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
     }
   else
     {
+#endif 
       gimple stmt;
   
       stmt = gsi_stmt (*gsi);

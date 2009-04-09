@@ -3323,14 +3323,14 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
       if (TYPE_PRECISION (TREE_TYPE (intop0)) != TYPE_PRECISION (sizetype))
         intop0 = convert (c_common_type_for_size (TYPE_PRECISION (sizetype),
                                                   TYPE_UNSIGNED (sizetype)), intop0);
-      intop0 = build_binary_op (MULT_EXPR, intop0,
+      intop0 = build_binary_op (location, MULT_EXPR, intop0,
                                 convert (TREE_TYPE (intop0), size_exp), 1);
       
       intop1 = convert (int_type, TREE_OPERAND (intop, 1));
       if (TYPE_PRECISION (TREE_TYPE (intop1)) != TYPE_PRECISION (sizetype))
         intop1 = convert (c_common_type_for_size (TYPE_PRECISION (sizetype),
                                                   TYPE_UNSIGNED (sizetype)), intop1);
-      intop1 = build_binary_op (MULT_EXPR, intop1,
+      intop1 = build_binary_op (location, MULT_EXPR, intop1,
                                 convert (TREE_TYPE (intop1), size_exp), 1);
       
       /* adding intop0 and intop1 in opposite order allows

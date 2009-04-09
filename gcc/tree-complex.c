@@ -1734,8 +1734,10 @@ struct gimple_opt_pass pass_lower_complex_O0 =
  }
 };
 
-struct tree_opt_pass pass_regimple = 
+struct gimple_opt_pass pass_regimple = 
 {
+  {
+  GIMPLE_PASS,
   "regmpl",     			/* name */
   gate_generate_rtl,                    /* gate */
   tree_regimple,                	/* execute */
@@ -1748,7 +1750,7 @@ struct tree_opt_pass pass_regimple =
   0,					/* properties_destroyed */
   0,					/* todo_flags_start */
   TODO_dump_func | TODO_ggc_collect
-    /*| TODO_verify_stmts*/,		/* todo_flags_finish */
-  0					/* letter */
+    /*| TODO_verify_stmts*/		/* todo_flags_finish */
+  }
 };
 

@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Modified by Sun Microsystems 2008 */
+/* Modified by Sun Microsystems 2009 */
 
 /* This file is part of the C front end.
    It contains routines to build C expressions given their operands,
@@ -2188,7 +2188,7 @@ build_array_ref (tree array, tree index, location_t loc)
          
           /* build indirect_ref just to get through normal warnings/errors
              fix for gcc.dg/pointer-arith-1.c */
-          t = build_indirect_ref (build_binary_op (PLUS_EXPR, ar, index, 0),
+          t = build_indirect_ref (loc, build_binary_op (loc, PLUS_EXPR, ar, index, 0),
 				 "array indexing");
 
           if (t == error_mark_node)

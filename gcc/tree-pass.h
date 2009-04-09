@@ -390,11 +390,11 @@ extern struct gimple_opt_pass pass_rebuild_cgraph_edges;
 extern struct gimple_opt_pass pass_build_cgraph_edges;
 extern struct gimple_opt_pass pass_reset_cc_flags;
 
-extern struct tree_opt_pass pass_regimple;
-extern struct tree_opt_pass pass_lower_vector_nocfg;
-extern struct tree_opt_pass pass_generate_ir;
-extern struct tree_opt_pass pass_rest_of_genir;
-extern struct tree_opt_pass pass_all_passes_rtl;
+extern struct gimple_opt_pass pass_regimple;
+extern struct gimple_opt_pass pass_lower_vector_nocfg;
+extern struct gimple_opt_pass pass_generate_ir;
+extern struct gimple_opt_pass pass_rest_of_genir;
+extern struct gimple_opt_pass pass_all_passes_rtl;
 extern bool gate_generate_ir (void);
 extern bool gate_generate_rtl (void);
 

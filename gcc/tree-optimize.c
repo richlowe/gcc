@@ -97,8 +97,9 @@ struct gimple_opt_pass pass_all_optimizations =
  }
 };
 
-struct tree_opt_pass pass_all_passes_rtl =
+struct gimple_opt_pass pass_all_passes_rtl =
 {
+  {
   NULL,					/* name */
   gate_generate_rtl,    		/* gate */
   NULL,					/* execute */
@@ -110,8 +111,8 @@ struct tree_opt_pass pass_all_passes_rtl =
   PROP_gimple_any | PROP_gimple_lcf | PROP_gimple_leh | PROP_cfg,/* properties_provided */
   0,					/* properties_destroyed */
   TODO_set_props,			/* todo_flags_start */
-  0,					/* todo_flags_finish */
-  0					/* letter */
+  0					/* todo_flags_finish */
+  }
 };
 
 /* Gate: execute, or not, all of the non-trivial optimizations.  */
@@ -304,8 +305,10 @@ execute_generate_ir (void)
   return 0;
 }
 
-struct tree_opt_pass pass_generate_ir =
+struct gimple_opt_pass pass_generate_ir =
 {
+  {
+  GIMPLE_PASS,
   "genir",				/* name */
   gate_generate_ir,			/* gate */
   execute_generate_ir,			/* execute */
@@ -317,8 +320,8 @@ struct tree_opt_pass pass_generate_ir =
   0,					/* properties_provided */
   0,    				/* properties_destroyed */
   0,					/* todo_flags_start */
-  TODO_dump_func,               	/* todo_flags_finish */
-  0					/* letter */
+  TODO_dump_func                	/* todo_flags_finish */
+  }
 };
 
 /* Pass: do the actions required to finish with tree-ssa optimization

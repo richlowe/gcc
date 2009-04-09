@@ -34,6 +34,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "bitmap.h"
 #include "langhooks.h"
+#include "tree-iterator.h"
 
 
 /* Complete a #pragma omp master construct.  STMT is the structured-block

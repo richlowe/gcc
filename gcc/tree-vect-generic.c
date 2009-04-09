@@ -588,7 +588,7 @@ struct gimple_opt_pass pass_lower_vector =
  }
 };
 
-struct tree_opt_pass pass_lower_vector_nocfg = 
+struct gimple_opt_pass pass_lower_vector_nocfg = 
 {
   {
   GIMPLE_PASS,

@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Modified by Sun Microsystems 2008 */
+/* Modified by Sun Microsystems 2009 */
 
 #include "config.h"
 #include "system.h"
@@ -2515,8 +2515,10 @@ execute_rest_of_genir (void)
   return 0;
 }
 
-struct tree_opt_pass pass_rest_of_genir =
+struct gimple_opt_pass pass_rest_of_genir =
 {
+  {
+  GIMPLE_PASS,
   "rest_of_genir",		        /* name */
   gate_generate_ir,		        /* gate */
   execute_rest_of_genir,	        /* execute */
@@ -2528,7 +2530,7 @@ struct tree_opt_pass pass_rest_of_genir =
   0,                                    /* properties_provided */
   PROP_rtl,                             /* properties_destroyed */
   0,                                    /* todo_flags_start */
-  TODO_ggc_collect,			/* todo_flags_finish */
-  0					/* letter */
+  TODO_ggc_collect			/* todo_flags_finish */
+  }
 };
 

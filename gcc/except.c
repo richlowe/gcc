@@ -470,7 +470,7 @@ gen_eh_region (enum eh_region_type type, struct eh_region *outer)
     }
 
   new_eh->region_number = ++cfun->eh->last_region_number;
-  new->action_number = -4;  /* initialized to a fixed wrong number */
+  new_eh->action_number = -4;  /* initialized to a fixed wrong number */
 
   return new_eh;
 }
@@ -604,7 +604,7 @@ get_action_number (struct eh_region *r)
       if (r->action_number < -3)
         abort ();
       if (r->action_number != -1)
-        cfun->uses_eh_lsda = 1;
+        crtl->uses_eh_lsda = 1;
     }
   return r->action_number;
 }
@@ -805,14 +805,14 @@ generate_one_landing_pad (struct eh_region *region, int exit_label)
         struct eh_region *c;
         int rethrow_label = 0;
         IR_NODE *filter = get_ir_exception_filter ();
-        for (c = region->u.try.catch; c ; c = c->u.catch.next_catch)
+        for (c = region->u.eh_try.eh_catch; c ; c = c->u.eh_catch.next_catch)
           {
-            if (c->u.catch.type_list == NULL)
+            if (c->u.eh_catch.type_list == NULL)
               build_ir_goto (get_ir_label_of_tree (c->tree_label));
             else
               {
-                tree tp_node = c->u.catch.type_list;
-                tree flt_node = c->u.catch.filter_list;
+                tree tp_node = c->u.eh_catch.type_list;
+                tree flt_node = c->u.eh_catch.filter_list;
                 for (; tp_node; )
                   {
                     IR_NODE *ir_cond;
@@ -821,7 +821,7 @@ generate_one_landing_pad (struct eh_region *region, int exit_label)
                     int next_label = 0;
                     int catch_label = get_ir_label_of_tree (c->tree_label);
                     int has_next = (TREE_CHAIN (tp_node) != 0 
-                                    || c->u.catch.next_catch);
+                                    || c->u.eh_catch.next_catch);
                     if (has_next)   /* goto next catch if it exists */
                       next_label = gen_ir_label ();
                     else
@@ -3662,7 +3662,7 @@ add_action_record (htab_t ar_hash, int filter, int next)
       if (!flag_use_rtl_backend)
         {
           ir_eh_node_hdl_t type_list = NULL, eh_node;
-          int k = new->offset - VARRAY_ACTIVE_SIZE (ACTION_LEAF_ARRAY);
+          int k = new_ar->offset - VARRAY_ACTIVE_SIZE (ACTION_LEAF_ARRAY);
           /* Due to variable length coding, not every offset in
              ACTION_LEAF_ARRAY corrsponds to an __EH_LF leaf.
              We simply fill the empty elements with NULL. */
@@ -3672,7 +3672,7 @@ add_action_record (htab_t ar_hash, int filter, int next)
           if (next)
             {
               eh_node =
-                  (ir_eh_node_hdl_t) VARRAY_GENERIC_PTR (ACTION_LEAF_ARRAY, new->next);
+                  (ir_eh_node_hdl_t) VARRAY_GENERIC_PTR (ACTION_LEAF_ARRAY, new_ar->next);
               if (type_list == NULL)
                 type_list = build_ir_eh_node (IR_TYPELIST);
               ir_eh_node_list_append (type_list, eh_node);
@@ -4261,7 +4261,7 @@ output_function_exception_table (const char * ARG_UNUSED (fnname))
     }
   
   /* Not all functions need anything.  */
-  if (! cfun->uses_eh_lsda)
+  if (! crtl->uses_eh_lsda)
     return;
 
   if (!flag_use_rtl_backend)

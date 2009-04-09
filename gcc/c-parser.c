@@ -7684,7 +7684,7 @@ c_parser_omp_flush (c_parser *parser)
   tree flush_list = NULL_TREE, op1;
   c_parser_consume_pragma (parser);
   if (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
-    flush_list = c_parser_omp_var_list_parens (parser, OMP_CLAUSE_ERROR,, NULL);
+    flush_list = c_parser_omp_var_list_parens (parser, OMP_CLAUSE_ERROR, NULL);
   else if (c_parser_next_token_is_not (parser, CPP_PRAGMA_EOL))
     c_parser_error (parser, "expected %<(%> or end of line");
   c_parser_skip_to_pragma_eol (parser);
@@ -7715,7 +7715,6 @@ c_parser_omp_for_loop (c_parser *parser, tree clauses, tree *par_clauses)
   location_t loc;
   bool fail = false, open_brace_parsed = false;
   int i, collapse = 1, nbraces = 0;
-  struct c_expr tmp;
 
   for (cl = clauses; cl; cl = OMP_CLAUSE_CHAIN (cl))
     if (OMP_CLAUSE_CODE (cl) == OMP_CLAUSE_COLLAPSE)
@@ -7925,7 +7924,7 @@ c_parser_omp_for_loop (c_parser *parser, tree clauses, tree *par_clauses)
      an error from the initialization parsing.  */
   if (!fail)
     {
-      stmt = c_finish_omp_for (loc, declv, initv, condv, incrv, body, NULL);
+      stmt = c_finish_omp_for (loc, declv, initv, condv, incrv, body, NULL, NULL);
       if (stmt)
 	{
 	  if (par_clauses != NULL)
