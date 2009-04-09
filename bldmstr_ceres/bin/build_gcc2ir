@@ -1148,7 +1148,12 @@ then
     fi
 fi
 
-export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR"
+if [ `uname -r` == 5.11 ]
+then
+  export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR$GCC_VERSION"
+else
+  export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR"
+fi
 
 if [ "$OS_NAME" != "Linux" ]
 then
