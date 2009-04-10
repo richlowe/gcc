@@ -923,7 +923,11 @@ manipulate_install_area ()
         #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
 	( cd $INSTALL_DIR;
 	  mv ../$SUNINSTSUBDIR usr/lib/gcc/sparc-sun-solaris2.11/gccfss )
-        
+
+        # correct SUNW_SCGFSS_PATH for future tests.         
+        SUNW_SCGFSS_PATH=$INSTALL_DIR/usr/lib/gcc/sparc-sun-solaris2.11/gccfss
+        export SUNW_SCGFSS_PATH
+
         # Lets create the packages
 	echo "Create packages ..."
         # 1. SUNWgcc432
@@ -1149,12 +1153,7 @@ then
     fi
 fi
 
-if [ `uname -r` == 5.11 ]
-then
-  export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR$GCC_VERSION"
-else
-  export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR"
-fi
+export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR"
 
 if [ "$OS_NAME" != "Linux" ]
 then
