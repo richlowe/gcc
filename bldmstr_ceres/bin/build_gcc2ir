@@ -57,7 +57,7 @@ case "$OS_NAME" in
 	;;
 esac
 
-DEFAULT_SUN_DIR=/ws/gccfss/builds/4.3.2/current_gcc/SUNW0scgfss
+DEFAULT_SUN_DIR=/ws/gccfss/builds/$GCC_VERSION/current_gcc/SUNW0scgfss
 SPARC_INSTALL_DIR=
 ROOT=
 FORCE_BRINGOVER=0

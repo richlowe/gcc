@@ -6,13 +6,13 @@ then
 else
 	if [ `uname -r` == 5.11 ]
 	then
-	  COMPILERDIR=/ws/gccfss/builds/4.3.2_s11
+	  COMPILERDIR=/ws/gccfss/builds/$GCC_VERSION_s11
 	else
-	  COMPILERDIR=/ws/gccfss/builds/4.3.2
+	  COMPILERDIR=/ws/gccfss/builds/$GCC_VERSION
 	fi
 fi
 
-VERSION=432
+VERSION=433
 MAIL_LIST=
 
 if [ $# -ne 1 -a $# -ne 2 ]
