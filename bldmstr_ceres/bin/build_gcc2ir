@@ -1002,6 +1002,7 @@ do_bringover()
     else
         echo "Bringing over the gcc2ir source workspace $src_ws ...."
         $GIT clone -q --depth 1 $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir
+	(cd $ROOT/src ; $GIT checkout -q -b gccfss433 origin/gccfss433)
         echo "Untarring gmp amd mpfr into the source area ...."
         (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/gmp-4.2.1-renamed.tar.bz2 | tar xf -)
         (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/mpfr-2.3.0-renamed.tar.bz2 | tar xf - )
