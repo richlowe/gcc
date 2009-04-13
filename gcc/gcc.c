@@ -954,7 +954,7 @@ static const char *cpp_unique_options =
 static const char *cpp_options =
 "%(cpp_unique_options) %1 %{m*} %{std*&ansi&trigraphs} %{W*&pedantic*} %{w}\
  %{f*} %{g*:%{!g0:%{g*} %{!fno-working-directory:-fworking-directory}}} %{O*}\
- %{undef} %{save-temps:-fpch-preprocess}" %{xopenmp*}";
+ %{undef} %{save-temps:-fpch-preprocess} %{xopenmp*}";
 
 /* This contains cpp options which are not passed when the preprocessor
    output will be used by another program.  */

@@ -2550,6 +2550,106 @@ const unsigned char gimple_rhs_class_table[] = {
 
 /* Validation of GIMPLE expressions.  */
 
+/* gcc4ss rvalue */
+static bool
+is_gimple4ss_rvalue (tree t)
+{
+  enum tree_code code = TREE_CODE (t);
+
+  if (TREE_CODE (TREE_TYPE (t)) != VECTOR_TYPE)
+    {
+      /* IR can handle all operations on non-vector types */
+      switch (TREE_CODE_CLASS (code))
+        {
+        case tcc_unary:
+        case tcc_binary:
+        case tcc_comparison:
+          return true;
+        default:
+          break;
+        }
+    }
+  else
+    {
+      /* only limited set is supported by sparc vis.
+         the rest of ops should be split into simple ops on each vector element
+*/
+      switch (TREE_CODE_CLASS (code))
+        {
+        case PLUS_EXPR:
+        case MINUS_EXPR:
+        case BIT_AND_EXPR:
+        case BIT_IOR_EXPR:
+        case BIT_XOR_EXPR:
+        case BIT_NOT_EXPR:
+          return true;
+        default:
+          break;
+        }
+    }
+
+  switch (code)
+    {
+    case TRUTH_NOT_EXPR:
+    case TRUTH_AND_EXPR:
+    case TRUTH_OR_EXPR:
+    case TRUTH_XOR_EXPR:
+    case ADDR_EXPR:
+/*    case CALL_EXPR: */ /* func calls needs to be assigned to temp var,
+                            so tree-inline.c can handle them.
+                            call_expr is handled in is_gimple_formal_tmp_rhs() */
+/*    case CONSTRUCTOR:*/ /* rvalues ok for comp_ref/array_ref,
+                             so we can't allow constructor to be an rvalue
+                             and it will be handled in is_gimple_formal_tmp_rhs()*/
+    case COMPLEX_EXPR:
+    case INTEGER_CST:
+    case REAL_CST:
+    case STRING_CST:
+    case COMPLEX_CST:
+    case VECTOR_CST:
+    case OBJ_TYPE_REF:
+
+    case INDIRECT_REF:
+    case ARRAY_REF:
+    case COMPONENT_REF:
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
+
+    case NOP_EXPR:
+    case CONVERT_EXPR:
+    case FIX_TRUNC_EXPR:
+      return true;
+
+    default:
+      break;
+    }
+
+  return false;
+}
+
+/* gcc4ss lvalue */
+static bool
+is_gimple4ss_lvalue (tree t)
+{
+  enum tree_code code = TREE_CODE (t);
+
+  switch (code)
+    {
+/*    case ADDR_EXPR:*/
+    case OBJ_TYPE_REF:
+    case INDIRECT_REF:
+    case ARRAY_REF:
+    case COMPONENT_REF:
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
+      return true;
+    default:
+      break;
+    }
+
+  return false;
+}
+
 /* Return true if OP is an acceptable tree node to be used as a GIMPLE
    operand.  */
 

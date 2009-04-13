@@ -49,6 +49,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "value-prof.h"
 #include "pointer-set.h"
 #include "tree-inline.h"
+#include "tree-iterator.h"
 
 /* This file contains functions for building the Control Flow Graph (CFG)
    for a function tree.  */
@@ -7106,30 +7107,18 @@ execute_warn_function_return_withcfg (void)
 static unsigned int
 execute_warn_function_return_nocfg (void)
 {
-#ifdef USE_MAPPED_LOCATION
   source_location location;
-#else
-  location_t *locus;
-#endif
   int has_return;
   tree_stmt_iterator tsi;
 
-#ifdef USE_MAPPED_LOCATION
   location = UNKNOWN_LOCATION;
-#else
-  locus = NULL;
-#endif
   has_return = 0;
   for (tsi = tsi_start (DECL_SAVED_TREE (cfun->decl));
        !tsi_end_p (tsi); tsi_next (&tsi))
     {
       tree stmt = tsi_stmt (tsi);
       if (TREE_CODE (stmt) == RETURN_EXPR 
-#ifdef USE_MAPPED_LOCATION
 	      && (location = EXPR_LOCATION (stmt)) != UNKNOWN_LOCATION)
-#else
-	      && (locus = EXPR_LOCUS (stmt)) != NULL)
-#endif
         {
           has_return = 1;
 	  break;
@@ -7139,15 +7128,9 @@ execute_warn_function_return_nocfg (void)
   /* If we have a path to EXIT, then we do return.  */
   if (TREE_THIS_VOLATILE (cfun->decl) && has_return)
     {
-#ifdef USE_MAPPED_LOCATION
       if (location == UNKNOWN_LOCATION)
 	location = cfun->function_end_locus;
       warning (0, "%H%<noreturn%> function does return", &location);
-#else
-      if (!locus)
-	locus = &cfun->function_end_locus;
-      warning (0, "%H%<noreturn%> function does return", locus);
-#endif
     }
 
   /* If we see "return;" in some basic block, then we do reach the end
@@ -7165,17 +7148,10 @@ execute_warn_function_return_nocfg (void)
 	      && TREE_OPERAND (stmt, 0) == NULL
 	      && !TREE_NO_WARNING (stmt))
 	    {
-#ifdef USE_MAPPED_LOCATION
 	      location = EXPR_LOCATION (stmt);
 	      if (location == UNKNOWN_LOCATION)
 		  location = cfun->function_end_locus;
 	      warning (OPT_Wreturn_type, "%Hcontrol reaches end of non-void function", &location);
-#else
-	      locus = EXPR_LOCUS (stmt);
-	      if (!locus)
-		locus = &cfun->function_end_locus;
-	      warning (OPT_Wreturn_type, "%Hcontrol reaches end of non-void function", locus);
-#endif
 	      TREE_NO_WARNING (cfun->decl) = 1;
 	      break;
 	    }

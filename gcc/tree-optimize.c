@@ -52,6 +52,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfgloop.h"
 #include "except.h"
 #include "tree-ir.h"
+#include "tree-iterator.h"
 
 /* For the SPARC target, use RTL backend for function number from 
    first_rtl_backend to last_rtl_backend.  The first function in

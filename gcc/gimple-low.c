@@ -390,7 +390,9 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
       gsi_insert_seq_before (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
       gimple_omp_set_body (stmt, NULL);
       gsi_remove (gsi, false);
+#if 0
     }
+#endif
 }
 
 

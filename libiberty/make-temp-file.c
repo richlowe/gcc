@@ -160,26 +160,6 @@ choose_tmpdir (void)
     }
 
   return memoized_tmpdir;
-=======
-  /* Try /var/tmp, /usr/tmp.  */
-  base = try_dir (vartmp, base);
-  base = try_dir (usrtmp, base);
- 
-  /* If all else fails, use the current directory!  */
-  if (base == 0)
-    base = ".";
-
-  /* Append DIR_SEPARATOR to the directory we've chosen
-     and return it.  */
-  len = strlen (base);
-  tmpdir = XNEWVEC (char, len + 2);
-  strcpy (tmpdir, base);
-  tmpdir[len] = DIR_SEPARATOR;
-  tmpdir[len+1] = '\0';
-
-  memoized_tmpdir = tmpdir;
-  return tmpdir;
->>>>>>> Fix option processing that was causing garbage to be passed to cc1. Remove code for non -ftree-ir-eh, as it is supported by default. Prefer /tmp over /var/tmp for compiler temp files. Handle updated CALL_EXPR:libiberty/make-temp-file.c
 }
 
 /*

@@ -534,14 +534,12 @@ static unsigned int
 expand_vector_operations_nocfg (void)
 {
   tree_stmt_iterator tsi;
-  block_stmt_iterator bsi;
+  gimple_stmt_iterator gsi;
 
-  bsi.bb = 0;
   for (tsi = tsi_start (DECL_SAVED_TREE (current_function_decl)); 
        !tsi_end_p (tsi); tsi_next (&tsi))
     {
-      bsi.tsi = tsi;
-      expand_vector_operations_1 (&bsi);
+      expand_vector_operations_1 (&gsi);
       update_stmt_if_modified (tsi_stmt (tsi));
     }
   return 0;
@@ -550,7 +548,7 @@ expand_vector_operations_nocfg (void)
 static unsigned int
 expand_vector_operations (void)
 {
-  block_stmt_iterator bsi;
+  gimple_stmt_iterator gsi;
   basic_block bb;
 
   /* No cfg for GCCFSS */
@@ -559,10 +557,10 @@ expand_vector_operations (void)
 
   FOR_EACH_BB (bb)
     {
-      for (bsi = bsi_start (bb); !bsi_end_p (bsi); bsi_next (&bsi))
+      for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-	  expand_vector_operations_1 (&bsi);
-	  update_stmt_if_modified (bsi_stmt (bsi));
+	  expand_vector_operations_1 (&gsi);
+	  update_stmt_if_modified (gsi_stmt (gsi));
 	}
     }
   return 0;

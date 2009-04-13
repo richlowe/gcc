@@ -34,6 +34,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "tree-pass.h"
 #include "flags.h"
+#include "tree-iterator.h"
 
 /* Walk tree and record all calls and references to functions/variables.
    Called via walk_tree: TP is pointer to tree to be examined.  */
@@ -155,8 +156,8 @@ build_cgraph_edges (void)
               for (i = 0; i < n; i++)
                   walk_tree (&CALL_EXPR_ARG (call, i),
                              record_reference, node, visited_nodes);
-              if (TREE_CODE (stmt) == GIMPLE_MODIFY_STMT)
-                  walk_tree (&GIMPLE_STMT_OPERAND (stmt, 0),
+              if (TREE_CODE (stmt) == MODIFY_EXPR)
+                  walk_tree (gimple_assign_lhs (stmt),
                              record_reference, node, visited_nodes);
             }
           else

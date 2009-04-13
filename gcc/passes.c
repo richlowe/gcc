@@ -283,8 +283,7 @@ gate_rest_of_compilation (void)
 {
   /* Early return if there were errors.  We can run afoul of our
      consistency checks, and there's not really much point in fixing them.  */
-  return !(rtl_dump_and_exit || flag_syntax_only || errorcount || sorrycount
-	       || gate_generate_ir ());
+  return !(rtl_dump_and_exit || flag_syntax_only || errorcount || sorrycount);
 }
 
 struct gimple_opt_pass pass_rest_of_compilation =
@@ -570,11 +569,10 @@ init_optimization_passes (void)
       NEXT_PASS (pass_release_ssa_names);
       NEXT_PASS (pass_rebuild_cgraph_edges);
       NEXT_PASS (pass_inline_parameters);
-    }*/
-  /*NEXT_PASS (pass_ipa_increase_alignment);
+    }
+  NEXT_PASS (pass_ipa_increase_alignment);
   NEXT_PASS (pass_ipa_matrix_reorg);
   NEXT_PASS (pass_ipa_cp);*/
-
   NEXT_PASS (pass_ipa_inline);
   /* the trees after 1st pass of gimplifier are unusable for IPA passes
    which may cause wrong ECF_CONST markings leading to wrong code
@@ -592,10 +590,9 @@ init_optimization_passes (void)
   NEXT_PASS (pass_generate_ir);
   NEXT_PASS (pass_all_passes_rtl);
   NEXT_PASS (pass_rest_of_genir);  /* generate LSDA and global variables */
-  NEXT_PASS (pass_rest_of_compilation);
   *p = NULL;
   
-  p = &pass_all_passes_rtl.sub;
+  p = &pass_all_passes_rtl.pass.sub;
   NEXT_PASS (pass_all_optimizations);
     {
       struct opt_pass **p = &pass_all_optimizations.pass.sub;

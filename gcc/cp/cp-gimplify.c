@@ -332,16 +332,16 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
 		      t = cond;
 		      walk_tree (&t, copy_tree_r, NULL, NULL);
 		      t1 = build_and_jump (&LABEL_EXPR_LABEL (top));
-		      t2 = build_bc_goto (bc_break);
+		      t2 = gimple_build_goto (get_bc_label (bc_break));
 		      t = fold_build3 (COND_EXPR, void_type_node, t, t1, t2);
 		      gimplify_stmt (&t);
 		    }
 		  else
-		    t = build_bc_goto (bc_continue);
+		    t = gimple_build_goto (get_bc_label (bc_continue));
 		}
 	      append_to_statement_list (t, &stmt_list);
 	    }
-	  t = build_bc_goto (bc_break);
+	  t = gimple_build_goto (get_bc_label (bc_break));
 	  exit = fold_build3 (COND_EXPR, void_type_node, cond, exit, t);
 	  gimplify_stmt (&exit);
 	}
@@ -397,12 +397,16 @@ is_unshareable_expr (tree expr)
 static tree
 gimplify_for_loop (tree cond, tree body, tree incr)
 {
-  tree top, entry, exit, cont_block, break_block, stmt_list, t;
+  tree top, entry, exit, cont_block, break_block, t;
+  gimple_seq stmt_list, body_seq, incr_seq, exit_seq;
   location_t stmt_locus;
   bool unshareable = true;
 
   stmt_locus = input_location;
-  stmt_list = NULL_TREE;
+  stmt_list = NULL;
+  body_seq = NULL;
+  incr_seq = NULL;
+  exit_seq = NULL;
   entry = NULL_TREE;
 
   break_block = begin_bc_block (bc_break);
@@ -413,7 +417,7 @@ gimplify_for_loop (tree cond, tree body, tree incr)
     {
       top = NULL_TREE;
       exit = NULL_TREE;
-      t = build_bc_goto (bc_break);
+      t = gimple_build_goto (get_bc_label (bc_break));
       append_to_statement_list (t, &stmt_list);
     }
   else
@@ -433,11 +437,11 @@ gimplify_for_loop (tree cond, tree body, tree incr)
           if (is_unshareable_expr (cond))
             {
               tree cc = unshare_expr (cond);
-              t = build_bc_goto (bc_break);
+              t = gimple_build_goto (get_bc_label (bc_break));
               entry = build_and_jump (&LABEL_EXPR_LABEL (top));
               entry = build3 (COND_EXPR, void_type_node, cc, entry, t);
               entry = fold (entry);
-              gimplify_stmt (&entry);
+              gimplify_stmt (&entry,&stmt_list);
             }
           else
             {
@@ -445,22 +449,22 @@ gimplify_for_loop (tree cond, tree body, tree incr)
 	      if (incr)
 		{
 		  entry = gimple_build_label (create_artificial_label ());
-		  stmt = gimple_build_goto (gimple_label_label (entry));
+		  t = gimple_build_goto (gimple_label_label (entry));
 		}
 	      else
-		t = build_bc_goto (bc_continue);
+		t = gimple_build_goto (get_bc_label (bc_continue));
 	      append_to_statement_list (t, &stmt_list);
             }
 
-	  t = build_bc_goto (bc_break);
+	  t = gimple_build_goto (get_bc_label (bc_break));
 	  exit = build3 (COND_EXPR, void_type_node, cond, exit, t);
 	  exit = fold (exit);
-	  gimplify_stmt (&exit);
+	  gimplify_stmt (&exit, &exit_seq);
 	}
       else
 	{
-	  stmt = gimple_build_goto (gimple_label_label (top));
-	  gimple_seq_add_stmt (&exit_seq, stmt);
+	  t = gimple_build_goto (gimple_label_label (top));
+	  gimple_seq_add_stmt (&exit_seq, t);
 	}
     }
 
@@ -470,13 +474,13 @@ gimplify_for_loop (tree cond, tree body, tree incr)
   body_seq = finish_bc_block (bc_continue, cont_block, body_seq);
 
   if (unshareable)
-    append_to_statement_list (entry, &stmt_list);
-  append_to_statement_list (top, &stmt_list);
-  append_to_statement_list (body, &stmt_list);
-  append_to_statement_list (incr, &stmt_list);
+    gimple_seq_add_stmt (&stmt_list, entry);
+  gimple_seq_add_stmt (&stmt_list, top);
+  gimple_seq_add_seq (&stmt_list, body_seq);
+  gimple_seq_add_seq (&stmt_list, incr_seq);
   if (!unshareable)
-    append_to_statement_list (entry, &stmt_list);
-  append_to_statement_list (exit, &stmt_list);
+    gimple_seq_add_stmt (&stmt_list, entry);
+  gimple_seq_add_seq (&stmt_list, exit_seq);
 
   annotate_all_with_location (stmt_list, stmt_locus);
 
@@ -1395,7 +1399,8 @@ cxx_register_omp_threadprivate_init (tree var)
         {
           t = build_special_member_call (NULL_TREE,
                                          complete_ctor_identifier,
-                                         NULL_TREE, inner_type, LOOKUP_NORMAL);
+                                         NULL_TREE, inner_type, LOOKUP_NORMAL,
+                                         tf_warning_or_error);
           default_ctor = get_callee_fndecl (t);
 
           t = build_int_cst (build_pointer_type (inner_type), 0);
@@ -1404,7 +1409,8 @@ cxx_register_omp_threadprivate_init (tree var)
 
           t = build_special_member_call (NULL_TREE,
                                          complete_ctor_identifier,
-                                         t, inner_type, LOOKUP_NORMAL);
+                                         t, inner_type, LOOKUP_NORMAL,
+                                         tf_warning_or_error);
           default_copyctor = get_callee_fndecl (t);
         }
       else
@@ -1419,7 +1425,8 @@ cxx_register_omp_threadprivate_init (tree var)
           t = build1 (INDIRECT_REF, inner_type, t);
           t = build_special_member_call (t, ansi_assopname (NOP_EXPR),
                                          build_tree_list (NULL, t),
-                                         inner_type, LOOKUP_NORMAL);
+                                         inner_type, LOOKUP_NORMAL,
+                                         tf_warning_or_error);
           
           /* We'll have called convert_from_reference on the call, which
              may well have added an indirect_ref.  It's unneeded here,
@@ -1484,7 +1491,8 @@ cxx_new_register_omp_threadprivate_init (tree var)
           t = build1 (INDIRECT_REF, inner_type, t);
           t = build_special_member_call (t, ansi_assopname (NOP_EXPR),
                                          build_tree_list (NULL, t),
-                                         inner_type, LOOKUP_NORMAL);
+                                         inner_type, LOOKUP_NORMAL,
+                                         tf_warning_or_error);
           
           /* We'll have called convert_from_reference on the call, which
              may well have added an indirect_ref.  It's unneeded here,

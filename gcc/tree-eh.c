@@ -125,7 +125,7 @@ add_stmt_to_eh_region_fn (struct function *ifun, gimple t, int num)
   /* ??? For the benefit of calls.c, converting all this to rtl,
      we need to record the call expression, not just the outer
      modify statement.  */
-  if (gate_generate_ir () && TREE_CODE (t) == GIMPLE_MODIFY_STMT
+  if (gate_generate_ir () && gimple_code (t) == GIMPLE_ASSIGN
       && (t = get_call_expr_in (t)))
     add_stmt_to_eh_region_fn (ifun, t, num);
 }
@@ -161,7 +161,7 @@ remove_stmt_from_eh_region_fn (struct function *ifun, gimple t)
       /* ??? For the benefit of calls.c, converting all this to rtl,
          we need to record the call expression, not just the outer
          modify statement.  */
-      if (gate_generate_ir () && TREE_CODE (t) == GIMPLE_MODIFY_STMT 
+      if (gate_generate_ir () && gimple_code (t) == GIMPLE_ASSIGN 
           && (t = get_call_expr_in (t)))
         remove_stmt_from_eh_region_fn (ifun, t);
       return true;

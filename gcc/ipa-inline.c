@@ -1516,13 +1516,6 @@ cgraph_decide_inlining_incrementally (struct cgraph_node *node,
   return inlined;
 }
 
-/* When inlining shall be performed.  */
-static bool
-cgraph_gate_inlining (void)
-{
-  return flag_inline_trees;
-}
-
 /* Because inlining might remove no-longer reachable nodes, we need to
    keep the array visible to garbage collector to avoid reading collected
    out nodes.  */

@@ -880,12 +880,10 @@ copy_tree_body_r (tree *tp, int *walk_subtrees, void *data)
 	{
 	  tree new_decl;
 	  /* Replace the RETURN_EXPR with (a copy of) the
-	     GIMPLE_MODIFY_STMT hanging underneath. */ 
+	     MODIFY_EXPR hanging underneath. */ 
 	  *tp = copy_node (assignment); 
-	  new_decl = remap_decl (GIMPLE_STMT_OPERAND(*tp, 0), id);
-	  GIMPLE_STMT_OPERAND(*tp, 0) = new_decl;
-	  /*copy_body_r (tp, walk_subtrees, data);
-	  walk_tree (&GIMPLE_STMT_OPERAND(*tp, 0), copy_body_r, id, NULL);*/
+	  new_decl = remap_decl (gimple_assign_lhs (*tp), id);
+	  gimple_assign_set_lhs (*tp, new_decl);
 	}
       else /* Else the RETURN_EXPR returns no value.  */
 	{
@@ -1826,7 +1824,7 @@ copy_body_nocfg (copy_body_data *id, tree_stmt_iterator * callsite_tsi_p)
       tree stmt = tsi_stmt (tsi);
       tree orig_stmt = stmt;
 
-      walk_tree (&stmt, copy_body_r, id, NULL);
+      walk_tree (&stmt, copy_tree_body_r, id, NULL);
 
       /* RETURN_EXPR might be removed,
          this is signalled by making stmt pointer NULL.  */
@@ -1835,85 +1833,72 @@ copy_body_nocfg (copy_body_data *id, tree_stmt_iterator * callsite_tsi_p)
 	  tree call, decl;
 
           tsi_link_after (&copy_tsi, stmt, TSI_NEW_STMT);
-	  call = get_call_expr_in (stmt);
 
-          if ( call && CALL_EXPR_VA_ARG_PACK (call) && id->call_expr)
+          if (is_gimple_call (stmt)
+              && gimple_call_va_arg_pack_p (stmt)
+              && id->gimple_call)
 	    {
 	      /* __builtin_va_arg_pack () should be replaced by
 	         all arguments corresponding to ... in the caller.  */
-	      tree p, *argarray, new_call, *call_ptr;
-	      int nargs = call_expr_nargs (id->call_expr);
+              tree p;
+              gimple new_call;
+              VEC(tree, heap) *argarray;
+              size_t nargs = gimple_call_num_args (id->gimple_call);
+              size_t n;
 	      tree *stmtp = tsi_stmt_ptr (copy_tsi);
 	      tree stmt = *stmtp;
 
 	      for (p = DECL_ARGUMENTS (id->src_fn); p; p = TREE_CHAIN (p))
 	        nargs--;
 
-	      argarray = (tree *) alloca ((nargs + call_expr_nargs (call))
-	    			      * sizeof (tree));
+              /* Create the new array of arguments.  */
+              n = nargs + gimple_call_num_args (stmt);
+              argarray = VEC_alloc (tree, heap, n);
+              VEC_safe_grow (tree, heap, argarray, n);
 
-	      memcpy (argarray, CALL_EXPR_ARGP (call),
-	    	  call_expr_nargs (call) * sizeof (*argarray));
-	      memcpy (argarray + call_expr_nargs (call),
-	    	  CALL_EXPR_ARGP (id->call_expr)
-	    	  + (call_expr_nargs (id->call_expr) - nargs),
-	    	  nargs * sizeof (*argarray));
+              /* Copy all the arguments before '...'  */
+              memcpy (VEC_address (tree, argarray),
+                      gimple_call_arg_ptr (stmt, 0),
+                      gimple_call_num_args (stmt) * sizeof (tree));
 
-	      new_call = build_call_array (TREE_TYPE (call),
-	    			       CALL_EXPR_FN (call),
-	    			       nargs + call_expr_nargs (call),
-	    			       argarray);
-	      /* Copy all CALL_EXPR flags, locus and block, except
-	         CALL_EXPR_VA_ARG_PACK flag.  */
-	      CALL_EXPR_STATIC_CHAIN (new_call)
-	        = CALL_EXPR_STATIC_CHAIN (call);
-	      CALL_EXPR_TAILCALL (new_call) = CALL_EXPR_TAILCALL (call);
-	      CALL_EXPR_RETURN_SLOT_OPT (new_call)
-	        = CALL_EXPR_RETURN_SLOT_OPT (call);
-	      CALL_FROM_THUNK_P (new_call) = CALL_FROM_THUNK_P (call);
-	      CALL_CANNOT_INLINE_P (new_call)
-	        = CALL_CANNOT_INLINE_P (call);
-	      TREE_NOTHROW (new_call) = TREE_NOTHROW (call);
-	      SET_EXPR_LOCUS (new_call, EXPR_LOCUS (call));
-	      TREE_BLOCK (new_call) = TREE_BLOCK (call);
+              /* Append the arguments passed in '...'  */
+              memcpy (VEC_address(tree, argarray) + gimple_call_num_args (stmt),                      gimple_call_arg_ptr (id->gimple_call, 0)
+                        + (gimple_call_num_args (id->gimple_call) - nargs),
+                      nargs * sizeof (tree));
 
-              call_ptr = stmtp;
-              if (TREE_CODE (*call_ptr) == GIMPLE_MODIFY_STMT)
-                call_ptr = &GIMPLE_STMT_OPERAND (*call_ptr, 1);
-              if (TREE_CODE (*call_ptr) == WITH_SIZE_EXPR)
-                call_ptr = &TREE_OPERAND (*call_ptr, 0);
-              gcc_assert (*call_ptr == call);
+              new_call = gimple_build_call_vec (gimple_call_fn (stmt),
+                                                argarray);
 
-              *call_ptr = new_call;
-              update_stmt (stmt);
+              VEC_free (tree, heap, argarray);
+              /* Copy all GIMPLE_CALL flags, location and block, except
+                 GF_CALL_VA_ARG_PACK.  */
+              gimple_call_copy_flags (new_call, stmt);
+              gimple_call_set_va_arg_pack (new_call, false);
+              gimple_set_location (new_call, gimple_location (stmt));
+              gimple_call_set_lhs (new_call, gimple_call_lhs (stmt));
+
+              gsi_replace (&copy_tsi, new_call, false);
+              stmt = new_call;
 	    }
-          else if (call
-	           && id->call_expr
-	           && (decl = get_callee_fndecl (call))
-	           && DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL
-	           && DECL_FUNCTION_CODE (decl)
-	    	  == BUILT_IN_VA_ARG_PACK_LEN)
+          else if (is_gimple_call (stmt)
+                   && id->gimple_call
+                   && (decl = gimple_call_fndecl (stmt))
+                   && DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL
+                   && DECL_FUNCTION_CODE (decl) == BUILT_IN_VA_ARG_PACK_LEN)
 	    {
 	      /* __builtin_va_arg_pack_len () should be replaced by
 	         the number of anonymous arguments.  */
-	      int nargs = call_expr_nargs (id->call_expr);
-	      tree count, *call_ptr, p;
-	      tree *stmtp = tsi_stmt_ptr (copy_tsi);
-	      tree stmt = *stmtp;
+              size_t nargs = gimple_call_num_args (id->gimple_call);
+              tree count, p;
+              gimple new_stmt;
 
 	      for (p = DECL_ARGUMENTS (id->src_fn); p; p = TREE_CHAIN (p))
 	        nargs--;
 
 	      count = build_int_cst (integer_type_node, nargs);
-	      call_ptr = stmtp;
-	      if (TREE_CODE (*call_ptr) == GIMPLE_MODIFY_STMT)
-	        call_ptr = &GIMPLE_STMT_OPERAND (*call_ptr, 1);
-	      if (TREE_CODE (*call_ptr) == WITH_SIZE_EXPR)
-	        call_ptr = &TREE_OPERAND (*call_ptr, 0);
-	      gcc_assert (*call_ptr == call && call_ptr != stmtp);
-	      *call_ptr = count;
-	      update_stmt (stmt);
-	      call = NULL_TREE;
+              new_stmt = gimple_build_assign (gimple_call_lhs (stmt), count);
+              gsi_replace (&copy_tsi, new_stmt, false);
+              stmt = new_stmt;
 	    }
 
 	  /* We're duplicating a CALL_EXPR.  Find any corresponding
@@ -1929,7 +1914,7 @@ copy_body_nocfg (copy_body_data *id, tree_stmt_iterator * callsite_tsi_p)
 		  edge = cgraph_edge (id->src_node, orig_stmt);
 		  if (edge)
 		    cgraph_clone_edge (edge, id->dst_node, stmt,
-				       REG_BR_PROB_BASE, 1, true);
+				       REG_BR_PROB_BASE, 1, true, false);
 		  break;
 
 		case CB_CGE_MOVE_CLONES:
@@ -2001,7 +1986,7 @@ copy_body_nocfg (copy_body_data *id, tree_stmt_iterator * callsite_tsi_p)
          into a COMPONENT_REF which doesn't.  If the copy
          can throw, the original could also throw.  */
 
-      if (tree_can_throw_internal (copy_stmt))
+      if (stmt_can_throw_internal (copy_stmt))
 	{
 	  if (!tsi_end_p (tsi))
 	    /* Note that bb's predecessor edges aren't necessarily
@@ -2860,10 +2845,12 @@ inline_forbidden_p (tree fndecl)
   if (flag_use_rtl_backend == 0)
     for (tsi = tsi_start (DECL_SAVED_TREE (fndecl)); !tsi_end_p (tsi); tsi_next (&tsi))
       {
-  	ret = walk_tree_without_duplicates (tsi_stmt_ptr (tsi),
-  				    inline_forbidden_p_1, fndecl);
-  	if (ret)
-  	  goto egress;
+        gimple ret;
+        ret = walk_gimple_seq (tsi_stmt_ptr (tsi), inline_forbidden_p_stmt,
+ 			       inline_forbidden_p_op, &wi);
+        forbidden_p = (ret != NULL);
+        if (forbidden_p)
+ 	  goto egress;
       }
   else
     FOR_EACH_BB_FN (bb, fun)
@@ -3392,7 +3379,7 @@ get_indirect_callee_fndecl (struct cgraph_node *node, gimple stmt)
 /* If STMT is a GIMPLE_CALL, replace it with its inline expansion.  */
 
 static bool
-expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id)
+expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id,
                     tree_stmt_iterator * callsite_tsi_p)
 {
   tree retvar, use_retvar;
@@ -3469,7 +3456,7 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id)
       gcc_assert (dest->needed);
       if (flag_use_rtl_backend == 0)
         cgraph_create_edge (id->dst_node, dest, stmt,
-                            0, 0)->inline_failed
+                            0, CGRAPH_FREQ_BASE, 0)->inline_failed
 	  = N_("originally indirect function call not considered for inlining");
       else
         cgraph_create_edge (id->dst_node, dest, stmt,
@@ -3670,49 +3657,6 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id)
   pointer_map_destroy (id->decl_map);
   id->decl_map = st;
 
-  if (flag_use_rtl_backend == 0)
-    {
-      /* Create a dummy builtin lni marker for the end
-         of the inlining. This will be used to generate
-         better lni context during IR generation */
-      struct cgraph_node *lni_node = cgraph_node (implicit_built_in_decls[BUILT_IN_LNI_END]);
-      cgraph_mark_needed_node (lni_node);
-      lni_info =
-          build_function_call_expr (implicit_built_in_decls[BUILT_IN_LNI_END],
-                                    tree_cons (NULL_TREE, build_fold_addr_expr (fn),
-                                               NULL_TREE));
-      SET_EXPR_LOCATION (lni_info, DECL_STRUCT_FUNCTION (fn)->function_end_locus);
-      tsi_link_before (&tsi, lni_info, TSI_SAME_STMT);
-      
-      /* If the inlined function returns a result that we care about,
-         clobber the CALL_EXPR with a reference to the return variable.  */
-      if (use_retvar && (TREE_CODE (tsi_stmt (*callsite_tsi_p)) != CALL_EXPR))
-        {
-          *tp = use_retvar;
-          maybe_clean_or_replace_eh_stmt (stmt, stmt);
-
-          /* add modified callsite to the end of inlined body */
-          tsi_link_before (&tsi, stmt, TSI_SAME_STMT);
-          /* add the whole body */
-          tsi_link_after (callsite_tsi_p, inlined_body, TSI_SAME_STMT);
-          /* remove stmt, since now it's in the end of just linked inlined_body */
-          tsi_delink (callsite_tsi_p);
-        }
-      else
-        {
-          tsi_link_after (callsite_tsi_p, inlined_body, TSI_SAME_STMT);
-          /* We're modifying a TSI owned by gimple_expand_calls_inline();
-             tsi_delink() will leave the iterator in a sane state.  */
-          tsi_delink (callsite_tsi_p);
-        }
-      /* the above link/delink steps as well as tsi_link_before() calls
-         in setup_one_parameter() and copy_body_nocfg() should match 
-         the walking of stmts in gimple_expand_calls_inline() loop 
-         to keep callsite_tsi_p iterator in the sane state and 
-         in correct position for further walking */
-    }
-  else
-    {
   /* If the inlined function returns a result that we care about,
      substitute the GIMPLE_CALL with an assignment of the return
      variable to the LHS of the call.  That is, if STMT was
@@ -3759,7 +3703,6 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id)
       else
         gsi_remove (&stmt_gsi, true);
     }
-    } /* end of else (flag_use_rtl_backend == 0) */
 
   if (purge_dead_abnormal_edges)
     gimple_purge_dead_abnormal_call_edges (return_block);
@@ -3817,7 +3760,7 @@ gimple_expand_calls_inline (basic_block bb, copy_body_data *id)
           if (TREE_CODE (*expr_p) == WITH_SIZE_EXPR || TREE_CODE (*expr_p) == NOP_EXPR)
             expr_p = &TREE_OPERAND (*expr_p, 0);
           if (TREE_CODE (*expr_p) == CALL_EXPR)
-    	    successfully_inlined = expand_call_inline (0, stmt, expr_p, id, &tsi);
+    	    successfully_inlined = expand_call_inline (0, stmt, id, &tsi);
          
           /* after successful inlining tsi already points to the next stmt */
           if (!successfully_inlined)
@@ -3831,7 +3774,7 @@ gimple_expand_calls_inline (basic_block bb, copy_body_data *id)
         gimple stmt = gsi_stmt (gsi);
 
         if (is_gimple_call (stmt)
-            && expand_call_inline (bb, stmt, id))
+            && expand_call_inline (bb, stmt, id, &tsi))
 	  return true;
       }
 
@@ -4711,7 +4654,7 @@ tree_function_versioning (tree old_decl, tree new_decl, varray_type tree_map,
 	    init = setup_one_parameter (&id, replace_info->old_tree,
 	    			        replace_info->new_tree, id.src_fn,
 				        NULL,
-				        &vars);
+				        &vars, NULL);
 	    if (init)
 	      VEC_safe_push (gimple, heap, init_stmts, init);
 	  }
@@ -4744,15 +4687,11 @@ tree_function_versioning (tree old_decl, tree new_decl, varray_type tree_map,
   
   /* Copy the Function's body.  */
   if (flag_use_rtl_backend == 0)
-    {
-      new_fndecl = copy_body_nocfg (&id, 0);
-    }
+    copy_body_nocfg (&id, 0);
   else
-    {
-      new_fndecl = copy_body (&id, old_entry_block->count,
+    copy_body (&id, old_entry_block->count,
                               old_entry_block->frequency,
                               ENTRY_BLOCK_PTR, EXIT_BLOCK_PTR);
-    }
   
   if (DECL_RESULT (old_decl) != NULL_TREE)
     {

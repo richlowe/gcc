@@ -51,6 +51,7 @@ Boston, MA 02111-1307, USA.  */
 #include "regs.h"
 #include "tree-ir.h"
 #include "df.h"
+#include "tree-iterator.h"
 
 #define FIRST_SGCC_VIRTUAL_REGNO 14159000
 
@@ -1116,7 +1117,7 @@ dump_ir_builtin_va_arg (tree valist, tree type)
 
   incr = fold (build2 (PLUS_EXPR, ptr_type_node, incr, build_int_cst (NULL_TREE, rsize)));
 
-  incr = build2 (GIMPLE_MODIFY_STMT, ptr_type_node, valist, incr);
+  incr = build2 (MODIFY_EXPR, ptr_type_node, valist, incr);
   TREE_SIDE_EFFECTS (incr) = 1;
 
   dump_ir_stmt (incr);
@@ -2278,7 +2279,7 @@ dump_ir_complexpart_expr (tree stmt, int is_realpart, enum MAP_FOR map_for)
     {
       tree var = create_tmp_var_raw (TREE_TYPE (op0), "__complex_tmp_var.");
       TREE_ADDRESSABLE (var) = 1;
-      t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), var, op0);
+      t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
       TREE_SIDE_EFFECTS (t) = 1;
       dump_ir_stmt (t);
       t = build_fold_addr_expr_with_type (var, build_pointer_type (record_type));
@@ -2383,7 +2384,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                         error ("global register variable has initial value");
                       }
                     if (TREE_THIS_VOLATILE (stmt))
-                      warning0 ("volatile register variables don%'t "
+                      warning (0, "volatile register variables don%'t "
                                "work as you might wish");
                     ret = build_ir_reg_var (regname, regno, 
                                             argtype, map_gnu_type_to_IR_TYPE_NODE (var_type));
@@ -3678,7 +3679,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             /* copy op0 into temporary */
             var = create_tmp_var_raw (TREE_TYPE (op0), "__vis_tmp_var.");
             TREE_ADDRESSABLE (var) = 1;
-            t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), var, op0);
+            t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
             TREE_SIDE_EFFECTS (t) = 1;
             dump_ir_stmt (t);
             
@@ -3767,8 +3768,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                                map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (stmt)));	else
 	  ret = ir_op0;
         
-        if (lang_hooks.reduce_bit_field_operations
-            && TREE_CODE (TREE_TYPE (stmt)) == INTEGER_TYPE
+        if (TREE_CODE (TREE_TYPE (stmt)) == INTEGER_TYPE
             && argtype.size * BITS_PER_UNIT > TYPE_PRECISION (TREE_TYPE (stmt)))
           ret = ir_reduce_bit_field_operations (ret, TREE_TYPE (stmt));
       }
@@ -4043,8 +4043,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
           }
        
             
-        if (lang_hooks.reduce_bit_field_operations
-            && TREE_CODE (TREE_TYPE (stmt)) == INTEGER_TYPE
+        if (TREE_CODE (TREE_TYPE (stmt)) == INTEGER_TYPE
             && argtype.size * BITS_PER_UNIT > TYPE_PRECISION (TREE_TYPE (stmt)))
           ret = ir_reduce_bit_field_operations (ret, TREE_TYPE (stmt));
       }
@@ -4891,7 +4890,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                 /* copy op0 into temporary */
                 var = create_tmp_var_raw (TREE_TYPE (op0), "__fabsl_tmp_var.");
                 TREE_ADDRESSABLE (var) = 1;
-                t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), var, op0);
+                t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
                 dump_ir_stmt (t);
             
                 /* get the address of the temporary */
@@ -4904,7 +4903,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                 t2 = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (stmt)), var);
                 t2 = build1 (NOP_EXPR, integer_ptr_type_node, t2);
                 t2 = build1 (INDIRECT_REF, integer_type_node, t2);
-                t2 = build2 (GIMPLE_MODIFY_STMT, integer_type_node, t2, t);
+                t2 = build2 (MODIFY_EXPR, integer_type_node, t2, t);
                 dump_ir_stmt (t2);
 
                 ret = dump_ir_expr (var, map_for);
@@ -5307,7 +5306,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
   /* recognize pure function. */
   if (TREE_CODE (op0) == ADDR_EXPR
       && TREE_CODE (TREE_OPERAND (op0, 0)) == FUNCTION_DECL
-      && DECL_IS_PURE (TREE_OPERAND (op0, 0)))
+      && DECL_PURE_P (TREE_OPERAND (op0, 0)))
     is_pure_call = 1;
 
   op1 = CALL_EXPR_ARGS (stmt);
@@ -5578,11 +5577,11 @@ dump_ir_modify (tree stmt)
   tree op0, op1;
   int is_indirect = 0;
 
-  if (TREE_CODE (stmt) != GIMPLE_MODIFY_STMT)
+  if (TREE_CODE (stmt) != MODIFY_EXPR)
     abort();
   
-  op0 = GIMPLE_STMT_OPERAND (stmt, 0); /* left */
-  op1 = GIMPLE_STMT_OPERAND (stmt, 1); /* right */
+  op0 = gimple_assign_lhs (stmt); /* left */
+  op1 = gimple_assign_rhs1 (stmt); /* right */
     
   if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
       && TREE_CODE (CALL_EXPR_FN (op1)) == ADDR_EXPR)
@@ -6024,7 +6023,7 @@ dump_ir_builtin_va_copy (tree arglist)
 
   if (TREE_CODE (va_list_type_node) != ARRAY_TYPE)
     {
-      t = build2 (GIMPLE_MODIFY_STMT, va_list_type_node, dst, src);
+      t = build2 (MODIFY_EXPR, va_list_type_node, dst, src);
       TREE_SIDE_EFFECTS (t) = 1;
       dump_ir_stmt (t);
     }
@@ -6064,7 +6063,7 @@ dump_ir_builtin_va_start (tree exp)
   nextarg = dump_ir_builtin_next_arg ();
   valist = stabilize_va_list (CALL_EXPR_ARG (exp, 0), 1);
 
-  t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (valist), valist, nextarg);
+  t = build2 (MODIFY_EXPR, TREE_TYPE (valist), valist, nextarg);
   TREE_SIDE_EFFECTS (t) = 1;
 
   dump_ir_stmt (t);
@@ -6126,7 +6125,7 @@ dump_ir_builtin_nonlocal_goto (tree stmt ATTRIBUTE_UNUSED, tree arglist)
   n->triple.is_volatile = IR_TRUE;
   /* n->triple.may_cause_exception = IR_TRUE; */
   /* check_stmt_eh_region (stmt, n); */
-  current_function_has_nonlocal_goto = 1;
+  crtl->has_nonlocal_goto = 1;
 }
 
 static IR_NODE *
@@ -6611,7 +6610,7 @@ dump_builtin_memcpy (tree stmt, tree arglist, int need_return)
                      build1 (NOP_EXPR, ptr_type_node, dest));
       src = build1 (INDIRECT_REF, char_type_node, 
                      build1 (NOP_EXPR, const_ptr_type_node, src));
-      result = build2 (GIMPLE_MODIFY_STMT, char_type_node, new_dest, src);
+      result = build2 (MODIFY_EXPR, char_type_node, new_dest, src);
       dump_ir_stmt (result);
       return dump_ir_expr (dest, MAP_FOR_VALUE);
     }
@@ -7081,7 +7080,6 @@ dump_ir_builtin_call (tree stmt, int need_return)
       ret = dump_ir_call (stmt, need_return);
       break;
     case BUILT_IN_VA_START:
-    case BUILT_IN_STDARG_START:
       dump_ir_builtin_va_start (stmt);
       break;
     case BUILT_IN_VA_END:
@@ -7230,7 +7228,7 @@ dump_ir_builtin_call (tree stmt, int need_return)
         /* Argument 1 must be either zero or one.  */
         if (op1 != 0 && op1 != 1)
           {
-            warning0 ("invalid second argument to %<__builtin_prefetch%>; using zero");
+            warning (0, "invalid second argument to %<__builtin_prefetch%>; using zero");
             op1 = 0;
           }
 
@@ -7245,7 +7243,7 @@ dump_ir_builtin_call (tree stmt, int need_return)
         /* Argument 2 must be 0, 1, 2, or 3.  */
         if (op2 < 0 || op2 > 3)
           {
-            warning0 ("invalid third argument to %<__builtin_prefetch%>; using zero");
+            warning (0, "invalid third argument to %<__builtin_prefetch%>; using zero");
             op2 = 0;
           }
 
@@ -7661,8 +7659,6 @@ dump_ir_stmt (tree stmt)
       dump_ir_call (stmt, 0/* procedure call*/);
       break;
     case MODIFY_EXPR:
-      abort();
-    case GIMPLE_MODIFY_STMT:
       dump_ir_modify (stmt);
       break;
     case RETURN_EXPR:
@@ -7673,11 +7669,11 @@ dump_ir_stmt (tree stmt)
 
         if (op0) 
           {
-            if (TREE_CODE (op0) == GIMPLE_MODIFY_STMT)
+            if (TREE_CODE (op0) == MODIFY_EXPR)
               {
                 tree left, right;
-		left = GIMPLE_STMT_OPERAND (op0, 0); /* left */
-		right = GIMPLE_STMT_OPERAND (op0, 1); /* right */
+		left = gimple_assign_lhs (op0); /* left */
+		right = gimple_assign_rhs1 (op0); /* right */
                 
                 /* case of 'return_expr (result_decl = var_decl)' */
                 if (TREE_CODE (left) == RESULT_DECL
@@ -7704,7 +7700,7 @@ dump_ir_stmt (tree stmt)
               }
             else if (TREE_CODE (op0) != RESULT_DECL) /* new gcc case */
               {
-                tree t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (op0), 
+                tree t = build2 (MODIFY_EXPR, TREE_TYPE (op0), 
                                 DECL_RESULT (current_function_decl), op0);
                 dump_ir_stmt (t);
               }
@@ -8088,43 +8084,43 @@ dump_ir_stmt (tree stmt)
         break;
       }
 
-    case OMP_PARALLEL:
+    case GIMPLE_OMP_PARALLEL:
       dump_omp_parallel (stmt);
       break;
 
-    case OMP_FOR:
+    case GIMPLE_OMP_FOR:
       dump_omp_for (stmt);
       break;
 
-    case OMP_SECTIONS:
+    case GIMPLE_OMP_SECTIONS:
       dump_omp_sections (stmt);
       break;
 
-    case OMP_SECTION:
+    case GIMPLE_OMP_SECTION:
       dump_omp_section (stmt);
       break;
             
-    case OMP_SINGLE:
+    case GIMPLE_OMP_SINGLE:
       dump_omp_single (stmt);
       break;
 
-    case OMP_MASTER:
+    case GIMPLE_OMP_MASTER:
       dump_omp_master (stmt);
       break;
 
-    case OMP_ORDERED:
+    case GIMPLE_OMP_ORDERED:
       dump_omp_ordered (stmt);
       break;
 
-    case OMP_CRITICAL:
+    case GIMPLE_OMP_CRITICAL:
       dump_omp_critical (stmt);
       break;
 
-    case OMP_RETURN:
+    case GIMPLE_OMP_RETURN:
       dump_omp_return (stmt);
       break;
 
-    case OMP_TASK:
+    case GIMPLE_OMP_TASK:
       dump_omp_task (stmt);
       break;
             
@@ -8277,10 +8273,10 @@ dump_function_ir_statements (tree t)
               cur = tsi_stmt (tsi); 
               nxt = tsi_stmt (new_tsi);
               /* start with looong comparison. */
-              if (TREE_CODE (cur) == GIMPLE_MODIFY_STMT 
-                  && (op0 = GIMPLE_STMT_OPERAND (cur, 0)) /* get lvalue */ 
+              if (TREE_CODE (cur) == MODIFY_EXPR 
+                  && (op0 = gimple_assign_lhs (cur)) /* get lvalue */ 
                   && (DECL_P (op0) && DECL_ARTIFICIAL (op0)) 
-                  && (op1 = GIMPLE_STMT_OPERAND (cur, 1)) /* get rvalue */ 
+                  && (op1 = gimple_assign_rhs1 (cur)) /* get rvalue */ 
                   && TREE_CODE_CLASS (TREE_CODE (op1)) == tcc_comparison 
                   && TREE_CODE (nxt) == COND_EXPR 
                   && op0 == TREE_OPERAND (nxt, 0)) 
@@ -8681,9 +8677,9 @@ dump_function_ir (tree fn)
   
   /* When gimple is lowered, the variables are no longer available in the
      bind_exprs, so display them separately.  */
-  if (cfun->unexpanded_var_list)
+  if (cfun->local_decls)
     {
-      for (vars = cfun->unexpanded_var_list; vars; vars = TREE_CHAIN (vars))
+      for (vars = cfun->local_decls; vars; vars = TREE_CHAIN (vars))
 	{
 	  var = TREE_VALUE (vars);
 	  /* print_generic_decl (stderr, var, 0); */
@@ -8775,10 +8771,10 @@ dump_function_ir (tree fn)
   if (ir_gen_scope_triple_p ()) 
     ir_pop_lexical_scopes ();
 
-  if (cfun->uses_pbranch && !cfun->uses_eh_lsda)
+  if (cfun->uses_pbranch && !crtl->uses_eh_lsda)
     {
       /* very unusual case */
-      cfun->uses_eh_lsda = 1;
+      crtl->uses_eh_lsda = 1;
     }
   
   /* generate all landing pads at the end */
@@ -9785,7 +9781,7 @@ fill_scope_info (pragmaEntry_t ptype,
            {
              tree value, t;
              value = DECL_VALUE_EXPR (decl); 
-             t = build2 (GIMPLE_MODIFY_STMT, TREE_TYPE (value), decl, value); 
+             t = build2 (MODIFY_EXPR, TREE_TYPE (value), decl, value); 
              dump_ir_stmt (t); 
            }
           var = create_ir_scope (decl, &pinfo->u.s.firstprivate, pinfo, 1);
@@ -10217,8 +10213,8 @@ dump_omp_for (tree stmt)
      be available from the OMP_FOR_INIT body. */
   
   loop_index = OMP_FOR_INIT (stmt);
-  gcc_assert (TREE_CODE (loop_index) == GIMPLE_MODIFY_STMT);
-  loop_index = GIMPLE_STMT_OPERAND (loop_index, 0);
+  gcc_assert (TREE_CODE (loop_index) == MODIFY_EXPR);
+  loop_index = gimple_assign_lhs (loop_index);
   gcc_assert (DECL_P (loop_index));
   l0_lab = gen_ir_label ();
   l1_lab = gen_ir_label ();
@@ -11449,6 +11445,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
 {
   tree vecs, fn, var, wrapper, parm, t, arg, arg2, argtype, body, bind;
   tree clause, info;
+  struct gimplify_ctx gctx;
  
   vecs = (tree) n->key;
   fn = TREE_VEC_ELT (vecs, 0);
@@ -11516,7 +11513,8 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
       break;
     case 1:
       TREE_VEC_ELT (info, 0) = fn;
-      t = lang_hooks.decls.omp_clause_default_ctor (clause, t);
+      /* FIXME: x is supposed to give a proper value. */
+      t = lang_hooks.decls.omp_clause_default_ctor (clause, t, NULL);
       break;
     case 2:
       TREE_VEC_ELT (info, 0) = fn;
@@ -11531,7 +11529,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
       break;
     }
 
-  push_gimplify_context ();
+  push_gimplify_context (&gctx);
   gimplify_and_add (t, &body);
   pop_gimplify_context (NULL_TREE);
   BIND_EXPR_BODY (bind) = body;

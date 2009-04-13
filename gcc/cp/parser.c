@@ -20659,49 +20659,6 @@ cp_parser_omp_clause_nowait (cp_parser *parser ATTRIBUTE_UNUSED,
   return c;
 }
 
-/* OpenMP 3.0:
-   untied */
-
-static tree
-cp_parser_omp_clause_untied (cp_parser *parser ATTRIBUTE_UNUSED, tree list)
-{
-  tree c;
-
-  check_no_duplicate_clause (list, OMP_CLAUSE_NOWAIT, "untied");
-
-  c = build_omp_clause (OMP_CLAUSE_UNTIED);
-  OMP_CLAUSE_CHAIN (c) = list;
-  return c;
-}
-
-/* OpenMP 3.0:
-   collapse ( integer ) */
-
-static tree
-cp_parser_omp_clause_collapse (cp_parser *parser, tree list)
-{
-  tree t, c;
-
-  if (!cp_parser_require (parser, CPP_OPEN_PAREN, "`('"))
-    return list;
-
-  t = cp_parser_expression (parser, false);
-
-  if (t == error_mark_node
-      || !cp_parser_require (parser, CPP_CLOSE_PAREN, "`)'"))
-    cp_parser_skip_to_closing_parenthesis (parser, /*recovering=*/true,
-					   /*or_comma=*/false,
-					   /*consume_paren=*/true);
-
-  check_no_duplicate_clause (list, OMP_CLAUSE_COLLAPSE, "collapse");
-
-  c = build_omp_clause (OMP_CLAUSE_COLLAPSE);
-  OMP_CLAUSE_COLLAPSE_EXPR (c) = t;
-  OMP_CLAUSE_CHAIN (c) = list;
-
-  return c;
-}
-
 /* OpenMP 2.5:
    num_threads ( expression ) */
 
@@ -21229,16 +21186,6 @@ cp_parser_omp_flush (cp_parser *parser, cp_token *pragma_tok)
   cp_parser_require_pragma_eol (parser, pragma_tok);
 
   finish_omp_flush ();
-}
-
-/* OpenMP 3.0:
-   # pragma omp taskwait new-line */
-
-static void
-cp_parser_omp_taskwait (cp_parser *parser, cp_token *pragma_tok)
-{
-  cp_parser_require_pragma_eol (parser, pragma_tok);
-  finish_omp_taskwait ();
 }
 
 /* Helper function, to parse omp for increment expression.  */

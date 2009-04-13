@@ -5617,7 +5617,7 @@ gimplify_scan_omp_clauses (tree *list_p, gimple_seq *pre_p,
 	    }
           if (outer_ctx)
 	    omp_notice_variable (outer_ctx, decl, true);
-          if (!in_parallel
+          if (region_type != ORT_PARALLEL
 	      && !omp_check_private (ctx, decl)
               && !lang_hooks.decls.omp_privatize_by_reference (decl) /* For fortran */
               && lang_hooks.decls.omp_threadprivate_decl(decl) == NULL_TREE)

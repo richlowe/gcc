@@ -18,6 +18,8 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+/* Modified by Sun Microsystems 2009 */
+
 #ifndef TREE_SSA_SCCVN_H
 #define TREE_SSA_SCCVN_H
 
@@ -72,6 +74,7 @@ typedef struct vn_reference_op_struct
   tree op0;
   tree op1;
   tree op2;
+  tree op3;
 } vn_reference_op_s;
 typedef vn_reference_op_s *vn_reference_op_t;
 typedef const vn_reference_op_s *const_vn_reference_op_t;

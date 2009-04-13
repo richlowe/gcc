@@ -238,8 +238,8 @@ unsigned const char omp_clause_num_ops[] =
   0, /* OMP_CLAUSE_ORDERED  */
   0, /* OMP_CLAUSE_DEFAULT  */
   3, /* OMP_CLAUSE_COLLAPSE  */
-  0  /* OMP_CLAUSE_UNTIED   */
-  1, /* OMP_CLAUSE_AUTO */
+  0, /* OMP_CLAUSE_UNTIED   */
+  1  /* OMP_CLAUSE_AUTO */
 };
 
 const char * const omp_clause_code_name[] =
@@ -416,7 +416,7 @@ decl_assembler_name_equal (tree decl, const_tree asmname)
 	asmname_str --;
     }
 
-  if (globalize_flag && decl_str[0] == '$' && decl__str[1] == 'X')
+  if (globalize_flag && decl_str[0] == '$' && decl_str[1] == 'X')
     {
       /* Could assert that
          strncmp (decl_asmname_str, ir_global_prefix, 16) == 0
@@ -3323,17 +3323,17 @@ build2_stat (enum tree_code code, tree tt, tree arg0, tree arg1 MEM_STAT_DECL)
 
   gcc_assert (TREE_CODE_LENGTH (code) == 2);
 
-  /* gccfss style:
-    p[i+5] -> (p + (i*4) + 20). 
+  /* gccfss style: p[i+5] -> (p + (i*4) + 20).
     loosen the assertion. 
   if ((code == MINUS_EXPR || code == PLUS_EXPR || code == MULT_EXPR)
-      && arg0 && arg1 && tt && POINTER_TYPE_P (tt)
-      /* When sizetype precision doesn't match that of pointers
+      && arg0 && arg1 && tt && POINTER_TYPE_P (tt) 
+      * When sizetype precision doesn't match that of pointers
          we need to be able to build explicit extensions or truncations
-	 of the offset argument.  */
+	 of the offset argument.  *
       && TYPE_PRECISION (sizetype) == TYPE_PRECISION (tt))
-    //gcc_assert (TREE_CODE (arg0) == INTEGER_CST
+    gcc_assert (TREE_CODE (arg0) == INTEGER_CST
 		&& TREE_CODE (arg1) == INTEGER_CST);
+  */
 
   if (code == POINTER_PLUS_EXPR && arg0 && arg1 && tt)
     gcc_assert (POINTER_TYPE_P (tt) && POINTER_TYPE_P (TREE_TYPE (arg0))

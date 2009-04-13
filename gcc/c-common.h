@@ -1059,4 +1059,6 @@ extern tree c_omp_remap_decl (tree, bool);
 #define GCC_DIAG_STYLE __gcc_cdiag__
 #endif
 
+extern int anon_aggr_type_p (const_tree);
+
 #endif /* ! GCC_C_COMMON_H */

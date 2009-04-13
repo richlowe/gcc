@@ -2800,7 +2800,7 @@ mangle_decl_string (const tree decl)
       TREE_PUBLIC (decl) = 1;
       DECL_VISIBILITY (decl) = VISIBILITY_HIDDEN;
 
-      start_mangling (0, true);
+      start_mangling (0);
       write_string (result);
       result = finish_mangling (true);
     }
@@ -2844,6 +2844,7 @@ static tree
 mangle_special_for_type (const tree type, const char *code)
 {
   tree result;
+  char *name;
 
   /* We don't have an actual decl here for the special component, so
      we can't just process the <encoded-name>.  Instead, fake it.  */
@@ -2857,15 +2858,17 @@ mangle_special_for_type (const tree type, const char *code)
   write_type (type);
   result = finish_mangling_get_identifier (/*warn=*/false);
 
-  if (globalize_flag && result[4] == 'Z') /* 'Z' for local name. */ 
+  name = IDENTIFIER_POINTER (result);
+
+  if (globalize_flag && name[4] == 'Z') /* 'Z' for local name. */ 
     {
-      result = make_global_name (result,
+      result = make_global_name (name,
                                  0/* don't add function suffix to
                                      globalized name in C++ */,
                                  0/* for future use*/);
-      start_mangling (0, true);
-      write_string (result);
-      result = finish_mangling (true);
+      start_mangling (0);
+      write_string (name);
+      result = finish_mangling_get_identifier (true);
     }
 
   if (DEBUG_MANGLE)

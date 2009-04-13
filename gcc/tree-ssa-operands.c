@@ -1977,8 +1977,7 @@ get_expr_operands (gimple stmt, tree *expr_p, int flags)
             get_expr_operands (stmt, &TREE_OPERAND (expr, 1), opf_use);
             get_expr_operands (stmt, &TREE_OPERAND (expr, 2), opf_use);
             get_expr_operands (stmt, &TREE_OPERAND (expr, 3), opf_use);
-            get_expr_operands (stmt, &TREE_OPERAND (expr, 4), 0);
-
+            get_expr_operands (stmt, &TREE_OPERAND (expr, 4), opf_use);
 	  }
 
 	return;
@@ -1991,15 +1990,6 @@ get_expr_operands (gimple stmt, tree *expr_p, int flags)
       get_expr_operands (stmt, &TREE_OPERAND (expr, 0), flags);
       return;
 
-    case NOP_EXPR:
-      if (TREE_CODE (TREE_OPERAND (expr, 0)) == CALL_EXPR)
-	    {
-          get_call_expr_operands (stmt, TREE_OPERAND (expr, 0));
-          return;
-	    }
-      else
-        goto do_unary;
-        
     case COND_EXPR:
     case VEC_COND_EXPR:
       get_expr_operands (stmt, &TREE_OPERAND (expr, 0), opf_use);

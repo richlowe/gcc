@@ -431,6 +431,16 @@ add_decl_expr (tree decl)
   add_stmt (r);
 }
 
+/* Nonzero if TYPE is an anonymous union or struct type.  We have to use a
+   flag for this because "A union for which objects or pointers are
+   declared is not an anonymous union" [class.union].  */
+
+int
+anon_aggr_type_p (const_tree node)
+{
+  return ANON_AGGR_TYPE_P (node);
+}
+
 /* Finish a scope.  */
 
 tree
@@ -3558,7 +3568,7 @@ generate_default_copy_ctor_function (tree decl)
   TREE_CHAIN (arg1) = arg2;
   DECL_ARGUMENTS (fn_decl) = arg1;
 
-  allocate_struct_function ( fn_decl);
+  allocate_struct_function (fn_decl, false);
 
   TREE_STATIC (fn_decl) = 1;
   TREE_USED (fn_decl) = 1;
@@ -3583,7 +3593,7 @@ generate_default_copy_ctor_function (tree decl)
 
   t = build1 (INDIRECT_REF, type, arg1);
   t2 = build1 (INDIRECT_REF, type, arg2);
-  t = build2 (GIMPLE_MODIFY_STMT, type, t, t2);
+  t = build2 (MODIFY_EXPR, type, t, t2);
 
   append_to_statement_list (t, &BIND_EXPR_BODY (body));
   DECL_SAVED_TREE (fn_decl) = body;
@@ -3960,7 +3970,8 @@ finish_omp_clauses (tree clauses)
                 {
                   t = build_special_member_call (NULL_TREE,
                                                  complete_ctor_identifier,
-                                                 NULL, inner_type, LOOKUP_NORMAL);
+                                                 NULL, inner_type, LOOKUP_NORMAL,
+                                                 tf_warning_or_error);
                   if (!gate_generate_ir ())
                     if (targetm.cxx.cdtor_returns_this () || errorcount)
                 /* Because constructors and destructors return this,
@@ -3981,7 +3992,8 @@ finish_omp_clauses (tree clauses)
                   t = build_tree_list (NULL, t);
                   t = build_special_member_call (NULL_TREE,
                                              complete_ctor_identifier,
-                                             t, inner_type, LOOKUP_NORMAL);
+                                             t, inner_type, LOOKUP_NORMAL,
+                                             tf_warning_or_error);
                   t = get_callee_fndecl (t);
 		}
               else
@@ -3992,7 +4004,8 @@ finish_omp_clauses (tree clauses)
 	          t = build_special_member_call (t,
                                                  complete_ctor_identifier,
                                                  build_tree_list (NULL, t), 
-                                                 inner_type, LOOKUP_NORMAL);
+                                                 inner_type, LOOKUP_NORMAL,
+                                                 tf_warning_or_error);
                   if (TREE_CODE (t) == CALL_EXPR)
                     t = get_callee_fndecl (t);
 	          else
@@ -4042,7 +4055,8 @@ finish_omp_clauses (tree clauses)
 	      t = build_int_cst (build_pointer_type (inner_type), 0);
 	      t = build1 (INDIRECT_REF, inner_type, t);
 	      t = build_special_member_call (t, complete_dtor_identifier,
-					     NULL, inner_type, LOOKUP_NORMAL);
+					     NULL, inner_type, LOOKUP_NORMAL,
+                                             tf_warning_or_error);
 
 	      if (targetm.cxx.cdtor_returns_this ())
 		/* Because constructors and destructors return this,
@@ -4088,7 +4102,8 @@ finish_omp_clauses (tree clauses)
 	      t = build1 (INDIRECT_REF, inner_type, t);
 	      t = build_special_member_call (t, ansi_assopname (NOP_EXPR),
 					     build_tree_list (NULL, t),
-					     inner_type, LOOKUP_NORMAL);
+					     inner_type, LOOKUP_NORMAL,
+                                             tf_warning_or_error);
 
 	      /* We'll have called convert_from_reference on the call, which
 		 may well have added an indirect_ref.  It's unneeded here,
@@ -4838,15 +4853,18 @@ cp_convert_omp_for_cond_pattern_1 (tree *cond_p, tree iter, tree iter_i,
   pushdecl (upper);
   /* tell gimplifier scope _upper_ as shared. */
   DECL_REFER_SCOPED_SHARED (upper) = 1;
-  tmp = build_x_modify_expr (upper, NOP_EXPR, tmp);
+  tmp = build_x_modify_expr (upper, NOP_EXPR, tmp, tf_warning_or_error);
   list = push_stmt_list ();
   finish_expr_stmt (tmp);
   list = pop_stmt_list (list);
   append_to_statement_list_force (list, pre_body_p);
 
-  tmp = build_x_binary_op (MINUS_EXPR, upper, lower, 0);
+  tmp = build_x_binary_op (MINUS_EXPR, upper, TREE_CODE(upper),
+                           lower, TREE_CODE(lower), 0,
+                           tf_warning_or_error);
   distance = create_tmp_var (integer_type_node, NULL);
-  tmp = build_x_modify_expr (distance, NOP_EXPR, tmp);
+  tmp = build_x_modify_expr (distance, NOP_EXPR, tmp,
+                             tf_warning_or_error);
   list = push_stmt_list ();
   finish_expr_stmt (tmp);
   list = pop_stmt_list (list);
@@ -4920,16 +4938,18 @@ cp_convert_omp_for_cond_pattern_2 (tree *cond_p, tree iter, tree iter_i,
   pushdecl (upper);
   /* tell gimplifier scope _upper_ as shared. */
   DECL_REFER_SCOPED_SHARED (upper) = 1;
-  tmp = build_x_indirect_ref (tmp, "unary *");
-  tmp = build_x_modify_expr (upper, NOP_EXPR, tmp);
+  tmp = build_x_indirect_ref (tmp, "unary *", tf_warning_or_error);
+  tmp = build_x_modify_expr (upper, NOP_EXPR, tmp, tf_warning_or_error);
   list = push_stmt_list ();
   finish_expr_stmt (tmp);
   list = pop_stmt_list (list);
   append_to_statement_list_force (list, pre_body_p);
 
-  tmp = build_x_binary_op (MINUS_EXPR, upper, lower, 0);
+  tmp = build_x_binary_op (MINUS_EXPR, upper, TREE_CODE(upper),
+                           lower, TREE_CODE(lower), 0,
+                           tf_warning_or_error);
   distance = create_tmp_var (integer_type_node, NULL);
-  tmp = build_x_modify_expr (distance, NOP_EXPR, tmp);
+  tmp = build_x_modify_expr (distance, NOP_EXPR, tmp, tf_warning_or_error);
   list = push_stmt_list ();
   finish_expr_stmt (tmp);
   list = pop_stmt_list (list);
@@ -4997,7 +5017,7 @@ cp_convert_omp_for_init (tree *init_p, tree *decl_p, tree *iter_p,
 
   /* going to build statements like:
        lower = INITIAL_VALUE_OF_ITERATOR; */
-  tmp = build_x_modify_expr (*lower_p, NOP_EXPR, *init_p);
+  tmp = build_x_modify_expr (*lower_p, NOP_EXPR, *init_p, tf_warning_or_error);
   list = push_stmt_list ();
   finish_expr_stmt (tmp);
   TREE_SIDE_EFFECTS (list) = 0;
@@ -5073,10 +5093,10 @@ cp_convert_omp_for_body (tree iter, tree iter_i, tree lower,
   /* going to build statements like below:
        iter = lower;
        operator+=(&iter, &iter_i); */
-  tmp = build_x_modify_expr (iter, NOP_EXPR, lower);
+  tmp = build_x_modify_expr (iter, NOP_EXPR, lower, tf_warning_or_error);
   SET_EXPR_LOCATION (tmp, locus);
   finish_expr_stmt (tmp);
-  tmp = build_x_modify_expr (iter, PLUS_EXPR, iter_i);
+  tmp = build_x_modify_expr (iter, PLUS_EXPR, iter_i, tf_warning_or_error);
   SET_EXPR_LOCATION (tmp, locus);
   finish_expr_stmt (tmp);
   list = pop_stmt_list (list);
@@ -5103,10 +5123,10 @@ cp_convert_omp_for_body (tree iter, tree iter_i, tree lower,
        iter = lower;
        operator+=(&iter, &iter_i); 
        OMP_BARRIER */
-  tmp = build_x_modify_expr (iter, NOP_EXPR, lower);
+  tmp = build_x_modify_expr (iter, NOP_EXPR, lower, tf_warning_or_error);
   SET_EXPR_LOCATION (tmp, locus);
   finish_expr_stmt (tmp);
-  tmp = build_x_modify_expr (iter, PLUS_EXPR, iter_i);
+  tmp = build_x_modify_expr (iter, PLUS_EXPR, iter_i, tf_warning_or_error);
   SET_EXPR_LOCATION (tmp, locus);
   finish_expr_stmt (tmp);
   c_finish_omp_barrier ();
@@ -5125,7 +5145,7 @@ cp_convert_omp_for_body (tree iter, tree iter_i, tree lower,
 
 tree
 finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
-		tree incrv, tree body, tree pre_body, tree clauses, tree par_claused)
+		tree incrv, tree body, tree pre_body, tree clauses, tree par_clauses)
 {
   tree omp_for = NULL, orig_incr = NULL;
   tree decl, init, cond, incr;
@@ -5262,12 +5282,12 @@ finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
           location_t saved_location = input_location;
 
           if (incr && (TREE_CODE (incr) == MODOP_EXPR))
-            incr = build_modify_expr (TREE_OPERAND (incr, 0),
+            incr = build_modify_expr (input_location, TREE_OPERAND (incr, 0),
                                       TREE_CODE (TREE_OPERAND (incr, 1)),
                                       TREE_OPERAND (incr, 2));
 
           input_location = locus;
-          cp_convert_omp_for_init (&init, &decl, &iter, &iter_i, &lower, &pre_body, ws_clauses_p, par_clauses_p);
+          cp_convert_omp_for_init (&init, &decl, &iter, &iter_i, &lower, &pre_body, clauses, par_clauses);
           cp_convert_omp_for_cond (&cond, iter, iter_i, lower, &pre_body);
           cp_convert_omp_for_incr (&incr, iter, iter_i);
           input_location = saved_location;
@@ -5342,7 +5362,7 @@ finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
 
   omp_for = c_finish_omp_for (locus, declv, initv, condv, incrv,
 			      body, pre_body, post_body);
-  if (flag_cpp_iter && par_clauses_p && iter) 
+  if (flag_cpp_iter && par_clauses && iter) 
     OMP_FOR_NOT_COMBINED (omp_for) = 1; 
 
   if (omp_for == NULL)

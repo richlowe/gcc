@@ -172,7 +172,7 @@ const struct gcc_debug_hooks dbg_gen_debug_hooks =
   dbg_gen_function_decl,
   dbg_gen_global_decl, 
   dbg_gen_type_decl,
-  debug_nothing_tree_tree,     /* imported_module_or_decl  */
+  debug_nothing_tree_tree_tree_bool,     /* imported_module_or_decl  */
   debug_nothing_tree,          /* deferred_inline_function  */
   debug_nothing_tree,          /* outlining_inline_function  */
   debug_nothing_rtx,           /* label  */
@@ -761,7 +761,7 @@ dbg_gen_CC_type_flags (tree type)
     }
   if (TYPE_BINFO (type) && BINFO_VIRTUAL_P (TYPE_BINFO (type)))
     flags |= DBG_VIRTUAL;
-  if (context && IS_AGGR_TYPE_CODE (TREE_CODE (context)))
+  if (context && RECORD_OR_UNION_CODE_P (TREE_CODE (context)))
     flags |= DBG_NESTED;
     
   return flags;
@@ -927,7 +927,7 @@ dbg_gen_CC_method_member_type_flags (tree decl)
     flags |= DBG_VIRTUAL;
   if (DECL_ARTIFICIAL (decl))
     flags |= DBG_SYNTHETIC;
-  if (DECL_INLINE (decl))
+  if (DECL_DECLARED_INLINE_P (decl))
     flags |= DBG_INLINE; 
 
   return flags;

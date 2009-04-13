@@ -4831,7 +4831,7 @@ extern tree finish_omp_task			(tree, tree);
    || TREE_CODE (TREE_TYPE (decl)) == TYPENAME_TYPE     \
    || TREE_CODE (TREE_TYPE (decl)) == RECORD_TYPE)
 extern tree finish_omp_for			(location_t, tree, tree,
-						 tree, tree, tree, tree, tree *, tree *);
+						 tree, tree, tree, tree, tree, tree);
 extern void finish_omp_atomic			(enum tree_code, tree, tree);
 extern void finish_omp_barrier			(void);
 extern void finish_omp_flush			(void);

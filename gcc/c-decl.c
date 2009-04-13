@@ -8157,4 +8157,13 @@ lhd_var_is_omp_threadprivate (tree decl)
   return NULL_TREE;
 }
 
+/* Nonzero if TYPE is an anonymous union or struct type.  Always 0 in
+   C.  */
+
+int
+anon_aggr_type_p (const_tree ARG_UNUSED (node))
+{
+  return 0;
+}
+
 #include "gt-c-decl.h"

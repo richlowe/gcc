@@ -1372,7 +1372,7 @@ convert_local_reference_op (tree *tp, int *walk_subtrees, void *data)
 	      walk_tree (&TREE_OPERAND (t, 3), convert_local_reference_op, wi,
 			 NULL);
               if (TREE_CODE (t) == ARRAY_REF)
-	        walk_tree (&TREE_OPERAND (t, 4), convert_local_reference, wi,
+	        walk_tree (&TREE_OPERAND (t, 4), convert_local_reference_op, wi,
 			   NULL);
 	    }
 	  else if (TREE_CODE (t) == BIT_FIELD_REF)

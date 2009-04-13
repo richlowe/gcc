@@ -1666,8 +1666,9 @@ static unsigned int
 tree_regimple (void)
 {
   tree_stmt_iterator tsi;
+  struct gimplify_ctx gctx;
   
-  push_gimplify_context ();
+  push_gimplify_context (&gctx);
   if (TREE_CODE (DECL_SAVED_TREE (current_function_decl)) == BIND_EXPR)
      tsi = tsi_start (BIND_EXPR_BODY (DECL_SAVED_TREE (current_function_decl)));
   else
@@ -1676,6 +1677,8 @@ tree_regimple (void)
     {
       tree t;
       tree * stmt = tsi_stmt_ptr (tsi);
+      location_t loc = 0;
+      gimple_seq tseq = NULL;
 
       /* reverse a[i] to *(a+i) for better comprehension of optimization passes on RTL. */ 
       if (*stmt != NULL_TREE 
@@ -1684,10 +1687,14 @@ tree_regimple (void)
           && TREE_CODE (TREE_TYPE (TREE_OPERAND (TREE_OPERAND (*stmt, 0), 0))) == POINTER_TYPE) 
         {
            tree arrref = TREE_OPERAND (*stmt, 0);
-           TREE_OPERAND (*stmt, 0) = build_array_ref (TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1));  
+
+           if (gimple_has_location (stmt))
+             loc = gimple_location (stmt);
+        
+           TREE_OPERAND (*stmt, 0) = build_array_ref (loc, TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1));  
         }
 
-      gimplify_stmt (stmt);
+      gimplify_stmt (stmt, &tseq);
 
       t = tsi_stmt (tsi);
       if (t == NULL)
