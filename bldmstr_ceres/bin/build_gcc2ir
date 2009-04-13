@@ -387,9 +387,16 @@ install_crosscompiler_suncomponents ()
 	ln -s sparcfmaf/64 v9c
         # create soft links for sparcima subdirectory
         ln -s sparcfmaf sparcima
-        # create soft links for v8plusd/v9d subdirectories
-        #ln -s sparcima v8plusd
-        #ln -s sparcima/64 v9d
+        # create soft links for v8plusd/,v9d subdirectories
+        # CR 6829027. vis.il lives in v8plusd and v9d,
+        # move it to sparcfmaf, and create links to
+        # sparcima. sparcima is again a link to sparcfmaf
+        mv v8plusd/vis.il sparcfmaf/vis.il
+        mv v9d/vis.il sparcfmaf/64/vis.il
+        rm -rf v8plusd
+        rm -rf v9d
+        ln -s sparcima v8plusd
+        ln -s sparcima/64 v9d
         # create links for sparcvis and sparcvis2
         ln -s v8plusa sparcvis
         ln -s v8plusb sparcvis2
@@ -499,9 +506,16 @@ install_suncomponents()
 	ln -s sparcfmaf/64 v9c
         # create soft links for sparcima subdirectory
         ln -s sparcfmaf sparcima
-        # create soft links for v8plusd/v9d subdirectories
-        #ln -s sparcima v8plusd
-        #ln -s sparcima/64 v9d
+        # create soft links for v8plusd,v9d subdirectories
+        # CR 6829027. vis.il lives in v8plusd and v9d,
+        # move it to sparcfmaf, and create links to
+        # sparcima. sparcima is again a link to sparcfmaf
+        mv v8plusd/vis.il sparcfmaf/vis.il
+        mv v9d/vis.il sparcfmaf/64/vis.il
+        rm -rf v8plusd
+        rm -rf v9d
+        ln -s sparcima v8plusd
+        ln -s sparcima/64 v9d
         # create links for sparcvis and sparcvis2
         ln -s v8plusa sparcvis
         ln -s v8plusb sparcvis2
