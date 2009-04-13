@@ -596,7 +596,12 @@ run_tests_installed()
   # Running test for Objc and Fortran
   echo "Running tests for Objc and Fortran"
 
-  FINAL_INSTALL_DIR=$INSTALL_DIR/usr/compilers/gcc432
+  FINAL_INSTALL_DIR=$INSTALL_DIR/usr
+  # Create links: gcc -> gcc-4.3.2, gfortran -> gfortran-4.3.2
+  cd $FINAL_INSTALL_DIR/bin
+  ln -s gcc-4.3.2 gcc
+  ln -s gfortran-4.3.2 gfortran
+
   cd $ROOT/build.gcc2ir/gcc
 
   rm -rf testsuite.objc-fortran.m32
@@ -634,6 +639,10 @@ run_tests_installed()
     --without-gcc --without-g++ --target_board=unix/-m64 \
 	> $ROOT/logs/tests.objc-fortran.m64.log 2>&1); \
     mv *.log *.sum $ROOT/logs/result.m64 )
+
+  # Remove links: gcc -> gcc-4.3.2, gfortran -> gfortran-4.3.2
+  cd $FINAL_INSTALL_DIR/bin
+  rm gcc gfortran
 }
 
 run_tests_parallel()
