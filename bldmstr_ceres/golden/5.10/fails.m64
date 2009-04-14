@@ -1,3 +1,4 @@
+g++.sum:FAIL: g++.dg/debug/dwarf2/local-var-in-contructor.C scan-assembler problem
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -O0  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -O1  scan-assembler .weak[ \t]_?_ZTSPP1A
 g++.sum:FAIL: g++.dg/abi/rtti3.C  -O2  scan-assembler .weak[ \t]_?_ZTSPP1A
@@ -96,6 +97,8 @@ gcc.sum:FAIL: gcc.c-torture/execute/ieee/mul-subnormal-single-1.c execution,  -f
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/mul-subnormal-single-1.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/pr38016.c execution,  -fast
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/pr38016.c execution,  -fast -xipo=2
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c (test for excess errors)
@@ -119,6 +122,8 @@ gcc.sum:FAIL: gcc.dg/pr30643.c scan-assembler-not undefined
 gcc.sum:FAIL: gcc.dg/pr32773.c  (test for warnings, line 9)
 gcc.sum:FAIL: gcc.dg/pr32773.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
+gcc.sum:FAIL: gcc.dg/pr37858.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/pr37879.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)

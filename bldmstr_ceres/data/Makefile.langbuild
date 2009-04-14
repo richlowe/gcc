@@ -10,7 +10,7 @@ PATH=/usr/bin:/bin
 #   * set LANGWSLIST explicitly to specify the complete list of workspaces 
 
 EXTRALANGWS =
-LANGWSLIST = $(EXTRALANGWS) /import/backend-src/ceres/lang /shared/dp/sstrunk/latest/src/lang
+LANGWSLIST = $(EXTRALANGWS) /import/backend-src/ceres_patch/lang /shared/dp/sstrunk/latest/src/lang
 
 BM_BUILD_DATE:sh = /bin/date +\%Y/\%m/\%d
 BM_BUILD_NAME="gccfss_lang"
