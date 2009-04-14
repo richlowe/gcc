@@ -49,7 +49,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "value-prof.h"
 #include "pointer-set.h"
 #include "tree-inline.h"
-#include "tree-iterator.h"
 
 /* This file contains functions for building the Control Flow Graph (CFG)
    for a function tree.  */
@@ -7109,14 +7108,14 @@ execute_warn_function_return_nocfg (void)
 {
   source_location location;
   int has_return;
-  tree_stmt_iterator tsi;
+  gimple_stmt_iterator gsi;
 
   location = UNKNOWN_LOCATION;
   has_return = 0;
-  for (tsi = tsi_start (DECL_SAVED_TREE (cfun->decl));
-       !tsi_end_p (tsi); tsi_next (&tsi))
+  for (gsi = gsi_start (gimple_body (current_function_decl));
+       !gsi_end_p (gsi); gsi_next (&gsi))
     {
-      tree stmt = tsi_stmt (tsi);
+      tree stmt = gsi_stmt (gsi);
       if (TREE_CODE (stmt) == RETURN_EXPR 
 	      && (location = EXPR_LOCATION (stmt)) != UNKNOWN_LOCATION)
         {
@@ -7140,10 +7139,10 @@ execute_warn_function_return_nocfg (void)
 	   && has_return
 	   && !VOID_TYPE_P (TREE_TYPE (TREE_TYPE (cfun->decl))))
     {
-      for (tsi = tsi_start (DECL_SAVED_TREE (cfun->decl));
-           !tsi_end_p (tsi); tsi_next (&tsi))
+      for (gsi = gsi_start (gimple_body (cfun->decl));
+           !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-          tree stmt = tsi_stmt (tsi);
+          tree stmt = gsi_stmt (gsi);
 	  if (TREE_CODE (stmt) == RETURN_EXPR
 	      && TREE_OPERAND (stmt, 0) == NULL
 	      && !TREE_NO_WARNING (stmt))

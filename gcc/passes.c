@@ -523,7 +523,7 @@ init_optimization_passes (void)
   NEXT_PASS (pass_lower_vector);
   NEXT_PASS (pass_warn_function_return);
   NEXT_PASS (pass_build_cgraph_edges);
-  NEXT_PASS (pass_inline_parameters);
+  //NEXT_PASS (pass_inline_parameters);
   *p = NULL;
 
   /* Interprocedural optimization passes.  */

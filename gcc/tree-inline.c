@@ -3299,8 +3299,19 @@ estimate_num_insns_fn (tree fndecl, eni_weights *weights)
 {
   struct function *my_function = DECL_STRUCT_FUNCTION (fndecl);
   gimple_stmt_iterator bsi;
+  gimple_stmt_iterator gsi;
   basic_block bb;
   int n = 0;
+
+  if (flag_use_rtl_backend == 0)
+    {
+      gcc_assert (my_function);
+      for (gsi = gsi_start (gimple_body (fndecl));
+           !gsi_end_p (gsi); gsi_next (&gsi))
+        n += estimate_num_insns (gsi_stmt (gsi), weights);
+
+      return n;
+    }
 
   gcc_assert (my_function && my_function->cfg);
   FOR_EACH_BB_FN (bb, my_function)

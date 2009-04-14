@@ -533,14 +533,13 @@ gate_expand_vector_operations (void)
 static unsigned int
 expand_vector_operations_nocfg (void)
 {
-  tree_stmt_iterator tsi;
   gimple_stmt_iterator gsi;
 
-  for (tsi = tsi_start (DECL_SAVED_TREE (current_function_decl)); 
-       !tsi_end_p (tsi); tsi_next (&tsi))
+  for ( gsi = gsi_start (gimple_body (current_function_decl)); 
+       !gsi_end_p (gsi); gsi_next (&gsi))
     {
       expand_vector_operations_1 (&gsi);
-      update_stmt_if_modified (tsi_stmt (tsi));
+      update_stmt_if_modified (gsi_stmt (gsi));
     }
   return 0;
 }

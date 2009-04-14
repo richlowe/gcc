@@ -34,7 +34,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "tree-pass.h"
 #include "flags.h"
-#include "tree-iterator.h"
 
 /* Walk tree and record all calls and references to functions/variables.
    Called via walk_tree: TP is pointer to tree to be examined.  */
@@ -135,33 +134,53 @@ build_cgraph_edges (void)
   struct cgraph_node *node = cgraph_node (current_function_decl);
   struct pointer_set_t *visited_nodes = pointer_set_create ();
   gimple_stmt_iterator gsi;
-  tree_stmt_iterator tsi;
   tree step;
 
   if (flag_use_rtl_backend == 0)
     {
-      tree stmts = DECL_SAVED_TREE (current_function_decl);
-      for (tsi = tsi_start (stmts); !tsi_end_p (tsi); tsi_next (&tsi))
+      for (gsi = gsi_start (gimple_body (current_function_decl));
+           !gsi_end_p (gsi); gsi_next (&gsi))
         {
-	  tree stmt = tsi_stmt (tsi);
-          tree call = get_call_expr_in (stmt);
-          tree decl;
-          
-          if (call && (decl = get_callee_fndecl (call)))
-	    {
-	      int i;
-              int n = call_expr_nargs (call);
-	      cgraph_create_edge (node, cgraph_node (decl), stmt, 0, 0, 0);
+	gimple stmt = gsi_stmt (gsi);
+	tree decl;
 
-              for (i = 0; i < n; i++)
-                  walk_tree (&CALL_EXPR_ARG (call, i),
-                             record_reference, node, visited_nodes);
-              if (TREE_CODE (stmt) == MODIFY_EXPR)
-                  walk_tree (gimple_assign_lhs (stmt),
-                             record_reference, node, visited_nodes);
-            }
-          else
-            walk_tree (tsi_stmt_ptr (tsi), record_reference, node, visited_nodes);
+	if (is_gimple_call (stmt) && (decl = gimple_call_fndecl (stmt)))
+	  {
+	    size_t i;
+	    size_t n = gimple_call_num_args (stmt);
+	    cgraph_create_edge (node, cgraph_node (decl), stmt,
+				0, 0,
+				0);
+	    for (i = 0; i < n; i++)
+	      walk_tree (gimple_call_arg_ptr (stmt, i), record_reference,
+			 node, visited_nodes);
+	    if (gimple_call_lhs (stmt))
+	      walk_tree (gimple_call_lhs_ptr (stmt), record_reference, node,
+		         visited_nodes);
+	  }
+	else
+	  {
+	    struct walk_stmt_info wi;
+	    memset (&wi, 0, sizeof (wi));
+	    wi.info = node;
+	    wi.pset = visited_nodes;
+	    walk_gimple_op (stmt, record_reference, &wi);
+	    if (gimple_code (stmt) == GIMPLE_OMP_PARALLEL
+		&& gimple_omp_parallel_child_fn (stmt))
+	      {
+		tree fn = gimple_omp_parallel_child_fn (stmt);
+		cgraph_mark_needed_node (cgraph_node (fn));
+	      }
+	    if (gimple_code (stmt) == GIMPLE_OMP_TASK)
+	      {
+		tree fn = gimple_omp_task_child_fn (stmt);
+		if (fn)
+		  cgraph_mark_needed_node (cgraph_node (fn));
+		fn = gimple_omp_task_copy_fn (stmt);
+		if (fn)
+		  cgraph_mark_needed_node (cgraph_node (fn));
+	      }
+	  }
         }
     }
   else
