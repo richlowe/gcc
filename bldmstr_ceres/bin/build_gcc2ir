@@ -120,12 +120,6 @@ check_options()
             echo >&2 ERROR: cannot configure without $GNU_TOOL_BIN/gcc
             exit 2
         fi
-
-        if [ -e /usr/local/include/iconv.h ]
-        then
-            echo >&2 ERROR: cannot configure with /usr/local/include/iconv.h
-            exit 2
-        fi
 }
 
 # Process the command-line options.
