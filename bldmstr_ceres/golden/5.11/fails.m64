@@ -237,7 +237,48 @@ gcc.sum:FAIL: gcc.target/sparc/fxnors.c scan-assembler-times fxnors	% 4
 gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
 gfortran.sum:FAIL: gfortran.dg/deallocate_stat.f90  -O1  (internal compiler error)
 gfortran.sum:FAIL: gfortran.dg/deallocate_stat.f90  -O1  (test for excess errors)
-libstdc++.sum:FAIL: 27_io/basic_ofstream/cons/char/2.cc execution test
-libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_denormal_2.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O0  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O1  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O2  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-pointer  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -g  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -Os  execution test
+libstdc++.sum:FAIL: ext/throw_allocator/check_delete.cc execution test
+libstdc++.sum:FAIL: ext/throw_allocator/deallocate_global.cc execution test
+libstdc++.sum:FAIL: ext/throw_allocator/deallocate_local.cc execution test
 objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-loops  -fgnu-runtime
 objc.sum:FAIL: objc/execute/exceptions/foward-1.m execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  -fgnu-runtime
