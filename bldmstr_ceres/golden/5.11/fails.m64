@@ -240,7 +240,7 @@ gfortran.sum:FAIL: gfortran.dg/deallocate_stat.f90  -O1  (test for excess errors
 gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O0  execution test
 gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O1  execution test
 gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O2  execution test
-gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer execution test
+gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer  execution test
 gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer -funroll-loops  execution test
 gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
 gfortran.sum:FAIL: gfortran.dg/default_format_2.f90  -O3 -g  execution test
@@ -277,6 +277,7 @@ gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-p
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O3 -g  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -Os  execution test
+libstdc++.sum:FAIL: 27_io/basic_ofstream/cons/char/2.cc execution test
 libstdc++.sum:FAIL: ext/throw_allocator/check_delete.cc execution test
 libstdc++.sum:FAIL: ext/throw_allocator/deallocate_global.cc execution test
 libstdc++.sum:FAIL: ext/throw_allocator/deallocate_local.cc execution test
