@@ -1096,6 +1096,12 @@ gimplify_bind_expr (tree *expr_p, tree *pre_p)
 	    omp_add_variable (gimplify_omp_ctxp, t, GOVD_LOCAL | GOVD_SEEN);
 
 	  DECL_SEEN_IN_BIND_EXPR_P (t) = 1;
+
+         if (current_function_decl
+             && DECL_DONT_GENERATE_SUNIR (current_function_decl) != 1
+             && flag_use_rtl_backend != -1 
+             && TYPE_MODE (TREE_TYPE (t)) == TImode) 
+           (void) sunir_check_128bits_handling (TREE_TYPE (t));
 	}
 
       /* Preliminarily mark non-addressed complex variables as eligible
