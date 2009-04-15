@@ -1247,6 +1247,12 @@ gimplify_bind_expr (tree *expr_p, gimple_seq *pre_p)
 
 	  if (DECL_HARD_REGISTER (t) && !is_global_var (t) && cfun)
 	    cfun->has_local_explicit_reg_vars = true;
+
+         if (current_function_decl
+             && DECL_DONT_GENERATE_SUNIR (current_function_decl) != 1
+             && flag_use_rtl_backend != -1 
+             && TYPE_MODE (TREE_TYPE (t)) == TImode) 
+           (void) sunir_check_128bits_handling (TREE_TYPE (t));
 	}
 
       /* Preliminarily mark non-addressed complex variables as eligible
