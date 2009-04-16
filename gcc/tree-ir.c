@@ -7689,8 +7689,8 @@ dump_ir_stmt (gimple stmt)
               }
             else if (TREE_CODE (op0) != RESULT_DECL) /* new gcc case */
               {
-                tree t = build2 (MODIFY_EXPR, TREE_TYPE (op0), 
-                                DECL_RESULT (current_function_decl), op0);
+		gimple t = gimple_build_assign (DECL_RESULT (current_function_decl),
+						op0);
                 dump_ir_stmt (t);
               }
           }  
@@ -7763,7 +7763,7 @@ dump_ir_stmt (gimple stmt)
 
       if (lhs) ir_lhs = dump_ir_expr (lhs, MAP_FOR_VALUE);
       if (rhs) ir_rhs = dump_ir_expr (rhs, MAP_FOR_VALUE);
-      ir_cond = build_ir_triple (conv_treecode2ir (cond_code), lhs, rhs, inttype, NULL);
+      ir_cond = build_ir_triple (conv_treecode2ir (cond_code), ir_lhs, ir_rhs, inttype, NULL);
           
       if (_then && _else)
         {
@@ -7849,25 +7849,16 @@ dump_ir_stmt (gimple stmt)
       break;
     case GIMPLE_SWITCH:
       {
-#if 0 /* FIXME: */
         IR_NODE  *ir_cond;
-        tree _cond = SWITCH_COND (stmt);
-        tree _body = SWITCH_BODY (stmt);
-        tree _labels = SWITCH_LABELS (stmt);
-        size_t i, n = TREE_VEC_LENGTH (_labels);
-        TRIPLE * caselist = NULL, * ir_case, * ir_default_case = NULL;
-       
-        if (_body)
-          { 
-            debug_tree (_body);
-            abort ();
-          }
+	TRIPLE * caselist = NULL, * ir_case, * ir_default_case = NULL;
+	size_t i, n = gimple_switch_num_labels (stmt);
+	tree index = gimple_switch_index (stmt);
         
-        ir_cond = dump_ir_expr (_cond, MAP_FOR_VALUE);
+        ir_cond = dump_ir_expr (index, MAP_FOR_VALUE);
 
-        for (i = 0; i < n; ++i)
+        for (i = 0; i < n; i++)
           {
-            tree elt = TREE_VEC_ELT (_labels, i);
+            tree elt = gimple_switch_label (stmt, i);
             tree _case = CASE_LOW (elt);
             tree _case_high = CASE_HIGH (elt);
             tree _label = CASE_LABEL (elt);
@@ -7894,7 +7885,7 @@ dump_ir_stmt (gimple stmt)
                       { /* make sure ir_cond is a leaf */
                         IR_NODE * new_leaf = 
                             get_tmp_leaf (ir_cond->operand.type,
-                                          map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (_cond)));
+                                          map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (index)));
 
                         build_ir_triple (IR_ASSIGN, new_leaf, ir_cond, 
                                          ir_cond->operand.type, NULL);
@@ -7954,7 +7945,6 @@ dump_ir_stmt (gimple stmt)
 
         build_ir_triple (IR_SWITCH, ir_cond, (IR_NODE*)caselist, 
                          ir_cond->operand.type, NULL);
-#endif 
       }
       break;
 

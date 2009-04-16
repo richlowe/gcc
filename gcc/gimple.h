@@ -29,6 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "hard-reg-set.h"
 #include "basic-block.h"
 #include "tree-ssa-operands.h"
+#include "tree-pass.h"
 
 DEF_VEC_P(gimple);
 DEF_VEC_ALLOC_P(gimple,heap);
@@ -839,6 +840,8 @@ void gimple_assign_set_rhs_with_ops (gimple_stmt_iterator *, enum tree_code,
 tree gimple_get_lhs (const_gimple);
 void gimple_set_lhs (gimple, tree);
 gimple gimple_copy (gimple);
+bool is_gimple4ss_rvalue (tree);
+bool is_gimple4ss_lvalue (tree);
 bool is_gimple_operand (const_tree);
 void gimple_set_modified (gimple, bool);
 void gimple_cond_get_ops_from_tree (tree, enum tree_code *, tree *, tree *);
@@ -3187,7 +3190,8 @@ static inline void
 gimple_switch_set_index (gimple gs, tree index)
 {
   GIMPLE_CHECK (gs, GIMPLE_SWITCH);
-  gcc_assert (SSA_VAR_P (index) || CONSTANT_CLASS_P (index));
+  gcc_assert (SSA_VAR_P (index) || CONSTANT_CLASS_P (index) 
+              || (gate_generate_ir () && is_gimple4ss_rvalue (index)));
   gimple_set_op (gs, 0, index);
 }
 

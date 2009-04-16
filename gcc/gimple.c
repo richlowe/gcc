@@ -819,6 +819,7 @@ gimple_build_switch_vec (tree index, tree default_label, VEC(tree, heap) *args)
 {
   unsigned i;
   unsigned nlabels = VEC_length (tree, args);
+
   gimple p = gimple_build_switch_1 (nlabels, index, default_label);
 
   /*  Put labels in labels[1 - (nlabels + 1)].
@@ -2551,7 +2552,7 @@ const unsigned char gimple_rhs_class_table[] = {
 /* Validation of GIMPLE expressions.  */
 
 /* gcc4ss rvalue */
-static bool
+bool
 is_gimple4ss_rvalue (tree t)
 {
   enum tree_code code = TREE_CODE (t);
@@ -2628,7 +2629,7 @@ is_gimple4ss_rvalue (tree t)
 }
 
 /* gcc4ss lvalue */
-static bool
+bool
 is_gimple4ss_lvalue (tree t)
 {
   enum tree_code code = TREE_CODE (t);
@@ -2656,7 +2657,8 @@ is_gimple4ss_lvalue (tree t)
 bool
 is_gimple_operand (const_tree op)
 {
-  return op && get_gimple_rhs_class (TREE_CODE (op)) == GIMPLE_SINGLE_RHS;
+    return op && (get_gimple_rhs_class (TREE_CODE (op)) == GIMPLE_SINGLE_RHS
+                  || (gate_generate_ir () && is_gimple_val(op)));
 }
 
 
@@ -2999,7 +3001,7 @@ is_gimple_reg (tree t)
   if (!is_gimple_variable (t))
     return false;
 
-  if (is_gimple4ss_lvalue (t))
+  if (gate_generate_ir () && is_gimple4ss_lvalue (t))
     return false;
 
   if (gate_generate_rtl () && !is_gimple_reg_type (TREE_TYPE (t)))
