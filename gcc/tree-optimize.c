@@ -101,6 +101,7 @@ struct gimple_opt_pass pass_all_optimizations =
 struct gimple_opt_pass pass_all_passes_rtl =
 {
   {
+  GIMPLE_PASS,
   NULL,					/* name */
   gate_generate_rtl,    		/* gate */
   NULL,					/* execute */

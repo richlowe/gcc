@@ -135,12 +135,12 @@ enum MAP_FOR {
     MAP_FOR_VALUE
 };
 
-static IR_NODE * dump_ir_call (tree stmt, int for_value);
-static IR_NODE * dump_ir_builtin_call (tree stmt, int need_return);
-static void dump_ir_stmt (tree stmt);
-static IR_NODE * dump_ir_call_main (tree stmt, int for_value, tree return_slot);
+static IR_NODE * dump_ir_call (gimple stmt, int for_value);
+static IR_NODE * dump_ir_builtin_call (gimple stmt, int need_return);
+static void dump_ir_stmt (gimple stmt);
+static IR_NODE * dump_ir_call_main (gimple stmt, int for_value, tree return_slot);
 static IR_NODE * dump_ir_expr (tree stmt, enum MAP_FOR map_for);
-static IR_NODE * dump_ir_flushw (tree stmt);
+static IR_NODE * dump_ir_flushw (gimple stmt);
 
 static bool ir_branch_triple_p (IR_OP);
 static bool ir_lexical_scope_p (tree);
@@ -160,21 +160,21 @@ static void ir_begin_scope_triple (TRIPLE *);
 static void ir_end_scope_triple (unsigned, TRIPLE *);
 static void ir_remove_scope_triples (void);
 
-static void dump_omp_parallel (tree stmt);
-static void dump_omp_for (tree stmt);
-static void dump_omp_sections (tree stmt);
-static void dump_omp_section (tree stmt);
-static void dump_omp_single (tree stmt);
-static void dump_omp_master (tree stmt);
-static void dump_omp_ordered (tree stmt);
-static void dump_omp_critical (tree stmt);
-static void dump_omp_barrier (tree stmt);
-static void dump_omp_atomic_start (tree stmt);
-static void dump_omp_atomic_end (tree stmt);
-static void dump_omp_flush (tree stmt);
-static void dump_omp_return (tree stmt);
-static void dump_omp_task (tree stmt);
-static void dump_omp_taskwait (tree stmt);
+static void dump_omp_parallel (gimple stmt);
+static void dump_omp_for (gimple stmt);
+static void dump_omp_sections (gimple stmt);
+static void dump_omp_section (gimple stmt);
+static void dump_omp_single (gimple stmt);
+static void dump_omp_master (gimple stmt);
+static void dump_omp_ordered (gimple stmt);
+static void dump_omp_critical (gimple stmt);
+static void dump_omp_barrier (gimple stmt);
+static void dump_omp_atomic_start (gimple stmt);
+static void dump_omp_atomic_end (gimple stmt);
+static void dump_omp_flush (gimple stmt);
+static void dump_omp_return (gimple stmt);
+static void dump_omp_task (gimple stmt);
+static void dump_omp_taskwait (gimple stmt);
 static void generate_cxx_constructor_wrappers (void);
 
 /* In builtins.c */
@@ -189,7 +189,7 @@ typedef struct region_list
 typedef struct omp_ir_context_t 
 {
     PRAGMAINFO *pinfo; /* pragma information.*/
-    tree stmt;
+    gimple stmt;
     int l1_lab, l2_lab; /* l1: loop_exit; l2: loop body.*/
     int exception_label; /* pragma end. */
     bool lab_used; /* omp region contains exception. */
@@ -230,23 +230,23 @@ static location_t saved_location;
 static LN_Element_t saved_lni_handle;
 
 static void
-save_and_switch_line_information (tree stmt)
+save_and_switch_line_information (gimple stmt)
 {
-  if (!EXPR_HAS_LOCATION (stmt))
+  if (!gimple_has_location (stmt))
     return;
     
   saved_location = input_location;
   saved_lni_handle = current_lni_handle;
   
-  input_location = EXPR_LOCATION (stmt);
+  input_location = gimple_location (stmt);
   ir_location = expand_location (input_location);
   current_lni_handle = lni_source_transition (&ir_location);
 }
 
 static void
-restore_line_information (tree stmt)
+restore_line_information (gimple stmt)
 {
-  if (!EXPR_HAS_LOCATION (stmt))
+  if (!gimple_has_location (stmt))
     return;
     
   input_location = saved_location;
@@ -294,9 +294,9 @@ add_to_label_list (int labelno)
 
 /* map tree opcode into IR opcode */
 static IR_OP
-conv_treecode2ir (tree node)
+conv_treecode2ir (enum tree_code code)
 {
-  switch (TREE_CODE (node))
+  switch (code)
     {
     case TRUTH_OR_EXPR:
     case TRUTH_ORIF_EXPR:
@@ -392,7 +392,6 @@ conv_treecode2ir (tree node)
       return IR_REMAINDER;
 
     default:
-      debug_tree (node);
       abort ();
       return IR_ERR;
     }
@@ -3787,7 +3786,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
               
         ir_op0 = dump_ir_expr (op0, MAP_FOR_VALUE);
 
-        ret = build_ir_triple (conv_treecode2ir (stmt), ir_op0, NULL, 
+        ret = build_ir_triple (conv_treecode2ir (TREE_CODE (stmt)), ir_op0, NULL, 
                           ir_op0->operand.type, NULL);
       }
       break;
@@ -3951,10 +3950,10 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             /* ptr - ptr -> inttype in V8;   ptr - ptr -> longtype in V9*/
             if (PCC_ISPTR (ir_op0->operand.type.tword) 
                 && PCC_ISPTR (ir_op1->operand.type.tword))
-              ret = build_ir_triple (conv_treecode2ir (stmt), ir_op0, ir_op1, offsettype, NULL);
+              ret = build_ir_triple (conv_treecode2ir (TREE_CODE (stmt)), ir_op0, ir_op1, offsettype, NULL);
             else
 	    {
-              ret = build_ir_triple (conv_treecode2ir (stmt), ir_op0, ir_op1, ir_op0->operand.type, NULL);
+              ret = build_ir_triple (conv_treecode2ir (TREE_CODE (stmt)), ir_op0, ir_op1, ir_op0->operand.type, NULL);
               /* do conversion if needed */
               if (argtype.tword != ir_op0->operand.type.tword
 		&& !PCC_ISPTR (ir_op0->operand.type.tword) 
@@ -3971,7 +3970,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
           case NE_EXPR:
             /* GCC use _Bool type for all compare expression. 
                Need to generate 'inttype' for IR instead */
-            ret = build_ir_triple (conv_treecode2ir (stmt), ir_op0, ir_op1, inttype, NULL);
+            ret = build_ir_triple (conv_treecode2ir (TREE_CODE (stmt)), ir_op0, ir_op1, inttype, NULL);
 
             /* if it's not _Bool, do a conversion */
             if (TREE_CODE (TREE_TYPE (stmt)) != BOOLEAN_TYPE && argtype.tword != PCC_INT)
@@ -3985,7 +3984,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
           case BIT_XOR_EXPR:
           case BIT_AND_EXPR:
             /* for shifts and mult use ir_op0 type as a type of triple */
-            ret = build_ir_triple (conv_treecode2ir (stmt), ir_op0, ir_op1, 
+            ret = build_ir_triple (conv_treecode2ir (TREE_CODE (stmt)), ir_op0, ir_op1, 
                                    ir_op0->operand.type, NULL);
             /* do conversion if needed */
             if (argtype.tword != ir_op0->operand.type.tword)
@@ -4038,7 +4037,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 	    break;
           default:
             /* use GCC recommended type "argtype" for all other expressions */
-            ret = build_ir_triple (conv_treecode2ir (stmt), ir_op0, ir_op1, argtype, map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (stmt)));
+            ret = build_ir_triple (conv_treecode2ir (TREE_CODE (stmt)), ir_op0, ir_op1, argtype, map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (stmt)));
             break;
           }
        
@@ -4062,7 +4061,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
 
         ir_op0 = dump_ir_expr (op0, MAP_FOR_VALUE);
         ir_op1 = dump_ir_expr (op1, MAP_FOR_VALUE);
-        ret1 = build_ir_triple (conv_treecode2ir (stmt), ir_op0, ir_op1, inttype, NULL);
+        ret1 = build_ir_triple (conv_treecode2ir (TREE_CODE (stmt)), ir_op0, ir_op1, inttype, NULL);
         
         ir_op0 = dump_ir_expr (op0, MAP_FOR_VALUE);
         ir_op1 = dump_ir_expr (op1, MAP_FOR_VALUE);
@@ -5144,7 +5143,7 @@ set_may_cause_exception (IR_NODE *node)
 }
 
 static void 
-check_stmt_eh_region (tree stmt, IR_NODE *ir_node)
+check_stmt_eh_region (gimple stmt, IR_NODE *ir_node)
 {
   struct eh_region *region = find_eh_region (stmt);
   if (region)
@@ -5184,7 +5183,7 @@ is_gxx_operator_new (tree fn)
 
 /* generate IR_SCALL triple */
 static IR_NODE *
-dump_ir_call_main (tree stmt, int for_value, tree return_slot)
+dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
 {
   IR_NODE * ir_arglist = 0;
   IR_NODE * ir_callnode;
@@ -5201,7 +5200,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
   IR_TYPE_NODE * fn_ir_type;
   int call_flags;
 
-  if (TREE_CODE (stmt) != CALL_EXPR)
+  if (!is_gimple_call (stmt))
     {
       if (for_value)
         abort ();
@@ -5209,12 +5208,12 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
       return NULL;
     }
 
-  fn_ir_type = map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (stmt));
+  fn_ir_type = map_gnu_type_to_IR_TYPE_NODE (gimple_call_return_type (stmt));
 
-  fncalltype = map_gnu_type_to_TYPE (TREE_TYPE (stmt));
+  fncalltype = map_gnu_type_to_TYPE (gimple_call_return_type (stmt));
 
-  op0 = CALL_EXPR_FN (stmt); /* The call expression */
-  op2 = CALL_EXPR_STATIC_CHAIN (stmt); /* chain reg. if not zero it's a call to nested function */
+  op0 = gimple_call_fn (stmt); /* The call expression */
+  op2 = gimple_call_chain (stmt); /* chain reg. if not zero it's a call to nested function */
 
   if (0)
   /* The messages of __attribute__ "error" or "warning" are to be issued after
@@ -5222,7 +5221,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
      Use rtl as backend to workaround the issue before gccfss propose a way 
      to pass the attributes to iropt. */ 
   {
-    tree fndecl = get_callee_fndecl (stmt), attr;
+    tree fndecl = gimple_call_fndecl (stmt), attr;
     if (fndecl
         && (attr = lookup_attribute ("error",
                                      DECL_ATTRIBUTES (fndecl))) != NULL)
@@ -5253,7 +5252,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
 
   ir_dest = dump_ir_expr (op0, MAP_FOR_VALUE);
 
-  if (!for_value && CALL_EXPR_RETURN_SLOT_OPT (stmt) && return_slot)
+  if (!for_value && gimple_call_return_slot_opt_p (stmt) && return_slot)
     {
       tree return_slot_addr;
       has_hidden_result = 1;
@@ -5276,11 +5275,11 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
   /* functions that return structs and result is ignored, can not be translated
      to SCALL, make them FCALL. For C and C++ */
   else if (!for_value 
-           && (TREE_CODE (TREE_TYPE (stmt)) == RECORD_TYPE 
-               || TREE_CODE (TREE_TYPE (stmt)) == UNION_TYPE))
+           && (TREE_CODE (gimple_call_return_type (stmt)) == RECORD_TYPE 
+               || TREE_CODE (gimple_call_return_type (stmt)) == UNION_TYPE))
     {
-      tree fndecl = get_callee_fndecl (stmt);
-      if (IS_RECORD_TYPE (TREE_TYPE (stmt))
+      tree fndecl = gimple_call_fndecl (stmt);
+      if (IS_RECORD_TYPE (gimple_call_return_type (stmt))
           /* small structures are supposed to be in registers in 64-bit, but
              decl_by_reference forces them to be passed through memory 
              with address in %o0. Make sure we emit ifetch/foreff in 
@@ -5294,8 +5293,8 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
     }
   
   /* Ignore zero sized structs in C in v8 and v9 */
-  if (for_value && IS_RECORD_TYPE (TREE_TYPE (stmt))
-      && get_type_size (TREE_TYPE (stmt)) == 0)
+  if (for_value && IS_RECORD_TYPE (gimple_call_return_type (stmt))
+      && get_type_size (gimple_call_return_type (stmt)) == 0)
     {
       /* gcc doesn't generate unimp 0. So we use scall instead and do not init sp+64 */
       for_value = 0;
@@ -5309,7 +5308,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
       && DECL_PURE_P (TREE_OPERAND (op0, 0)))
     is_pure_call = 1;
 
-  op1 = CALL_EXPR_ARGS (stmt);
+  op1 = gimple_call_chain (stmt);
   for (; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
     {
       ir_argp = dump_ir_genargs (TREE_VALUE (op1));
@@ -5369,9 +5368,9 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
   if (for_value)
     { 
       ir_callnode = build_ir_triple (IR_FCALL, ir_dest, ir_arglist, fncalltype, fn_ir_type);
-      ((TRIPLE *)ir_callnode)->param_float_map = make_floatmap (TREE_TYPE (stmt));
+      ((TRIPLE *)ir_callnode)->param_float_map = make_floatmap (gimple_call_return_type (stmt));
 
-      if (IS_RECORD_TYPE (TREE_TYPE (stmt)) || is_fake_call)
+      if (IS_RECORD_TYPE (gimple_call_return_type (stmt)) || is_fake_call)
         {
           ir_callnode->triple.is_stcall = IR_TRUE;
           /* make it a pointer, but keep size and align from structure */
@@ -5390,7 +5389,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
       ir_result = NULL;
     }
   
-  if (TREE_THIS_VOLATILE (stmt))
+  if (gimple_has_volatile_ops (stmt))
     ir_callnode->triple.is_volatile = IR_TRUE;
 
   /* mark __attribute__ ((__pure__)) funcs as never_writes_global
@@ -5460,7 +5459,7 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
     }
 
   /* mark noreturn and longjump functions */
-  call_flags = call_expr_flags (stmt);
+  call_flags = gimple_call_flags (stmt);
   if (call_flags & ECF_NORETURN)
     ir_callnode->triple.never_returns = IR_TRUE;
 
@@ -5564,20 +5563,20 @@ dump_ir_call_main (tree stmt, int for_value, tree return_slot)
 }
 
 static IR_NODE *
-dump_ir_call (tree stmt, int for_value)
+dump_ir_call (gimple stmt, int for_value)
 {
   return dump_ir_call_main (stmt, for_value, NULL_TREE);
 }
 
 /* generate '=' IR_ASSIGN triple */
 static IR_NODE *
-dump_ir_modify (tree stmt)
+dump_ir_modify (gimple stmt)
 {
   IR_NODE * ret = 0, * ir_op0 = 0, * ir_op1 = 0;
   tree op0, op1;
   int is_indirect = 0;
 
-  if (TREE_CODE (stmt) != MODIFY_EXPR)
+  if (gimple_code (stmt) != GIMPLE_ASSIGN)
     abort();
   
   op0 = gimple_assign_lhs (stmt); /* left */
@@ -5643,7 +5642,8 @@ dump_ir_modify (tree stmt)
     {
       /* convert op1 if it has different type than op0 */
       if (ir_op0->operand.type.tword != ir_op1->operand.type.tword
-               && !TREE_LANG_FLAG_6 (stmt)) /* special assignment, don't bother converting */
+	  /* FIXME: do not how to replace the macro.
+               && !TREE_LANG_FLAG_6 (stmt)*/) /* special assignment, don't bother converting */
         {
           ir_op1 = build_ir_triple (IR_CONV, ir_op1, NULL, ir_op0->operand.type, 
                                ir_op0->leaf.typep);
@@ -6046,31 +6046,34 @@ dump_ir_builtin_next_arg (void)
 /* Expand ARGLIST, from a call to __builtin_va_start.  */
 
 static void
-dump_ir_builtin_va_start (tree exp)
+dump_ir_builtin_va_start (gimple exp)
 {
   tree nextarg;
-  tree valist, t;
+  tree valist;
+  gimple t;
 
-  if (call_expr_nargs (exp) < 2)
+  if (gimple_call_num_args (exp) < 2)
     {
       error ("too few arguments to function %<va_start%>");
       return;
     }
 
+  /* FIXME
   if (fold_builtin_next_arg (exp, true))
     return;
+  */
 
   nextarg = dump_ir_builtin_next_arg ();
-  valist = stabilize_va_list (CALL_EXPR_ARG (exp, 0), 1);
+  valist = stabilize_va_list (gimple_call_arg(exp, 0), 1);
 
-  t = build2 (MODIFY_EXPR, TREE_TYPE (valist), valist, nextarg);
-  TREE_SIDE_EFFECTS (t) = 1;
+  t = gimple_build_assign (valist, nextarg);
+  TREE_SIDE_EFFECTS (gimple_op (t, 0)) = 1;
 
   dump_ir_stmt (t);
 }
 
 static void
-dump_ir_builtin_nonlocal_goto (tree stmt ATTRIBUTE_UNUSED, tree arglist)
+dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
 {
   tree nl_goto_target = TREE_VALUE (arglist);
   tree nl_save_area = TREE_VALUE (TREE_CHAIN (arglist));
@@ -6123,13 +6126,11 @@ dump_ir_builtin_nonlocal_goto (tree stmt ATTRIBUTE_UNUSED, tree arglist)
                          (IR_NODE*)args, argtype, NULL);
   clobber->triple.right = n;
   n->triple.is_volatile = IR_TRUE;
-  /* n->triple.may_cause_exception = IR_TRUE; */
-  /* check_stmt_eh_region (stmt, n); */
   crtl->has_nonlocal_goto = 1;
 }
 
 static IR_NODE *
-dump_ir_builtin_return_addr (tree fndecl, tree arglist, tree stmt, int need_return)
+dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_return)
 {
   if (arglist == 0)
     /* Warning about missing arg was already issued.  */
@@ -6236,7 +6237,7 @@ dump_ir_builtin_return_addr (tree fndecl, tree arglist, tree stmt, int need_retu
 }
 
 static IR_NODE *
-dump_ir_builtin_expect (tree stmt, tree arglist, int need_return)
+dump_ir_builtin_expect (gimple stmt, tree arglist, int need_return)
 {
   tree exp, c;
   IR_NODE * ret;
@@ -6264,7 +6265,7 @@ dump_ir_builtin_expect (tree stmt, tree arglist, int need_return)
 }
 
 static IR_NODE *
-dump_ir_builtin_trap (tree stmt ATTRIBUTE_UNUSED)
+dump_ir_builtin_trap (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *n, *clobber;
   TRIPLE *args = NULL;
@@ -6277,13 +6278,11 @@ dump_ir_builtin_trap (tree stmt ATTRIBUTE_UNUSED)
   n = build_ir_triple (IR_ASM_STMT, build_ir_string_const ("ta\t5"), (IR_NODE*)args, argtype, NULL);
   clobber->triple.right = n;
   n->triple.is_volatile = IR_TRUE;
-  /* n->triple.may_cause_exception = IR_TRUE; */
-  /* check_stmt_eh_region (stmt, n); */
   return n;
 }
 
 static IR_NODE *
-dump_ir_flushw (tree stmt ATTRIBUTE_UNUSED)
+dump_ir_flushw (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *n, *clobber;
   TRIPLE *args = NULL;
@@ -6299,8 +6298,6 @@ dump_ir_flushw (tree stmt ATTRIBUTE_UNUSED)
     n = build_ir_triple (IR_ASM_STMT, build_ir_string_const ("ta\t3"), (IR_NODE*)args, argtype, NULL);
   clobber->triple.right = n;
   n->triple.is_volatile = IR_TRUE;
-  /* n->triple.may_cause_exception = IR_TRUE; */
-  /* check_stmt_eh_region (stmt, n); */
   return n;
 }
 
@@ -6343,7 +6340,7 @@ tree build_string_literal (int len, const char *str);
 /* Expand a call to printf or printf_unlocked with argument list ARGLIST.
    UNLOCKED indicates this is a printf_unlocked call.  */
 static IR_NODE *
-dump_builtin_printf (tree stmt, tree arglist, int need_return, bool unlocked)
+dump_builtin_printf (gimple stmt, tree arglist, int need_return, bool unlocked)
 {
   tree fn_putchar = unlocked ? built_in_decls[BUILT_IN_PUTCHAR_UNLOCKED]
 		             : implicit_built_in_decls[BUILT_IN_PUTCHAR];
@@ -6443,7 +6440,7 @@ dump_builtin_printf (tree stmt, tree arglist, int need_return, bool unlocked)
    UNLOCKED indicates this is a fprintf_unlocked call.  */
 
 static IR_NODE *
-dump_builtin_fprintf (tree stmt, tree arglist, int need_return, bool unlocked)
+dump_builtin_fprintf (gimple stmt, tree arglist, int need_return, bool unlocked)
 {
   tree fn_fputc = unlocked ? built_in_decls[BUILT_IN_FPUTC_UNLOCKED]
 			   : implicit_built_in_decls[BUILT_IN_FPUTC];
@@ -6532,7 +6529,7 @@ dump_builtin_fprintf (tree stmt, tree arglist, int need_return, bool unlocked)
 }
 
 static IR_NODE *
-dump_builtin_memset (tree stmt, tree arglist, int need_return)
+dump_builtin_memset (gimple stmt, tree arglist, int need_return)
 {
   tree dest = TREE_VALUE (arglist);
   tree val = TREE_VALUE (TREE_CHAIN (arglist));
@@ -6620,7 +6617,7 @@ dump_builtin_memcpy (tree stmt, tree arglist, int need_return)
 
 /* Expand expression EXP, which is a call to the strcpy builtin. */
 static IR_NODE*
-dump_builtin_strcpy (tree stmt, tree arglist, int need_return)
+dump_builtin_strcpy (gimple stmt, tree arglist, int need_return)
 {
   tree dest = TREE_VALUE (arglist);
   tree src = TREE_VALUE (TREE_CHAIN (arglist));
@@ -6633,7 +6630,7 @@ dump_builtin_strcpy (tree stmt, tree arglist, int need_return)
   
   /* If SRC and DEST are the same (and not volatile), return DEST.  */
   if (operand_equal_p (src, dest, 0))
-    return dump_ir_expr (fold_convert (TREE_TYPE (stmt), dest), MAP_FOR_VALUE);
+    return dump_ir_expr (fold_convert (gimple_call_return_type (stmt), dest), MAP_FOR_VALUE);
 
   if (optimize_size)
     return dump_ir_call (stmt, need_return);
@@ -6650,13 +6647,13 @@ dump_builtin_strcpy (tree stmt, tree arglist, int need_return)
   arglist = build_tree_list (NULL_TREE, len);
   arglist = tree_cons (NULL_TREE, src, arglist);
   arglist = tree_cons (NULL_TREE, dest, arglist);
-  return dump_ir_call (fold_convert (TREE_TYPE (stmt),
+  return dump_ir_call (fold_convert (gimple_call_return_type (stmt),
 		       build_function_call_expr (fn, arglist)), need_return);
 }
 
 /* Expand expression EXP, which is a call to the memmove builtin. */
 static IR_NODE*
-dump_builtin_memmove (tree stmt, tree arglist, int need_return)
+dump_builtin_memmove (gimple stmt, tree arglist, int need_return)
 {
   tree dest = TREE_VALUE (arglist);
   tree src = TREE_VALUE (TREE_CHAIN (arglist));
@@ -6677,7 +6674,7 @@ dump_builtin_memmove (tree stmt, tree arglist, int need_return)
           fn = build_function_call_expr (fn, arglist);
           if (TREE_CODE (fn) == CALL_EXPR)
             {
-              CALL_EXPR_TAILCALL (fn) = CALL_EXPR_TAILCALL (stmt);
+              gimple_call_set_tail (fn, gimple_call_tail_p (stmt));
               return dump_builtin_memcpy (fn, arglist, need_return);
             }
           else if (need_return || TREE_SIDE_EFFECTS (fn))
@@ -6715,7 +6712,7 @@ dump_builtin_memmove (tree stmt, tree arglist, int need_return)
 
 /* Expand expression EXP, which is a call to the bcopy builtin. */
 static IR_NODE*
-dump_builtin_bcopy (tree stmt, tree arglist, int need_return)
+dump_builtin_bcopy (gimple stmt, tree arglist, int need_return)
 {
   tree src = TREE_VALUE (arglist);
   tree dest = TREE_VALUE (TREE_CHAIN (arglist));
@@ -6740,7 +6737,7 @@ dump_builtin_bcopy (tree stmt, tree arglist, int need_return)
 }
 
 static IR_NODE *
-dump_ir_builtin_init_trampoline (tree stmt, tree arglist, int need_return)
+dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
 {
   tree tramp = TREE_VALUE (arglist);
   tree func = TREE_VALUE (TREE_CHAIN (arglist));
@@ -6952,10 +6949,10 @@ dump_builtin_eh_return_data_regno (tree arglist)
 
 /* lower lfloor builtin, into expression to (int)(floor(x))  */
 static IR_NODE *
-dump_ir_builtin_int_roundingfn (tree stmt, int need_return)
+dump_ir_builtin_int_roundingfn (gimple stmt, int need_return)
 {
-  tree fndecl = get_callee_fndecl (stmt);
-  tree arglist = CALL_EXPR_ARGS (stmt);
+  tree fndecl = gimple_call_fndecl (stmt);
+  tree arglist = gimple_call_chain (stmt);
   enum built_in_function fallback_fn;
   tree fallback_fndecl;
   tree arg, exp;
@@ -6986,7 +6983,7 @@ dump_ir_builtin_int_roundingfn (tree stmt, int need_return)
   gcc_assert (fallback_fndecl != NULL_TREE);
   exp = build_function_call_expr (fallback_fndecl, arglist);
 
-  exp = build1 (NOP_EXPR, TREE_TYPE (stmt), exp);
+  exp = build1 (NOP_EXPR, gimple_call_return_type (stmt), exp);
   ret = dump_ir_expr (exp, MAP_FOR_VALUE);
   if (need_return)
     return ret;
@@ -7024,10 +7021,10 @@ conv_c99_treecode2ir (tree node)
 }
 
 static IR_NODE *
-dump_ir_builtin_call (tree stmt, int need_return)
+dump_ir_builtin_call (gimple stmt, int need_return)
 {
-  tree fndecl = get_callee_fndecl (stmt);
-  tree arglist = CALL_EXPR_ARGS (stmt);
+  tree fndecl = gimple_call_fndecl (stmt);
+  tree arglist = gimple_call_chain (stmt);
   enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
   IR_NODE * ret = 0;
 
@@ -7121,7 +7118,7 @@ dump_ir_builtin_call (tree stmt, int need_return)
       break;*/
     case BUILT_IN_FRAME_ADDRESS:
     case BUILT_IN_RETURN_ADDRESS:
-      ret = dump_ir_builtin_return_addr (fndecl, arglist, stmt, need_return);
+      ret = dump_ir_builtin_return_addr (stmt, fndecl, arglist, need_return);
       break;
     case BUILT_IN_NONLOCAL_GOTO:
       dump_ir_builtin_nonlocal_goto (stmt, arglist);
@@ -7152,24 +7149,24 @@ dump_ir_builtin_call (tree stmt, int need_return)
       break;
     case BUILT_IN_STPCPY:
       {
-        tree new_stmt = stmt;
+        gimple new_stmt = stmt;
         if (!need_return)
           {
             tree fn = implicit_built_in_decls[BUILT_IN_STRCPY];
             if (fn)
-              new_stmt = build_function_call_expr (fn, arglist);
+              new_stmt = gimple_build_call_vec (fn, arglist);
           }
         ret = dump_ir_call (new_stmt, need_return);
       }
       break;
     case BUILT_IN_MEMPCPY:
       {
-        tree new_stmt = stmt;
+        gimple new_stmt = stmt;
         if (!need_return)
           {
             tree fn = implicit_built_in_decls[BUILT_IN_MEMCPY];
             if (fn)
-              new_stmt = build_function_call_expr (fn, arglist);
+              new_stmt = gimple_build_call_vec (fn, arglist);
           }
         ret = dump_ir_call (new_stmt, need_return);
       }
@@ -7629,26 +7626,18 @@ process_asm_parameters (tree asm_args, int is_outputs, TRIPLE ** args_list)
 /* process statements (toplevel expressions in basic blocks) */
 
 static void
-dump_ir_stmt (tree stmt)
+dump_ir_stmt (gimple stmt)
 {
   if (errorcount != 0) 
     return;
 
-  STRIP_NOPS (stmt);
-
-  switch (TREE_CODE (stmt))
+  switch (gimple_code (stmt))
     {
-    case CALL_EXPR:
-      /* if (TREE_CODE (TREE_OPERAND (stmt, 0)) == ADDR_EXPR
-          && (TREE_CODE (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))
-              == FUNCTION_DECL)
-          && DECL_BUILT_IN (TREE_OPERAND (TREE_OPERAND (stmt, 0), 0))) */ 
-      if (TREE_CODE (CALL_EXPR_FN (stmt)) == ADDR_EXPR
-          && (TREE_CODE (TREE_OPERAND (CALL_EXPR_FN (stmt), 0))
-              == FUNCTION_DECL)
-          && DECL_BUILT_IN (TREE_OPERAND (CALL_EXPR_FN (stmt), 0)))
+    case GIMPLE_CALL:
+      if ( gimple_call_fndecl (stmt)
+          && DECL_BUILT_IN (gimple_call_fndecl (stmt)))
         {       
-          if (DECL_BUILT_IN_CLASS (TREE_OPERAND (CALL_EXPR_FN (stmt), 0))
+          if (DECL_BUILT_IN_CLASS (gimple_call_fndecl (stmt))
               == BUILT_IN_FRONTEND)
             abort ();
           else
@@ -7658,14 +7647,14 @@ dump_ir_stmt (tree stmt)
 
       dump_ir_call (stmt, 0/* procedure call*/);
       break;
-    case MODIFY_EXPR:
+    case GIMPLE_ASSIGN:
       dump_ir_modify (stmt);
       break;
-    case RETURN_EXPR:
+    case GIMPLE_RETURN:
       {
         tree op0;
         
-        op0 = TREE_OPERAND (stmt, 0); /* left */
+        op0 = gimple_return_retval (stmt); /* left */
 
         if (op0) 
           {
@@ -7709,7 +7698,8 @@ dump_ir_stmt (tree stmt)
         build_ir_goto (return_label_num);
       }
       break;
-    case COND_EXPR:
+    case GIMPLE_COND:
+#if 0  /* FIXME: So far I don't know how to replace this checking. */
       if (TREE_TYPE (stmt) == void_type_node)
         {
           IR_NODE *ir_cond, *ir_then, *ir_else;
@@ -7762,11 +7752,39 @@ dump_ir_stmt (tree stmt)
           /* result = (op0) ? (op1) : (op2); */
           dump_ir_expr (stmt, MAP_FOR_VALUE);
         }
+#endif
+      {
+      IR_NODE *ir_lhs, *ir_rhs, *ir_cond, *ir_then, *ir_else;
+      enum tree_code cond_code = gimple_cond_code (stmt);
+      tree lhs = gimple_cond_lhs (stmt);
+      tree rhs = gimple_cond_rhs (stmt);
+      tree _then = gimple_cond_true_label (stmt);
+      tree _else = gimple_cond_false_label (stmt);
+
+      if (lhs) ir_lhs = dump_ir_expr (lhs, MAP_FOR_VALUE);
+      if (rhs) ir_rhs = dump_ir_expr (rhs, MAP_FOR_VALUE);
+      ir_cond = build_ir_triple (conv_treecode2ir (cond_code), lhs, rhs, inttype, NULL);
+          
+      if (_then && _else)
+        {
+          int true_lab = get_ir_label (_then); 
+          int false_lab = get_ir_label (_else); 
+
+          ir_then = build_ir_labelref (true_lab, 1);
+          ir_else = build_ir_labelref (false_lab, 0);
+          {
+            TRIPLE *t = (TRIPLE *) ir_then;
+            TAPPEND(t, (TRIPLE *) ir_else);
+            ir_then = (IR_NODE *)t;
+          }
+          build_ir_triple (IR_CBRANCH, ir_cond, ir_then, longtype, NULL);
+         }
+      }
       break;
 
-    case LABEL_EXPR:
+    case GIMPLE_LABEL:
       {
-        tree op0 = LABEL_EXPR_LABEL (stmt); /* label_decl */
+        tree op0 = gimple_label_label (stmt); /* label_decl */
         int labelno = get_ir_label (op0);
         IR_NODE * ret;
 
@@ -7783,9 +7801,11 @@ dump_ir_stmt (tree stmt)
 	/* fix for CR 6563127 */
 	if (FORCED_LABEL (op0))
           add_to_label_list (labelno);
- 
+
+	/* FIXME: So far I don't know how to replace this checking. 
 	if (TREE_LANG_FLAG_6 (stmt))
           ir_add_loopinfo (op0);
+	*/
 
         if (DECL_NONLOCAL (op0)) /* don't need to mark FORCED_LABELs as volatile */
           {
@@ -7801,11 +7821,11 @@ dump_ir_stmt (tree stmt)
           }
       }
       break;
-    case GOTO_EXPR:
+    case GIMPLE_GOTO:
       {
         tree op0;
         
-        op0 = TREE_OPERAND (stmt, 0); /* label */
+        op0 = gimple_goto_dest (stmt); /* label */
         
         if (TREE_CODE (op0) == LABEL_DECL)
           build_ir_goto (get_ir_label (op0));
@@ -7827,8 +7847,9 @@ dump_ir_stmt (tree stmt)
           }
       }
       break;
-    case SWITCH_EXPR:
+    case GIMPLE_SWITCH:
       {
+#if 0 /* FIXME: */
         IR_NODE  *ir_cond;
         tree _cond = SWITCH_COND (stmt);
         tree _body = SWITCH_BODY (stmt);
@@ -7933,11 +7954,13 @@ dump_ir_stmt (tree stmt)
 
         build_ir_triple (IR_SWITCH, ir_cond, (IR_NODE*)caselist, 
                          ir_cond->operand.type, NULL);
+#endif 
       }
       break;
 
     case ASM_EXPR:
       {
+#if 0 /*FIXME */
         tree _string = ASM_STRING (stmt);
         tree _outputs = ASM_OUTPUTS (stmt);
         tree _inputs = ASM_INPUTS (stmt);
@@ -8061,6 +8084,7 @@ dump_ir_stmt (tree stmt)
             
             _outputs = TREE_CHAIN (_outputs);
           }
+#endif
       }
       break;
     
@@ -8068,11 +8092,11 @@ dump_ir_stmt (tree stmt)
       dump_ir_resx_expr (stmt);
       break;              
 
-    case NOP_EXPR:
+    case GIMPLE_NOP:
       {
         tree op0;
         
-        op0 = TREE_OPERAND (stmt, 0); 
+        op0 = gimple_op (stmt, 0); 
         if (TREE_SIDE_EFFECTS (op0))
           {
             IR_NODE * ir_op0 = dump_ir_expr (op0, MAP_FOR_VALUE);
@@ -8134,25 +8158,25 @@ dump_ir_stmt (tree stmt)
       break;
     }
 }
-    
+
 static void
-dump_one_function_statement (tree stmt)
+dump_one_function_statement (gimple stmt)
 {
   bool have_loc;
   expanded_location for_check;
   current_eh_region = 0;
   number_of_pbranch = 0;
 
-  if (EXPR_HAS_LOCATION (stmt))
-    {   
-      input_location = EXPR_LOCATION (stmt);
+  if (gimple_has_location (stmt))
+    {
+      input_location = gimple_location (stmt);
       have_loc = true;
       ir_location = expand_location (input_location);
       current_lni_handle = lni_source_transition (&ir_location);
       for_check = ir_location;
     }
-  else if (TREE_CODE (stmt) == RETURN_EXPR)
-    {  
+  else if (gimple_code (stmt) == GIMPLE_RETURN)
+    {
       input_location = cfun->function_end_locus;
       have_loc = true;
       ir_location = expand_location (input_location);
@@ -8165,20 +8189,20 @@ dump_one_function_statement (tree stmt)
       have_loc = false;
       for_check = ir_location;
     }
-  
-  if (ir_gen_scope_triple_p () && TREE_CODE (stmt) != LABEL_EXPR)
+
+  if (ir_gen_scope_triple_p () && gimple_code (stmt) != GIMPLE_LABEL)
     {
       tree block;
-          
-      /* When gimplify pass lowers return stmts, it replaces similar 
+
+      /* When gimplify pass lowers return stmts, it replaces similar
          RETURN_EXPRS in different scopes with one at the end of the function.
-         The replacement expr has no location and its TREE_BLOCK () is not 
-         updated to reflect the new position. This transformation is done 
+         The replacement expr has no location and its TREE_BLOCK () is not
+         updated to reflect the new position. This transformation is done
          regardless of optimization level. So check for this case.  */
-      block = EXPR_HAS_LOCATION (stmt) ? TREE_BLOCK (stmt) : NULL;
-      
+      block = gimple_has_location (stmt) ? gimple_block (stmt) : NULL;
+
       /* Check for change in lexical scope.  */
-      if (IR_RELEVANT_SCOPE_P (block) 
+      if (IR_RELEVANT_SCOPE_P (block)
           && BLOCK_SCOPE_ID (block) != BLOCK_SCOPE_ID (ir_top_scope ()))
         ir_change_scope (block);
     }
@@ -8189,7 +8213,7 @@ dump_one_function_statement (tree stmt)
          will get attached to all triples generated from
          this statement. TODO: get rid of the IR_STMT once
          iropt/cg can completely handle it */
-      build_ir_triple (IR_STMT, build_ir_string_const (ir_location.file), 
+      build_ir_triple (IR_STMT, build_ir_string_const (ir_location.file),
                        build_ir_int_const (ir_location.line, inttype, 0),
                        undeftype, NULL);
     }
@@ -8201,7 +8225,7 @@ dump_one_function_statement (tree stmt)
   gcc_assert (for_check.line == ir_location.line
               && for_check.file == ir_location.file);
   
-  if (TREE_CODE (stmt) == LABEL_EXPR && have_loc)
+  if (gimple_code (stmt) == GIMPLE_LABEL && have_loc)
     {
       /* generate SunIR for LABEL_EXPR and add ir_stmt 
          pointing to source location.
@@ -8236,61 +8260,46 @@ dump_one_function_statement (tree stmt)
 }
 
 static void
-dump_function_ir_statements (tree t)
+dump_function_ir_statements (gimple_seq gseq)
 {
-  if (t == NULL)
-    return;
-
-  /* Fix 6563978. The OMP FOR pre init may
-     contain arbitrary code. We do not gimplify this
-     and it may contain bind statements */
-  if (TREE_CODE(t) == BIND_EXPR)
-    t = BIND_EXPR_BODY (t);
-
-  if (TREE_CODE (t) == STATEMENT_LIST)
+  gimple_stmt_iterator gsi;
+  for (gsi = gsi_start (gseq); !gsi_end_p (gsi); gsi_next (&gsi))
     {
-      tree_stmt_iterator tsi;
-      for (tsi = tsi_start (t); !tsi_end_p (tsi); tsi_next (&tsi))
+      gimple stmt = gsi_stmt (gsi);
+
+      /* Optimize condition pattern like:
+         AUTO.0 = x <cond> y; if (AUTO.0)
+         to the pattern like: 
+         AUTO.0 = x <cond> y; if (x <cond> y)
+         lt will help iropt optimization. */ 
+      do  
         {
-          /* Optimize condition pattern like:
-               AUTO.0 = x <cond> y;
-               if (AUTO.0)
-             to the pattern like: 
-               AUTO.0 = x <cond> y; // leave iropt for optimization 
-               if (x <cond> y)
-           */
-          do  
+          tree op0, op1;
+          gimple cur, nxt;
+          gimple_stmt_iterator new_gsi = gsi;
+          /* In general, c parser doesn't build such temporaries for 
+             comparison. */
+          if (ir_language != CDOUBLEPLUS)
+            break;
+          gsi_next (&new_gsi);
+          if (gsi_end_p (new_gsi))
+            break;
+          cur = gsi_stmt (gsi); 
+          nxt = gsi_stmt (new_gsi);
+          /* start with looong comparison. */
+          if (is_gimple_assign (cur) 
+              && (op0 = gimple_assign_lhs (cur)) /* get lvalue */ 
+              && (DECL_P (op0) && DECL_ARTIFICIAL (op0)) 
+              && (op1 = gimple_assign_rhs1 (cur)) /* get rvalue */ 
+              && TREE_CODE_CLASS (TREE_CODE (op1)) == tcc_comparison 
+              && gimple_code (nxt) == GIMPLE_COND 
+              && op0 == gimple_cond_code (nxt)) 
             {
-              tree cur, nxt, op0, op1;
-              tree_stmt_iterator new_tsi = tsi;
-              /* In general, c parser doesn't build such temporaries for 
-                 comparison. */
-              if (ir_language != CDOUBLEPLUS)
-                break;
-              tsi_next (&new_tsi);
-              if (tsi_end_p (new_tsi))
-                break;
-              cur = tsi_stmt (tsi); 
-              nxt = tsi_stmt (new_tsi);
-              /* start with looong comparison. */
-              if (TREE_CODE (cur) == MODIFY_EXPR 
-                  && (op0 = gimple_assign_lhs (cur)) /* get lvalue */ 
-                  && (DECL_P (op0) && DECL_ARTIFICIAL (op0)) 
-                  && (op1 = gimple_assign_rhs1 (cur)) /* get rvalue */ 
-                  && TREE_CODE_CLASS (TREE_CODE (op1)) == tcc_comparison 
-                  && TREE_CODE (nxt) == COND_EXPR 
-                  && op0 == TREE_OPERAND (nxt, 0)) 
-                {
-                  TREE_OPERAND (nxt, 0) = op1; 
-                }
-            } while (0); 
-          dump_one_function_statement (tsi_stmt (tsi));
-          if (flag_use_rtl_backend)
-	    abort();
-        }
+	      /* FIXME: */
+            }
+        } while (0); 
+      dump_one_function_statement (stmt);
     }
-  else
-    dump_one_function_statement (t);
 }
 
 /* Dump IR of FUNCTION_DECL FN to file "ir_file_name" */
@@ -8752,10 +8761,9 @@ dump_function_ir (tree fn)
   if (ir_gen_scope_triple_p ())
     ir_push_scope (DECL_INITIAL (fn));
   
-  gcc_assert (TREE_CODE (DECL_SAVED_TREE (fn)) == STATEMENT_LIST);
   /* clear plist_* pointers always here. */
   plist_head = plist_prev = plist_cur = NULL;
-  dump_function_ir_statements (DECL_SAVED_TREE (fn));
+  dump_function_ir_statements (gimple_body (fn));
   if (flag_use_rtl_backend)
     {
       abort();
@@ -9924,7 +9932,7 @@ fill_scope_info (pragmaEntry_t ptype,
 
 static void
 push_omp_context (PRAGMAINFO *pinfo,
-                  tree stmt) 
+                  gimple stmt) 
 {
   omp_ir_context_t *c;
 
@@ -9991,13 +9999,13 @@ generate_exception_label (omp_ir_context_t *c)
 */
 
 static void
-dump_omp_parallel (tree stmt) 
+dump_omp_parallel (gimple stmt) 
 {
   tree clauses;
   LEAF *nthreads, *if_cond;
   PRAGMAINFO *pinfo;
 
-  clauses = OMP_PARALLEL_CLAUSES (stmt);
+  clauses = gimple_omp_parallel_clauses (stmt);
 
   /* OMP_PARALLEL region clauses can generate some side effects
      due to if clause whose condition may need to be normalized
@@ -10029,7 +10037,7 @@ dump_omp_parallel (tree stmt)
      is important as we do not want to generate triples before
      we generate some of the for/sections side effect */
 
-  if (!OMP_PARALLEL_COMBINED (stmt))
+  if (!gimple_omp_parallel_combined_p (stmt))
     {
       IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
       pragma_typ = build_ir_int_const ((CONSZ) OMP_PARALLEL_BEGIN,
@@ -10053,7 +10061,7 @@ dump_omp_parallel_end (tree stmt)
   IR_NODE *pragma_typ, *pragma_tp, *lineno;
 
   pinfo = cur_omp_context->pinfo;  
-  if (OMP_PARALLEL_COMBINED (stmt))
+  if (gimple_omp_parallel_combined_p (stmt))
     {
       switch (pinfo->type)
         {
@@ -10145,7 +10153,7 @@ dump_omp_parallel_end (tree stmt)
        End pragma */
 
 static void
-dump_omp_for (tree stmt)
+dump_omp_for (gimple stmt)
 {
   tree clauses, loop_index;
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno, *cond, *index;
@@ -10155,11 +10163,11 @@ dump_omp_for (tree stmt)
   TRIPLE *t;
   LOOPINFO *linfo;
   
-  clauses = OMP_FOR_CLAUSES (stmt);
+  clauses = gimple_omp_for_clauses (stmt);
   
   if (cur_omp_context
-      && TREE_CODE (cur_omp_context->stmt) == OMP_PARALLEL
-      && OMP_PARALLEL_COMBINED (cur_omp_context->stmt))
+      && gimple_code (cur_omp_context->stmt) == GIMPLE_OMP_PARALLEL
+      && gimple_omp_parallel_combined_p (cur_omp_context->stmt))
     {
       /* combined parallel for. Do not allocate another praga info */
       pinfo = cur_omp_context->pinfo;
@@ -10186,7 +10194,7 @@ dump_omp_for (tree stmt)
   /* Generate the pre loop body. The upper bound/step
      may be invariants and must be generated outside
      the pragma region */
-  dump_function_ir_statements (OMP_FOR_PRE_BODY (stmt));
+  dump_function_ir_statements (gimple_omp_for_pre_body (stmt));
 
   pragma_typ = build_ir_int_const ((CONSZ) (pinfo->type == OMP_E_PARDO ? OMP_PARDO_BEGIN : OMP_DO_BEGIN),
                                    inttype, 0);
@@ -10212,9 +10220,7 @@ dump_omp_for (tree stmt)
      construct the loop info, The loop index info should
      be available from the OMP_FOR_INIT body. */
   
-  loop_index = OMP_FOR_INIT (stmt);
-  gcc_assert (TREE_CODE (loop_index) == MODIFY_EXPR);
-  loop_index = gimple_assign_lhs (loop_index);
+  loop_index = gimple_omp_for_index (stmt, 0);
   gcc_assert (DECL_P (loop_index));
   l0_lab = gen_ir_label ();
   l1_lab = gen_ir_label ();
@@ -10224,9 +10230,10 @@ dump_omp_for (tree stmt)
   
   /* Generate the loop init body. Our index var will
      be created during the process. */
-  save_and_switch_line_information (OMP_FOR_INIT (stmt));
-  dump_function_ir_statements (OMP_FOR_INIT (stmt));
-  restore_line_information (OMP_FOR_INIT (stmt));
+  save_and_switch_line_information (gimple_omp_for_initial (stmt, 0));
+  /* FIXME. need to build the initial statements. */
+  dump_ir_expr (gimple_omp_for_initial (stmt, 0), MAP_FOR_VALUE);
+  restore_line_information (gimple_omp_for_initial (stmt, 0));
   
   /* Generate loopinfo structure */
   index = dump_ir_expr (loop_index, MAP_FOR_VALUE);
@@ -10244,7 +10251,8 @@ dump_omp_for (tree stmt)
   /* Rest of loopinfo struct is essentially zero */
   
   /* Generate the loop body */
-  cond = dump_ir_expr (OMP_FOR_COND (stmt), MAP_FOR_VALUE);
+  /* FIXME. */
+  cond = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
   loop_body = build_ir_labelref (l0_lab, 1);
   loop_exit = build_ir_labelref (l1_lab, 0);
   t = (TRIPLE *) loop_body;
@@ -10277,7 +10285,7 @@ dump_omp_for_end (tree stmt)
      has trouble discovering the loop. It sees it
      as multi exit loop. */
   generate_exception_label(cur_omp_context);
-  
+#if 0 /* FIXME. */  
   dump_function_ir_statements (OMP_FOR_INCR (stmt));
   restore_line_information (stmt);
   save_and_switch_line_information (OMP_FOR_COND (stmt));
@@ -10291,7 +10299,7 @@ dump_omp_for_end (tree stmt)
   restore_line_information (OMP_FOR_COND (stmt));
   
   if (cur_omp_context->prev_ctx
-      && OMP_PARALLEL_COMBINED (cur_omp_context->prev_ctx->stmt)) {
+      && gimple_omp_parallel_combined_p (cur_omp_context->prev_ctx->stmt)) {
       /*
        * combined parallel for!. end pragma will be generated by end parallel 
        */
@@ -10311,6 +10319,7 @@ dump_omp_for_end (tree stmt)
                                NULL);
   pinfo->end_triple = (TRIPLE *) pragma_tp;
   pinfo->end_lineno = END_PRAGMA_LINE(ir_location);
+#endif
 
   pop_omp_context ();
 }
@@ -10354,15 +10363,15 @@ dump_omp_for_end (tree stmt)
 */
 
 static void
-dump_omp_sections (tree stmt)
+dump_omp_sections (gimple stmt)
 {
   tree clauses;
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
   PRAGMAINFO *pinfo;
   
   if (cur_omp_context
-      && TREE_CODE (cur_omp_context->stmt) == OMP_PARALLEL
-      && OMP_PARALLEL_COMBINED (cur_omp_context->stmt))
+      && gimple_code (cur_omp_context->stmt) == GIMPLE_OMP_PARALLEL
+      && gimple_omp_parallel_combined_p (cur_omp_context->stmt))
     {
       /* combined parallel for. Do not allocate another praga info */
       pinfo = cur_omp_context->pinfo;
@@ -10375,7 +10384,7 @@ dump_omp_sections (tree stmt)
       pinfo->begin_lineno = ir_location.line;
     }
 
-  clauses = OMP_SECTIONS_CLAUSES (stmt);
+  clauses = gimple_omp_sections_clauses (stmt);
  
   pragma_typ = build_ir_int_const ((CONSZ) (pinfo->type == OMP_E_PARSECTIONS ?
                                             OMP_PARSECTIONS_BEGIN : OMP_SECTIONS_BEGIN),
@@ -10401,7 +10410,7 @@ dump_omp_sections (tree stmt)
 }
 
 static void
-dump_omp_sections_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_sections_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *pragma_tp, *lno;
   PRAGMAINFO *pinfo;
@@ -10410,7 +10419,7 @@ dump_omp_sections_end (tree stmt ATTRIBUTE_UNUSED)
      as genertion the loop bounds check will distort this
      information */
   if (cur_omp_context->prev_ctx
-      && OMP_PARALLEL_COMBINED (cur_omp_context->prev_ctx->stmt)) {
+      && gimple_omp_parallel_combined_p (cur_omp_context->prev_ctx->stmt)) {
       /*
        * combined parallel for!. end pragma will be generated by end parallel 
        */
@@ -10444,7 +10453,7 @@ dump_omp_sections_end (tree stmt ATTRIBUTE_UNUSED)
    we should probably add it */
 
 static void
-dump_omp_section (tree stmt)
+dump_omp_section (gimple stmt)
 {
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
 
@@ -10462,7 +10471,7 @@ dump_omp_section (tree stmt)
 
 
 static void
-dump_omp_section_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_section_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   generate_exception_label(cur_omp_context);
   
@@ -10487,13 +10496,13 @@ dump_omp_section_end (tree stmt ATTRIBUTE_UNUSED)
 */
 
 static void
-dump_omp_single (tree stmt)
+dump_omp_single (gimple stmt)
 {
   tree clauses;
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
   PRAGMAINFO *pinfo;
 
-  clauses = OMP_SINGLE_CLAUSES (stmt);
+  clauses = gimple_omp_single_clauses (stmt);
   pinfo = build_ir_pragmainfo ();
   pinfo->type = OMP_E_SINGLE;
   pinfo->begin_lineno = ir_location.line;
@@ -10521,7 +10530,7 @@ dump_omp_single (tree stmt)
 }
 
 static void
-dump_omp_single_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_single_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
   PRAGMAINFO *pinfo;
@@ -10549,7 +10558,7 @@ dump_omp_single_end (tree stmt ATTRIBUTE_UNUSED)
    master body
    IR_pragma OMP_MASTER_END */
 static void
-dump_omp_master (tree stmt)
+dump_omp_master (gimple stmt)
 {
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
 
@@ -10566,7 +10575,7 @@ dump_omp_master (tree stmt)
 }
 
 static void
-dump_omp_master_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_master_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *pragma_tp;
   IR_NODE *begin_lno;
@@ -10593,7 +10602,7 @@ dump_omp_master_end (tree stmt ATTRIBUTE_UNUSED)
    IR_pragma OMP_ORDER_END */
 
 static void
-dump_omp_ordered (tree stmt)
+dump_omp_ordered (gimple stmt)
 {
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
 
@@ -10611,7 +10620,7 @@ dump_omp_ordered (tree stmt)
 }
 
 static void
-dump_omp_ordered_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_ordered_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *pragma_tp;
   IR_NODE *begin_lno;
@@ -10646,7 +10655,7 @@ static GTY((param1_is (tree), param2_is (tree)))
   splay_tree critical_name_mutexes;
   
 static void
-dump_omp_critical (tree stmt)
+dump_omp_critical (gimple stmt)
 {
   tree lock_name, decl;
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
@@ -10670,7 +10679,7 @@ dump_omp_critical (tree stmt)
   pinfo->begin_lineno = ir_location.line;
   pinfo->filename = (LEAF *) build_ir_string_const (ir_location.file);
   
-  lock_name = OMP_CRITICAL_NAME (stmt);
+  lock_name = gimple_omp_critical_name (stmt);
 
   if (lock_name)
     {
@@ -10710,7 +10719,7 @@ dump_omp_critical (tree stmt)
 }
 
 static void
-dump_omp_critical_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_critical_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *pragma_tp;
   PRAGMAINFO *pinfo;
@@ -10739,7 +10748,7 @@ dump_omp_critical_end (tree stmt ATTRIBUTE_UNUSED)
    IR_pragma OMP_BARRIER */
 
 static void
-dump_omp_barrier (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_barrier (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *begin_lno, *pragma_tp;
 
@@ -10758,7 +10767,7 @@ dump_omp_barrier (tree stmt ATTRIBUTE_UNUSED)
    for iropt. */
 
 static void
-dump_omp_atomic_start (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_atomic_start (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *begin_lno, *pragma_tp;
 
@@ -10774,7 +10783,7 @@ dump_omp_atomic_start (tree stmt ATTRIBUTE_UNUSED)
 }
 
 static void
-dump_omp_atomic_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_atomic_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *begin_lno, *pragma_tp;
 
@@ -10794,7 +10803,7 @@ dump_omp_atomic_end (tree stmt ATTRIBUTE_UNUSED)
    the list of variables to be flushed. */
 
 static void
-dump_omp_flush (tree stmt)
+dump_omp_flush (gimple stmt)
 {
   IR_NODE *pragma_typ, *begin_lno, *pragma_tp;
   PRAGMAINFO *pinfo;
@@ -10821,7 +10830,7 @@ dump_omp_flush (tree stmt)
   pinfo->end_lineno = ir_location.line;
   pinfo->filename = (LEAF *) build_ir_string_const (ir_location.file);
   
-  op1 = CALL_EXPR_ARGS (stmt); /* list of arguments */
+  op1 = gimple_call_chain (stmt); /* list of arguments */
   for (; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
     {
       var = dump_ir_expr (TREE_VALUE (op1), MAP_FOR_VALUE);
@@ -10833,13 +10842,13 @@ dump_omp_flush (tree stmt)
 }
 
 static void
-dump_omp_task (tree stmt)
+dump_omp_task (gimple stmt)
 {
   tree clauses;
   PRAGMAINFO *pinfo;
   IR_NODE *pragma_typ, *pragma_tp, *begin_lno;
   
-  clauses = OMP_TASK_CLAUSES (stmt);
+  clauses = gimple_omp_task_clauses (stmt);
 
   pinfo = build_ir_pragmainfo ();
   push_omp_context (pinfo, stmt);
@@ -10864,7 +10873,7 @@ dump_omp_task (tree stmt)
 }
 
 static void
-dump_omp_task_end (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_task_end (gimple stmt ATTRIBUTE_UNUSED)
 {
   PRAGMAINFO *pinfo;
   IR_NODE *pragma_typ, *pragma_tp, *lineno;
@@ -10888,7 +10897,7 @@ dump_omp_task_end (tree stmt ATTRIBUTE_UNUSED)
 }
     
 static void
-dump_omp_taskwait (tree stmt ATTRIBUTE_UNUSED)
+dump_omp_taskwait (gimple stmt ATTRIBUTE_UNUSED)
 {
   IR_NODE *pragma_typ, *begin_lno, *pragma_tp;
 
@@ -11583,45 +11592,45 @@ generate_cxx_constructor_wrappers (void)
 
 
 static void
-dump_omp_return (tree stmt)
+dump_omp_return (gimple stmt)
 {
   gcc_assert (cur_omp_context != NULL);
   
-  switch (TREE_CODE(cur_omp_context->stmt))
+  switch (gimple_code (cur_omp_context->stmt))
     {
-    case OMP_PARALLEL:
+    case GIMPLE_OMP_PARALLEL:
       dump_omp_parallel_end (cur_omp_context->stmt);
       break;
 
-    case OMP_FOR:
+    case GIMPLE_OMP_FOR:
       dump_omp_for_end (cur_omp_context->stmt);
       break;
 
-    case OMP_SECTIONS:
+    case GIMPLE_OMP_SECTIONS:
       dump_omp_sections_end (cur_omp_context->stmt);
       break;
 
-    case OMP_SECTION:
+    case GIMPLE_OMP_SECTION:
       dump_omp_section_end (cur_omp_context->stmt);
       break;
             
-    case OMP_SINGLE:
+    case GIMPLE_OMP_SINGLE:
       dump_omp_single_end (cur_omp_context->stmt);
       break;
 
-    case OMP_MASTER:
+    case GIMPLE_OMP_MASTER:
       dump_omp_master_end (cur_omp_context->stmt);
       break;
 
-    case OMP_ORDERED:
+    case GIMPLE_OMP_ORDERED:
       dump_omp_ordered_end (stmt);
       break;
 
-    case OMP_CRITICAL:
+    case GIMPLE_OMP_CRITICAL:
       dump_omp_critical_end (stmt);
       break;
 
-    case OMP_TASK:
+    case GIMPLE_OMP_TASK:
       dump_omp_task_end (stmt);
       break;
 
