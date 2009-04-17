@@ -492,7 +492,8 @@ gimple_cond_get_ops_from_tree (tree cond, enum tree_code *code_p,
   gcc_assert (TREE_CODE_CLASS (TREE_CODE (cond)) == tcc_comparison
 	      || TREE_CODE (cond) == TRUTH_NOT_EXPR
 	      || is_gimple_min_invariant (cond)
-	      || SSA_VAR_P (cond));
+	      || SSA_VAR_P (cond)
+              || (gate_generate_ir () && is_gimple4ss_rvalue (cond)));
 
   extract_ops_from_tree (cond, code_p, lhs_p, rhs_p);
 

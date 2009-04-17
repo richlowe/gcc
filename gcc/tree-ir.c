@@ -7150,11 +7150,19 @@ dump_ir_builtin_call (gimple stmt, int need_return)
     case BUILT_IN_STPCPY:
       {
         gimple new_stmt = stmt;
+
         if (!need_return)
           {
+	    int i, nargs = gimple_call_num_args (stmt);
+	    VEC(tree, heap) *vargs = VEC_alloc (tree, heap, nargs);
+
+	    for ( i = 0; i < nargs; i++)
+	      VEC_quick_push (tree, vargs, gimple_call_arg (stmt, i));
+
             tree fn = implicit_built_in_decls[BUILT_IN_STRCPY];
             if (fn)
-              new_stmt = gimple_build_call_vec (fn, arglist);
+ 	      new_stmt = gimple_build_call_vec (fn, vargs);
+	    VEC_free (tree, heap, vargs);
           }
         ret = dump_ir_call (new_stmt, need_return);
       }
@@ -7164,9 +7172,16 @@ dump_ir_builtin_call (gimple stmt, int need_return)
         gimple new_stmt = stmt;
         if (!need_return)
           {
+	    int i, nargs = gimple_call_num_args (stmt);
+	    VEC(tree, heap) *vargs = VEC_alloc (tree, heap, nargs);
+
+	    for ( i = 0; i < nargs; i++)
+	      VEC_quick_push (tree, vargs, gimple_call_arg (stmt, i));
+
             tree fn = implicit_built_in_decls[BUILT_IN_MEMCPY];
             if (fn)
-              new_stmt = gimple_build_call_vec (fn, arglist);
+              new_stmt = gimple_build_call_vec (fn, vargs);
+	    VEC_free (tree, heap, vargs);
           }
         ret = dump_ir_call (new_stmt, need_return);
       }
