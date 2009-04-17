@@ -1665,49 +1665,37 @@ tree_lower_complex_O0 (void)
 static unsigned int
 tree_regimple (void)
 {
-  tree_stmt_iterator tsi;
+  gimple_stmt_iterator gsi = gsi_start (gimple_body (current_function_decl));
   struct gimplify_ctx gctx;
   
   push_gimplify_context (&gctx);
-  if (TREE_CODE (DECL_SAVED_TREE (current_function_decl)) == BIND_EXPR)
-     tsi = tsi_start (BIND_EXPR_BODY (DECL_SAVED_TREE (current_function_decl)));
-  else
-  tsi = tsi_start (DECL_SAVED_TREE (current_function_decl));
-  while (!tsi_end_p (tsi))
+
+  if (gimple_code (gsi_stmt (gsi)) == GIMPLE_BIND)
+    gsi = gsi_start (gimple_bind_body (gsi_stmt (gsi)));
+
+  for ( ; !gsi_end_p (gsi); gsi_next (&gsi))
     {
       tree t;
-      tree * stmt = tsi_stmt_ptr (tsi);
+      gimple stmt = gsi_stmt (gsi);
       location_t loc = 0;
-      gimple_seq tseq = NULL;
 
       /* reverse a[i] to *(a+i) for better comprehension of optimization passes on RTL. */ 
-      if (*stmt != NULL_TREE 
-          && TREE_CODE (*stmt) == MODIFY_EXPR
-          && TREE_CODE (TREE_OPERAND (*stmt, 0)) == ARRAY_REF
-          && TREE_CODE (TREE_TYPE (TREE_OPERAND (TREE_OPERAND (*stmt, 0), 0))) == POINTER_TYPE) 
+      if (stmt != NULL 
+          && is_gimple_assign (stmt)
+          && TREE_CODE (gimple_assign_lhs (stmt)) == ARRAY_REF
+          && TREE_CODE (TREE_TYPE (TREE_OPERAND (gimple_assign_lhs (stmt), 0))) == POINTER_TYPE) 
         {
-           tree arrref = TREE_OPERAND (*stmt, 0);
+           tree arrref = gimple_assign_lhs (stmt);
 
            if (gimple_has_location (stmt))
              loc = gimple_location (stmt);
         
-           TREE_OPERAND (*stmt, 0) = build_array_ref (loc, TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1));  
+           gimple_assign_set_lhs (stmt, build_array_ref (loc, TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1)));  
         }
 
-      gimplify_stmt (stmt, &tseq);
-
-      t = tsi_stmt (tsi);
-      if (t == NULL)
-        tsi_delink (&tsi);
-      else if (TREE_CODE (t) == STATEMENT_LIST)
-        {
-          tsi_link_before (&tsi, t, TSI_SAME_STMT);
-          tsi_delink (&tsi);
-        }
-      else
-        tsi_next (&tsi);
+      gimple_regimplify_operands (stmt, &gsi);
     }
-  pop_gimplify_context (0);
+  pop_gimplify_context (NULL);
   
   return 0;
 }

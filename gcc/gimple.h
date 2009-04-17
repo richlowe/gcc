@@ -2054,6 +2054,17 @@ gimple_call_arg (const_gimple gs, unsigned index)
   return gimple_op (gs, index + 3);
 }
 
+/* Build and Return a TREE_LIST of arguments. */
+static tree
+gimple_call_arglist (const_gimple gs)
+{
+  int i;
+  tree arglist = NULL_TREE;
+  GIMPLE_CHECK (gs, GIMPLE_CALL);
+  for (i = gimple_call_num_args (gs) - 1; i >= 0; i--)
+    arglist = tree_cons (NULL_TREE, gimple_call_arg (gs, i), arglist);
+  return arglist;
+}
 
 /* Return a pointer to the argument at position INDEX for call
    statement GS.  */

@@ -5308,7 +5308,7 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
       && DECL_PURE_P (TREE_OPERAND (op0, 0)))
     is_pure_call = 1;
 
-  op1 = gimple_call_chain (stmt);
+  op1 = gimple_call_arglist (stmt);
   for (; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
     {
       ir_argp = dump_ir_genargs (TREE_VALUE (op1));
@@ -6952,7 +6952,7 @@ static IR_NODE *
 dump_ir_builtin_int_roundingfn (gimple stmt, int need_return)
 {
   tree fndecl = gimple_call_fndecl (stmt);
-  tree arglist = gimple_call_chain (stmt);
+  tree arglist = gimple_call_arglist (stmt);
   enum built_in_function fallback_fn;
   tree fallback_fndecl;
   tree arg, exp;
@@ -7024,7 +7024,7 @@ static IR_NODE *
 dump_ir_builtin_call (gimple stmt, int need_return)
 {
   tree fndecl = gimple_call_fndecl (stmt);
-  tree arglist = gimple_call_chain (stmt);
+  tree arglist = gimple_call_arglist (stmt);
   enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
   IR_NODE * ret = 0;
 
@@ -10820,7 +10820,7 @@ dump_omp_flush (gimple stmt)
   pinfo->end_lineno = ir_location.line;
   pinfo->filename = (LEAF *) build_ir_string_const (ir_location.file);
   
-  op1 = gimple_call_chain (stmt); /* list of arguments */
+  op1 = gimple_call_arglist (stmt); /* list of arguments */
   for (; op1 != NULL_TREE; op1 = TREE_CHAIN (op1))
     {
       var = dump_ir_expr (TREE_VALUE (op1), MAP_FOR_VALUE);
