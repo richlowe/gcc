@@ -315,7 +315,7 @@ struct gimple_opt_pass pass_rebuild_cgraph_edges =
  {
   GIMPLE_PASS,
   NULL,					/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,			/* gate */
   rebuild_cgraph_edges,			/* execute */
   NULL,					/* sub */
   NULL,					/* next */

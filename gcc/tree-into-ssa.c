@@ -2282,7 +2282,7 @@ struct gimple_opt_pass pass_build_ssa =
  {
   GIMPLE_PASS,
   "ssa",				/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,			/* gate */
   rewrite_into_ssa,			/* execute */
   NULL,					/* sub */
   NULL,					/* next */

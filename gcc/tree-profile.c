@@ -438,6 +438,8 @@ tree_gen_ior_profiler (histogram_value value, unsigned tag, unsigned base)
 static bool
 do_tree_profiling (void)
 {
+  if (gate_generate_ir())
+    return false;
   if (profile_arc_flag || flag_test_coverage || flag_branch_probabilities)
     {
       tree_register_profile_hooks ();

@@ -348,7 +348,7 @@ struct gimple_opt_pass pass_release_ssa_names =
  {
   GIMPLE_PASS,
   "release_ssa",			/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,			/* gate */
   release_dead_ssa_names,		/* execute */
   NULL,					/* sub */
   NULL,					/* next */

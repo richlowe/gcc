@@ -5448,7 +5448,7 @@ static bool
 gate_expand_omp (void)
 {
   return (flag_openmp != 0 && errorcount == 0
-          && flag_use_rtl_backend == -1); 
+          && gate_generate_rtl()); 
 }
 
 struct gimple_opt_pass pass_expand_omp = 

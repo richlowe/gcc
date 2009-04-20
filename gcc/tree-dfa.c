@@ -120,7 +120,7 @@ struct gimple_opt_pass pass_referenced_vars =
  {
   GIMPLE_PASS,
   NULL,					/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,			/* gate */
   find_referenced_vars,			/* execute */
   NULL,					/* sub */
   NULL,					/* next */

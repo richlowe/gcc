@@ -123,7 +123,7 @@ static bool
 gate_all_early_local_passes (void)
 {
 	  /* Don't bother doing anything if the program has errors.  */
-  return (!errorcount && !sorrycount && gate_generate_rtl());
+  return (!errorcount && !sorrycount);
 }
 
 struct simple_ipa_opt_pass pass_early_local_passes =
@@ -164,7 +164,8 @@ gate_all_early_optimizations (void)
 {
   return (optimize >= 1
 	  /* Don't bother doing anything if the program has errors.  */
-	  && !(errorcount || sorrycount));
+	  && !(errorcount || sorrycount)
+          && gate_generate_rtl());
 }
 
 struct gimple_opt_pass pass_all_early_optimizations =
@@ -203,7 +204,7 @@ struct gimple_opt_pass pass_cleanup_cfg =
  {
   GIMPLE_PASS,
   "cleanup_cfg",			/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,			/* gate */
   execute_cleanup_cfg_pre_ipa,		/* execute */
   NULL,					/* sub */
   NULL,					/* next */
@@ -460,7 +461,7 @@ struct gimple_opt_pass pass_init_datastructures =
  {
   GIMPLE_PASS,
   NULL,					/* name */
-  NULL,					/* gate */
+  gate_generate_rtl,			/* gate */
   execute_init_datastructures,		/* execute */
   NULL,					/* sub */
   NULL,					/* next */

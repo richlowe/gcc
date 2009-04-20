@@ -1084,6 +1084,7 @@ dump_ir_builtin_va_arg (tree valist, tree type)
   tree addr, incr, t;
   int indirect = 0;
   IR_NODE * ret = 0;
+  gimple t_gimple;
 
   /* Round up sizeof(type) to a word.  */
   size = int_size_in_bytes (type);
@@ -1116,10 +1117,10 @@ dump_ir_builtin_va_arg (tree valist, tree type)
 
   incr = fold (build2 (PLUS_EXPR, ptr_type_node, incr, build_int_cst (NULL_TREE, rsize)));
 
-  incr = build2 (MODIFY_EXPR, ptr_type_node, valist, incr);
   TREE_SIDE_EFFECTS (incr) = 1;
+  t_gimple = gimple_build_assign (valist, incr);
 
-  dump_ir_stmt (incr);
+  dump_ir_stmt (t_gimple);
 
   /* BYTES_BIG_ENDIAN only */
   addr = fold (build2 (MINUS_EXPR, ptr_type_node, addr, build_int_cst (NULL_TREE, size)));
@@ -2146,7 +2147,7 @@ ir_dump_vis (tree stmt, tree op0, tree op1)
   TREE_NOTHROW (fn) = 1;
 
   t = build_function_call_expr (fn, arglist);
-  ret = dump_ir_call (t, 1);
+  ret = dump_ir_call (gimple_build_call_from_tree (t), 1);
   return ret;
 }
 
@@ -2207,6 +2208,7 @@ dump_ir_complexpart_expr (tree stmt, int is_realpart, enum MAP_FOR map_for)
   tree t;
   tree type = TREE_TYPE (stmt);
   tree record_type, f_real, f_imag;
+  gimple t_gimple;
   
   /* access bit packed complex type */
   if ((TREE_CODE (op0) == COMPONENT_REF 
@@ -2278,9 +2280,8 @@ dump_ir_complexpart_expr (tree stmt, int is_realpart, enum MAP_FOR map_for)
     {
       tree var = create_tmp_var_raw (TREE_TYPE (op0), "__complex_tmp_var.");
       TREE_ADDRESSABLE (var) = 1;
-      t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
-      TREE_SIDE_EFFECTS (t) = 1;
-      dump_ir_stmt (t);
+      t_gimple = gimple_build_assign (var, op0);
+      dump_ir_stmt (t_gimple);
       t = build_fold_addr_expr_with_type (var, build_pointer_type (record_type));
     }
   t = build_fold_indirect_ref (t);
@@ -3674,13 +3675,14 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             || TREE_CODE (stmt) == VIEW_CONVERT_EXPR)
           {
             tree t, var;
+            gimple t_gimple;
             
             /* copy op0 into temporary */
             var = create_tmp_var_raw (TREE_TYPE (op0), "__vis_tmp_var.");
             TREE_ADDRESSABLE (var) = 1;
-            t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
-            TREE_SIDE_EFFECTS (t) = 1;
-            dump_ir_stmt (t);
+            t_gimple = gimple_build_assign (var, op0);
+            /* TREE_SIDE_EFFECTS (t) = 1; FIXME */
+            dump_ir_stmt (t_gimple);
             
             if (get_type_size (TREE_TYPE (op0)) == get_type_size (TREE_TYPE (stmt)))
               {
@@ -4885,12 +4887,13 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
               {
                 /* implementation of fabsl() in IR */
                 tree t, var, t2;
+                gimple t_gimple;
             
                 /* copy op0 into temporary */
                 var = create_tmp_var_raw (TREE_TYPE (op0), "__fabsl_tmp_var.");
                 TREE_ADDRESSABLE (var) = 1;
-                t = build2 (MODIFY_EXPR, TREE_TYPE (op0), var, op0);
-                dump_ir_stmt (t);
+                t_gimple = gimple_build_assign (var, op0);
+                dump_ir_stmt (t_gimple);
             
                 /* get the address of the temporary */
                 t = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (stmt)), var);
@@ -4902,8 +4905,8 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                 t2 = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (stmt)), var);
                 t2 = build1 (NOP_EXPR, integer_ptr_type_node, t2);
                 t2 = build1 (INDIRECT_REF, integer_type_node, t2);
-                t2 = build2 (MODIFY_EXPR, integer_type_node, t2, t);
-                dump_ir_stmt (t2);
+                t_gimple = gimple_build_assign (t2, t);
+                dump_ir_stmt (t_gimple);
 
                 ret = dump_ir_expr (var, map_for);
                 break;
@@ -4936,7 +4939,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
         TREE_READONLY (fn) = 1; /* never reads or writes globals. same as ECF_CONST */
 
         t = build_function_call_expr (fn, arglist);
-        ret = dump_ir_call (t, 1);
+        ret = dump_ir_call (gimple_build_call_from_tree (t), 1);
         ret->triple.left->leaf.func_descr = INTR_FUNC;
        
 #if 0
@@ -5602,7 +5605,7 @@ dump_ir_modify (gimple stmt)
       && CALLEXPR_IS_PUBLIC (op1) /* internal convention. see cp/semantics.c */)
     {
       /* using extended IR to pass struct values out of funcs */
-      return dump_ir_call_main (op1, 0, op0);
+      return dump_ir_call_main (gimple_build_call_from_tree (op1), 0, op0);
     }
 
   /* don't emit assignments for zero sized objects */
@@ -5944,7 +5947,7 @@ dump_ir_modify (gimple stmt)
                             build_tree_list (NULL_TREE, size)));
 
           t = build_function_call_expr (built_in_decls[BUILT_IN_MEMSET], args);
-          dump_ir_call (t, 0);
+          dump_ir_call (gimple_build_call_from_tree (t), 0);
         }
     }
   /* Mark the istore or assign of virtual table pointer
@@ -6013,7 +6016,8 @@ stabilize_va_list (tree valist, int needs_lvalue)
 static void
 dump_ir_builtin_va_copy (tree arglist)
 {
-  tree dst, src, t;
+  tree dst, src;
+  gimple t;
 
   dst = TREE_VALUE (arglist);
   src = TREE_VALUE (TREE_CHAIN (arglist));
@@ -6023,8 +6027,8 @@ dump_ir_builtin_va_copy (tree arglist)
 
   if (TREE_CODE (va_list_type_node) != ARRAY_TYPE)
     {
-      t = build2 (MODIFY_EXPR, va_list_type_node, dst, src);
-      TREE_SIDE_EFFECTS (t) = 1;
+      t = gimple_build_assign (dst, src);
+      /* TREE_SIDE_EFFECTS (t) = 1; */
       dump_ir_stmt (t);
     }
   else
@@ -6067,7 +6071,7 @@ dump_ir_builtin_va_start (gimple exp)
   valist = stabilize_va_list (gimple_call_arg(exp, 0), 1);
 
   t = gimple_build_assign (valist, nextarg);
-  TREE_SIDE_EFFECTS (gimple_op (t, 0)) = 1;
+  /* FIXME: TREE_SIDE_EFFECTS (gimple_op (t, 0)) = 1; */
 
   dump_ir_stmt (t);
 }
@@ -6324,7 +6328,7 @@ dump_ir_builtin_profile_func (int is_enter)
                        build_tree_list (NULL_TREE, ret_addr_call));
 
   t = build_function_call_expr (fn, arglist);
-  ret = dump_ir_call (t, 0);
+  ret = dump_ir_call (gimple_build_call_from_tree (t), 0);
   return ret;
 }
 
@@ -6347,7 +6351,7 @@ dump_builtin_printf (gimple stmt, tree arglist, int need_return, bool unlocked)
   tree fn_puts = unlocked ? built_in_decls[BUILT_IN_PUTS_UNLOCKED]
 			  : implicit_built_in_decls[BUILT_IN_PUTS];
   const char *fmt_str;
-  tree fn, fmt, arg;
+  tree fn, fmt, arg, t;
 
   /* If the return value is used, don't do the transformation.  */
   if (need_return)
@@ -6432,7 +6436,8 @@ dump_builtin_printf (gimple stmt, tree arglist, int need_return, bool unlocked)
 
   if (!fn)
     return dump_ir_call (stmt, need_return);
-  dump_ir_stmt (build_function_call_expr (fn, arglist));
+  t = build_function_call_expr (fn, arglist);
+  dump_ir_stmt (gimple_build_call_from_tree (t));
   return 0;
 }
 
@@ -6447,7 +6452,7 @@ dump_builtin_fprintf (gimple stmt, tree arglist, int need_return, bool unlocked)
   tree fn_fputs = unlocked ? built_in_decls[BUILT_IN_FPUTS_UNLOCKED]
 			   : implicit_built_in_decls[BUILT_IN_FPUTS];
   const char *fmt_str;
-  tree fn, fmt, fp, arg;
+  tree fn, fmt, fp, arg, t;
 
   /* If the return value is used, don't do the transformation.  */
   if (need_return)
@@ -6523,8 +6528,8 @@ dump_builtin_fprintf (gimple stmt, tree arglist, int need_return, bool unlocked)
 
   if (!fn)
     return dump_ir_call (stmt, need_return);
-  
-  dump_ir_stmt (build_function_call_expr (fn, arglist));
+  t = build_function_call_expr (fn, arglist); 
+  dump_ir_stmt (gimple_build_call_from_tree (t));
   return 0;
 }
 
@@ -6589,12 +6594,12 @@ dump_builtin_memset (gimple stmt, tree arglist, int need_return)
 bool readonly_data_expr (tree);
 
 static IR_NODE*
-dump_builtin_memcpy (tree stmt, tree arglist, int need_return)
+dump_builtin_memcpy (gimple stmt, tree arglist, int need_return)
 {
   tree dest = TREE_VALUE (arglist);
   tree src = TREE_VALUE (TREE_CHAIN (arglist));
   tree len = TREE_VALUE (TREE_CHAIN (TREE_CHAIN (arglist)));
-  tree result;
+  gimple result;
 
   if (TREE_CODE (TREE_TYPE (dest)) != POINTER_TYPE
       || TREE_CODE (TREE_TYPE (src)) != POINTER_TYPE
@@ -6607,7 +6612,7 @@ dump_builtin_memcpy (tree stmt, tree arglist, int need_return)
                      build1 (NOP_EXPR, ptr_type_node, dest));
       src = build1 (INDIRECT_REF, char_type_node, 
                      build1 (NOP_EXPR, const_ptr_type_node, src));
-      result = build2 (MODIFY_EXPR, char_type_node, new_dest, src);
+      result = gimple_build_assign (new_dest, src);
       dump_ir_stmt (result);
       return dump_ir_expr (dest, MAP_FOR_VALUE);
     }
@@ -6647,7 +6652,7 @@ dump_builtin_strcpy (gimple stmt, tree arglist, int need_return)
   arglist = build_tree_list (NULL_TREE, len);
   arglist = tree_cons (NULL_TREE, src, arglist);
   arglist = tree_cons (NULL_TREE, dest, arglist);
-  return dump_ir_call (fold_convert (gimple_call_return_type (stmt),
+  return dump_ir_expr (fold_convert (gimple_call_return_type (stmt),
 		       build_function_call_expr (fn, arglist)), need_return);
 }
 
@@ -6669,13 +6674,15 @@ dump_builtin_memmove (gimple stmt, tree arglist, int need_return)
   if (readonly_data_expr (src))
     {
       tree fn = implicit_built_in_decls[BUILT_IN_MEMCPY];
+      gimple fn_gimple;
       if (fn)
         {
           fn = build_function_call_expr (fn, arglist);
           if (TREE_CODE (fn) == CALL_EXPR)
             {
-              gimple_call_set_tail (fn, gimple_call_tail_p (stmt));
-              return dump_builtin_memcpy (fn, arglist, need_return);
+              fn_gimple = gimple_build_call_from_tree (fn);
+              gimple_call_set_tail (fn_gimple, gimple_call_tail_p (stmt));
+              return dump_builtin_memcpy (fn_gimple, arglist, need_return);
             }
           else if (need_return || TREE_SIDE_EFFECTS (fn))
             {
@@ -6826,9 +6833,7 @@ dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
       TREE_NOTHROW (func) = 1;
 
       func = build_function_call_expr (func, arglist);
-      dump_ir_call (func, 0);
-      /*emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__enable_execute_stack"),
-                         LCT_NORMAL, VOIDmode, 1, tramp, Pmode);*/
+      dump_ir_call (gimple_build_call_from_tree (func), 0);
     }
   else
     {
@@ -6916,7 +6921,7 @@ dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
       TREE_NOTHROW (func) = 1;
 
       func = build_function_call_expr (func, arglist);
-      dump_ir_call (func, 0);
+      dump_ir_call (gimple_build_call_from_tree (func), 0);
     } 
   return 0;
 }
@@ -7282,7 +7287,7 @@ dump_ir_builtin_call (gimple stmt, int need_return)
         TREE_NOTHROW (fn) = 1;
 
         t = build_function_call_expr (fn, arglist);
-        ret = dump_ir_call (t, need_return);
+        ret = dump_ir_call (gimple_build_call_from_tree (t), need_return);
       }
       break;
 
@@ -7675,9 +7680,11 @@ dump_ir_stmt (gimple stmt)
           {
             if (TREE_CODE (op0) == MODIFY_EXPR)
               {
+	        /* FIXME: This should not be true.*/
                 tree left, right;
 		left = gimple_assign_lhs (op0); /* left */
 		right = gimple_assign_rhs1 (op0); /* right */
+		abort ();
                 
                 /* case of 'return_expr (result_decl = var_decl)' */
                 if (TREE_CODE (left) == RESULT_DECL
@@ -9792,9 +9799,10 @@ fill_scope_info (pragmaEntry_t ptype,
           if (ir_language == FORTRAN
             && DECL_HAS_VALUE_EXPR_P (decl))
            {
-             tree value, t;
+             tree value;
+             gimple t;
              value = DECL_VALUE_EXPR (decl); 
-             t = build2 (MODIFY_EXPR, TREE_TYPE (value), decl, value); 
+             t = gimple_build_assign (decl, value); 
              dump_ir_stmt (t); 
            }
           var = create_ir_scope (decl, &pinfo->u.s.firstprivate, pinfo, 1);
