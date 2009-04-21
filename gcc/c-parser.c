@@ -7924,7 +7924,7 @@ c_parser_omp_for_loop (c_parser *parser, tree clauses, tree *par_clauses)
      an error from the initialization parsing.  */
   if (!fail)
     {
-      stmt = c_finish_omp_for (loc, declv, initv, condv, incrv, body, NULL, NULL);
+      stmt = c_finish_omp_for (loc, declv, initv, condv, incrv, body, NULL);
       if (stmt)
 	{
 	  if (par_clauses != NULL)

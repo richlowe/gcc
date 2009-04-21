@@ -10617,8 +10617,6 @@ tsubst_omp_for_iterator (tree t, int i, tree declv, tree initv,
 #undef RECUR
 }
 
-static tree cp_recur_incr_and_keep_operator (tree, tree, tree, tsubst_flags_t, tree, bool);
-
 /* Like tsubst_copy for expressions, etc. but also does semantic
    processing.  */
 
@@ -10933,81 +10931,12 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl,
       break;
 
     case OMP_PARALLEL:
-      {
-        tree saved_for_stmt = NULL;
-        tree_stmt_iterator tsi;
       tmp = tsubst_omp_clauses (OMP_PARALLEL_CLAUSES (t),
 				args, complain, in_decl);
-      if (OMP_PARALLEL_COMBINED (t))
-        {
-          tree body = OMP_PARALLEL_BODY (t);
-
-          switch (TREE_CODE (body))
-            {
-            case OMP_FOR:
-              saved_for_stmt = body;
-              break;
-            case BIND_EXPR:
-              for (tsi = tsi_start (BIND_EXPR_BODY (body)); !tsi_end_p (tsi); tsi_next (&tsi))
-                if (TREE_CODE (tsi_stmt (tsi)) == OMP_FOR)
-                  {
-                    if (EXPR_LINENO (tsi_stmt (tsi)) == EXPR_LINENO (t) + 1) 
-                      saved_for_stmt = tsi_stmt (tsi); 
-                    break;
-                  }
-              break;
-            default:
-              break;
-            }
-
-          if (saved_for_stmt) 
-            OMP_FOR_PAR_CLAUSES (saved_for_stmt) = &tmp;
-        }
-        
       stmt = begin_omp_parallel ();
       RECUR (OMP_PARALLEL_BODY (t));
-      if (saved_for_stmt)
-        {
-          switch (TREE_CODE (stmt))
-            {
-            case OMP_FOR:
-              saved_for_stmt = stmt;
-              break;
-            case BIND_EXPR:
-              for (tsi = tsi_start (BIND_EXPR_BODY (stmt)); !tsi_end_p (tsi); tsi_next (&tsi))
-                if (TREE_CODE (tsi_stmt (tsi)) == OMP_FOR)
-                  {
-                    if (EXPR_LINENO (tsi_stmt (tsi)) == EXPR_LINENO (t) + 1)
-                      saved_for_stmt = tsi_stmt (tsi);
-                    break;
-                  }
-              break;
-            case STATEMENT_LIST:
-              for (tsi = tsi_start (stmt); !tsi_end_p (tsi); tsi_next (&tsi))
-                if (TREE_CODE (tsi_stmt (tsi)) == BIND_EXPR)
-                  {
-                    for (tsi = tsi_start (BIND_EXPR_BODY (tsi_stmt (tsi))); !tsi_end_p (tsi); tsi_next (&tsi))
-                      if (TREE_CODE (tsi_stmt (tsi)) == OMP_FOR)
-                        {
-                          if (EXPR_LINENO (tsi_stmt (tsi)) == EXPR_LINENO (t) + 1)
-                            saved_for_stmt = tsi_stmt (tsi);
-                          break;
-                        }
-                    break;
-                  }
-              break;
-            default:
-              break;
-            }
-        }
-
-    if (saved_for_stmt) 
-      OMP_PARALLEL_COMBINED (finish_omp_parallel (EXPR_LOCATION (t), tmp, stmt))
-	= OMP_FOR_NOT_COMBINED (saved_for_stmt) ? 0 : OMP_PARALLEL_COMBINED (t);
-    else 
-      OMP_PARALLEL_COMBINED (finish_omp_parallel (EXPR_LOCATION (t), tmp, stmt))
-	= OMP_PARALLEL_COMBINED (t);
-	    }
+      OMP_PARALLEL_COMBINED (finish_omp_parallel (tmp, stmt))
+        = OMP_PARALLEL_COMBINED (t);
       break;
 
     case OMP_TASK:
@@ -11035,85 +10964,6 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl,
 	  tsubst_omp_for_iterator (t, i, declv, initv, condv, incrv,
 				   &clauses, args, complain, in_decl,
 				   integral_constant_expression_p);
-#if 0
-=======
-	init = OMP_FOR_INIT (t);
-	gcc_assert (TREE_CODE (init) == MODIFY_EXPR);
-	decl = RECUR (TREE_OPERAND (init, 0));
-	init = RECUR (TREE_OPERAND (init, 1));
-	cond = OMP_FOR_COND (t);
-	incr = OMP_FOR_INCR (t);
-        if (flag_cpp_iter == 0)
-          {
-            cond = RECUR (cond);
-            incr = RECUR (incr);
-          }
-        else
-          {
-        if (! CLASS_TYPE_P (TREE_TYPE (decl)))
-          {
-            cond = RECUR (cond);
-            if (TREE_CODE (incr) == MODIFY_EXPR)
-	      incr = build_x_modify_expr (RECUR (TREE_OPERAND (incr, 0)),
-					  NOP_EXPR,
-					  RECUR (TREE_OPERAND (incr, 1)));
-	    else
-	      incr = RECUR (incr);
-          }
-        else 
-          {
-            if (COMPARISON_CLASS_P (cond))
-              cond = build2 (TREE_CODE (cond), boolean_type_node,
-                             RECUR (TREE_OPERAND (cond, 0)),
-                             RECUR (TREE_OPERAND (cond, 1)));
-            else
-              cond = RECUR (cond);
-            if (TREE_CODE (incr) == POSTINCREMENT_EXPR 
-                || TREE_CODE (incr) == POSTDECREMENT_EXPR 
-                || TREE_CODE (incr) == PREINCREMENT_EXPR 
-                || TREE_CODE (incr) == PREDECREMENT_EXPR)  
-              {
-                incr = build2 (TREE_CODE (incr), TREE_TYPE (decl), 
-                               RECUR (TREE_OPERAND (incr, 0)), NULL);
-              }
-            else if (TREE_CODE (incr) == MODIFY_EXPR)
-              {
-                tree rhs = TREE_OPERAND (incr, 1);
-                incr = build2 (MODIFY_EXPR, TREE_TYPE (decl),
-                         RECUR (TREE_OPERAND (incr, 0)),
-                         build2 (TREE_CODE (rhs), TREE_TYPE (decl),
-                                 RECUR (TREE_OPERAND (rhs, 0)),
-                                 RECUR (TREE_OPERAND (rhs, 1))));
-                                 }
-            else if (TREE_CODE (incr) == MODOP_EXPR)
-              {
-                if (TREE_CODE (TREE_OPERAND (incr, 1)) == PLUS_EXPR
-                    || TREE_CODE (TREE_OPERAND (incr, 1)) == MINUS_EXPR)
-                  {
-                    tree lhs = RECUR (TREE_OPERAND (incr, 0));
-                    incr = build2 (MODIFY_EXPR, TREE_TYPE (decl), lhs,
-                                   build2 (TREE_CODE (TREE_OPERAND (incr, 1)),
-                                           TREE_TYPE (decl), lhs,
-                                           RECUR (TREE_OPERAND (incr, 2))));
-                  }
-                else if (TREE_CODE (TREE_OPERAND (incr, 1)) == NOP_EXPR
-                         && (TREE_CODE (TREE_OPERAND (incr, 2)) == PLUS_EXPR
-                             || (TREE_CODE (TREE_OPERAND (incr, 2)) == MINUS_EXPR)))
-                  {
-                    tree rhs = TREE_OPERAND (incr, 2);
-                    incr = build2 (MODIFY_EXPR, TREE_TYPE (decl),
-                                   RECUR (TREE_OPERAND (incr, 0)),
-                                   cp_recur_incr_and_keep_operator (rhs, decl, 
-                                           args, complain, in_decl, 
-                                           integral_constant_expression_p));
-                  }
-              }
-            else
-               incr = RECUR (incr);
-          }
-          } // if (flag_cpp_iter == 1) 
->>>>>>> First cut at GCCFSS merge:gcc/cp/pt.c
-#endif /* FIXME. */
 
 	stmt = begin_omp_structured_block ();
 
@@ -11146,12 +10996,8 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl,
 	RECUR (OMP_FOR_BODY (t));
 	body = pop_stmt_list (body);
 
-	if (OMP_FOR_PAR_CLAUSES (t)) 
-	  t = finish_omp_for (EXPR_LOCATION (t), declv, initv, condv, incrv,
-			      body, pre_body, clauses, OMP_FOR_PAR_CLAUSES (t));
-        else
-	  t = finish_omp_for (EXPR_LOCATION (t), declv, initv, condv, incrv,
-			      body, pre_body, clauses, NULL);
+	t = finish_omp_for (EXPR_LOCATION (t), declv, initv, condv, incrv,
+			    body, pre_body, clauses);
 
 	add_stmt (finish_omp_structured_block (stmt));
       }
@@ -11211,25 +11057,6 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl,
 
   return NULL_TREE;
 #undef RECUR
-}
-
-static tree
-cp_recur_incr_and_keep_operator (tree exp, tree decl, tree args, tsubst_flags_t
-complain, tree in_decl, bool integral_constant_expression_p)
-{
-  tree t;
-
-  if (TREE_CODE (exp) == PLUS_EXPR
-      || TREE_CODE (exp) == MINUS_EXPR)
-    t = build2 (TREE_CODE (exp), TREE_TYPE (decl),
-                cp_recur_incr_and_keep_operator (TREE_OPERAND (exp, 0), decl,
-                  args, complain, in_decl, integral_constant_expression_p),
-                cp_recur_incr_and_keep_operator (TREE_OPERAND (exp, 1), decl,
-                  args, complain, in_decl, integral_constant_expression_p));
-  else
-    t = tsubst_expr (exp, args, complain, in_decl, integral_constant_expression_p);
-
-  return t;
 }
 
 /* T is a postfix-expression that is not being used in a function

@@ -4826,12 +4826,8 @@ extern tree begin_omp_parallel			(void);
 extern tree finish_omp_parallel			(location_t, tree, tree);
 extern tree begin_omp_task			(void);
 extern tree finish_omp_task			(tree, tree);
-#define IS_RANDOM_ACCESS_ITER(decl)     \
-  (TREE_CODE (TREE_TYPE (decl)) == TEMPLATE_TYPE_PARM   \
-   || TREE_CODE (TREE_TYPE (decl)) == TYPENAME_TYPE     \
-   || TREE_CODE (TREE_TYPE (decl)) == RECORD_TYPE)
 extern tree finish_omp_for			(location_t, tree, tree,
-						 tree, tree, tree, tree, tree, tree);
+						 tree, tree, tree, tree, tree);
 extern void finish_omp_atomic			(enum tree_code, tree, tree);
 extern void finish_omp_barrier			(void);
 extern void finish_omp_flush			(void);

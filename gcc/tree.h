@@ -1740,7 +1740,6 @@ extern void protected_set_expr_location (tree, location_t);
 #define OMP_FOR_COND(NODE)	   TREE_OPERAND (OMP_FOR_CHECK (NODE), 3)
 #define OMP_FOR_INCR(NODE)	   TREE_OPERAND (OMP_FOR_CHECK (NODE), 4)
 #define OMP_FOR_PRE_BODY(NODE)	   TREE_OPERAND (OMP_FOR_CHECK (NODE), 5)
-#define OMP_FOR_PAR_CLAUSES(NODE)  TREE_OPERAND (OMP_FOR_CHECK (NODE), 6)
 
 #define OMP_SECTIONS_BODY(NODE)    TREE_OPERAND (OMP_SECTIONS_CHECK (NODE), 0)
 #define OMP_SECTIONS_CLAUSES(NODE) TREE_OPERAND (OMP_SECTIONS_CHECK (NODE), 1)
@@ -1773,12 +1772,6 @@ extern void protected_set_expr_location (tree, location_t);
 #define OMP_PARALLEL_COMBINED(NODE) \
   (OMP_PARALLEL_CHECK (NODE)->base.private_flag)
 
-/* True on an OMP_FOR statement if its iterator is of c++ class. it will 
-   affect OMP_PARALLEL_COMBINED of its combined omp_parallel. the only write  
-   to it is in finish_omp_for. */ 
-#define OMP_FOR_NOT_COMBINED(NODE) \
-  TREE_PRIVATE (OMP_FOR_CHECK (NODE))
-  
 /* True on a PRIVATE clause if its decl is kept around for debugging
    information only and its DECL_VALUE_EXPR is supposed to point
    to what it has been remapped to.  */
@@ -2805,7 +2798,6 @@ struct tree_decl_common GTY(())
   /* DECL_OFFSET_ALIGN, used only for FIELD_DECLs.  */
   unsigned int off_align : 8;
   
-  unsigned has_scoped_lastprivate : 1;
   /* supporting transactional memory. the attributes could be applied to 
      functions or classes. */
   unsigned tm_atomic_attr : 1;
@@ -2842,8 +2834,6 @@ extern void decl_value_expr_insert (tree, tree);
 #define SET_DECL_VALUE_EXPR(NODE, VAL)			\
   (decl_value_expr_insert (DECL_WRTL_CHECK (NODE), VAL))
 
-#define DECL_HAS_SCOPED_LASTPRIVATE_P(NODE) \
-  (TREE_CHECK2 (NODE, VAR_DECL, PARM_DECL)->decl_common.has_scoped_lastprivate)
 #define DECL_IS_TM_ATOMIC_P(NODE)	\
   (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_atomic_attr)
 #define DECL_IS_TM_CALLABLE_P(NODE)	\
@@ -3155,13 +3145,9 @@ struct tree_decl_with_vis GTY(())
  ENUM_BITFIELD(tls_model) tls_model : 3;
  /* 10 unused bits. */
  unsigned has_scoped_clause: 1;
- /* only set for c++ iterator transformation. lower and upper both have to 
-    be scoped by gimplifier as shared. */
- unsigned refer_scoped_shared: 1; 
 };
 
 #define DECL_HAS_SCOPED_CLAUSE_P(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.has_scoped_clause)
-#define DECL_REFER_SCOPED_SHARED(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.refer_scoped_shared)
 
 /* In a VAR_DECL that's static,
    nonzero if the space is in the text section.  */

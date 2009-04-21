@@ -5728,11 +5728,7 @@ gimplify_adjust_omp_clauses_1 (splay_tree_node n, void *data)
     private_debug
       = lang_hooks.decls.omp_private_debug_clause (decl,
 						   !!(flags & GOVD_SHARED));
-  /* cp_convert_omp_for_init told gimplifier to do this. */
-  if (TREE_CODE (decl) == VAR_DECL 
-      && DECL_REFER_SCOPED_SHARED (decl) == 1)
-    code = OMP_CLAUSE_SHARED;
-  else if (private_debug)
+  if (private_debug)
     code = OMP_CLAUSE_PRIVATE;
   else if (flags & GOVD_SHARED)
     {

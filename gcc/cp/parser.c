@@ -21678,7 +21678,7 @@ cp_parser_omp_for_loop (cp_parser *parser, tree clauses, tree *par_clauses)
     ret = NULL_TREE;
   else
     ret = finish_omp_for (loc_first, declv, initv, condv, incrv, body,
-			  pre_body, clauses, par_clauses);
+			  pre_body, clauses);
 
   while (nbraces)
     {
@@ -21900,8 +21900,6 @@ cp_parser_omp_parallel (cp_parser *parser, cp_token *pragma_tok)
   tree stmt, clauses, par_clause, ws_clause, block;
   unsigned int mask = OMP_PARALLEL_CLAUSE_MASK;
   unsigned int save;
-  tree saved_for_stmt = NULL;
-
 
   if (cp_lexer_next_token_is_keyword (parser->lexer, RID_FOR))
     {
@@ -21938,7 +21936,7 @@ cp_parser_omp_parallel (cp_parser *parser, cp_token *pragma_tok)
 
     case PRAGMA_OMP_PARALLEL_FOR:
       c_split_parallel_clauses (clauses, &par_clause, &ws_clause);
-      saved_for_stmt = cp_parser_omp_for_loop (parser, ws_clause, &par_clause);
+      cp_parser_omp_for_loop (parser, ws_clause, &par_clause);
       break;
 
     case PRAGMA_OMP_PARALLEL_SECTIONS:
@@ -21953,12 +21951,9 @@ cp_parser_omp_parallel (cp_parser *parser, cp_token *pragma_tok)
     }
 
   cp_parser_end_omp_structured_block (parser, save);
-  stmt = finish_omp_parallel (pragma_tok->location, par_clause, block);
+  stmt = finish_omp_parallel (par_clause, block);
   if (p_kind != PRAGMA_OMP_PARALLEL)
-    if (saved_for_stmt && OMP_FOR_NOT_COMBINED (saved_for_stmt)) 
-      OMP_PARALLEL_COMBINED (stmt) = 0;
-    else 
-      OMP_PARALLEL_COMBINED (stmt) = 1;
+    OMP_PARALLEL_COMBINED (stmt) = 1;
   return stmt;
 }
 

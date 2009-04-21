@@ -1412,10 +1412,6 @@ fnew-tp
 Common Report Var(flag_new_tp) Init(1)
 Support changed threadprivate behavior for Openmp3.0
 
-fcppiter
-Common Report Var(flag_cpp_iter) Init(1)
-Support c++ iterator for Openmp3.0
-
 tm_mode
 Common RejectNegative Var(flag_tm_mode, 1) Init(0) 
 Support transactional memory, ={none|htm|phtm|stm} 

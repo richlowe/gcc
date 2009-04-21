@@ -223,7 +223,7 @@ check_omp_for_incr_expr (tree exp, tree decl)
 
 tree
 c_finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
-		  tree incrv, tree body, tree pre_body, tree post_body)
+		  tree incrv, tree body, tree pre_body)
 {
   location_t elocus;
   bool fail = false;
@@ -447,19 +447,7 @@ c_finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
       OMP_FOR_PRE_BODY (t) = pre_body;
 
       SET_EXPR_LOCATION (t, locus);
-      ret = add_stmt (t); 
-      if (post_body)
-        {
-          if (TREE_CODE (post_body) == STATEMENT_LIST)
-            {
-              tree_stmt_iterator tsi;
-              for (tsi = tsi_start (post_body); !tsi_end_p (tsi); tsi_next (&tsi))
-                add_stmt (tsi_stmt (tsi));
-            }
-          else
-            add_stmt (post_body);
-         }
-       return ret;
+      return add_stmt (t); 
     }
 }
 
