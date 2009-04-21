@@ -1693,7 +1693,9 @@ tree_regimple (void)
            gimple_assign_set_lhs (stmt, build_array_ref (loc, TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1)));  
         }
 
-      gimple_regimplify_operands (stmt, &gsi);
+      if (gimple_code (stmt) != GIMPLE_LABEL
+          && gimple_code (stmt) != GIMPLE_GOTO)
+        gimple_regimplify_operands (stmt, &gsi);
     }
   pop_gimplify_context (NULL);
   

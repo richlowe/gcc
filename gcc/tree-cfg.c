@@ -528,7 +528,7 @@ make_edges (void)
 	      make_eh_edges (last);
 
 	      /* Some calls are known not to return.  */
-	      fallthru = !(call_expr_flags (last) & ECF_NORETURN);
+	      fallthru = !(gimple_call_flags (last) & ECF_NORETURN);
 	      break;
 
 	    case GIMPLE_ASSIGN:

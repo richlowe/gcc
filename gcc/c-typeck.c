@@ -2276,6 +2276,10 @@ build_external_ref (tree id, int fun, location_t loc)
   /* Recursive call does not count as usage.  */
   if (ref != current_function_decl) 
     {
+      /* gcc 4.4.0 move assemble_external to final.c when processing RTL.
+         Move it back here for IR backend. */
+      if (!skip_evaluation)
+        assemble_external (ref);
       TREE_USED (ref) = 1;
     }
 

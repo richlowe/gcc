@@ -5583,7 +5583,7 @@ dump_ir_modify (gimple stmt)
     abort();
   
   op0 = gimple_assign_lhs (stmt); /* left */
-  op1 = gimple_assign_rhs1 (stmt); /* right */
+  op1 = gimple_assign_rhs_to_tree (stmt); /* right */
     
   if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
       && TREE_CODE (CALL_EXPR_FN (op1)) == ADDR_EXPR)
@@ -7680,10 +7680,10 @@ dump_ir_stmt (gimple stmt)
           {
             if (TREE_CODE (op0) == MODIFY_EXPR)
               {
-	        /* FIXME: This should not be true.*/
                 tree left, right;
-		left = gimple_assign_lhs (op0); /* left */
-		right = gimple_assign_rhs1 (op0); /* right */
+		left = TREE_OPERAND (op0, 0); /* left */
+		right = TREE_OPERAND (op0, 1); /* right */
+	        /* FIXME: This should not be true.*/
 		abort ();
                 
                 /* case of 'return_expr (result_decl = var_decl)' */
@@ -7704,10 +7704,10 @@ dump_ir_stmt (gimple stmt)
                         TREE_USED (left) = 1;
                       }
                     else
-                      dump_ir_modify (op0);
+                      dump_ir_modify (gimple_build_assign (left, right));
                   }
                 else
-                  dump_ir_modify (op0);
+                  dump_ir_modify (gimple_build_assign (left, right));
               }
             else if (TREE_CODE (op0) != RESULT_DECL) /* new gcc case */
               {
@@ -8302,7 +8302,7 @@ dump_function_ir_statements (gimple_seq gseq)
           if (is_gimple_assign (cur) 
               && (op0 = gimple_assign_lhs (cur)) /* get lvalue */ 
               && (DECL_P (op0) && DECL_ARTIFICIAL (op0)) 
-              && (op1 = gimple_assign_rhs1 (cur)) /* get rvalue */ 
+              && (op1 = gimple_assign_rhs_to_tree (cur)) /* get rvalue */ 
               && TREE_CODE_CLASS (TREE_CODE (op1)) == tcc_comparison 
               && gimple_code (nxt) == GIMPLE_COND 
               && op0 == gimple_cond_code (nxt)) 
