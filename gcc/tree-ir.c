@@ -7654,18 +7654,31 @@ dump_ir_stmt (gimple stmt)
   switch (gimple_code (stmt))
     {
     case GIMPLE_CALL:
-      if ( gimple_call_fndecl (stmt)
+      {
+        IR_NODE * ir_op0 = 0, * ir_op1 = 0;
+
+        if (gimple_has_lhs (stmt))
+           ir_op0 = dump_ir_expr (gimple_call_lhs (stmt), MAP_FOR_ADDR); /* left. */
+
+        if ( gimple_call_fndecl (stmt)
           && DECL_BUILT_IN (gimple_call_fndecl (stmt)))
-        {       
           if (DECL_BUILT_IN_CLASS (gimple_call_fndecl (stmt))
               == BUILT_IN_FRONTEND)
             abort ();
           else
-            dump_ir_builtin_call (stmt, 0);
-          break;
-        }   
+	    if (gimple_has_lhs (stmt))
+              ir_op1 = dump_ir_builtin_call (stmt, 1);
+	    else
+	      dump_ir_builtin_call (stmt, 0);
+        else
+	  if (gimple_has_lhs (stmt))
+            ir_op1 = dump_ir_call (stmt, 1);
+          else
+	    dump_ir_call (stmt, 0/* procedure call*/);
 
-      dump_ir_call (stmt, 0/* procedure call*/);
+        if (gimple_has_lhs (stmt))
+          build_ir_triple (IR_ASSIGN, ir_op0, ir_op1, ir_op0->operand.type, NULL); 
+      }
       break;
     case GIMPLE_ASSIGN:
       dump_ir_modify (stmt);
@@ -7970,7 +7983,7 @@ dump_ir_stmt (gimple stmt)
       }
       break;
 
-    case ASM_EXPR:
+    case GIMPLE_ASM:
       {
 #if 0 /*FIXME */
         tree _string = ASM_STRING (stmt);
