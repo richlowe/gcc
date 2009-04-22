@@ -7024,6 +7024,68 @@ conv_c99_treecode2ir (tree node)
     }
 }
 
+/* We could map the builtin's below to appropriate call in atomics.h on S10. 
+   If can't, return NULL and later use inline templates. */
+static char *
+map_sync2solaris_fname (enum built_in_function fcode)
+{
+  switch (fcode)
+    {
+    case BUILT_IN_ADD_AND_FETCH_N:
+      return "atomic_add_32";
+    case BUILT_IN_ADD_AND_FETCH_1:
+      return "atomic_add_8";
+    case BUILT_IN_ADD_AND_FETCH_2:
+      return "atomic_add_16";
+    case BUILT_IN_ADD_AND_FETCH_4:
+      return "atomic_add_32";
+    case BUILT_IN_ADD_AND_FETCH_8:
+      return "atomic_add_64";
+    case BUILT_IN_OR_AND_FETCH_N:
+      return "atomic_or_32";
+    case BUILT_IN_OR_AND_FETCH_1:
+      return "atomic_or_8";
+    case BUILT_IN_OR_AND_FETCH_2:
+      return "atomic_or_16";
+    case BUILT_IN_OR_AND_FETCH_4:
+      return "atomic_or_32";
+    case BUILT_IN_OR_AND_FETCH_8:
+      return "atomic_or_64";
+    case BUILT_IN_AND_AND_FETCH_N:
+      return "atomic_and_32";
+    case BUILT_IN_AND_AND_FETCH_1:
+      return "atomic_and_8";
+    case BUILT_IN_AND_AND_FETCH_2:
+      return "atomic_and_16";
+    case BUILT_IN_AND_AND_FETCH_4:
+      return "atomic_and_32";
+    case BUILT_IN_AND_AND_FETCH_8:
+      return "atomic_and_64";
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_N:
+      return "atomic_cas_32";
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
+      return "atomic_cas_8";
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
+      return "atomic_cas_16";
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
+      return "atomic_cas_32";
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
+      return "atomic_cas_64";
+    case BUILT_IN_LOCK_TEST_AND_SET_N:
+      return "atomic_swap_32";
+    case BUILT_IN_LOCK_TEST_AND_SET_1:
+      return "atomic_swap_8";
+    case BUILT_IN_LOCK_TEST_AND_SET_2:
+      return "atomic_swap_16";
+    case BUILT_IN_LOCK_TEST_AND_SET_4:
+      return "atomic_swap_32";
+    case BUILT_IN_LOCK_TEST_AND_SET_8:
+      return "atomic_swap_64";
+    default: 
+      return NULL;
+    }
+}
+
 static IR_NODE *
 dump_ir_builtin_call (tree stmt, int need_return)
 {
@@ -7291,6 +7353,139 @@ dump_ir_builtin_call (tree stmt, int need_return)
     case BUILT_IN_SYNCHRONIZE:
       dump_omp_flush (stmt);
       break;
+
+    /* We could map all the builtin's below to
+       appropriate call in atomics.h on S10. */
+    case BUILT_IN_FETCH_AND_ADD_N:
+    case BUILT_IN_FETCH_AND_ADD_1:
+    case BUILT_IN_FETCH_AND_ADD_2:
+    case BUILT_IN_FETCH_AND_ADD_4:
+    case BUILT_IN_FETCH_AND_ADD_8:
+    case BUILT_IN_FETCH_AND_ADD_16:
+    case BUILT_IN_FETCH_AND_SUB_N:
+    case BUILT_IN_FETCH_AND_SUB_1:
+    case BUILT_IN_FETCH_AND_SUB_2:
+    case BUILT_IN_FETCH_AND_SUB_4:
+    case BUILT_IN_FETCH_AND_SUB_8:
+    case BUILT_IN_FETCH_AND_SUB_16:
+    case BUILT_IN_FETCH_AND_OR_N:
+    case BUILT_IN_FETCH_AND_OR_1:
+    case BUILT_IN_FETCH_AND_OR_2:
+    case BUILT_IN_FETCH_AND_OR_4:
+    case BUILT_IN_FETCH_AND_OR_8:
+    case BUILT_IN_FETCH_AND_OR_16:
+    case BUILT_IN_FETCH_AND_AND_N:
+    case BUILT_IN_FETCH_AND_AND_1:
+    case BUILT_IN_FETCH_AND_AND_2:
+    case BUILT_IN_FETCH_AND_AND_4:
+    case BUILT_IN_FETCH_AND_AND_8:
+    case BUILT_IN_FETCH_AND_AND_16:
+    case BUILT_IN_FETCH_AND_XOR_N:
+    case BUILT_IN_FETCH_AND_XOR_1:
+    case BUILT_IN_FETCH_AND_XOR_2:
+    case BUILT_IN_FETCH_AND_XOR_4:
+    case BUILT_IN_FETCH_AND_XOR_8:
+    case BUILT_IN_FETCH_AND_XOR_16:
+    case BUILT_IN_FETCH_AND_NAND_N:
+    case BUILT_IN_FETCH_AND_NAND_1:
+    case BUILT_IN_FETCH_AND_NAND_2:
+    case BUILT_IN_FETCH_AND_NAND_4:
+    case BUILT_IN_FETCH_AND_NAND_8:
+    case BUILT_IN_FETCH_AND_NAND_16:
+    case BUILT_IN_ADD_AND_FETCH_N:
+    case BUILT_IN_ADD_AND_FETCH_1:
+    case BUILT_IN_ADD_AND_FETCH_2:
+    case BUILT_IN_ADD_AND_FETCH_4:
+    case BUILT_IN_ADD_AND_FETCH_8:
+    case BUILT_IN_ADD_AND_FETCH_16:
+    case BUILT_IN_SUB_AND_FETCH_N:
+    case BUILT_IN_SUB_AND_FETCH_1:
+    case BUILT_IN_SUB_AND_FETCH_2:
+    case BUILT_IN_SUB_AND_FETCH_4:
+    case BUILT_IN_SUB_AND_FETCH_8:
+    case BUILT_IN_SUB_AND_FETCH_16:
+    case BUILT_IN_OR_AND_FETCH_N:
+    case BUILT_IN_OR_AND_FETCH_1:
+    case BUILT_IN_OR_AND_FETCH_2:
+    case BUILT_IN_OR_AND_FETCH_4:
+    case BUILT_IN_OR_AND_FETCH_8:
+    case BUILT_IN_OR_AND_FETCH_16:
+    case BUILT_IN_AND_AND_FETCH_N:
+    case BUILT_IN_AND_AND_FETCH_1:
+    case BUILT_IN_AND_AND_FETCH_2:
+    case BUILT_IN_AND_AND_FETCH_4:
+    case BUILT_IN_AND_AND_FETCH_8:
+    case BUILT_IN_AND_AND_FETCH_16:
+    case BUILT_IN_XOR_AND_FETCH_N:
+    case BUILT_IN_XOR_AND_FETCH_1:
+    case BUILT_IN_XOR_AND_FETCH_2:
+    case BUILT_IN_XOR_AND_FETCH_4:
+    case BUILT_IN_XOR_AND_FETCH_8:
+    case BUILT_IN_XOR_AND_FETCH_16:
+    case BUILT_IN_NAND_AND_FETCH_N:
+    case BUILT_IN_NAND_AND_FETCH_1:
+    case BUILT_IN_NAND_AND_FETCH_2:
+    case BUILT_IN_NAND_AND_FETCH_4:
+    case BUILT_IN_NAND_AND_FETCH_8:
+    case BUILT_IN_NAND_AND_FETCH_16:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_N:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_1:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_2:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
+    case BUILT_IN_BOOL_COMPARE_AND_SWAP_16:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_N:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
+    case BUILT_IN_VAL_COMPARE_AND_SWAP_16:
+    case BUILT_IN_LOCK_TEST_AND_SET_N:
+    case BUILT_IN_LOCK_TEST_AND_SET_1:
+    case BUILT_IN_LOCK_TEST_AND_SET_2:
+    case BUILT_IN_LOCK_TEST_AND_SET_4:
+    case BUILT_IN_LOCK_TEST_AND_SET_8:
+    case BUILT_IN_LOCK_TEST_AND_SET_16:
+    case BUILT_IN_LOCK_RELEASE_N:
+    case BUILT_IN_LOCK_RELEASE_1:
+    case BUILT_IN_LOCK_RELEASE_2:
+    case BUILT_IN_LOCK_RELEASE_4:
+    case BUILT_IN_LOCK_RELEASE_8:
+    case BUILT_IN_LOCK_RELEASE_16:
+    {
+      char * fname;
+
+#ifdef __linux__
+      tree fn;
+
+      fn = build_decl (FUNCTION_DECL, get_identifier ("membar_enter"),
+                       build_function_type (void_type_node, NULL_TREE));
+      DECL_ARTIFICIAL (fn) = 1;
+      DECL_EXTERNAL (fn) = 1;
+      TREE_PUBLIC (fn) = 1;
+      TREE_NOTHROW (fn) = 1;
+      DECL_IN_SYSTEM_HEADER (fn) = 1;
+
+      fn = build_function_call_expr (fn, NULL_TREE);
+      dump_ir_call (fn, 0);
+#endif
+
+      fname = map_sync2solaris_fname (fcode);
+      if (fname)
+        {
+          stmt = build_decl (FUNCTION_DECL, get_identifier (fname), 
+                             build_function_type (TREE_TYPE (stmt), 
+                                                  TYPE_ARG_TYPES (TREE_TYPE (fndecl)))); 
+          DECL_ARTIFICIAL (stmt) = 1;
+          DECL_EXTERNAL (stmt) = 1;
+          DECL_IN_SYSTEM_HEADER (stmt) = 1;
+          TREE_PUBLIC (stmt) = 1;
+          TREE_NOTHROW (stmt) = 1;
+          stmt = build_function_call_expr (stmt, arglist);
+        }
+
+      return dump_ir_call (stmt, need_return);
+    }
 
     case BUILT_IN_LNI_START:
       push_lni_inline_context (stmt);
@@ -11666,107 +11861,6 @@ sunir_check_builtin_handling (tree function)
     case BUILT_IN_VSNPRINTF_CHK:
     case BUILT_IN_SPRINTF_CHK:
     case BUILT_IN_VSPRINTF_CHK:
-    /* We could map all the builtin's below to
-       appropriate call in atomics.h on S10. However, since
-       we need to support this on S9 also, its too much work
-       for now to handle multiple versions of all these
-       synchronization interfaces. For now punt to RTL */
-    case BUILT_IN_FETCH_AND_ADD_N:
-    case BUILT_IN_FETCH_AND_ADD_1:
-    case BUILT_IN_FETCH_AND_ADD_2:
-    case BUILT_IN_FETCH_AND_ADD_4:
-    case BUILT_IN_FETCH_AND_ADD_8:
-    case BUILT_IN_FETCH_AND_ADD_16:
-    case BUILT_IN_FETCH_AND_SUB_N:
-    case BUILT_IN_FETCH_AND_SUB_1:
-    case BUILT_IN_FETCH_AND_SUB_2:
-    case BUILT_IN_FETCH_AND_SUB_4:
-    case BUILT_IN_FETCH_AND_SUB_8:
-    case BUILT_IN_FETCH_AND_SUB_16:
-    case BUILT_IN_FETCH_AND_OR_N:
-    case BUILT_IN_FETCH_AND_OR_1:
-    case BUILT_IN_FETCH_AND_OR_2:
-    case BUILT_IN_FETCH_AND_OR_4:
-    case BUILT_IN_FETCH_AND_OR_8:
-    case BUILT_IN_FETCH_AND_OR_16:
-    case BUILT_IN_FETCH_AND_AND_N:
-    case BUILT_IN_FETCH_AND_AND_1:
-    case BUILT_IN_FETCH_AND_AND_2:
-    case BUILT_IN_FETCH_AND_AND_4:
-    case BUILT_IN_FETCH_AND_AND_8:
-    case BUILT_IN_FETCH_AND_AND_16:
-    case BUILT_IN_FETCH_AND_XOR_N:
-    case BUILT_IN_FETCH_AND_XOR_1:
-    case BUILT_IN_FETCH_AND_XOR_2:
-    case BUILT_IN_FETCH_AND_XOR_4:
-    case BUILT_IN_FETCH_AND_XOR_8:
-    case BUILT_IN_FETCH_AND_XOR_16:
-    case BUILT_IN_FETCH_AND_NAND_N:
-    case BUILT_IN_FETCH_AND_NAND_1:
-    case BUILT_IN_FETCH_AND_NAND_2:
-    case BUILT_IN_FETCH_AND_NAND_4:
-    case BUILT_IN_FETCH_AND_NAND_8:
-    case BUILT_IN_FETCH_AND_NAND_16:
-    case BUILT_IN_ADD_AND_FETCH_N:
-    case BUILT_IN_ADD_AND_FETCH_1:
-    case BUILT_IN_ADD_AND_FETCH_2:
-    case BUILT_IN_ADD_AND_FETCH_4:
-    case BUILT_IN_ADD_AND_FETCH_8:
-    case BUILT_IN_ADD_AND_FETCH_16:
-    case BUILT_IN_SUB_AND_FETCH_N:
-    case BUILT_IN_SUB_AND_FETCH_1:
-    case BUILT_IN_SUB_AND_FETCH_2:
-    case BUILT_IN_SUB_AND_FETCH_4:
-    case BUILT_IN_SUB_AND_FETCH_8:
-    case BUILT_IN_SUB_AND_FETCH_16:
-    case BUILT_IN_OR_AND_FETCH_N:
-    case BUILT_IN_OR_AND_FETCH_1:
-    case BUILT_IN_OR_AND_FETCH_2:
-    case BUILT_IN_OR_AND_FETCH_4:
-    case BUILT_IN_OR_AND_FETCH_8:
-    case BUILT_IN_OR_AND_FETCH_16:
-    case BUILT_IN_AND_AND_FETCH_N:
-    case BUILT_IN_AND_AND_FETCH_1:
-    case BUILT_IN_AND_AND_FETCH_2:
-    case BUILT_IN_AND_AND_FETCH_4:
-    case BUILT_IN_AND_AND_FETCH_8:
-    case BUILT_IN_AND_AND_FETCH_16:
-    case BUILT_IN_XOR_AND_FETCH_N:
-    case BUILT_IN_XOR_AND_FETCH_1:
-    case BUILT_IN_XOR_AND_FETCH_2:
-    case BUILT_IN_XOR_AND_FETCH_4:
-    case BUILT_IN_XOR_AND_FETCH_8:
-    case BUILT_IN_XOR_AND_FETCH_16:
-    case BUILT_IN_NAND_AND_FETCH_N:
-    case BUILT_IN_NAND_AND_FETCH_1:
-    case BUILT_IN_NAND_AND_FETCH_2:
-    case BUILT_IN_NAND_AND_FETCH_4:
-    case BUILT_IN_NAND_AND_FETCH_8:
-    case BUILT_IN_NAND_AND_FETCH_16:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_N:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_1:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_2:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
-    case BUILT_IN_BOOL_COMPARE_AND_SWAP_16:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_N:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
-    case BUILT_IN_VAL_COMPARE_AND_SWAP_16:
-    case BUILT_IN_LOCK_TEST_AND_SET_N:
-    case BUILT_IN_LOCK_TEST_AND_SET_1:
-    case BUILT_IN_LOCK_TEST_AND_SET_2:
-    case BUILT_IN_LOCK_TEST_AND_SET_4:
-    case BUILT_IN_LOCK_TEST_AND_SET_8:
-    case BUILT_IN_LOCK_TEST_AND_SET_16:
-    case BUILT_IN_LOCK_RELEASE_N:
-    case BUILT_IN_LOCK_RELEASE_1:
-    case BUILT_IN_LOCK_RELEASE_2:
-    case BUILT_IN_LOCK_RELEASE_4:
-    case BUILT_IN_LOCK_RELEASE_8:
-    case BUILT_IN_LOCK_RELEASE_16:
     case BUILT_IN_BSWAP32:
     case BUILT_IN_BSWAP64:
       DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
