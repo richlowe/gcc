@@ -461,10 +461,10 @@ tree_coverage_counter_addr (unsigned counter, unsigned no)
   no += prg_n_ctrs[counter] + fn_b_ctrs[counter];
 
   /* "no" here is an array index, scaled to bytes later.  */
-  return build_fold_addr_expr (build4 (ARRAY_REF, gcov_type_node,
+  return build_fold_addr_expr (build5 (ARRAY_REF, gcov_type_node,
 				       tree_ctr_tables[counter],
 				       build_int_cst (NULL_TREE, no),
-				       NULL, NULL));
+				       NULL, NULL, NULL));
 }
 
 /* Generate a checksum for a string.  CHKSUM is the current

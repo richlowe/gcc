@@ -5351,8 +5351,8 @@ build_string_literal (int len, const char *str)
 
   type = build_pointer_type (elem);
   t = build1 (ADDR_EXPR, type,
-	      build4 (ARRAY_REF, elem,
-		      t, integer_zero_node, NULL_TREE, NULL_TREE));
+	      build5 (ARRAY_REF, elem,
+		      t, integer_zero_node, NULL_TREE, NULL_TREE, NULL_TREE));
   return t;
 }
 
