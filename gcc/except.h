@@ -108,7 +108,7 @@ extern int  in_must_not_throw_region (tree);
 extern void generate_cfun_eh_filters (void);
 extern void generate_cfun_landing_pads (int exit_label);
 extern void generate_special_landing_pads (int exit_label, int region_number);
-extern void dump_ir_resx_expr (tree);
+extern void dump_ir_resx_expr (gimple);
 extern int eh_region_type_may_throw (struct eh_region*);
 extern void *build_eh_leaf (int action_num);
 

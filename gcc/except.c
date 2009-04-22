@@ -81,6 +81,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "ir/ir_common.h"
 #include "tree-ir.h"
 #include "c-common.h"
+#include "gimple.h"
 
 /* Provide defaults for stuff that may not be defined when using
    sjlj exceptions.  */
@@ -1004,10 +1005,10 @@ generate_cfun_eh_filters (void)
 }
 
 void
-dump_ir_resx_expr (tree stmt)
+dump_ir_resx_expr (gimple stmt)
 {
   /* similar to expand_resx_expr but generate IR */
-  int region_nr = TREE_INT_CST_LOW (TREE_OPERAND (stmt, 0));
+  int region_nr = gimple_resx_region (stmt);
   struct eh_region *region;
   region = VEC_index (eh_region, cfun->eh->region_array, region_nr);
   if (region)

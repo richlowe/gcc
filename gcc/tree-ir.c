@@ -8113,7 +8113,7 @@ dump_ir_stmt (gimple stmt)
       }
       break;
     
-    case RESX_EXPR:
+    case GIMPLE_RESX:
       dump_ir_resx_expr (stmt);
       break;              
 
