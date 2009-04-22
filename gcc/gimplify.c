@@ -7056,7 +7056,8 @@ gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 	      goto dont_recalculate;
 
 	    default:
-	      gcc_assert (TREE_CODE (*expr_p) == TRUTH_AND_EXPR
+              if (gate_generate_rtl())
+	        gcc_assert (TREE_CODE (*expr_p) == TRUTH_AND_EXPR
 			  || TREE_CODE (*expr_p) == TRUTH_OR_EXPR
 			  || TREE_CODE (*expr_p) == TRUTH_XOR_EXPR);
 	      goto expr_2;

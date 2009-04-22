@@ -473,7 +473,8 @@ gimple_build_cond (enum tree_code pred_code, tree lhs, tree rhs,
 {
   gimple p;
 
-  gcc_assert (TREE_CODE_CLASS (pred_code) == tcc_comparison);
+  if (gate_generate_rtl())
+    gcc_assert (TREE_CODE_CLASS (pred_code) == tcc_comparison);
   p = gimple_build_with_ops (GIMPLE_COND, pred_code, 4);
   gimple_cond_set_lhs (p, lhs);
   gimple_cond_set_rhs (p, rhs);
@@ -505,7 +506,7 @@ gimple_cond_get_ops_from_tree (tree cond, enum tree_code *code_p,
       *rhs_p = fold_convert (TREE_TYPE (*lhs_p), integer_zero_node);
     }
   /* Canonicalize conditionals of the form 'if (VAL)'  */
-  else if (TREE_CODE_CLASS (*code_p) != tcc_comparison)
+  else if (TREE_CODE_CLASS (*code_p) != tcc_comparison && *rhs_p == NULL_TREE)
     {
       *code_p = NE_EXPR;
       gcc_assert (*lhs_p && *rhs_p == NULL_TREE);
