@@ -4652,10 +4652,10 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
               == BUILT_IN_FRONTEND)
             abort ();
           else
-            ret = dump_ir_builtin_call (stmt, 1);
+            ret = dump_ir_builtin_call (gimple_build_call_from_tree (stmt), 1);
           break;
         }
-      ret = dump_ir_call (stmt, 1/* function call. need return value*/);
+      ret = dump_ir_call (gimple_build_call_from_tree (stmt), 1/* function call. need return value*/);
       break;
     case LABEL_DECL:
       ret = 0;
