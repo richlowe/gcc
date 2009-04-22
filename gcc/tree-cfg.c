@@ -3322,7 +3322,7 @@ verify_gimple_assign_unary (gimple stmt)
   tree rhs1 = gimple_assign_rhs1 (stmt);
   tree rhs1_type = TREE_TYPE (rhs1);
 
-  if (!is_gimple_reg (lhs)
+  if (gate_generate_rtl () && !is_gimple_reg (lhs)
       && !(optimize == 0
 	   && TREE_CODE (lhs_type) == COMPLEX_TYPE))
     {
@@ -3465,7 +3465,7 @@ verify_gimple_assign_binary (gimple stmt)
   tree rhs2 = gimple_assign_rhs2 (stmt);
   tree rhs2_type = TREE_TYPE (rhs2);
 
-  if (!is_gimple_reg (lhs)
+  if (gate_generate_rtl () && !is_gimple_reg (lhs)
       && !(optimize == 0
 	   && TREE_CODE (lhs_type) == COMPLEX_TYPE))
     {
@@ -3729,7 +3729,7 @@ verify_gimple_assign_single (gimple stmt)
     case REALPART_EXPR:
     case IMAGPART_EXPR:
     case TARGET_MEM_REF:
-      if (!is_gimple_reg (lhs)
+      if (gate_generate_rtl () && !is_gimple_reg (lhs)
 	  && is_gimple_reg_type (TREE_TYPE (lhs)))
 	{
 	  error ("invalid rhs for gimple memory store");
@@ -3754,7 +3754,7 @@ verify_gimple_assign_single (gimple stmt)
       return res;
     case VAR_DECL:
     case PARM_DECL:
-      if (!is_gimple_reg (lhs)
+      if (gate_generate_rtl () && !is_gimple_reg (lhs)
 	  && !is_gimple_reg (rhs1)
 	  && is_gimple_reg_type (TREE_TYPE (lhs)))
 	{
