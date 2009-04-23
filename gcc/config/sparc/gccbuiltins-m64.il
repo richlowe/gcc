@@ -165,9 +165,6 @@
 .alias  __sync_fetch_and_add = __sync_fetch_and_add_4
 
 .inline __sync_fetch_and_add_8, 2
-  sllx	%o1, 32, %o1		! upper 32 in %o1, lower in %o2
-  srl	%o2, 0, %o2
-  add	%o1, %o2, %o1		! convert 2 32-bit args into 1 64-bit
   ldx	[%o0], %o2
 1:
   add	%o2, %o1, %o3
@@ -175,8 +172,7 @@
   cmp	%o2, %o3
   bne,a,pn %xcc, 1b
   mov	%o3, %o2
-  mov   %o2, %o1		! return lower 32-bits in %o1
-  srlx	%o1, 32, %o0		! return upper 32-bits in %o0
+  mov   %o2, %o0		! %o0 = old value for return
 .end
 
 .inline __sync_fetch_and_sub_1, 2
@@ -240,9 +236,6 @@
 .alias __sync_fetch_and_sub = __sync_fetch_and_sub_4
 
 .inline __sync_fetch_and_sub_8, 2
-  sllx	%o1, 32, %o1		! upper 32 in %o1, lower in %o2
-  srl	%o2, 0, %o2
-  add	%o1, %o2, %o1		! convert 2 32-bit args into 1 64-bit
   ldx	[%o0], %o2
 1:
   sub	%o2, %o1, %o3
@@ -250,8 +243,7 @@
   cmp	%o2, %o3
   bne,a,pn %xcc, 1b
   mov	%o3, %o2
-  mov   %o2, %o1		! return lower 32-bits in %o1
-  srlx	%o1, 32, %o0		! return upper 32-bits in %o0
+  mov   %o2, %o0		! return old value
 .end
 
 .inline __sync_fetch_and_or_1, 2
@@ -309,9 +301,6 @@
 .alias __sync_fetch_and_or = __sync_fetch_and_or_4
 
 .inline __sync_fetch_and_or_8, 2
-  sllx	%o1, 32, %o1		! upper 32 in %o1, lower in %o2
-  srl	%o2, 0, %o2
-  add	%o1, %o2, %o1		! convert 2 32-bit args into 1 64-bit
   ldx	[%o0], %o2
 1:
   or	%o2, %o1, %o3
@@ -319,8 +308,7 @@
   cmp	%o2, %o3
   bne,a,pn %xcc, 1b
   mov	%o3, %o2
-  mov	%o2, %o1		! return lower 32-bits in %o1
-  srlx	%o1, 32, %o0		! return upper 32-bits in %o0
+  mov	%o2, %o0		! return old value
 .end
 
 .inline __sync_fetch_and_and_1, 2
@@ -432,9 +420,6 @@
 .alias __sync_fetch_and_nand = __sync_fetch_and_nand_4
 
 .inline __sync_fetch_and_and_8, 2
-  sllx	%o1, 32, %o1		! upper 32 in %o1, lower in %o2
-  srl	%o2, 0, %o2
-  add	%o1, %o2, %o1		! convert 2 32-bit args into 1 64-bit
   ldx	[%o0], %o2
 1:
   and	%o2, %o1, %o3
@@ -442,14 +427,10 @@
   cmp	%o2, %o3
   bne,a,pn %xcc, 1b
   mov	%o3, %o2
-  mov	%o2, %o1		! return lower 32-bits in %o1
-  srlx	%o1, 32, %o0		! return upper 32-bits in %o0
+  mov	%o2, %o0		! return old value
 .end
 
 .inline __sync_fetch_and_nand_8, 2
-  sllx	%o1, 32, %o1		! upper 32 in %o1, lower in %o2
-  srl	%o2, 0, %o2
-  add	%o1, %o2, %o1		! convert 2 32-bit args into 1 64-bit
   ldx	[%o0], %o2
 1:
   andn	%o2, %o1, %o3
@@ -457,8 +438,7 @@
   cmp	%o2, %o3
   bne,a,pn %xcc, 1b
   mov	%o3, %o2
-  mov	%o2, %o1		! return lower 32-bits in %o1
-  srlx	%o1, 32, %o0		! return upper 32-bits in %o0
+  mov	%o2, %o0		! return old value
 .end
 
 .inline __sync_fetch_and_xor_1, 2
@@ -516,9 +496,6 @@
 .alias __sync_fetch_and_xor = __sync_fetch_and_xor_4
 
 .inline __sync_fetch_and_xor_8, 2
-  sllx  %o1, 32, %o1            ! upper 32 in %o1, lower in %o2
-  srl   %o2, 0, %o2
-  add   %o1, %o2, %o1           ! convert 2 32-bit args into 1 64-bit
   ldx   [%o0], %o2
 1:
   xor	%o2, %o1, %o3
@@ -526,8 +503,7 @@
   cmp   %o2, %o3
   bne,a,pn %xcc, 1b
   mov   %o3, %o2
-  mov   %o2, %o1                ! return lower 32-bits in %o1
-  srlx  %o1, 32, %o0            ! return upper 32-bits in %o0
+  mov   %o2, %o0                ! return old value
 .end
 
 .inline __sync_xor_and_fetch_1, 2
@@ -587,9 +563,6 @@
 .alias __sync_xor_and_fetch = __sync_xor_and_fetch_4
 
 .inline __sync_xor_and_fetch_8, 2
-  sllx  %o1, 32, %o1            ! upper 32 in %o1, lower in %o2
-  srl   %o2, 0, %o2
-  add   %o1, %o2, %o1           ! convert 2 32-bit args into 1 64-bit
   ldx   [%o0], %o2
 1:
   xor   %o2, %o1, %o3
@@ -597,8 +570,7 @@
   cmp   %o2, %o3
   bne,a,pn %xcc, 1b
   mov   %o3, %o2
-  xor	%o2, %o1, %o1		! return lower 32-bits in %o1
-  srlx  %o1, 32, %o0            ! return upper 32-bits in %o0
+  xor	%o2, %o1, %o0		! return new value
 .end
 
 .inline __sync_sub_and_fetch_1, 2
@@ -664,9 +636,6 @@
 .alias __sync_sub_and_fetch = __sync_sub_and_fetch_4
 
 .inline __sync_sub_and_fetch_8, 2
-  sllx  %o1, 32, %o1            ! upper 32 in %o1, lower in %o2
-  srl   %o2, 0, %o2
-  add   %o1, %o2, %o1           ! convert 2 32-bit args into 1 64-bit
   ldx   [%o0], %o2
 1:
   sub   %o2, %o1, %o3
@@ -674,8 +643,7 @@
   cmp   %o2, %o3
   bne,a,pn %xcc, 1b
   mov   %o3, %o2
-  sub   %o2, %o1, %o1		! return lower 32-bits in %o1
-  srlx  %o1, 32, %o0            ! return upper 32-bits in %o0
+  sub   %o2, %o1, %o0		! return new value
 .end
 
 .inline __sync_nand_and_fetch_1, 2
@@ -735,9 +703,6 @@
 .alias __sync_nand_and_fetch = __sync_nand_and_fetch_4
 
 .inline __sync_nand_and_fetch_8, 2
-  sllx  %o1, 32, %o1            ! upper 32 in %o1, lower in %o2
-  srl   %o2, 0, %o2
-  add   %o1, %o2, %o1           ! convert 2 32-bit args into 1 64-bit
   ldx   [%o0], %o2
 1:
   andn	%o2, %o1, %o3
@@ -745,8 +710,7 @@
   cmp   %o2, %o3
   bne,a,pn %xcc, 1b
   mov   %o3, %o2
-  andn	%o2, %o1, %o1		! return lower 32-bits in %o1
-  srlx  %o1, 32, %o0            ! return upper 32-bits in %o0
+  andn	%o2, %o1, %o0		! return new value
 .end
 
 .inline __sync_bool_compare_and_swap_1, 2
@@ -818,12 +782,6 @@
 .alias __sync_bool_compare_and_swap = __sync_bool_compare_and_swap_4
 
 .inline __sync_bool_compare_and_swap_8, 2
-  sllx	%o1, 32, %o1		! cmp's upper 32 in %o1, lower in %o2
-  srl	%o2, 0, %o2		! convert 2 32-bit args into 1 64-bit
-  add	%o1, %o2, %o1
-  sllx	%o3, 32, %o2		! newval upper 32 in %o3, lower in %o4
-  srl	%o4, 0, %o4		! setup %o2 to have newval
-  add	%o2, %o4, %o2
   casx	[%o0], %o1, %o2
   cmp   %o1, %o2
   or    %g0, 0, %o0
