@@ -1001,12 +1001,6 @@ DEFTREECODE (TARGET_MEM_REF, "target_mem_ref", tcc_reference, 7)
 
 DEFTREECODE (OMP_PARALLEL, "omp_parallel", tcc_statement, 2)
 
-/* OpenMP - #pragma omp task [clause1 ... clauseN]
-   Operand 0: OMP_TASK_BODY: Code to be executed by all threads.
-   Operand 1: OMP_TASK_CLAUSES: List of clauses.  */
-
-DEFTREECODE (OMP_TASK, "omp_task", tcc_statement, 2)
-
 /* OpenMP - #pragma omp for [clause1 ... clauseN]
    Operand 0: OMP_FOR_BODY: Loop body.
    Operand 1: OMP_FOR_CLAUSES: List of clauses.

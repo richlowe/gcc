@@ -509,7 +509,7 @@ gimple_cond_get_ops_from_tree (tree cond, enum tree_code *code_p,
   else if (TREE_CODE_CLASS (*code_p) != tcc_comparison && *rhs_p == NULL_TREE)
     {
       *code_p = NE_EXPR;
-      gcc_assert (*lhs_p && *rhs_p == NULL_TREE);
+      gcc_assert (*lhs_p);
       *rhs_p = fold_convert (TREE_TYPE (*lhs_p), integer_zero_node);
     }
 }
