@@ -617,7 +617,7 @@ get_landing_label (struct eh_region *r)
 }
 
 int
-in_must_not_throw_region (tree stmt)
+in_must_not_throw_region (gimple stmt)
 {
   int n = lookup_stmt_eh_region (stmt);
   struct eh_region *region;
@@ -633,7 +633,7 @@ in_must_not_throw_region (tree stmt)
 }
 
 struct eh_region *
-find_eh_region (tree stmt)
+find_eh_region (gimple stmt)
 {
   int n = lookup_stmt_eh_region (stmt);
   struct eh_region *region;
@@ -993,7 +993,7 @@ generate_cfun_eh_filters (void)
   /* Simply use assign_filter_values, which has no bad side effect yet. */
   assign_filter_values ();
   /* prepare hash table to generate action for each PBRANCH */
-  VARRAY_UCHAR_INIT (cfun->eh->action_record_data, 64, "action_record_data");
+  VARRAY_UCHAR_INIT (crtl->eh.action_record_data, 64, "action_record_data");
   gcc2ir_ar_hash = htab_create (31, action_record_hash, action_record_eq, free);
   if (!flag_use_rtl_backend)
     {

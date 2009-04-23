@@ -7658,7 +7658,7 @@ dump_ir_stmt (gimple stmt)
         IR_NODE * ir_op0 = 0, * ir_op1 = 0;
 
         if (gimple_has_lhs (stmt))
-           ir_op0 = dump_ir_expr (gimple_call_lhs (stmt), MAP_FOR_ADDR); /* left. */
+           ir_op0 = dump_ir_expr (gimple_call_lhs (stmt), MAP_FOR_VALUE); /* ? left. */
 
         if ( gimple_call_fndecl (stmt)
           && DECL_BUILT_IN (gimple_call_fndecl (stmt)))

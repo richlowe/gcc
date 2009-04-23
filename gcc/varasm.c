@@ -6102,34 +6102,38 @@ default_unique_section (tree decl, int reloc)
   switch (categorize_decl_for_section (decl, reloc))
     {
     case SECCAT_TEXT:
-      prefix = one_only ? ".t" : ".text";
+      prefix = one_only ? ".gnu.linkonce.t" : ".text";
       break;
     case SECCAT_RODATA:
     case SECCAT_RODATA_MERGE_STR:
     case SECCAT_RODATA_MERGE_STR_INIT:
     case SECCAT_RODATA_MERGE_CONST:
-      prefix = one_only ? ".r" : ".rodata";
+      prefix = one_only ? ".gnu.linkonce.r" : ".rodata";
       break;
     case SECCAT_SRODATA:
-      prefix = one_only ? ".s2" : ".sdata2";
+      prefix = one_only ? ".gnu.linkonce.s2" : ".sdata2";
       break;
     case SECCAT_DATA:
+    case SECCAT_DATA_REL:
+    case SECCAT_DATA_REL_LOCAL:
+    case SECCAT_DATA_REL_RO:
+    case SECCAT_DATA_REL_RO_LOCAL:
       prefix = one_only ? ".gnu.linkonce.d." : ".data.";
       break;
     case SECCAT_SDATA:
-      prefix = one_only ? ".s" : ".sdata";
+      prefix = one_only ? ".gnu.linkonce.s" : ".sdata";
       break;
     case SECCAT_BSS:
-      prefix = one_only ? ".b" : ".bss";
+      prefix = one_only ? ".gnu.linkonce.b" : ".bss";
       break;
     case SECCAT_SBSS:
-      prefix = one_only ? ".sb" : ".sbss";
+      prefix = one_only ? ".gnu.linkonce.sb" : ".sbss";
       break;
     case SECCAT_TDATA:
-      prefix = one_only ? ".td" : ".tdata";
+      prefix = one_only ? ".gnu.linkonce.td" : ".tdata";
       break;
     case SECCAT_TBSS:
-      prefix = one_only ? ".tb" : ".tbss";
+      prefix = one_only ? ".gnu.linkonce.tb" : ".tbss";
       break;
     case SECCAT_EMUTLS_VAR:
       prefix = targetm.emutls.var_section;
