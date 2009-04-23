@@ -2793,7 +2793,7 @@ mangle_decl_string (const tree decl)
       && TREE_STATIC (decl) 
       && globalize_flag && !TREE_PUBLIC (decl))
     {
-      result = make_global_name (result, 
+      char * tmp = make_global_name (IDENTIFIER_POINTER (result), 
                                  0/* don't add function suffix to
                                      globalized name in C++ */,
                                  DECL_CONTEXT (decl)/* for future use*/);
@@ -2801,8 +2801,8 @@ mangle_decl_string (const tree decl)
       DECL_VISIBILITY (decl) = VISIBILITY_HIDDEN;
 
       start_mangling (0);
-      write_string (result);
-      result = finish_mangling (true);
+      write_string (tmp);
+      result = finish_mangling_get_identifier (true);
     }
     
   if (DEBUG_MANGLE)
