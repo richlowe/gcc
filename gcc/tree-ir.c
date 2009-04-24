@@ -8179,7 +8179,7 @@ dump_ir_stmt (gimple stmt)
             
     default:
       if (!quiet_flag)
-        debug_tree (stmt);
+        debug_gimple_stmt (stmt);
       break;
     }
 }

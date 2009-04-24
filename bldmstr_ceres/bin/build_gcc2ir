@@ -57,7 +57,7 @@ case "$OS_NAME" in
 	;;
 esac
 
-DEFAULT_SUN_DIR=/ws/gccfss/builds/4.3.2/current_gcc/SUNW0scgfss
+DEFAULT_SUN_DIR=/ws/gccfss/builds/$GCC_VERSION/current_gcc/SUNW0scgfss
 SPARC_INSTALL_DIR=
 ROOT=
 FORCE_BRINGOVER=0
@@ -1002,9 +1002,10 @@ do_bringover()
     else
         echo "Bringing over the gcc2ir source workspace $src_ws ...."
         $GIT clone -q --depth 1 $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir
+	(cd $ROOT/src ; $GIT checkout -q -b gccfss440 origin/gccfss440)
         echo "Untarring gmp amd mpfr into the source area ...."
         (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/gmp-4.2.1-renamed.tar.bz2 | tar xf -)
-        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/mpfr-2.3.0-renamed.tar.bz2 | tar xf - )
+        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/mpfr-2.4.1-renamed.tar.bz2 | tar xf - )
         echo "Bringover from $src_ws completed at $(date)" > \
              $ROOT/done/bringover.gcc2ir
     fi
@@ -1114,7 +1115,7 @@ then
 	    # use system 'as' during configure, gccfss driver will use 'fbe'
 	    export AS="/usr/ccs/bin/as"
 	    export AS_FOR_TARGET="/usr/ccs/bin/as"
-	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --enable-tls --with-as=/usr/ccs/bin/as --without-gnu-as"
+	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --enable-tls --with-as=/usr/ccs/bin/as --without-gnu-as --disable-bootstrap"
 	fi
 
 	# make sure $CONFIG_FLAGS is the last parameter on the list
