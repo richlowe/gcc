@@ -1215,7 +1215,7 @@ static const char *ssbe_optlevel =
 "%{O:-O3;\
    O0: %{xprofile=* : -O3  ;\
                     : -OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 \
-                           -gen_loclist_gcc=0} ;\
+                           -gen_loclist_gcc=1} ;\
    O1:-O3;\
    O2:-O3;\
    O3:-O5;\
@@ -1224,7 +1224,7 @@ static const char *ssbe_optlevel =
    Zfast:-O5 ;\
      : %{xprofile=* : -O3 ; \
                     : -OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 \
-                           -gen_loclist_gcc=0} }";
+                           -gen_loclist_gcc=1} }";
 
 /* some slightly different stuff for iropt */
 static const char *ssiropt_optlevel =
