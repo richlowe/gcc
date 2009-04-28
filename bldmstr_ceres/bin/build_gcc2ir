@@ -605,10 +605,11 @@ run_tests_installed()
   echo "Running tests for Objc and Fortran"
 
   FINAL_INSTALL_DIR=$INSTALL_DIR/usr
-  # Create links: gcc -> gcc-4.3.2, gfortran -> gfortran-4.3.2
+  # Create links: gcc -> gcc-$GCC_VERSION,
+  #          gfortran -> gfortran-$GCC_VERSION
   cd $FINAL_INSTALL_DIR/bin
-  ln -s gcc-4.3.2 gcc
-  ln -s gfortran-4.3.2 gfortran
+  ln -s gcc-$GCC_VERSION gcc
+  ln -s gfortran-$GCC_VERSION gfortran
 
   cd $ROOT/build.gcc2ir/gcc
 

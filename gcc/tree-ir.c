@@ -7469,9 +7469,9 @@ dump_ir_builtin_call (gimple stmt, int need_return)
     case BUILT_IN_LOCK_RELEASE_16:
     {
       char * fname;
+      tree fn;
 
 #ifdef __linux__
-      tree fn;
 
       fn = build_decl (FUNCTION_DECL, get_identifier ("membar_enter"),
                        build_function_type (void_type_node, NULL_TREE));
@@ -7482,21 +7482,21 @@ dump_ir_builtin_call (gimple stmt, int need_return)
       DECL_IN_SYSTEM_HEADER (fn) = 1;
 
       fn = build_function_call_expr (fn, NULL_TREE);
-      dump_ir_call (fn, 0);
+      dump_ir_call (gimple_build_call_from_tree(fn), 0);
 #endif
 
       fname = map_sync2solaris_fname (fcode);
       if (fname)
         {
-          stmt = build_decl (FUNCTION_DECL, get_identifier (fname), 
-                             build_function_type (TREE_TYPE (stmt), 
+          fn = build_decl (FUNCTION_DECL, get_identifier (fname), 
+                             build_function_type (gimple_call_return_type (stmt), 
                                                   TYPE_ARG_TYPES (TREE_TYPE (fndecl)))); 
-          DECL_ARTIFICIAL (stmt) = 1;
-          DECL_EXTERNAL (stmt) = 1;
-          DECL_IN_SYSTEM_HEADER (stmt) = 1;
-          TREE_PUBLIC (stmt) = 1;
-          TREE_NOTHROW (stmt) = 1;
-          stmt = build_function_call_expr (stmt, arglist);
+          DECL_ARTIFICIAL (fn) = 1;
+          DECL_EXTERNAL (fn) = 1;
+          TREE_PUBLIC (fn) = 1;
+          TREE_NOTHROW (fn) = 1;
+          fn = build_function_call_expr (fn, arglist);
+          stmt = gimple_build_call_from_tree (fn);
         }
 
       return dump_ir_call (stmt, need_return);
