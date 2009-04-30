@@ -12259,6 +12259,18 @@ finish_function (int flags)
   gcc_assert (!defer_mark_used_calls);
   defer_mark_used_calls = true;
 
+  if (flag_tm_mode)
+    {
+      tree fncon = DECL_CONTEXT (fndecl);
+      if (fncon && CLASS_TYPE_P (fncon))
+        {
+          DECL_IS_TM_ATOMIC_P (fndecl) |= CLASS_TYPE_IS_TM_ATOMIC_P (fncon);
+          DECL_IS_TM_CALLABLE_P (fndecl) |= CLASS_TYPE_IS_TM_CALLABLE_P (fncon);
+          DECL_IS_TM_ABORT_OK_P (fndecl) |= CLASS_TYPE_IS_TM_ABORT_OK_P (fncon);
+          DECL_IS_TM_PURE_P (fndecl) |= CLASS_TYPE_IS_TM_PURE_P (fncon);
+        }
+    }
+
   if (DECL_NONSTATIC_MEMBER_FUNCTION_P (fndecl)
       && DECL_VIRTUAL_P (fndecl)
       && !processing_template_decl)

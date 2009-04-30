@@ -2339,11 +2339,7 @@ begin_class_definition (tree t, tree attributes)
   pushclass (t);
   TYPE_BEING_DEFINED (t) = 1;
 
-  if (flag_tm_mode)
-    cplus_decl_attributes (&t, attributes, ((int) ATTR_FLAG_TYPE_IN_PLACE 
-                                            | (int) ATTR_FLAG_TYPE_TM_ATTR));
-  else
-    cplus_decl_attributes (&t, attributes, (int) ATTR_FLAG_TYPE_IN_PLACE);
+  cplus_decl_attributes (&t, attributes, (int) ATTR_FLAG_TYPE_IN_PLACE);
 
   if (flag_pack_struct)
     {

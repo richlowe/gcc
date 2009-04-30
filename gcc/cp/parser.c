@@ -16087,7 +16087,9 @@ cp_parser_member_declaration (cp_parser* parser)
 							      attributes);
                   if (flag_tm_mode 
                       && decl
-                      && TREE_CODE (decl) == FUNCTION_DECL)
+                      && TREE_CODE (decl) == FUNCTION_DECL
+                      /* might have no arguments in template class. */ 
+                      && DECL_ARGUMENTS (decl))
                     {
                       tree type = TREE_TYPE (DECL_ARGUMENTS (decl)); 
                       if (TREE_CODE (type) == POINTER_TYPE)
