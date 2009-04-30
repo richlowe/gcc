@@ -122,12 +122,15 @@ add_stmt_to_eh_region_fn (struct function *ifun, gimple t, int num)
   gcc_assert (!*slot);
   *slot = n;
 
+#if 0
+  /* When all testcases pass with the change, do remove it. */
   /* ??? For the benefit of calls.c, converting all this to rtl,
      we need to record the call expression, not just the outer
      modify statement.  */
   if (gate_generate_ir () && gimple_code (t) == GIMPLE_ASSIGN
       && (t = get_call_expr_in (t)))
     add_stmt_to_eh_region_fn (ifun, t, num);
+#endif
 }
 
 
@@ -158,12 +161,14 @@ remove_stmt_from_eh_region_fn (struct function *ifun, gimple t)
   if (slot)
     {
       htab_clear_slot (get_eh_throw_stmt_table (ifun), slot);
+#if 0
       /* ??? For the benefit of calls.c, converting all this to rtl,
          we need to record the call expression, not just the outer
          modify statement.  */
       if (gate_generate_ir () && gimple_code (t) == GIMPLE_ASSIGN 
           && (t = get_call_expr_in (t)))
         remove_stmt_from_eh_region_fn (ifun, t);
+#endif
       return true;
     }
   else

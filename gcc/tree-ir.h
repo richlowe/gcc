@@ -265,8 +265,8 @@ extern void ir_print_types (void);
 /* LNI */
 extern LN_Element_t lni_source_transition (expanded_location *);
 extern LN_Element_t current_lni_handle;
-extern void push_lni_inline_context (tree stmt);
-extern void pop_lni_inline_context (tree stmt);
+extern void push_lni_inline_context (gimple stmt);
+extern void pop_lni_inline_context (gimple stmt);
 
 extern ir_eh_node_hdl_t build_ir_eh_node (ir_eh_node_kind_t);
 extern void sunir_check_builtin_handling (tree function);

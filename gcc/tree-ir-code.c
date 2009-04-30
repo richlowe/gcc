@@ -82,17 +82,17 @@ static int inline_depth = 0;
 lni_ctx_t *current_lni_ctx = NULL;
 
 void
-push_lni_inline_context (tree stmt)
+push_lni_inline_context (gimple stmt)
 {
   lni_ctx_t *lni_ctx;
-  gcc_assert (EXPR_HAS_LOCATION (stmt));
+  gcc_assert (gimple_has_location (stmt));
 
   /* During inlining we wrap the inline function
      body with a builtin function call. The call
      carries the line number information of
      the original call triple */
 
-  expanded_location xloc = expand_location (EXPR_LOCATION (stmt));
+  expanded_location xloc = expand_location (gimple_location (stmt));
   
   lni_ctx = (lni_ctx_t *) xmalloc (sizeof (lni_ctx_t));
   lni_ctx->prev = current_lni_ctx;
@@ -128,10 +128,10 @@ push_lni_inline_context (tree stmt)
 }
 
 void
-pop_lni_inline_context (tree stmt)
+pop_lni_inline_context (gimple stmt)
 {
   lni_ctx_t *lni_ctx;
-  gcc_assert (EXPR_HAS_LOCATION (stmt));
+  gcc_assert (gimple_has_location (stmt));
   gcc_assert (current_lni_ctx->prev != NULL);
   gcc_assert (inline_depth >= 1);
   inline_depth--;

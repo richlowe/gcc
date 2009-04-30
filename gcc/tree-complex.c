@@ -1690,10 +1690,13 @@ tree_regimple (void)
            if (gimple_has_location (stmt))
              loc = gimple_location (stmt);
         
-           gimple_assign_set_lhs (stmt, build_array_ref (loc, TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1)));  
+           gimple_assign_set_lhs (stmt, build_array_ref (TREE_OPERAND (arrref, 0), TREE_OPERAND (arrref, 1), loc));  
         }
 
       if (gimple_code (stmt) != GIMPLE_LABEL
+          /* The type statement is built by gimple_build_cdt during gimplifier. 
+             Do not need to regimple it. */
+          && gimple_code (stmt) != GIMPLE_CHANGE_DYNAMIC_TYPE
           && gimple_code (stmt) != GIMPLE_GOTO)
         gimple_regimplify_operands (stmt, &gsi);
     }

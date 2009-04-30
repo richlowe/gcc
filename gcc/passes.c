@@ -573,8 +573,11 @@ init_optimization_passes (void)
   /*
   NEXT_PASS (pass_ipa_increase_alignment);
   NEXT_PASS (pass_ipa_matrix_reorg);
-  NEXT_PASS (pass_ipa_cp);
-  NEXT_PASS (pass_ipa_inline);*/
+  NEXT_PASS (pass_ipa_cp); */
+
+  /* pass_ipa_inline potentially invokes execute_fixup_cfg. */
+  NEXT_PASS (pass_ipa_inline);
+
   /* the trees after 1st pass of gimplifier are unusable for IPA passes
    which may cause wrong ECF_CONST markings leading to wrong code
    or ICE during compile time

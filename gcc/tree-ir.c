@@ -5028,7 +5028,12 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
         ret = get_ir_exception_pointer ();
         break;
       }
-    default: debug_tree (stmt); abort (); break;
+    default: 
+      {
+        debug_tree (stmt); 
+        abort (); 
+        break;
+      }
     }
 
   if (errorcount != 0) 
