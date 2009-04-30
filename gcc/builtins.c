@@ -8930,6 +8930,11 @@ fold_builtin_memory_op (tree dest, tree src, tree len, tree type, bool ignore, i
 
       if (!host_integerp (len, 0))
 	return NULL_TREE;
+
+      /* gccfss don't want turn the built-in call into an assignment. */
+      if (gate_generate_ir ())
+        return NULL_TREE;
+
       /* FIXME:
          This logic lose for arguments like (type *)malloc (sizeof (type)),
          since we strip the casts of up to VOID return value from malloc.
