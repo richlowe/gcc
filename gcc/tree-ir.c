@@ -7092,6 +7092,49 @@ map_sync2solaris_fname (enum built_in_function fcode)
     }
 }
 
+static void
+warn_if_sync_nand_changed (enum built_in_function fcode)
+{
+  static bool warned_f_a_n, warned_n_a_f;
+  tree fndecl;
+
+  switch (fcode)
+    {
+    case BUILT_IN_FETCH_AND_NAND_N:
+    case BUILT_IN_FETCH_AND_NAND_1:
+    case BUILT_IN_FETCH_AND_NAND_2:
+    case BUILT_IN_FETCH_AND_NAND_4:
+    case BUILT_IN_FETCH_AND_NAND_8:
+    case BUILT_IN_FETCH_AND_NAND_16:
+      if (warned_f_a_n)
+        break;
+
+      fndecl = implicit_built_in_decls[BUILT_IN_FETCH_AND_NAND_N];
+      inform (input_location,
+                  "%qD changed semantics in GCC 4.4", fndecl);
+      warned_f_a_n = true;
+      break;
+
+    case BUILT_IN_NAND_AND_FETCH_N:
+    case BUILT_IN_NAND_AND_FETCH_1:
+    case BUILT_IN_NAND_AND_FETCH_2:
+    case BUILT_IN_NAND_AND_FETCH_4:
+    case BUILT_IN_NAND_AND_FETCH_8:
+    case BUILT_IN_NAND_AND_FETCH_16:
+      if (warned_n_a_f)
+        break;
+
+      fndecl = implicit_built_in_decls[BUILT_IN_NAND_AND_FETCH_N];
+      inform (input_location,
+                  "%qD changed semantics in GCC 4.4", fndecl);
+      warned_n_a_f = true;
+      break;
+
+    default:
+      break;
+    }
+}
+
 static IR_NODE *
 dump_ir_builtin_call (gimple stmt, int need_return)
 {
@@ -7475,6 +7518,9 @@ dump_ir_builtin_call (gimple stmt, int need_return)
     {
       char * fname;
       tree fn;
+
+      if (warn_sync_nand)
+        warn_if_sync_nand_changed (fcode);
 
 #ifdef __linux__
 

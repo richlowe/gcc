@@ -342,7 +342,8 @@
   andn	%o0, 0x3, %o0		! %o0 = word address
   ld	[%o0], %o2		! read old value
 1:
-  andn	%o2, %o1, %o5		! andn in the new value
+  and	%o2, %o1, %o5		! 
+  xnor	%g0, %o5, %o5		! and;xnor to get the new value
   cas	[%o0], %o2, %o5
   cmp	%o2, %o5
   bne,a,pn %icc, 1b
@@ -386,7 +387,8 @@
 ! if low-order bit is 1, we will properly get an alignment fault here
   ld	[%o0], %o2		! read old value
 1:
-  andn	%o2, %o1, %o5		! andn in the new value
+  and	%o2, %o1, %o5		! 
+  xnor	%g0, %o5, %o5		! and;xnor to get the new value
   cas	[%o0], %o2, %o5
   cmp	%o2, %o5
   bne,a,pn %icc, 1b
@@ -410,7 +412,8 @@
 .inline __sync_fetch_and_nand_4, 2
   ld	[%o0], %o2
 1:
-  andn	%o2, %o1, %o3
+  and	%o2, %o1, %o3
+  xnor	%g0, %o3, %o3		! and;xnor to get the new value 
   cas	[%o0], %o2, %o3
   cmp	%o2, %o3
   bne,a,pn %icc, 1b
@@ -440,7 +443,8 @@
   add	%o1, %o2, %o1		! convert 2 32-bit args into 1 64-bit
   ldx	[%o0], %o2
 1:
-  andn	%o2, %o1, %o3
+  and	%o2, %o1, %o3
+  xnor	%g0, %o3, %o3		! and;xnor to get the new value
   casx	[%o0], %o2, %o3
   cmp	%o2, %o3
   bne,a,pn %xcc, 1b
@@ -677,12 +681,14 @@
   andn  %o0, 0x3, %o0           ! %o0 = word address
   ld    [%o0], %o2              ! read old value
 1:
-  andn	%o2, %o1, %o5           ! andn in the new value
+  and	%o2, %o1, %o5           ! 
+  xnor	%g0, %o5, %o5           ! and;xnor to get the new value
   cas   [%o0], %o2, %o5
   cmp   %o2, %o5
   bne,a,pn %icc, 1b
   mov   %o5, %o2                ! %o2 = old value
-  andn	%o2, %o1, %o5           ! and in the new value
+  and	%o2, %o1, %o5           ! 
+  xnor	%g0, %o5, %o5           ! and;xnor to get the new value
   and   %o5, %o3, %o5
   srl   %o5, %g1, %o0           ! %o0 = new value for return
 .end
@@ -700,12 +706,14 @@
 ! if low-order bit is 1, we will properly get an alignment fault here
   ld    [%o0], %o2              ! read old value
 1:
-  andn	%o2, %o1, %o5           ! andn in the new value
+  and	%o2, %o1, %o5           ! 
+  xnor	%g0, %o5, %o5           ! and;xnor to get the new value
   cas   [%o0], %o2, %o5
   cmp   %o2, %o5
   bne,a,pn %icc, 1b
   mov   %o5, %o2                ! %o2 = old value
-  andn	%o2, %o1, %o5           ! andn in the new value
+  and	%o2, %o1, %o5           ! 
+  xnor	%g0, %o5, %o5           ! and;xnor to get the new value
   and   %o5, %o3, %o5
   srl   %o5, %g1, %o0           ! %o0 = new value for return
 .end
@@ -713,12 +721,14 @@
 .inline __sync_nand_and_fetch_4, 2
   ld    [%o0], %o2
 1:
-  andn	%o2, %o1, %o3
+  and	%o2, %o1, %o3
+  xnor	%g0, %o3, %o3
   cas   [%o0], %o2, %o3
   cmp   %o2, %o3
   bne,a,pn %icc, 1b
   mov   %o3, %o2
-  andn	%o2, %o1, %o0		! return new value
+  and	%o2, %o1, %o0		! 
+  xnor	%g0, %o0, %o0		! return new value
 .end
 .alias __sync_nand_and_fetch = __sync_nand_and_fetch_4
 
@@ -728,12 +738,14 @@
   add   %o1, %o2, %o1           ! convert 2 32-bit args into 1 64-bit
   ldx   [%o0], %o2
 1:
-  andn	%o2, %o1, %o3
+  and	%o2, %o1, %o3
+  xnor	%g0, %o3, %o3
   casx  [%o0], %o2, %o3
   cmp   %o2, %o3
   bne,a,pn %xcc, 1b
   mov   %o3, %o2
-  andn	%o2, %o1, %o1		! return lower 32-bits in %o1
+  and	%o2, %o1, %o1		! 
+  xnor	%g0, %o1, %o1		! return lower 32-bits in %o1
   srlx  %o1, 32, %o0            ! return upper 32-bits in %o0
 .end
 
