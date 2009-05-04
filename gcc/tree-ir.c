@@ -7715,14 +7715,10 @@ is_memref_constraint (const char * c)
 }
 
 static void
-check_asm_expr (tree stmt)
+check_asm_expr (gimple stmt)
 {
-/*  tree _string = ASM_STRING (stmt);*/
-  tree _outputs = ASM_OUTPUTS (stmt);
-  tree _inputs = ASM_INPUTS (stmt);
-/*  tree _clobbers = ASM_CLOBBERS (stmt);*/
-  int ninputs = list_length (_inputs);
-  int noutputs = list_length (_outputs);
+  int ninputs = gimple_asm_ninputs (stmt);
+  int noutputs = gimple_asm_noutputs (stmt);
   
   if (ninputs + noutputs > MAX_RECOG_OPERANDS)
     {
@@ -7730,6 +7726,7 @@ check_asm_expr (tree stmt)
        return;
     }
 }
+
 static int
 is_pass_indirect_to_asm (tree type)
 {
@@ -7743,20 +7740,37 @@ is_pass_indirect_to_asm (tree type)
 
   return 0;
 }
+
 static void
-process_asm_parameters (tree asm_args, int is_outputs, TRIPLE ** args_list)
+process_asm_parameters (gimple stmt, int is_outputs, TRIPLE ** args_list)
 {
-  while (asm_args)
+  size_t i, n = 0;
+
+  if (is_outputs)
+    n = gimple_asm_noutputs (stmt);
+  else
+    n = gimple_asm_ninputs (stmt);
+
+  for (i = 0; i < n; i++)
     {
-      tree _purpose = TREE_VALUE (TREE_PURPOSE (asm_args));
-      tree _value = TREE_VALUE (asm_args);
-      
+      tree asm_args, _purpose, _value;
       TRIPLE * tp;
       IR_NODE * new_leaf;
+      TYPE ptr_to_val_t;
+      IR_TYPE_NODE *ir_val_t, *ir_ptr_to_val_t;
+
+      if (is_outputs)
+        asm_args = gimple_asm_output_op (stmt, i);
+      else
+        asm_args = gimple_asm_input_op (stmt, i);
+      
+      _purpose = TREE_VALUE (TREE_PURPOSE (asm_args));
+      _value = TREE_VALUE (asm_args);
+
       /* not used TYPE val_t = map_gnu_type_to_TYPE (TREE_TYPE (_value));*/
-      TYPE ptr_to_val_t = map_gnu_type_to_TYPE (build_pointer_type (TREE_TYPE (_value)));
-      IR_TYPE_NODE *ir_val_t = map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (_value));
-      IR_TYPE_NODE *ir_ptr_to_val_t = 
+      ptr_to_val_t = map_gnu_type_to_TYPE (build_pointer_type (TREE_TYPE (_value)));
+      ir_val_t = map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (_value));
+      ir_ptr_to_val_t = 
           map_gnu_type_to_IR_TYPE_NODE (build_pointer_type (TREE_TYPE (_value)));
       
       if (is_memref_constraint (TREE_STRING_POINTER (_purpose)))
@@ -7821,9 +7835,6 @@ process_asm_parameters (tree asm_args, int is_outputs, TRIPLE ** args_list)
           tp->param_mode = PM_INOUT;
       
           TAPPEND ( (*args_list), tp);
-
-          asm_args = TREE_CHAIN (asm_args);
-
         }
       else if (is_pass_indirect_to_asm (TREE_TYPE (_value))) 
         { /* error if not a memref contraint and struct value */
@@ -7881,8 +7892,6 @@ process_asm_parameters (tree asm_args, int is_outputs, TRIPLE ** args_list)
             }
 
           TAPPEND ( (*args_list), tp);
-
-          asm_args = TREE_CHAIN (asm_args);
         }
     }
 }
@@ -8231,55 +8240,62 @@ dump_ir_stmt (gimple stmt)
 
     case GIMPLE_ASM:
       {
-#if 0 /*FIXME */
-        tree _string = ASM_STRING (stmt);
-        tree _outputs = ASM_OUTPUTS (stmt);
-        tree _inputs = ASM_INPUTS (stmt);
-        tree _clobbers = ASM_CLOBBERS (stmt);
+        size_t i, n;
+        tree _outputs, _clobbers;
         IR_NODE * ir_string, * t;
         TRIPLE * asm_args = NULL;
        
         check_asm_expr (stmt); /* emit erros/warnings if needed */
 
-        ir_string = build_ir_string_const (TREE_STRING_POINTER (_string));
+        ir_string = build_ir_string_const (gimple_asm_string (stmt));
 
-        if (ASM_INPUT_P (stmt))
+        if (gimple_asm_input_p (stmt))
         /* if old-style asm, pass it as is */
           {
             /* Sun backend is very conservative with ir_pass triple */
             t = build_ir_triple (IR_PASS, ir_string, NULL, ir_string->leaf.type, NULL);
-            if (ASM_VOLATILE_P (stmt))
+            if (gimple_asm_volatile_p (stmt))
               t->triple.is_volatile = IR_TRUE; 
             /* pessimize optimizations the hard way ?
                default_opt_level = 1; */
             break;
           }
           
-        process_asm_parameters (_outputs, 1, &asm_args);
+        /* process output parms. */ 
+        process_asm_parameters (stmt, 1, &asm_args);
         
-        process_asm_parameters (_inputs, 0, &asm_args);
+        /* process input parms. */ 
+        process_asm_parameters (stmt, 0, &asm_args);
 
-        if (_clobbers == NULL) 
-            /* no clobbers, need to make one up to create a reference to 
+        n = gimple_asm_nclobbers (stmt);
+        if (n == 0)
+            /* no clobbers, need to make one up to create a reference to
                asm_stmt via right tree */
           {
               IR_NODE * value = build_ir_string_const ("");
-              TRIPLE * tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, value, NULL, 
+              TRIPLE * tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, value, NULL,
                                                   value->leaf.type, NULL);
 
               TAPPEND (asm_args, (TRIPLE *) tp);
           }
         else
-          while (_clobbers)
+          for (i = 0; i < n; i++)
             {
-              tree _value = TREE_VALUE (_clobbers);
-              IR_NODE * value = TREE_CODE (_value) != STRING_CST || 
-                                 TREE_PURPOSE (_clobbers) ? abort (), NULL : 
+              tree _value;
+              IR_NODE * value;
+              TRIPLE * tp;
+              int regn;
+
+               _clobbers = gimple_asm_clobber_op (stmt, i);
+
+              _value = TREE_VALUE (_clobbers);
+              value = TREE_CODE (_value) != STRING_CST ||
+                                 TREE_PURPOSE (_clobbers) ? abort (), NULL :
                                  build_ir_string_const (TREE_STRING_POINTER (_value));
-              TRIPLE * tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, value, NULL, 
+              tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, value, NULL,
                                                   value->leaf.type, NULL);
 
-              int regn = decode_reg_name (TREE_STRING_POINTER (_value));
+              regn = decode_reg_name (TREE_STRING_POINTER (_value));
 
               if (regn == -4)
                 tp->is_volatile = IR_TRUE; /* 'memory' clobber */
@@ -8287,14 +8303,12 @@ dump_ir_stmt (gimple stmt)
                 error ("unknown register name %qs in %<asm%>", TREE_STRING_POINTER (_value));
 
               if (TARGET_ARCH64)
-                /* in V9 mark %g[2367] as used, so .register will be 
+                /* in V9 mark %g[2367] as used, so .register will be
                    output in the side door file */
                 if (regn == 2 || regn == 3 || regn == 6 || regn == 7)
                   df_set_regs_ever_live (regn, true);
-                          
-              TAPPEND (asm_args, (TRIPLE *) tp);
 
-              _clobbers = TREE_CHAIN (_clobbers);
+              TAPPEND (asm_args, (TRIPLE *) tp);
             }
 
         gcc_assert (asm_args != NULL);
@@ -8306,7 +8320,7 @@ dump_ir_stmt (gimple stmt)
         t = build_ir_triple (IR_ASM_STMT, ir_string, (IR_NODE*)asm_args, 
                              ir_string->leaf.type, NULL);
         
-        if (ASM_VOLATILE_P (stmt))
+        if (gimple_asm_volatile_p (stmt))
           t->triple.is_volatile = IR_TRUE; 
         
         
@@ -8320,10 +8334,11 @@ dump_ir_stmt (gimple stmt)
             }
         }
 
-        _outputs = ASM_OUTPUTS (stmt);
-
-        while (_outputs)
+        n = gimple_asm_noutputs (stmt);
+        for (i = 0; i < n; i++)
           {
+            _outputs = gimple_asm_output_op (stmt, i);
+
             /* iterate 'asm_args' IR_NODEs simultaneously with '_outputs' trees.
                actually step ahead, because asm_args was pointing to last asm_clobber */
             asm_args = asm_args -> tnext; 
@@ -8352,10 +8367,7 @@ dump_ir_stmt (gimple stmt)
                 
                 TREE_PURPOSE (TREE_PURPOSE (_outputs)) = 0;
               }
-            
-            _outputs = TREE_CHAIN (_outputs);
           }
-#endif
       }
       break;
     
