@@ -95,6 +95,7 @@ enum gimple_rhs_class
 
    Keep this list sorted.  */
 enum gf_mask {
+    GF_LABEL_FOR_LOOP		= 1 << 0,
     GF_ASM_INPUT		= 1 << 0,
     GF_ASM_VOLATILE		= 1 << 1,
     GF_CALL_CANNOT_INLINE	= 1 << 0,
@@ -2793,6 +2794,29 @@ gimple_asm_input_p (const_gimple gs)
 {
   GIMPLE_CHECK (gs, GIMPLE_ASM);
   return (gs->gsbase.subcode & GF_ASM_INPUT) != 0;
+}
+
+
+/* If SET_P is true, mark asm GS as an FOR_LOOP.  */
+
+static inline void
+gimple_label_set_for_loop (gimple gs, bool set_p)
+{
+  GIMPLE_CHECK (gs, GIMPLE_LABEL);
+  if (set_p)
+    gs->gsbase.subcode |= GF_LABEL_FOR_LOOP;
+  else
+    gs->gsbase.subcode &= ~GF_LABEL_FOR_LOOP;
+}
+
+
+/* Return true if label GS is an FOR_LOOP.  */
+
+static inline bool
+gimple_label_for_loop_p (const_gimple gs)
+{
+  GIMPLE_CHECK (gs, GIMPLE_LABEL);
+  return (gs->gsbase.subcode & GF_LABEL_FOR_LOOP) != 0;
 }
 
 

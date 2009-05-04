@@ -3681,7 +3681,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             var = create_tmp_var_raw (TREE_TYPE (op0), "__vis_tmp_var.");
             TREE_ADDRESSABLE (var) = 1;
             t_gimple = gimple_build_assign (var, op0);
-            /* TREE_SIDE_EFFECTS (t) = 1; FIXME */
+            /* TREE_SIDE_EFFECTS (t) = 1; FIXME I think it's useless. */
             dump_ir_stmt (t_gimple);
             
             if (get_type_size (TREE_TYPE (op0)) == get_type_size (TREE_TYPE (stmt)))
@@ -5650,8 +5650,9 @@ dump_ir_modify (gimple stmt)
     {
       /* convert op1 if it has different type than op0 */
       if (ir_op0->operand.type.tword != ir_op1->operand.type.tword
-	  /* FIXME: do not how to replace the macro.
-               && !TREE_LANG_FLAG_6 (stmt)*/) /* special assignment, don't bother converting */
+	  /* FIXME: TREE_LANG_FLAG_6 was supposed to mark LABEL_EXPR. How 
+             could it happen with the assignment? */
+               && !gimple_label_for_loop_p (stmt)) /* special assignment, don't bother converting */
         {
           ir_op1 = build_ir_triple (IR_CONV, ir_op1, NULL, ir_op0->operand.type, 
                                ir_op0->leaf.typep);
@@ -6067,7 +6068,7 @@ dump_ir_builtin_va_start (gimple exp)
       return;
     }
 
-  /* FIXME
+  /* FIXME: gimplify_call_expr has already invoked it. seems not need fold it once more.  
   if (fold_builtin_next_arg (exp, true))
     return;
   */
@@ -6076,7 +6077,7 @@ dump_ir_builtin_va_start (gimple exp)
   valist = stabilize_va_list (gimple_call_arg(exp, 0), 1);
 
   t = gimple_build_assign (valist, nextarg);
-  /* FIXME: TREE_SIDE_EFFECTS (gimple_op (t, 0)) = 1; */
+  /* FIXME: TREE_SIDE_EFFECTS (gimple_op (t, 0)) = 1; I think it's useless. */
 
   dump_ir_stmt (t);
 }
@@ -7989,71 +7990,30 @@ dump_ir_stmt (gimple stmt)
       }
       break;
     case GIMPLE_COND:
-#if 0  /* FIXME: So far I don't know how to replace this checking. */
-      if (TREE_TYPE (stmt) == void_type_node)
-        {
-          IR_NODE *ir_cond, *ir_then, *ir_else;
-          tree _cond = COND_EXPR_COND (stmt);
-          tree _then = COND_EXPR_THEN (stmt);
-          tree _else = COND_EXPR_ELSE (stmt);
-
-          if (TREE_CODE (_cond) == NOP_EXPR
-              && TREE_CODE (TREE_TYPE (_cond)) == BOOLEAN_TYPE)
-            {
-              /* simplify if ((_Bool)cond) to if (cond) */
-              ir_cond = dump_ir_expr (TREE_OPERAND (_cond, 0), MAP_FOR_VALUE);
-            }
-          else if (TREE_CODE (_cond) == NE_EXPR
-                   && TREE_CODE (TREE_TYPE (_cond)) == BOOLEAN_TYPE
-                   && integer_zerop (TREE_OPERAND (_cond, 1)))
-            {
-              /* simplify if (cond != 0) to if (cond) */
-              ir_cond = dump_ir_expr (TREE_OPERAND (_cond, 0), MAP_FOR_VALUE);
-            }
-          else
-            ir_cond = dump_ir_expr (_cond, MAP_FOR_VALUE);
-
-          
-          if (_then && TREE_CODE (_then) == GOTO_EXPR
-              && _else && TREE_CODE (_else) == GOTO_EXPR)
-            {
-              int true_lab = get_ir_label (TREE_OPERAND (_then, 0)); 
-              int false_lab = get_ir_label (TREE_OPERAND (_else, 0)); 
-
-              ir_then = build_ir_labelref (true_lab, 1);
-              
-              ir_else = build_ir_labelref (false_lab, 0);
-              {
-                TRIPLE *t = (TRIPLE *) ir_then;
-                TAPPEND(t, (TRIPLE *) ir_else);
-                ir_then = (IR_NODE *)t;
-              }
-              build_ir_triple (IR_CBRANCH, ir_cond, ir_then, longtype, NULL);
-            }
-          else
-            {
-              debug_tree (_then);
-              debug_tree (_else);
-              abort ();
-            }
-        }
-      else
-        {
-          /* result = (op0) ? (op1) : (op2); */
-          dump_ir_expr (stmt, MAP_FOR_VALUE);
-        }
-#endif
       {
-      IR_NODE *ir_lhs, *ir_rhs, *ir_cond, *ir_then, *ir_else;
-      enum tree_code cond_code = gimple_cond_code (stmt);
-      tree lhs = gimple_cond_lhs (stmt);
-      tree rhs = gimple_cond_rhs (stmt);
+      IR_NODE *ir_cond, *ir_then, *ir_else;
       tree _then = gimple_cond_true_label (stmt);
       tree _else = gimple_cond_false_label (stmt);
 
-      if (lhs) ir_lhs = dump_ir_expr (lhs, MAP_FOR_VALUE);
-      if (rhs) ir_rhs = dump_ir_expr (rhs, MAP_FOR_VALUE);
-      ir_cond = build_ir_triple (conv_treecode2ir (cond_code), ir_lhs, ir_rhs, inttype, NULL);
+      /* simplify if (cond != 0) to if (cond) */
+      if (gimple_cond_single_var_p (stmt))
+        {
+          ir_cond = dump_ir_expr (gimple_cond_lhs (stmt), MAP_FOR_VALUE);
+        }
+      else
+        {
+          IR_NODE *ir_lhs, *ir_rhs;
+          enum tree_code cond_code = gimple_cond_code (stmt);
+          tree lhs = gimple_cond_lhs (stmt);
+          tree rhs = gimple_cond_rhs (stmt);
+
+          if (lhs) 
+            ir_lhs = dump_ir_expr (lhs, MAP_FOR_VALUE);
+          if (rhs) 
+            ir_rhs = dump_ir_expr (rhs, MAP_FOR_VALUE);
+
+          ir_cond = build_ir_triple (conv_treecode2ir (cond_code), ir_lhs, ir_rhs, inttype, NULL);
+        }
           
       if (_then && _else)
         {
@@ -8092,10 +8052,8 @@ dump_ir_stmt (gimple stmt)
 	if (FORCED_LABEL (op0))
           add_to_label_list (labelno);
 
-	/* FIXME: So far I don't know how to replace this checking. 
-	if (TREE_LANG_FLAG_6 (stmt))
+	if (gimple_label_for_loop_p (stmt))
           ir_add_loopinfo (op0);
-	*/
 
         if (DECL_NONLOCAL (op0)) /* don't need to mark FORCED_LABELs as volatile */
           {
@@ -8551,7 +8509,7 @@ dump_function_ir_statements (gimple_seq gseq)
       gimple stmt = gsi_stmt (gsi);
 
       /* Optimize condition pattern like:
-         AUTO.0 = x <cond> y; if (AUTO.0)
+         AUTO.0 = x <cond> y; if (AUTO.0 != 0)
          to the pattern like: 
          AUTO.0 = x <cond> y; if (x <cond> y)
          lt will help iropt optimization. */ 
@@ -8576,9 +8534,15 @@ dump_function_ir_statements (gimple_seq gseq)
               && (op1 = gimple_assign_rhs_to_tree (cur)) /* get rvalue */ 
               && TREE_CODE_CLASS (TREE_CODE (op1)) == tcc_comparison 
               && gimple_code (nxt) == GIMPLE_COND 
-              && op0 == gimple_cond_code (nxt)) 
+              && gimple_cond_single_var_p (nxt)
+              && op0 == gimple_cond_lhs (nxt)) 
             {
-	      /* FIXME: */
+              tree lhs, rhs;
+              enum tree_code code;
+              gimple_cond_get_ops_from_tree (op1, &code, &lhs, &rhs);
+              gimple_cond_set_code (nxt, code);
+              gimple_cond_set_lhs (nxt, lhs);
+              gimple_cond_set_rhs (nxt, rhs);
             }
         } while (0); 
       dump_one_function_statement (stmt);

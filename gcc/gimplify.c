@@ -6724,8 +6724,15 @@ gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
 	  /* ipa inliner will import callee's label. close this assertion in regimple pass. */
 	  gcc_assert (decl_function_context (LABEL_EXPR_LABEL (*expr_p))
 		      == current_function_decl || flag_use_rtl_backend == 1);
-	  gimplify_seq_add_stmt (pre_p,
-			  gimple_build_label (LABEL_EXPR_LABEL (*expr_p)));
+          {
+            gimple t = gimple_build_label (LABEL_EXPR_LABEL (*expr_p));
+            /* Check if it's "for" loop */
+            if (TREE_LANG_FLAG_6 (*expr_p))
+              gimple_label_set_for_loop (t, 1);
+	    gimplify_seq_add_stmt (pre_p, t);
+          }
+	  //gimplify_seq_add_stmt (pre_p,
+			  //gimple_build_label (LABEL_EXPR_LABEL (*expr_p)));
 	  break;
 
 	case CASE_LABEL_EXPR:
