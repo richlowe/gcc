@@ -605,7 +605,10 @@ get_action_number (struct eh_region *r)
       if (r->action_number < -3)
         abort ();
       if (r->action_number != -1)
-        crtl->uses_eh_lsda = 1;
+        if (gate_generate_rtl())
+          crtl->uses_eh_lsda = 1;
+        else
+          cfun->uses_eh_lsda = 1;
     }
   return r->action_number;
 }
@@ -3872,7 +3875,10 @@ convert_to_eh_region_ranges (void)
 	/* Existence of catch handlers, or must-not-throw regions
 	   implies that an lsda is needed (even if empty).  */
 	if (this_action != -1)
-	  crtl->uses_eh_lsda = 1;
+          if (gate_generate_rtl())
+            crtl->uses_eh_lsda = 1;
+          else
+            cfun->uses_eh_lsda = 1;
 
 	/* Delay creation of region notes for no-action regions
 	   until we're sure that an lsda will be required.  */

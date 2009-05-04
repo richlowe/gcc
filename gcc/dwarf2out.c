@@ -3248,7 +3248,10 @@ dwarf2out_begin_prologue (unsigned int line ATTRIBUTE_UNUSED,
   fde->dw_fde_cfi = NULL;
   fde->funcdef_number = current_function_funcdef_no;
   fde->nothrow = TREE_NOTHROW (current_function_decl);
-  fde->uses_eh_lsda = crtl->uses_eh_lsda;
+  if (gate_generate_rtl())
+    fde->uses_eh_lsda = crtl->uses_eh_lsda;
+  else
+    fde->uses_eh_lsda = cfun->uses_eh_lsda;
   fde->all_throwers_are_sibcalls = crtl->all_throwers_are_sibcalls;
   fde->drap_reg = INVALID_REGNUM;
   fde->vdrap_reg = INVALID_REGNUM;
@@ -3286,7 +3289,7 @@ dwarf2out_begin_prologue (unsigned int line ATTRIBUTE_UNUSED,
 	  fputc ('\n', asm_out_file);
 	}
 
-      if (crtl->uses_eh_lsda)
+      if (fde->uses_eh_lsda)
 	{
 	  char lab[20];
 

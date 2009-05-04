@@ -580,6 +580,10 @@ struct function GTY(())
      when the function body is entered.  However, some front-ends do
      not desire this behavior.  */
   unsigned int dont_save_pending_sizes_p : 1;
+
+  /* GCC2IR use it.
+     Nonzero if the current function needs an lsda for exception handling.  */
+  unsigned int uses_eh_lsda : 1;
   
   /* Nonzero if the current function uses pbranch in sparc IR.  */
   unsigned int uses_pbranch : 1;

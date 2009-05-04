@@ -6136,7 +6136,8 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
                          (IR_NODE*)args, argtype, NULL);
   clobber->triple.right = n;
   n->triple.is_volatile = IR_TRUE;
-  crtl->has_nonlocal_goto = 1;
+  /* I can see no effect of this assignment.
+  crtl->has_nonlocal_goto = 1;*/
 }
 
 static IR_NODE *
@@ -9026,10 +9027,10 @@ dump_function_ir (tree fn)
   if (ir_gen_scope_triple_p ()) 
     ir_pop_lexical_scopes ();
 
-  if (cfun->uses_pbranch && !crtl->uses_eh_lsda)
+  if (cfun->uses_pbranch && !cfun->uses_eh_lsda)
     {
       /* very unusual case */
-      crtl->uses_eh_lsda = 1;
+      cfun->uses_eh_lsda = 1;
     }
   
   /* generate all landing pads at the end */
