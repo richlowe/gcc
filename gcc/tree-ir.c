@@ -5647,10 +5647,10 @@ dump_ir_modify (gimple stmt)
       && !is_indirect && !ir_op0->leaf.is_indirect)
     {
       /* convert op1 if it has different type than op0 */
-      if (ir_op0->operand.type.tword != ir_op1->operand.type.tword
+      if (ir_op0->operand.type.tword != ir_op1->operand.type.tword)
 	  /* FIXME: TREE_LANG_FLAG_6 was supposed to mark LABEL_EXPR. How 
-             could it happen with the assignment? */
-               && !gimple_label_for_loop_p (stmt)) /* special assignment, don't bother converting */
+             could it happen with the assignment? Don't check it.  
+               && !gimple_label_for_loop_p (stmt))*/ /* special assignment, don't bother converting */
         {
           ir_op1 = build_ir_triple (IR_CONV, ir_op1, NULL, ir_op0->operand.type, 
                                ir_op0->leaf.typep);

@@ -108,7 +108,7 @@ gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xipo=2 
-gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c -fno-show-column (test for excess errors)
 gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
 gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/attr-weakref-1.c (test for excess errors)
@@ -244,27 +244,3 @@ gcc.sum:FAIL: gcc.target/sparc/fxnor.c scan-assembler-times fxnor	% 6
 gcc.sum:FAIL: gcc.target/sparc/fxnors.c scan-assembler-times fxnors	% 4
 gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
 libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
-gfortran.sum:FAIL: gfortran.dg/c_by_val_1.f  -fast -xipo=2  (test for excess errors)
-gfortran.sum:FAIL: gfortran.dg/cray_pointers_2.f90  -O3  execution test
-gfortran.sum:FAIL: gfortran.dg/cray_pointers_2.f90  -O3 -finline-functions  execution test
-gfortran.sum:FAIL: gfortran.dg/cray_pointers_2.f90  -fast  execution test
-gfortran.sum:FAIL: gfortran.dg/cray_pointers_2.f90  -fast -xipo=2  execution test
-gfortran.sum:FAIL: gfortran.dg/dependency_13.f90  -O  scan-tree-dump-times temp 3
-gfortran.sum:FAIL: gfortran.dg/dependency_8.f90  -O  scan-tree-dump-times temp 3
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -O0  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -O1  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -O2  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -O3  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -O3 -finline-functions  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -fast  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -fast -xipo=2  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -O2 -g  execution test
-gfortran.sum:FAIL: gfortran.dg/do_1.f90  -Os  execution test
-gfortran.sum:FAIL: gfortran.dg/nearest_1.f90  -fast  execution test
-gfortran.sum:FAIL: gfortran.dg/nearest_1.f90  -fast -xipo=2  (test for excess errors)
-gfortran.sum:FAIL: gfortran.dg/nearest_1.f90  -fast -xipo=2  execution test
-gfortran.sum:FAIL: gfortran.dg/gomp/appendix-a/a.35.4.f90  -O  (test for excess errors)
-gfortran.sum:FAIL: gfortran.dg/gomp/appendix-a/a.35.5.f90  -O  (test for excess errors)
-gfortran.sum:FAIL: gfortran.dg/gomp/appendix-a/a.35.6.f90  -O  (test for excess errors)
-gfortran.sum:FAIL: gfortran.fortran-torture/execute/nan_inf_fmt.f90 execution,  -fast 
-gfortran.sum:FAIL: gfortran.fortran-torture/execute/nan_inf_fmt.f90 execution,  -fast -xipo=2 
