@@ -80,8 +80,8 @@ then
 	exit 1
 fi
 
-BUILDNAME=`date +\%Y\%m\%d`_ceres_gcc440
-BACKEND_COMP_BUILDNAME=`date +\%Y\%m\%d`_ceres_gcc440
+BUILDNAME=`date +\%Y\%m\%d`_aten_gcc440
+BACKEND_COMP_BUILDNAME=`date +\%Y\%m\%d`_aten_gcc440
 if [ $# -gt 0 ]
 then
 	BUILDNAME=$1

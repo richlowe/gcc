@@ -10,13 +10,13 @@ PATH=/usr/bin:/bin
 #   * set LANGWSLIST explicitly to specify the complete list of workspaces 
 
 EXTRALANGWS =
-LANGWSLIST = $(EXTRALANGWS) /import/backend-src/ceres/lang /shared/dp/sstrunk/latest/src/lang
+LANGWSLIST = $(EXTRALANGWS) /import/backend-src/aten/lang /shared/dp/sstrunk/latest/src/lang
 
 BM_BUILD_DATE:sh = /bin/date +\%Y/\%m/\%d
 BM_BUILD_NAME="gccfss_lang"
 BM_COMMON_IMPORT="$(BUILDDIR)/shelf"
 BM_COMMON_EXPORT="$(BUILDDIR)/shelf"
-BM_UTIL = /import/backend-src/ceres/build_util
+BM_UTIL = /import/backend-src/aten/build_util
 BM_IMPORT = /set/sstrunk/import
 BUILD_MODE = 
 GCCVERSION = "4.4.0"

@@ -69,7 +69,7 @@ NIGHTLY_BUILD_MODE=0
 PARALLEL_BUILD_OPTION="-j $JOBS"
 BOOTSTRAP_OPTION=
 DEBUG_MODE=0
-LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
+LIBMTSK_DIR=/import/backend-blds/compilers/current_aten/prod/usr/lib/nightly/
 INCLUDE_HEADERS=/ws/gccfss/source/Studio12U1_include_headers
 
 trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
@@ -446,7 +446,7 @@ install_suncomponents()
 
 	# Copy the files.
 	cd $SUN_DIR_ROOT
-	cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SOURCE_WS/bldmstr_ceres/bin/sun_components.txt
+	cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SOURCE_WS/bldmstr/bin/sun_components.txt
 	# Set read/execute permission on directories created by cpio.  
 	# This is only necessary for Linux
 	find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
@@ -464,7 +464,7 @@ install_suncomponents()
 		done)
 		#else
 		# Do not need install developing libmtsk.so.1.
-		# Install libmtsk.so.1 from current_ceres build area.
+		# Install libmtsk.so.1 from current_aten build area.
 		# cd $LIBMTSK_DIR
 		# ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib
 		# cd sparcv9; ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9
@@ -1063,8 +1063,8 @@ then
 	exit 1
 fi
 
-# All scripts are run from the bldmstr_ceres/bin directory under the SOURCE_WS
-SCRIPTDIR=$SOURCE_WS/bldmstr_ceres/bin
+# All scripts are run from the bldmstr/bin directory under the SOURCE_WS
+SCRIPTDIR=$SOURCE_WS/bldmstr/bin
 
 # Set common configuration variables
 . $SCRIPTDIR/commonconfig
