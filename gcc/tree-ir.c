@@ -4931,15 +4931,13 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
         fn = build_decl (FUNCTION_DECL, get_identifier (abs_name), /* func name */
                          build_function_type (TREE_TYPE (stmt), /* return type */
                          build_tree_list (NULL_TREE, TREE_TYPE (stmt)))); /* arg1 type */
-        arglist = build_tree_list (NULL_TREE, op0);
         DECL_ARTIFICIAL (fn) = 1;
         DECL_EXTERNAL (fn) = 1;
         TREE_PUBLIC (fn) = 1;
         TREE_NOTHROW (fn) = 1;
         TREE_READONLY (fn) = 1; /* never reads or writes globals. same as ECF_CONST */
 
-        t = build_function_call_expr (fn, arglist);
-        ret = dump_ir_call (gimple_build_call_from_tree (t), 1);
+        ret = dump_ir_call (gimple_build_call (fn, 1, op0), 1);
         ret->triple.left->leaf.func_descr = INTR_FUNC;
        
 #if 0
@@ -6315,27 +6313,31 @@ dump_ir_flushw (gimple stmt ATTRIBUTE_UNUSED)
 static IR_NODE *
 dump_ir_builtin_profile_func (int is_enter)
 {
-  tree t, arglist;
+  gimple stmt;
+  tree var, fn, ptr_to_cfun;
   IR_NODE * ret;
-  tree ptr_to_cfun = build1 (ADDR_EXPR, 
-                             build_pointer_type (TREE_TYPE (current_function_decl)), 
-                             current_function_decl);
-  tree ret_addr_call = build_function_call_expr (built_in_decls[BUILT_IN_RETURN_ADDRESS], 
-                                                 build_tree_list (NULL_TREE, integer_zero_node));
-  tree fn = build_decl (FUNCTION_DECL, get_identifier (is_enter 
-                                                       ? "__cyg_profile_func_enter"
-                                                       : "__cyg_profile_func_exit"),
-                        build_function_type (integer_type_node, NULL_TREE));
+
+  stmt = gimple_build_call (built_in_decls[BUILT_IN_RETURN_ADDRESS], 
+                            1, integer_zero_node); 
+  var = create_tmp_var_raw (TREE_TYPE (TREE_TYPE (built_in_decls[BUILT_IN_RETURN_ADDRESS])), NULL);
+  gimple_call_set_lhs (stmt, var);
+  dump_ir_stmt (stmt);
+
+  fn = build_decl (FUNCTION_DECL, get_identifier (is_enter 
+                                                  ? "__cyg_profile_func_enter"
+                                                  : "__cyg_profile_func_exit"),
+                   build_function_type (integer_type_node, NULL_TREE));
   DECL_ARTIFICIAL (fn) = 1;
   DECL_EXTERNAL (fn) = 1;
   TREE_PUBLIC (fn) = 1;
   TREE_NOTHROW (fn) = 1;
 
-  arglist = tree_cons (NULL_TREE, ptr_to_cfun,
-                       build_tree_list (NULL_TREE, ret_addr_call));
+  ptr_to_cfun = build1 (ADDR_EXPR, 
+                        build_pointer_type (TREE_TYPE (current_function_decl)), 
+                        current_function_decl);
 
-  t = build_function_call_expr (fn, arglist);
-  ret = dump_ir_call (gimple_build_call_from_tree (t), 0);
+  stmt = gimple_build_call (fn, 2, ptr_to_cfun, var);
+  ret = dump_ir_call (stmt, 0);
   return ret;
 }
 
@@ -6833,14 +6835,12 @@ dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
       func = build_decl (FUNCTION_DECL, get_identifier ("__enable_execute_stack"), /* func name */
                        build_function_type (void_type_node, /* return type */
                          build_tree_list (NULL_TREE, ptr_type_node))); /* arg1 type */
-      arglist = build_tree_list (NULL_TREE, tramp);
       DECL_ARTIFICIAL (func) = 1;
       DECL_EXTERNAL (func) = 1;
       TREE_PUBLIC (func) = 1;
       TREE_NOTHROW (func) = 1;
 
-      func = build_function_call_expr (func, arglist);
-      dump_ir_call (gimple_build_call_from_tree (func), 0);
+      dump_ir_call (gimple_build_call (func, 1, tramp), 0);
     }
   else
     {
@@ -6921,14 +6921,12 @@ dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
       func = build_decl (FUNCTION_DECL, get_identifier ("__enable_execute_stack"), /* func name */
                        build_function_type (void_type_node, /* return type */
                          build_tree_list (NULL_TREE, ptr_type_node))); /* arg1 type */
-      arglist = build_tree_list (NULL_TREE, tramp);
       DECL_ARTIFICIAL (func) = 1;
       DECL_EXTERNAL (func) = 1;
       TREE_PUBLIC (func) = 1;
       TREE_NOTHROW (func) = 1;
 
-      func = build_function_call_expr (func, arglist);
-      dump_ir_call (gimple_build_call_from_tree (func), 0);
+      dump_ir_call (gimple_build_call (func, 1, tramp), 0);
     } 
   return 0;
 }
@@ -7534,8 +7532,7 @@ dump_ir_builtin_call (gimple stmt, int need_return)
       TREE_NOTHROW (fn) = 1;
       DECL_IN_SYSTEM_HEADER (fn) = 1;
 
-      fn = build_function_call_expr (fn, NULL_TREE);
-      dump_ir_call (gimple_build_call_from_tree(fn), 0);
+      dump_ir_call (gimple_build_call (fn, 0), 0);
 #endif
 
       fname = map_sync2solaris_fname (fcode);
@@ -8003,17 +8000,12 @@ dump_ir_stmt (gimple stmt)
         }
       else
         {
-          IR_NODE *ir_lhs, *ir_rhs;
-          enum tree_code cond_code = gimple_cond_code (stmt);
-          tree lhs = gimple_cond_lhs (stmt);
-          tree rhs = gimple_cond_rhs (stmt);
+          tree t;
 
-          if (lhs) 
-            ir_lhs = dump_ir_expr (lhs, MAP_FOR_VALUE);
-          if (rhs) 
-            ir_rhs = dump_ir_expr (rhs, MAP_FOR_VALUE);
+          t = build2 (gimple_cond_code (stmt), boolean_type_node,
+                      gimple_cond_lhs (stmt), gimple_cond_rhs (stmt));
 
-          ir_cond = build_ir_triple (conv_treecode2ir (cond_code), ir_lhs, ir_rhs, inttype, NULL);
+          ir_cond = dump_ir_expr (t, MAP_FOR_VALUE);
         }
           
       if (_then && _else)
