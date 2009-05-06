@@ -10506,7 +10506,7 @@ dump_omp_for (gimple stmt)
 }
 
 static void
-dump_omp_for_end (tree stmt)
+dump_omp_for_end (gimple stmt)
 {
   IR_NODE *pragma_typ, *pragma_tp, *lno, *cond;
   PRAGMAINFO *pinfo;
@@ -10526,9 +10526,8 @@ dump_omp_for_end (tree stmt)
      has trouble discovering the loop. It sees it
      as multi exit loop. */
   generate_exception_label(cur_omp_context);
-#if 0 /* FIXME. */  
-  dump_function_ir_statements (OMP_FOR_INCR (stmt));
   restore_line_information (stmt);
+  /* FIXME: dump_function_ir_statements (OMP_FOR_INCR (stmt));
   save_and_switch_line_information (OMP_FOR_COND (stmt));
   cond = dump_ir_expr (OMP_FOR_COND (stmt), MAP_FOR_VALUE);
   loop_body = build_ir_labelref (cur_omp_context->l2_lab, 1);
@@ -10537,7 +10536,7 @@ dump_omp_for_end (tree stmt)
   TAPPEND(t, (TRIPLE *) loop_exit);
   build_ir_triple (IR_CBRANCH, cond, loop_body, longtype, NULL);
   build_ir_labeldef (cur_omp_context->l1_lab);
-  restore_line_information (OMP_FOR_COND (stmt));
+  restore_line_information (OMP_FOR_COND (stmt));*/
   
   if (cur_omp_context->prev_ctx
       && gimple_omp_parallel_combined_p (cur_omp_context->prev_ctx->stmt)) {
@@ -10560,7 +10559,6 @@ dump_omp_for_end (tree stmt)
                                NULL);
   pinfo->end_triple = (TRIPLE *) pragma_tp;
   pinfo->end_lineno = END_PRAGMA_LINE(ir_location);
-#endif
 
   pop_omp_context ();
 }
