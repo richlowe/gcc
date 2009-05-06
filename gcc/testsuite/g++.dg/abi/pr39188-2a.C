@@ -1,6 +1,6 @@
 // PR c++/39188
 // { dg-do run }
-// { dg-options "-O2" }
+// { dg-options "-O2 -Wd,-w" }
 // { dg-additional-sources "pr39188-2b.C" }
 
 #include "pr39188-2.h"

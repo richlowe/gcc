@@ -3524,7 +3524,8 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id,
          where previous inlining turned indirect call into direct call by
          constant propagating arguments.  In all other cases we hit a bug
          (incorrect node sharing is most common reason for missing edges.  */
-      gcc_assert (dest->needed);
+      /* FIXME. First commented in gccfss 4.3.2.  
+      gcc_assert (dest->needed); */
       if (flag_use_rtl_backend == 0)
         cgraph_create_edge (id->dst_node, dest, stmt,
                             0, CGRAPH_FREQ_BASE, 0)->inline_failed

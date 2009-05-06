@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-O" }
+// { dg-options "-O -Wd,-w" }
 // Make sure inlined non-outlined functions aren't marked weak.
 // We'd get a ".weak xyzzy" annotation trigged by the second declaration.
 
