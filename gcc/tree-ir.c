@@ -10296,7 +10296,7 @@ dump_omp_parallel (gimple stmt)
 
 
 static void
-dump_omp_parallel_end (tree stmt)
+dump_omp_parallel_end (gimple stmt)
 {
   PRAGMAINFO *pinfo;
   IR_NODE *pragma_typ, *pragma_tp, *lineno;
@@ -10397,12 +10397,13 @@ static void
 dump_omp_for (gimple stmt)
 {
   tree clauses, loop_index;
-  IR_NODE *pragma_typ, *pragma_tp, *begin_lno, *cond, *index;
+  IR_NODE *pragma_typ, *pragma_tp, *begin_lno, *cond, *index, *final;
   PRAGMAINFO *pinfo;
   IR_NODE *loop_body, *loop_exit;
   int l0_lab, l1_lab, l2_lab;
   TRIPLE *t;
   LOOPINFO *linfo;
+  gimple init;
   
   clauses = gimple_omp_for_clauses (stmt);
   
@@ -10471,10 +10472,8 @@ dump_omp_for (gimple stmt)
   
   /* Generate the loop init body. Our index var will
      be created during the process. */
-  save_and_switch_line_information (gimple_omp_for_initial (stmt, 0));
-  /* FIXME. need to build the initial statements. */
-  dump_ir_expr (gimple_omp_for_initial (stmt, 0), MAP_FOR_VALUE);
-  restore_line_information (gimple_omp_for_initial (stmt, 0));
+  init = gimple_build_assign (loop_index, gimple_omp_for_initial (stmt, 0));
+  dump_ir_stmt (init);
   
   /* Generate loopinfo structure */
   index = dump_ir_expr (loop_index, MAP_FOR_VALUE);
@@ -10492,8 +10491,8 @@ dump_omp_for (gimple stmt)
   /* Rest of loopinfo struct is essentially zero */
   
   /* Generate the loop body */
-  /* FIXME. */
-  cond = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
+  final = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
+  cond = build_ir_triple (IR_LT, index, final, inttype, NULL);
   loop_body = build_ir_labelref (l0_lab, 1);
   loop_exit = build_ir_labelref (l1_lab, 0);
   t = (TRIPLE *) loop_body;
@@ -10510,7 +10509,7 @@ dump_omp_for_end (gimple stmt)
 {
   IR_NODE *pragma_typ, *pragma_tp, *lno, *cond;
   PRAGMAINFO *pinfo;
-  IR_NODE *loop_body, *loop_exit;
+  IR_NODE *loop_body, *loop_exit, *index, *incr, *final;
   TRIPLE *t;
   
   /* Make sure we stash off the correct line number here
@@ -10526,17 +10525,21 @@ dump_omp_for_end (gimple stmt)
      has trouble discovering the loop. It sees it
      as multi exit loop. */
   generate_exception_label(cur_omp_context);
-  restore_line_information (stmt);
-  /* FIXME: dump_function_ir_statements (OMP_FOR_INCR (stmt));
-  save_and_switch_line_information (OMP_FOR_COND (stmt));
-  cond = dump_ir_expr (OMP_FOR_COND (stmt), MAP_FOR_VALUE);
+
+  index = dump_ir_expr (gimple_omp_for_index (stmt, 0), MAP_FOR_VALUE);
+  incr = dump_ir_expr (gimple_omp_for_index (stmt, 0), MAP_FOR_VALUE);
+  t = build_ir_triple (IR_PLUS, index, incr, index->operand.type, NULL);
+  t = build_ir_triple (IR_ASSIGN, index, t, index->operand.type, NULL);
+
+  final = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
+  cond = (IR_NODE *)build_ir_triple (IR_LT, index, final, inttype, NULL);
   loop_body = build_ir_labelref (cur_omp_context->l2_lab, 1);
   loop_exit = build_ir_labelref (cur_omp_context->l1_lab, 0);
   t = (TRIPLE *) loop_body;
   TAPPEND(t, (TRIPLE *) loop_exit);
   build_ir_triple (IR_CBRANCH, cond, loop_body, longtype, NULL);
   build_ir_labeldef (cur_omp_context->l1_lab);
-  restore_line_information (OMP_FOR_COND (stmt));*/
+  restore_line_information (stmt);
   
   if (cur_omp_context->prev_ctx
       && gimple_omp_parallel_combined_p (cur_omp_context->prev_ctx->stmt)) {
