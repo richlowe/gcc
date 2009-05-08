@@ -1,6 +1,6 @@
 // PR tree-optimization/39259
 // { dg-do compile }
-// { dg-options "-O2" }
+// { dg-options "-O2 -Wd,-w" }
 
 
 extern "C" int __mysetjmp () __attribute__ ((__returns_twice__));

@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-// { dg-options "-O2 -fdump-tree-final_cleanup" }
+// { dg-options "-O2 -frtl-backend -fdump-tree-final_cleanup" }
 
 
 struct f

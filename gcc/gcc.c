@@ -7968,11 +7968,12 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
              */
             if (gcc_libexec_prefix) 
               {
-                char *pth = find_a_file (&startfile_prefixes, "libstdc++.so.6.0.10",
+                char *pth = find_a_file (&startfile_prefixes, "libstdc++.so",
 					 R_OK, 0); 
                 if (pth) 
                   {
-                    pth[strlen (pth) - 19] = 0;
+                    /* 12: the length of "libstdc++.so". */ 
+                    pth[strlen (pth) - 12] = 0;
                     do_spec_1 (pth, 1, NULL);
                   }
                 else

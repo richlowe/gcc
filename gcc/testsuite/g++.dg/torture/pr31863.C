@@ -1,4 +1,5 @@
 /* { dg-do link } */
+/* { dg-options "-frtl-backend" } */
 /* { dg-timeout-factor 2.0 } */
 
 namespace Loki

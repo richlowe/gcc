@@ -1,7 +1,7 @@
 // PR c++/36633
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -Wall -fdump-tree-forwprop1" } */
+/* { dg-options "-O2 -Wall -frtl-backend -fdump-tree-forwprop1" } */
 // No particular reason for choosing forwprop1 dump to look at.
 
 struct B { ~B() {} };
