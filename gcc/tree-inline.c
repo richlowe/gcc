@@ -1978,7 +1978,7 @@ copy_body_nocfg (copy_body_data *id, gimple_stmt_iterator * callsite_gsi_p)
 	  gcc_assert (lookup_stmt_eh_region_fn (id->src_cfun, orig_stmt)
 		      != 0);
 
-	  if (tree_could_throw_p (stmt))
+	  if (stmt_could_throw_p (stmt))
 	    {
 	      int region = lookup_stmt_eh_region_fn (id->src_cfun, orig_stmt);
 	      /* Add an entry for the copied tree in the EH hashtable.
@@ -1995,7 +1995,7 @@ copy_body_nocfg (copy_body_data *id, gimple_stmt_iterator * callsite_gsi_p)
 	      if ((lookup_stmt_eh_region_fn (id->src_cfun,
 					     orig_stmt) <= 0
 		   && id->eh_region > 0)
-		  && tree_could_throw_p (stmt))
+		  && stmt_could_throw_p (stmt))
 		add_stmt_to_eh_region (stmt, id->eh_region);
 	    }
 
