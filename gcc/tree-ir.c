@@ -11547,6 +11547,7 @@ dump_ir_threadprivate_fn_1 (int initp)
      end up emitting this function immediately.
      If not it will be deferred for later. However
      ensure we mark the node as needed, if emitted later */
+  gimplify_function_tree (decl);
   cgraph_finalize_function (decl, IR_FALSE);
   struct cgraph_node *n = cgraph_node (decl);
   cgraph_mark_needed_node (n);
@@ -11694,7 +11695,8 @@ cxx_omp_constructor_wrapper_for_irgen (tree vecs, location_t location, int flag)
 static int
 dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
 {
-  tree vecs, fn, var, wrapper, parm, t, arg, arg2, argtype, body, bind;
+  tree vecs, fn, var, wrapper, parm, t, arg, arg2, argtype;
+  gimple_seq gimple_body;
   tree clause, info;
   struct gimplify_ctx gctx;
  
@@ -11702,7 +11704,6 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   fn = TREE_VEC_ELT (vecs, 0);
   var = TREE_VEC_ELT (vecs, 1); 
   wrapper = (tree) n->value;
-  body = NULL;
   
   parm = TYPE_ARG_TYPES (TREE_TYPE (fn));
   argtype = TREE_VALUE (parm);
@@ -11718,9 +11719,6 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   allocate_struct_function (wrapper, false);
   cfun->function_end_locus = DECL_SOURCE_LOCATION (wrapper);
   
-  bind = build3 (BIND_EXPR, void_type_node, NULL_TREE,
-                 NULL_TREE, NULL_TREE);
-  TREE_SIDE_EFFECTS (bind) = 1;
   if (TREE_CODE (var) == VAR_DECL && TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)
     {
       arg = build_decl (PARM_DECL, DECL_NAME (var), TREE_TYPE (var));
@@ -11750,7 +11748,11 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
       DECL_ARGUMENTS (wrapper) = arg;
       t = build_fold_indirect_ref (arg);
     }
-  append_to_statement_list (t, &body);
+
+  gimple_body = gimple_seq_alloc ();
+  push_gimplify_context (&gctx);
+  gimplify_and_add (t, &gimple_body);
+  pop_gimplify_context (NULL_TREE);
 
   info = make_tree_vec (3);
   clause = build_omp_clause (OMP_CLAUSE_PRIVATE);
@@ -11781,10 +11783,9 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
     }
 
   push_gimplify_context (&gctx);
-  gimplify_and_add (t, &body);
+  gimplify_and_add (t, &gimple_body);
   pop_gimplify_context (NULL_TREE);
-  BIND_EXPR_BODY (bind) = body;
-  DECL_SAVED_TREE (wrapper) = bind;
+  gimple_set_body (wrapper, gimple_body);
   cgraph_finalize_function (wrapper, IR_FALSE);
   struct cgraph_node *node = cgraph_node (wrapper);
   cgraph_mark_needed_node (node);

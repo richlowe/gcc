@@ -369,15 +369,19 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
           gimple_omp_for_set_pre_body (stmt, NULL); 
         } 
 
-      bind = gsi_stmt( gsi_start (gimple_omp_body (stmt)));
-      if (gimple_code (bind) == GIMPLE_BIND)
+      if (gimple_seq_first (gimple_omp_body (stmt)))
 	{
-	  record_vars (gimple_bind_vars (bind));
-          gimple_omp_set_body (stmt, gimple_bind_body (bind));
-	}
-      /* FIXME: maybe_catch_exception (&bind);*/
+          bind = gsi_stmt( gsi_start (gimple_omp_body (stmt)));
+          if (gimple_code (bind) == GIMPLE_BIND)
+	    {
+	      record_vars (gimple_bind_vars (bind));
+              gimple_omp_set_body (stmt, gimple_bind_body (bind));
+	    }
+        }
+	/* FIXME: maybe_catch_exception (&bind);*/
       gsi_insert_after (gsi, gimple_build_omp_return (0), GSI_SAME_STMT);
-      gsi_insert_seq_after (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
+      if (gimple_seq_first (gimple_omp_body (stmt)))
+        gsi_insert_seq_after (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
       gimple_omp_set_body (stmt, NULL);
     }
   else
