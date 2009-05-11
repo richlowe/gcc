@@ -2862,7 +2862,7 @@ mangle_special_for_type (const tree type, const char *code)
 
   if (globalize_flag && name[4] == 'Z') /* 'Z' for local name. */ 
     {
-      result = make_global_name (name,
+      name = make_global_name (name,
                                  0/* don't add function suffix to
                                      globalized name in C++ */,
                                  0/* for future use*/);

@@ -1,7 +1,7 @@
 /* pr39500: autopar fails to parallel */
 /* origin: nemokingdom@gmail.com(LiFeng) */
 /* { dg-do compile } */
-/* { dg-options "-O2 -ftree-parallelize-loops=4 -fdump-tree-parloops-details" } */
+/* { dg-options "-O2 -frtl-backend -ftree-parallelize-loops=4 -fdump-tree-parloops-details" } */
 
 int main (void)
 {

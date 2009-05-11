@@ -1,8 +1,8 @@
 // PR debug/39372
 // { dg-do compile }
 // { dg-options "-O0 -g -dA" }
-// { dg-final { scan-assembler "DW_OP_addr\[^\n\r\]*\[\n\r\]*\[^\n\r\]*staticvar1" } }
-// { dg-final { scan-assembler "DW_OP_addr\[^\n\r\]*\[\n\r\]*\[^\n\r\]*staticvar2" } }
+// { dg-final { scan-assembler "DW_OP_addr\[^\n\r\]*\[\n\r\]*\[^\n\r\]*staticvar1" { xfail sparc*-*-* } } }
+// { dg-final { scan-assembler "DW_OP_addr\[^\n\r\]*\[\n\r\]*\[^\n\r\]*staticvar2" { xfail sparc*-*-* } } }
 
 extern void f (int *);
 

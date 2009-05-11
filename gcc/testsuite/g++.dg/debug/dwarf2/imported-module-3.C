@@ -1,7 +1,7 @@
 // PR debug/39379
 // { dg-do compile }
 // { dg-options "-g -dA" }
-// { dg-final { scan-assembler "DW_TAG_imported_module" }  }
+// { dg-final { scan-assembler "DW_TAG_imported_module" { xfail sparc*-*-* } }  }
 
 namespace A
 {

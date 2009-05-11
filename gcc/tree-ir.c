@@ -5574,64 +5574,14 @@ dump_ir_call (gimple stmt, int for_value)
   return dump_ir_call_main (stmt, for_value, NULL_TREE);
 }
 
-/* generate '=' IR_ASSIGN triple */
+/* Used for GIMPLE_ASSIGN and GIMPLE_CALL with left value. */
 static IR_NODE *
-dump_ir_modify (gimple stmt)
+dump_ir_modify_1 (tree op0, tree op1, IR_NODE * ir_op0, IR_NODE * ir_op1)
 {
-  IR_NODE * ret = 0, * ir_op0 = 0, * ir_op1 = 0;
-  tree op0, op1;
+  IR_NODE * ret = 0;
   int is_indirect = 0;
+  int has_op1 = op1 ? 1 : 0;
 
-  if (gimple_code (stmt) != GIMPLE_ASSIGN)
-    abort();
-  
-  op0 = gimple_assign_lhs (stmt); /* left */
-  op1 = gimple_assign_rhs_to_tree (stmt); /* right */
-    
-  if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
-      && TREE_CODE (CALL_EXPR_FN (op1)) == ADDR_EXPR)
-    {
-      tree fndecl = get_callee_fndecl (op1);
-      if (fndecl && DECL_RESULT (fndecl)
-          && DECL_BY_REFERENCE (DECL_RESULT (fndecl)))
-        {
-          /* paranoid check to make sure we don't screw up return_slot_opt
-             convention */
-          gcc_assert (CALLEXPR_IS_PUBLIC (op1));
-        }
-    }
-  
-  /* check for 'return slot' call first,
-     since we want to emit it even if it returns an empty class
-     see CR 6601435 */
-  if (TREE_CODE (op1) == CALL_EXPR && CALL_EXPR_RETURN_SLOT_OPT (op1)
-      && CALLEXPR_IS_PUBLIC (op1) /* internal convention. see cp/semantics.c */)
-    {
-      /* using extended IR to pass struct values out of funcs */
-      return dump_ir_call_main (gimple_build_call_from_tree (op1), 0, op0);
-    }
-
-  /* don't emit assignments for zero sized objects */
-  if (int_expr_size (op1) == 0)
-    {
-      if (TREE_SIDE_EFFECTS (op1))
-        {
-          ir_op1 = dump_ir_expr (op1, MAP_FOR_VALUE);
-          if (ir_op1 && ir_op1->operand.tag != ISLEAF)
-            ret = build_ir_triple (IR_FOREFF, ir_op1, NULL, ir_op1->operand.type, NULL);
-        }
-      return 0;
-    }
-  else if (TREE_CODE (op1) == VECTOR_CST && TREE_VECTOR_CST_ELTS (op1) == NULL)
-    return 0;
-
-  ir_op0 = dump_ir_expr (op0, MAP_FOR_ADDR);
-
-  ir_op1 = dump_ir_expr (op1, MAP_FOR_VALUE);
-  
-  if (errorcount != 0) 
-    return 0;
-  
   if (TREE_CODE (op0) == ARRAY_REF || TREE_CODE (op0) == INDIRECT_REF)
     is_indirect = 1;
   
@@ -5844,7 +5794,7 @@ dump_ir_modify (gimple stmt)
               else if (ir_op1->operand.tag == ISLEAF && ir_op1->leaf.class == VAR_LEAF
                        /* some array_of_structs[const_index] may be optimized
                           to a single struct. we can't MAP_FOR_ADDR them */
-                       && TREE_CODE (op1) != ARRAY_REF)
+                       && has_op1 && TREE_CODE (op1) != ARRAY_REF)
                 {
                   /* generate ADDR_CONST for leaf struct/union to be used in foreff.
                      MAP_FOR_ADDR returns ADDR_CONST for structs/unions */
@@ -5938,7 +5888,7 @@ dump_ir_modify (gimple stmt)
           /* string assignment above will assign op1 to the lower portion of op0.
              the rest of op0 needs to be zeroed per C standard.
              orig_argtype_size always > argtype.size */
-          tree args, t, addr, zero, size;
+          tree t, addr, zero, size;
         
           t = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (op0)), op0);
           addr = build2 (PLUS_EXPR, build_pointer_type (TREE_TYPE (op0)), t,
@@ -5946,14 +5896,52 @@ dump_ir_modify (gimple stmt)
           zero = build_int_cst (NULL_TREE, 0);
           size = build_int_cst (NULL_TREE, orig_argtype_size - argtype.size);
           
-          args = tree_cons (NULL_TREE, addr,
-                            tree_cons (NULL_TREE, zero,
-                            build_tree_list (NULL_TREE, size)));
-
-          t = build_function_call_expr (built_in_decls[BUILT_IN_MEMSET], args);
-          dump_ir_call (gimple_build_call_from_tree (t), 0);
+          dump_ir_call (gimple_build_call (built_in_decls[BUILT_IN_MEMSET], 3, addr, zero, size), 0);
         }
     }
+
+  return ret;
+}
+
+/* generate '=' IR_ASSIGN triple */
+static IR_NODE *
+dump_ir_modify (gimple stmt)
+{
+  IR_NODE * ret = 0, * ir_op0 = 0, * ir_op1 = 0;
+  tree op0, op1;
+  //int is_indirect = 0;
+
+  gcc_assert (gimple_code (stmt) == GIMPLE_ASSIGN);
+  
+  op0 = gimple_assign_lhs (stmt); /* left */
+  op1 = gimple_assign_rhs_to_tree (stmt); /* right */
+
+  /* Any calls would be included in GIMPLE_CALL since 4.4.0. */    
+  gcc_assert (TREE_CODE (op1) != CALL_EXPR);
+
+  /* don't emit assignments for zero sized objects */
+  if (int_expr_size (op1) == 0)
+    {
+      if (TREE_SIDE_EFFECTS (op1))
+        {
+          ir_op1 = dump_ir_expr (op1, MAP_FOR_VALUE);
+          if (ir_op1 && ir_op1->operand.tag != ISLEAF)
+            ret = build_ir_triple (IR_FOREFF, ir_op1, NULL, ir_op1->operand.type, NULL);
+        }
+      return 0;
+    }
+  else if (TREE_CODE (op1) == VECTOR_CST && TREE_VECTOR_CST_ELTS (op1) == NULL)
+    return 0;
+
+  ir_op0 = dump_ir_expr (op0, MAP_FOR_ADDR);
+
+  ir_op1 = dump_ir_expr (op1, MAP_FOR_VALUE);
+  
+  if (errorcount != 0) 
+    return 0;
+  
+  ret = dump_ir_modify_1 (op0, op1, ir_op0, ir_op1);
+
   /* Mark the istore or assign of virtual table pointer
      as cpp_vtptr_ref. */
   if (ir_language == CDOUBLEPLUS
@@ -7909,29 +7897,52 @@ dump_ir_stmt (gimple stmt)
     {
     case GIMPLE_CALL:
       {
-        IR_NODE * ir_op0 = 0, * ir_op1 = 0;
-
-        if (gimple_has_lhs (stmt))
-           ir_op0 = dump_ir_expr (gimple_call_lhs (stmt), MAP_FOR_VALUE); /* ? left. */
+        IR_NODE * ir_op0 = 0, * ir_op1 = 0, * ret = 0;
 
         if ( gimple_call_fndecl (stmt)
           && DECL_BUILT_IN (gimple_call_fndecl (stmt)))
-          if (DECL_BUILT_IN_CLASS (gimple_call_fndecl (stmt))
-              == BUILT_IN_FRONTEND)
-            abort ();
-          else
-	    if (gimple_has_lhs (stmt))
-              ir_op1 = dump_ir_builtin_call (stmt, 1);
-	    else
-	      dump_ir_builtin_call (stmt, 0);
+          {
+            gcc_assert (DECL_BUILT_IN_CLASS (gimple_call_fndecl (stmt))
+                        != BUILT_IN_FRONTEND);
+            ir_op1 = dump_ir_builtin_call (stmt, gimple_has_lhs (stmt) ? 1 : 0);
+          }
         else
-	  if (gimple_has_lhs (stmt))
-            ir_op1 = dump_ir_call (stmt, 1);
-          else
-	    dump_ir_call (stmt, 0/* procedure call*/);
+          {
+            ir_op1 = dump_ir_call (stmt, gimple_has_lhs (stmt) ? 1 : 0);
+          }
 
-        if (gimple_has_lhs (stmt))
-          build_ir_triple (IR_ASSIGN, ir_op0, ir_op1, ir_op0->operand.type, NULL); 
+        if (!gimple_has_lhs (stmt))
+          break;
+
+        if (gimple_call_return_slot_opt_p (stmt) 
+           && TREE_CODE (gimple_call_fn (stmt)) == ADDR_EXPR)
+         {
+           tree fndecl = gimple_call_fndecl (stmt);
+           if (fndecl && DECL_RESULT (fndecl)
+               && DECL_BY_REFERENCE (DECL_RESULT (fndecl)))
+             {
+               /* paranoid check to make sure we don't screw up return_slot_opt
+                  convention */
+               gcc_assert (gimple_call_public_p (stmt));
+             }
+          }
+  
+        /* check for 'return slot' call first,
+           since we want to emit it even if it returns an empty class
+           see CR 6601435 */
+        if (gimple_call_return_slot_opt_p (stmt)
+            && gimple_call_public_p (stmt) /* internal convention. see cp/semantics.c */)
+          /* using extended IR to pass struct values out of funcs */
+          return dump_ir_call_main (stmt, 0, gimple_call_lhs (stmt));
+
+        ir_op0 = dump_ir_expr (gimple_call_lhs (stmt), MAP_FOR_ADDR); /* get left */
+        if (errorcount != 0)
+          return 0;
+
+        ret = dump_ir_modify_1 (gimple_call_lhs (stmt), 0 /*has_op1*/, ir_op0, ir_op1);
+
+        if (gimple_has_side_effects (stmt))
+          ret->triple.is_volatile = IR_TRUE;
       }
       break;
     case GIMPLE_ASSIGN:
@@ -10296,7 +10307,7 @@ dump_omp_parallel (gimple stmt)
 
 
 static void
-dump_omp_parallel_end (tree stmt)
+dump_omp_parallel_end (gimple stmt)
 {
   PRAGMAINFO *pinfo;
   IR_NODE *pragma_typ, *pragma_tp, *lineno;
@@ -10397,12 +10408,13 @@ static void
 dump_omp_for (gimple stmt)
 {
   tree clauses, loop_index;
-  IR_NODE *pragma_typ, *pragma_tp, *begin_lno, *cond, *index;
+  IR_NODE *pragma_typ, *pragma_tp, *begin_lno, *cond, *index, *final;
   PRAGMAINFO *pinfo;
   IR_NODE *loop_body, *loop_exit;
   int l0_lab, l1_lab, l2_lab;
   TRIPLE *t;
   LOOPINFO *linfo;
+  gimple init;
   
   clauses = gimple_omp_for_clauses (stmt);
   
@@ -10471,10 +10483,8 @@ dump_omp_for (gimple stmt)
   
   /* Generate the loop init body. Our index var will
      be created during the process. */
-  save_and_switch_line_information (gimple_omp_for_initial (stmt, 0));
-  /* FIXME. need to build the initial statements. */
-  dump_ir_expr (gimple_omp_for_initial (stmt, 0), MAP_FOR_VALUE);
-  restore_line_information (gimple_omp_for_initial (stmt, 0));
+  init = gimple_build_assign (loop_index, gimple_omp_for_initial (stmt, 0));
+  dump_ir_stmt (init);
   
   /* Generate loopinfo structure */
   index = dump_ir_expr (loop_index, MAP_FOR_VALUE);
@@ -10492,8 +10502,9 @@ dump_omp_for (gimple stmt)
   /* Rest of loopinfo struct is essentially zero */
   
   /* Generate the loop body */
-  /* FIXME. */
-  cond = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
+  final = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
+  cond = build_ir_triple (conv_treecode2ir (gimple_omp_for_cond (stmt, 0)),
+                          index, final, inttype, NULL);
   loop_body = build_ir_labelref (l0_lab, 1);
   loop_exit = build_ir_labelref (l1_lab, 0);
   t = (TRIPLE *) loop_body;
@@ -10506,11 +10517,11 @@ dump_omp_for (gimple stmt)
 }
 
 static void
-dump_omp_for_end (tree stmt)
+dump_omp_for_end (gimple stmt)
 {
   IR_NODE *pragma_typ, *pragma_tp, *lno, *cond;
   PRAGMAINFO *pinfo;
-  IR_NODE *loop_body, *loop_exit;
+  IR_NODE *loop_body, *loop_exit, *index, *incr, *final;
   TRIPLE *t;
   
   /* Make sure we stash off the correct line number here
@@ -10526,18 +10537,21 @@ dump_omp_for_end (tree stmt)
      has trouble discovering the loop. It sees it
      as multi exit loop. */
   generate_exception_label(cur_omp_context);
-#if 0 /* FIXME. */  
-  dump_function_ir_statements (OMP_FOR_INCR (stmt));
-  restore_line_information (stmt);
-  save_and_switch_line_information (OMP_FOR_COND (stmt));
-  cond = dump_ir_expr (OMP_FOR_COND (stmt), MAP_FOR_VALUE);
+
+  index = dump_ir_expr (gimple_omp_for_index (stmt, 0), MAP_FOR_VALUE);
+  incr = dump_ir_expr (gimple_omp_for_incr (stmt, 0), MAP_FOR_VALUE);
+  t = build_ir_triple (IR_ASSIGN, index, incr, index->operand.type, NULL);
+
+  final = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
+  cond = (IR_NODE *)build_ir_triple (conv_treecode2ir (gimple_omp_for_cond (stmt, 0)),
+                                     index, final, inttype, NULL);
   loop_body = build_ir_labelref (cur_omp_context->l2_lab, 1);
   loop_exit = build_ir_labelref (cur_omp_context->l1_lab, 0);
   t = (TRIPLE *) loop_body;
   TAPPEND(t, (TRIPLE *) loop_exit);
   build_ir_triple (IR_CBRANCH, cond, loop_body, longtype, NULL);
   build_ir_labeldef (cur_omp_context->l1_lab);
-  restore_line_information (OMP_FOR_COND (stmt));
+  restore_line_information (stmt);
   
   if (cur_omp_context->prev_ctx
       && gimple_omp_parallel_combined_p (cur_omp_context->prev_ctx->stmt)) {
@@ -10560,7 +10574,6 @@ dump_omp_for_end (tree stmt)
                                NULL);
   pinfo->end_triple = (TRIPLE *) pragma_tp;
   pinfo->end_lineno = END_PRAGMA_LINE(ir_location);
-#endif
 
   pop_omp_context ();
 }
@@ -11546,6 +11559,7 @@ dump_ir_threadprivate_fn_1 (int initp)
      end up emitting this function immediately.
      If not it will be deferred for later. However
      ensure we mark the node as needed, if emitted later */
+  gimplify_function_tree (decl);
   cgraph_finalize_function (decl, IR_FALSE);
   struct cgraph_node *n = cgraph_node (decl);
   cgraph_mark_needed_node (n);
@@ -11693,7 +11707,9 @@ cxx_omp_constructor_wrapper_for_irgen (tree vecs, location_t location, int flag)
 static int
 dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
 {
-  tree vecs, fn, var, wrapper, parm, t, arg, arg2, argtype, body, bind;
+  tree vecs, fn, var, wrapper, parm, t, arg, arg2, argtype;
+  gimple_seq gimple_body;
+  gimple bind;
   tree clause, info;
   struct gimplify_ctx gctx;
  
@@ -11701,7 +11717,6 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   fn = TREE_VEC_ELT (vecs, 0);
   var = TREE_VEC_ELT (vecs, 1); 
   wrapper = (tree) n->value;
-  body = NULL;
   
   parm = TYPE_ARG_TYPES (TREE_TYPE (fn));
   argtype = TREE_VALUE (parm);
@@ -11717,9 +11732,6 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   allocate_struct_function (wrapper, false);
   cfun->function_end_locus = DECL_SOURCE_LOCATION (wrapper);
   
-  bind = build3 (BIND_EXPR, void_type_node, NULL_TREE,
-                 NULL_TREE, NULL_TREE);
-  TREE_SIDE_EFFECTS (bind) = 1;
   if (TREE_CODE (var) == VAR_DECL && TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)
     {
       arg = build_decl (PARM_DECL, DECL_NAME (var), TREE_TYPE (var));
@@ -11749,7 +11761,11 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
       DECL_ARGUMENTS (wrapper) = arg;
       t = build_fold_indirect_ref (arg);
     }
-  append_to_statement_list (t, &body);
+
+  gimple_body = gimple_seq_alloc ();
+  push_gimplify_context (&gctx);
+  gimplify_and_add (t, &gimple_body);
+  pop_gimplify_context (NULL_TREE);
 
   info = make_tree_vec (3);
   clause = build_omp_clause (OMP_CLAUSE_PRIVATE);
@@ -11780,10 +11796,12 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
     }
 
   push_gimplify_context (&gctx);
-  gimplify_and_add (t, &body);
+  gimplify_and_add (t, &gimple_body);
   pop_gimplify_context (NULL_TREE);
-  BIND_EXPR_BODY (bind) = body;
-  DECL_SAVED_TREE (wrapper) = bind;
+  bind = gimple_build_bind (NULL, gimple_body, NULL);
+  gimple_body = gimple_seq_alloc ();
+  gimple_seq_add_stmt (&gimple_body, bind);
+  gimple_set_body (wrapper, gimple_body);
   cgraph_finalize_function (wrapper, IR_FALSE);
   struct cgraph_node *node = cgraph_node (wrapper);
   cgraph_mark_needed_node (node);

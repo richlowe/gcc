@@ -344,11 +344,13 @@ maybe_catch_exception (tree *stmt_p)
 static void
 lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
 {
-#if 0 /* FIXME:  Using gsi as new parameter after 4.4 merge */
+  gimple stmt;
+
+  stmt = gsi_stmt (*gsi);
+
   if (flag_use_rtl_backend == 0)
     {
-      tree stmt, bind;
-      stmt = gsi_stmt (*gsi);
+      gimple bind;
         /* For C++ exceptions to work correctly, first off
            wrap the complete omp structured block in a
            try-finally region. No exception must propagate
@@ -359,40 +361,37 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
            for, take the pre-loop body and attach it before
            the omp node */
 
-      if (TREE_CODE (stmt) == OMP_FOR
-          && OMP_FOR_PRE_BODY (stmt) != NULL_TREE)
+      if (gimple_code (stmt) == GIMPLE_OMP_FOR
+          && gimple_omp_for_pre_body (stmt) != NULL)
         {
-          lower_stmt_body (OMP_FOR_PRE_BODY (stmt), data);
-          tsi_link_before (tsi, OMP_FOR_PRE_BODY (stmt), TSI_SAME_STMT);
-          OMP_FOR_PRE_BODY (stmt) = NULL_TREE;
+          lower_sequence (gimple_omp_for_pre_body (stmt), data);
+          gsi_insert_seq_before (gsi, gimple_omp_for_pre_body (stmt), GSI_SAME_STMT);
+          gimple_omp_for_set_pre_body (stmt, NULL); 
         } 
-      bind = OMP_BODY (stmt);
-      if (TREE_CODE(bind) == BIND_EXPR)
+
+      if (gimple_seq_first (gimple_omp_body (stmt)))
 	{
-	  record_vars (BIND_EXPR_VARS (bind));
-          bind = BIND_EXPR_BODY (bind);
-	}
-      gcc_assert (TREE_CODE(bind) == STATEMENT_LIST);
-      maybe_catch_exception (&bind);
-      append_to_statement_list (make_node (OMP_RETURN), &bind);
-      tsi_link_after (tsi, bind, TSI_SAME_STMT);
-      OMP_BODY (stmt) = NULL_TREE;
+          bind = gsi_stmt( gsi_start (gimple_omp_body (stmt)));
+          if (gimple_code (bind) == GIMPLE_BIND)
+	    {
+	      record_vars (gimple_bind_vars (bind));
+              gimple_omp_set_body (stmt, gimple_bind_body (bind));
+	    }
+        }
+	/* FIXME: maybe_catch_exception (&bind);*/
+      gsi_insert_after (gsi, gimple_build_omp_return (0), GSI_SAME_STMT);
+      if (gimple_seq_first (gimple_omp_body (stmt)))
+        gsi_insert_seq_after (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
+      gimple_omp_set_body (stmt, NULL);
     }
   else
     {
-#endif 
-      gimple stmt;
-  
-      stmt = gsi_stmt (*gsi);
-
       lower_sequence (gimple_omp_body (stmt), data);
       gsi_insert_before (gsi, stmt, GSI_SAME_STMT);
       gsi_insert_seq_before (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
       gimple_omp_set_body (stmt, NULL);
       gsi_remove (gsi, false);
-#if 0
     }
-#endif
 }
 
 
@@ -440,6 +439,12 @@ lower_stmt (gimple_stmt_iterator *gsi, struct lower_data *data)
     case GIMPLE_LABEL:
     case GIMPLE_SWITCH:
     case GIMPLE_CHANGE_DYNAMIC_TYPE:
+    case GIMPLE_OMP_RETURN:
+    case GIMPLE_OMP_ATOMIC_LOAD:
+    case GIMPLE_OMP_ATOMIC_STORE:
+    case GIMPLE_OMP_CONTINUE:
+      break;
+
     case GIMPLE_OMP_FOR:
     case GIMPLE_OMP_SECTIONS:
     case GIMPLE_OMP_SECTIONS_SWITCH:
@@ -448,10 +453,8 @@ lower_stmt (gimple_stmt_iterator *gsi, struct lower_data *data)
     case GIMPLE_OMP_MASTER:
     case GIMPLE_OMP_ORDERED:
     case GIMPLE_OMP_CRITICAL:
-    case GIMPLE_OMP_RETURN:
-    case GIMPLE_OMP_ATOMIC_LOAD:
-    case GIMPLE_OMP_ATOMIC_STORE:
-    case GIMPLE_OMP_CONTINUE:
+      if (flag_use_rtl_backend == 0)
+        lower_omp_directive (gsi, data);
       break;
 
     case GIMPLE_CALL:
@@ -478,7 +481,6 @@ lower_stmt (gimple_stmt_iterator *gsi, struct lower_data *data)
         break;
       else
         return;
-      return;
 
     default:
       gcc_unreachable ();

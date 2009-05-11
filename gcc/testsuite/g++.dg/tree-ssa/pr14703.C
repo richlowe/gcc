@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-optimized -fno-ipa-reference" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized -fno-ipa-reference" } */
 #include <iostream>
 
 namespace {

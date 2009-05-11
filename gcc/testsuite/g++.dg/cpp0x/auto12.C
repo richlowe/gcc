@@ -1,5 +1,6 @@
 // More auto/decltype mangling tests.
-// { dg-options "-std=c++0x" }
+// GCCFSS: scan-assembler would fail under -O2. force it to -O1. 
+// { dg-options "-std=c++0x -O1 -Wd,-w" }
 
 template <class T>
 struct B

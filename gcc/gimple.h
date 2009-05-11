@@ -103,6 +103,7 @@ enum gf_mask {
     GF_CALL_RETURN_SLOT_OPT	= 1 << 2,
     GF_CALL_TAILCALL		= 1 << 3,
     GF_CALL_VA_ARG_PACK		= 1 << 4,
+    GF_CALL_PUBLIC_P		= 1 << 5,
     GF_OMP_PARALLEL_COMBINED	= 1 << 0,
 
     /* True on an GIMPLE_OMP_RETURN statement if the return does not require
@@ -2151,6 +2152,15 @@ gimple_call_set_return_slot_opt (gimple s, bool return_slot_opt_p)
     s->gsbase.subcode &= ~GF_CALL_RETURN_SLOT_OPT;
 }
 
+static inline void
+gimple_call_set_public (gimple s, bool public_p)
+{
+  GIMPLE_CHECK (s, GIMPLE_CALL);
+  if (public_p)
+    s->gsbase.subcode |= GF_CALL_PUBLIC_P;
+  else
+    s->gsbase.subcode &= ~GF_CALL_PUBLIC_P;
+}
 
 /* Return true if S is marked for return slot optimization.  */
 
@@ -2161,6 +2171,12 @@ gimple_call_return_slot_opt_p (gimple s)
   return (s->gsbase.subcode & GF_CALL_RETURN_SLOT_OPT) != 0;
 }
 
+static inline bool
+gimple_call_public_p (gimple s)
+{
+  GIMPLE_CHECK (s, GIMPLE_CALL);
+  return (s->gsbase.subcode & GF_CALL_PUBLIC_P) != 0;
+}
 
 /* If FROM_THUNK_P is true, mark GIMPLE_CALL S as being the jump from a
    thunk to the thunked-to function.  */

@@ -1,5 +1,5 @@
 // PR c++/37256
-// { dg-options "-O" }
+// { dg-options "-O -Wd,-w" }
 
 template <typename T_>
 struct B

@@ -58,6 +58,7 @@ along with GCC; see the file COPYING3.  If not see
 
 static tree maybe_convert_cond (tree);
 static tree finalize_nrv_r (tree *, int *, void *);
+static tree generate_default_copy_ctor_function (tree);
 
 
 /* Deferred Access Checking Overview
@@ -3417,7 +3418,8 @@ cxx_omp_create_clause_info (tree c, tree type, bool need_default_ctor,
 			    bool need_copy_ctor, bool need_copy_assignment)
 {
   int save_errorcount = errorcount;
-  tree info, t;
+  tree info, t, orig_t = OMP_CLAUSE_DECL (c);
+  tree wrap, vecs;
 
   /* Always allocate 3 elements for simplicity.  These are the
      function decls for the ctor, dtor, and assignment op.
@@ -3428,31 +3430,91 @@ cxx_omp_create_clause_info (tree c, tree type, bool need_default_ctor,
   CP_OMP_CLAUSE_INFO (c) = info;
 
   if (need_default_ctor
-      || (need_copy_ctor && !TYPE_HAS_TRIVIAL_INIT_REF (type)))
+      || (need_copy_ctor
+           && (gate_generate_ir ()/* pcg needs it in misc_list */
+               || !TYPE_HAS_TRIVIAL_INIT_REF (type))))
     {
       if (need_default_ctor)
-	t = NULL;
-      else
 	{
-	  t = build_int_cst (build_pointer_type (type), 0);
-	  t = build1 (INDIRECT_REF, type, t);
-	  t = build_tree_list (NULL, t);
-	}
-      t = build_special_member_call (NULL_TREE, complete_ctor_identifier,
-				     t, type, LOOKUP_NORMAL,
+          t = build_special_member_call (NULL_TREE, complete_ctor_identifier,
+				     NULL, type, LOOKUP_NORMAL,
 				     tf_warning_or_error);
 
-      if (targetm.cxx.cdtor_returns_this () || errorcount)
+	  if (gate_generate_rtl())
+            if (targetm.cxx.cdtor_returns_this () || errorcount)
 	/* Because constructors and destructors return this,
 	   the call will have been cast to "void".  Remove the
 	   cast here.  We would like to use STRIP_NOPS, but it
 	   wouldn't work here because TYPE_MODE (t) and
 	   TYPE_MODE (TREE_OPERAND (t, 0)) are different.
 	   They are VOIDmode and Pmode, respectively.  */
-	if (TREE_CODE (t) == NOP_EXPR)
-	  t = TREE_OPERAND (t, 0);
+	     if (TREE_CODE (t) == NOP_EXPR)
+	       t = TREE_OPERAND (t, 0);
 
-      TREE_VEC_ELT (info, 0) = get_callee_fndecl (t);
+          t = get_callee_fndecl (t);
+        }
+      else if (gate_generate_rtl())
+	{
+	  t = build_int_cst (build_pointer_type (type), 0);
+	  t = build1 (INDIRECT_REF, type, t);
+	  t = build_tree_list (NULL, t);
+          t = build_special_member_call (NULL_TREE,
+				     complete_ctor_identifier,
+				     t, type, LOOKUP_NORMAL,
+				     tf_warning_or_error);
+          t = get_callee_fndecl (t);
+	}
+      else
+	{
+	  t = build1 (ADDR_EXPR, build_pointer_type (type), orig_t);
+	  t = build1 (NOP_EXPR, build_pointer_type (type), t);
+	  t = build1 (INDIRECT_REF, type, t);
+	  t = build_special_member_call (t,
+				     complete_ctor_identifier,
+				     build_tree_list (NULL, t),
+				     type, LOOKUP_NORMAL,
+				     tf_warning_or_error);
+
+	  if (TREE_CODE (t) == CALL_EXPR)
+	    t = get_callee_fndecl (t);
+          else
+	    /* we probably have no copy ctor at hand. define one. */
+	    t = generate_default_copy_ctor_function (orig_t);
+        }
+
+      if (gate_generate_rtl ())
+        TREE_VEC_ELT (info, 0) = t;
+      else
+	{
+	  vecs = make_tree_vec (2);
+	  TREE_VEC_ELT (vecs, 0) = t;
+	  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0);
+	  if (need_default_ctor)
+	    wrap = cxx_omp_constructor_wrapper_for_irgen (vecs,
+			   DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)),
+			   1);
+          else if (TREE_CODE (orig_t) == VAR_DECL
+		   && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
+	    wrap = cxx_omp_constructor_wrapper_for_irgen (vecs,
+			   DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)),
+			   2);
+          else
+	    wrap = t;
+
+          TREE_VEC_ELT (info, 0) = wrap;
+	}
+
+      if (gate_generate_ir ()
+	  && ((errorcount <= 0 && sorrycount <= 0)
+	       || global_dc->abort_on_error)
+          /* _t_ may be NULL if we are processing a template. */
+	  && t)
+	{
+	  /* Force generation of the body for IR */
+	  struct cgraph_node *node  = cgraph_node (wrap);
+	  node->needed = 1;
+	  cgraph_mark_reachable_node (node);
+        }
     }
 
   if ((need_default_ctor || need_copy_ctor)
@@ -3474,10 +3536,33 @@ cxx_omp_create_clause_info (tree c, tree type, bool need_default_ctor,
 	if (TREE_CODE (t) == NOP_EXPR)
 	  t = TREE_OPERAND (t, 0);
 
-      TREE_VEC_ELT (info, 1) = omp_clause_info_fndecl (t, type);
+      if (gate_generate_rtl())
+        TREE_VEC_ELT (info, 1) = omp_clause_info_fndecl (t, type);
+      else
+	{
+	  vecs = make_tree_vec (2);
+	  TREE_VEC_ELT (vecs, 0) = omp_clause_info_fndecl (t, type);
+	  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0);
+	  wrap = cxx_omp_constructor_wrapper_for_irgen (vecs,
+			 DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)),
+			 0);
+          TREE_VEC_ELT (info, 1) = wrap;
+
+	  if (((errorcount <= 0 && sorrycount <= 0)
+	        || global_dc->abort_on_error)
+	      && get_callee_fndecl (t))
+            {
+	      /* Force generation of the body for IR */
+	      struct cgraph_node *node  = cgraph_node (wrap);
+	      node->needed = 1;
+	      cgraph_mark_reachable_node (node);
+	    }
+        }
     }
 
-  if (need_copy_assignment && !TYPE_HAS_TRIVIAL_ASSIGN_REF (type))
+  if (need_copy_assignment
+      && (gate_generate_ir ()
+	  || !TYPE_HAS_TRIVIAL_ASSIGN_REF (type)))
     {
       t = build_int_cst (build_pointer_type (type), 0);
       t = build1 (INDIRECT_REF, type, t);
@@ -3492,7 +3577,40 @@ cxx_omp_create_clause_info (tree c, tree type, bool need_default_ctor,
       if (TREE_CODE (t) == INDIRECT_REF)
 	t = TREE_OPERAND (t, 0);
 
-      TREE_VEC_ELT (info, 2) = omp_clause_info_fndecl (t, type);
+      if (gate_generate_rtl())
+        TREE_VEC_ELT (info, 2) = omp_clause_info_fndecl (t, type);
+      else
+	{
+	  if (TREE_CODE (t) == CALL_EXPR)
+	    t = get_callee_fndecl (t);
+          else
+	    /* No copy assignment at hand. Generate one.
+	       It acts like default copy constructor. */
+            t = generate_default_copy_ctor_function (orig_t);
+
+          vecs = make_tree_vec (2);
+	  TREE_VEC_ELT (vecs, 0) = t;
+	  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0);
+
+	  wrap = t;
+	  if (TREE_CODE (orig_t) == VAR_DECL
+	      && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
+	    wrap = cxx_omp_constructor_wrapper_for_irgen (vecs,
+			   DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)),
+			   3);
+
+	  TREE_VEC_ELT (info, 2) = wrap;
+
+	  if (t
+	      && ((errorcount <= 0 && sorrycount <= 0)
+		  || global_dc->abort_on_error))
+            {
+	      /* Force generation of the body for IR */
+	      struct cgraph_node *node  = cgraph_node (wrap);
+	      node->needed = 1;
+	      cgraph_mark_reachable_node (node);
+            }
+        }	       
     }
 
   return errorcount != save_errorcount;
@@ -3943,211 +4061,7 @@ finish_omp_clauses (tree clauses)
 	  && !type_dependent_expression_p (t)
 	  && cxx_omp_create_clause_info (c, inner_type, need_default_ctor,
 					 need_copy_ctor, need_copy_assignment))
-	{
-	  int save_errorcount = errorcount;
-	  tree orig_t = t;
-	  tree info;
-
-	  /* Always allocate 3 elements for simplicity.  These are the
-	     function decls for the ctor, dtor, and assignment op.
-	     This layout is known to the three lang hooks,
-	     cxx_omp_clause_default_init, cxx_omp_clause_copy_init,
-	     and cxx_omp_clause_assign_op.  */
-	  info = make_tree_vec (3);
-	  CP_OMP_CLAUSE_INFO (c) = info;
-
-	  if (need_default_ctor
-	      || (need_copy_ctor
-                  && (gate_generate_ir ()/* pcg needs it in misc_list */ 
-                      || !TYPE_HAS_TRIVIAL_INIT_REF (inner_type))))
-	    {
-              tree wrap, vecs;
-	      if (need_default_ctor)
-                {
-                  t = build_special_member_call (NULL_TREE,
-                                                 complete_ctor_identifier,
-                                                 NULL, inner_type, LOOKUP_NORMAL,
-                                                 tf_warning_or_error);
-                  if (!gate_generate_ir ())
-                    if (targetm.cxx.cdtor_returns_this () || errorcount)
-                /* Because constructors and destructors return this,
-                   the call will have been cast to "void".  Remove the
-                   cast here.  We would like to use STRIP_NOPS, but it
-                   wouldn't work here because TYPE_MODE (t) and
-                   TYPE_MODE (TREE_OPERAND (t, 0)) are different.
-                   They are VOIDmode and Pmode, respectively.  */
-                      if (TREE_CODE (t) == NOP_EXPR)
-                        t = TREE_OPERAND (t, 0);
-
-	          t = get_callee_fndecl (t);
-		}
-	      else if (!gate_generate_ir ())
-		{
-                  t = build_int_cst (build_pointer_type (inner_type), 0);
-                  t = build1 (INDIRECT_REF, inner_type, t);
-                  t = build_tree_list (NULL, t);
-                  t = build_special_member_call (NULL_TREE,
-                                             complete_ctor_identifier,
-                                             t, inner_type, LOOKUP_NORMAL,
-                                             tf_warning_or_error);
-                  t = get_callee_fndecl (t);
-		}
-              else
-                {
-                  t = build1 (ADDR_EXPR, build_pointer_type (inner_type), t);
-		  t = build1 (NOP_EXPR, build_pointer_type (inner_type), t);
-		  t = build1 (INDIRECT_REF, inner_type, t);
-	          t = build_special_member_call (t,
-                                                 complete_ctor_identifier,
-                                                 build_tree_list (NULL, t), 
-                                                 inner_type, LOOKUP_NORMAL,
-                                                 tf_warning_or_error);
-                  if (TREE_CODE (t) == CALL_EXPR)
-                    t = get_callee_fndecl (t);
-	          else
-                  /* we probably have no copy ctor at hand. define one. */
-                    t = generate_default_copy_ctor_function (orig_t);
-		}
-
-	      if (gate_generate_ir ())
-		{
-                  vecs = make_tree_vec (2); 
-                  TREE_VEC_ELT (vecs, 0) = t; 
-                  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
-                  if (need_default_ctor)
-                    wrap =
-                      cxx_omp_constructor_wrapper_for_irgen (vecs,
-                                                           DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 1);
-                  else if (TREE_CODE (orig_t) == VAR_DECL 
-                       && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
-                    wrap =
-                      cxx_omp_constructor_wrapper_for_irgen (vecs,
-                                                           DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 2);
-                  else
-                    wrap = t;
-
-	          TREE_VEC_ELT (info, 0) = wrap;
-		}
-              else
-	        TREE_VEC_ELT (info, 0) = t;
-              
-              if (gate_generate_ir ()
-                  && ((errorcount <= 0 && sorrycount <= 0)
-                      || global_dc->abort_on_error) 
-                  /* _t_ may be NULL if we are processing a template. */
-                  && t)
-                {
-                  /* Force generation of the body for IR */
-                  struct cgraph_node *node  = cgraph_node (t);
-                  node->needed = 1;
-                  cgraph_mark_reachable_node (node);
-                }
-	    }
-
-	  if ((need_default_ctor || need_copy_ctor)
-	      && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (inner_type))
-	    {
-              tree wrap, vecs;
-	      t = build_int_cst (build_pointer_type (inner_type), 0);
-	      t = build1 (INDIRECT_REF, inner_type, t);
-	      t = build_special_member_call (t, complete_dtor_identifier,
-					     NULL, inner_type, LOOKUP_NORMAL,
-                                             tf_warning_or_error);
-
-	      if (targetm.cxx.cdtor_returns_this ())
-		/* Because constructors and destructors return this,
-		   the call will have been cast to "void".  Remove the
-		   cast here.  We would like to use STRIP_NOPS, but it
-		   wouldn't work here because TYPE_MODE (t) and
-		   TYPE_MODE (TREE_OPERAND (t, 0)) are different.
-		   They are VOIDmode and Pmode, respectively.  */
-		if (TREE_CODE (t) == NOP_EXPR)
-		  t = TREE_OPERAND (t, 0);
-
-	      t = get_callee_fndecl (t);
-              if (gate_generate_ir ())
-                {
-	          vecs = make_tree_vec (2); 
-                  TREE_VEC_ELT (vecs, 0) = t; 
-                  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
-                  wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 0);
-
-	          TREE_VEC_ELT (info, 1) = wrap;
-                }
-              else
-	        TREE_VEC_ELT (info, 1) = t;
-
-              if (gate_generate_ir ()
-                  && ((errorcount <= 0 && sorrycount <= 0)
-                      || global_dc->abort_on_error)
-                  && t)
-                {
-                  /* Force generation of the body for IR */
-                  struct cgraph_node *node  = cgraph_node (t);
-                  node->needed = 1;
-                  cgraph_mark_reachable_node (node);
-                }
-	    }
-
-	  if (need_copy_assignment
-	      && (gate_generate_ir () 
-                  || !TYPE_HAS_TRIVIAL_ASSIGN_REF (inner_type)))
-	    {
-              tree wrap, vecs;
-	      t = build_int_cst (build_pointer_type (inner_type), 0);
-	      t = build1 (INDIRECT_REF, inner_type, t);
-	      t = build_special_member_call (t, ansi_assopname (NOP_EXPR),
-					     build_tree_list (NULL, t),
-					     inner_type, LOOKUP_NORMAL,
-                                             tf_warning_or_error);
-
-	      /* We'll have called convert_from_reference on the call, which
-		 may well have added an indirect_ref.  It's unneeded here,
-		 and in the way, so kill it.  */
-	      if (TREE_CODE (t) == INDIRECT_REF)
-		t = TREE_OPERAND (t, 0);
-
-              if (gate_generate_ir ())
-                {
-	          if (TREE_CODE (t) == CALL_EXPR)
-	            t = get_callee_fndecl (t);
-                  else
-                    /* no copy assignment at hand. define one. 
-                       default copy assignment acts like default copy constructor. */
-                    t = generate_default_copy_ctor_function (orig_t);
-
-                  vecs = make_tree_vec (2); 
-                  TREE_VEC_ELT (vecs, 0) = t; 
-                  TREE_VEC_ELT (vecs, 1) = OMP_CLAUSE_OPERAND (c, 0); 
-
-                  wrap = t;
-                  if (TREE_CODE (orig_t) == VAR_DECL
-                      && TREE_CODE (TREE_TYPE (orig_t)) == ARRAY_TYPE)
-                    wrap = cxx_omp_constructor_wrapper_for_irgen (vecs, DECL_SOURCE_LOCATION (OMP_CLAUSE_DECL (c)), 3);
-
-	          TREE_VEC_ELT (info, 2) = wrap;
-                }
-              else
-                {
-	          t = get_callee_fndecl (t);
-	          TREE_VEC_ELT (info, 2) = t;
-                }
-
-              if (gate_generate_ir ()
-                  && ((errorcount <= 0 && sorrycount <= 0)
-                      || global_dc->abort_on_error)
-                  && t)
-                {
-                  /* Force generation of the body for IR */
-                  struct cgraph_node *node  = cgraph_node (t);
-                  node->needed = 1;
-                  cgraph_mark_reachable_node (node);
-                }
-	    }
-
-	  if (errorcount != save_errorcount)
-	    remove = true;
-	}
+	remove = true;
 
       if (remove)
 	*pc = OMP_CLAUSE_CHAIN (c);

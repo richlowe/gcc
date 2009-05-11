@@ -857,6 +857,8 @@ decode_options (unsigned int argc, const char **argv)
       else if (!strcmp (argv[i], "-frtl-backend"))
         {
           flag_use_rtl_backend = -1;
+	  flag_preir_tree_optimizations = 1;
+	  flag_use_dbg_gen = false;
         }
       else if (!strncmp (argv[i], "-fstack-protector", sizeof ("-fstack-protector")))
         {

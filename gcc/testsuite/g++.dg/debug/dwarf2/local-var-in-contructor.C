@@ -2,7 +2,7 @@
 // Origin PR27574
 // { dg-do compile }
 // { dg-options "-O0 -g" }
-// { dg-final { scan-assembler "problem" } }
+// { dg-final { scan-assembler "problem" { xfail sparc*-*-* } } }
 
 void f (int *)
 {

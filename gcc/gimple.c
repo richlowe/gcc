@@ -33,6 +33,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-flow.h"
 #include "value-prof.h"
 #include "flags.h"
+#include "cp/cp-tree.h"
 
 #define DEFGSCODE(SYM, NAME, STRUCT)	NAME,
 const char *const gimple_code_name[] = {
@@ -358,6 +359,7 @@ gimple_build_call_from_tree (tree t)
   gimple_call_set_tail (call, CALL_EXPR_TAILCALL (t));
   gimple_call_set_cannot_inline (call, CALL_CANNOT_INLINE_P (t));
   gimple_call_set_return_slot_opt (call, CALL_EXPR_RETURN_SLOT_OPT (t));
+  gimple_call_set_public (call, CALLEXPR_IS_PUBLIC (t)); /* gccfss convertion */
   gimple_call_set_from_thunk (call, CALL_FROM_THUNK_P (t));
   gimple_call_set_va_arg_pack (call, CALL_EXPR_VA_ARG_PACK (t));
 
@@ -3188,6 +3190,14 @@ get_base_address (tree t)
   while (handled_component_p (t))
     t = TREE_OPERAND (t, 0);
   
+  /* we could see (&pmv)[i] here, where pmv is 'type pmv[i]'
+     addr_expr may be generated due to 'pmv' being passed
+     to some other function as a parameter that takes 'type *'
+     and then array_ref'ed inside that function. See CR 6580198 */
+  if (TREE_CODE (t) == ADDR_EXPR
+      && TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE)
+    t = TREE_OPERAND (t, 0);
+
   if (SSA_VAR_P (t)
       || TREE_CODE (t) == STRING_CST
       || TREE_CODE (t) == CONSTRUCTOR
