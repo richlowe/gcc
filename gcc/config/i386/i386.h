@@ -39,6 +39,13 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    ADDR_BEG, ADDR_END, PRINT_IREG, PRINT_SCALE, PRINT_B_I_S, and many
    that start with ASM_ or end in ASM_OP.  */
 
+#ifndef TARGET_CPU_x86
+/* need to make some equivalent defines for x86 that exist in sparc */
+#define TARGET_ARCH64 TARGET_64BIT
+#define TARGET_ARCH32  !(TARGET_64BIT)
+#define TARGET_CPU_x86 1
+#endif
+
 /* Redefines for option macros.  */
 
 #define TARGET_64BIT	OPTION_ISA_64BIT

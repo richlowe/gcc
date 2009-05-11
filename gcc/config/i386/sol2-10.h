@@ -18,6 +18,13 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifndef TARGET_CPU_x86
+/* need some defines that are defined for sparc targets */
+#define TARGET_ARCH64 TARGET_64BIT
+#define TARGET_ARCH32  !(TARGET_64BIT)
+#define TARGET_CPU_x86 1
+#endif
+
 #undef ASM_COMMENT_START
 #define ASM_COMMENT_START "/"
 
