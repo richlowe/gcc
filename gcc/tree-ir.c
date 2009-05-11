@@ -11709,6 +11709,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
 {
   tree vecs, fn, var, wrapper, parm, t, arg, arg2, argtype;
   gimple_seq gimple_body;
+  gimple bind;
   tree clause, info;
   struct gimplify_ctx gctx;
  
@@ -11797,6 +11798,9 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   push_gimplify_context (&gctx);
   gimplify_and_add (t, &gimple_body);
   pop_gimplify_context (NULL_TREE);
+  bind = gimple_build_bind (NULL, gimple_body, NULL);
+  gimple_body = gimple_seq_alloc ();
+  gimple_seq_add_stmt (&gimple_body, bind);
   gimple_set_body (wrapper, gimple_body);
   cgraph_finalize_function (wrapper, IR_FALSE);
   struct cgraph_node *node = cgraph_node (wrapper);
