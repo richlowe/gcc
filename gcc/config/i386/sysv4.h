@@ -130,3 +130,22 @@ along with GCC; see the file COPYING3.  If not see
 		   "|%0,_GLOBAL_OFFSET_TABLE_+(.-.LPR%=)}"		\
 	   : "=d"(BASE))
 #endif
+
+
+/*RAT-TODO do we need this after eliminating side door file
+    -- for connecting with UBE */
+/* Undefine some symbols which are not appropriate for Solarais */
+#undef SET_ASM_OP
+
+/* This is how to equate one symbol to another symbol.  The syntax used is
+   `SYM1=SYM2'.  Note that this is different from the way equates are done
+   with most svr4 assemblers, where the syntax is `.set SYM1,SYM2'.  */
+
+#define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2)                              \
+ do {   fprintf ((FILE), "\t");                                         \
+        assemble_name (FILE, LABEL1);                                   \
+        fprintf (FILE, " = ");                                          \
+        assemble_name (FILE, LABEL2);                                   \
+        fprintf (FILE, "\n");                                           \
+  } while (0)
+

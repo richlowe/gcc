@@ -10135,9 +10135,13 @@ output_pic_addr_const (FILE *file, rtx x, int code)
 #endif
 	  assemble_name (file, name);
 	}
+#ifndef TARGET_CPU_x86
+      // ir2hf does not like @PLT
+      /* RAT-TODO perhaps can revert when remove side door file */
       if (!TARGET_MACHO && !(TARGET_64BIT && DEFAULT_ABI == MS_ABI)
 	  && code == 'P' && ! SYMBOL_REF_LOCAL_P (x))
 	fputs ("@PLT", file);
+#endif
       break;
 
     case LABEL_REF:
@@ -28572,8 +28576,15 @@ i386_solaris_elf_named_section (const char *name, unsigned int flags,
   if (TARGET_64BIT
       && strcmp (name, ".eh_frame") == 0)
     {
+#ifdef TARGET_CPU_x86
+      // ir2hf does not like @unwind
+      /* RAT-TODO revert to original code when remove side door file */
+      fprintf (asm_out_file, "\t.section\t%s,\"%s\"\n", name,
+	       flags & SECTION_WRITE ? "aw" : "a");
+#else
       fprintf (asm_out_file, "\t.section\t%s,\"%s\",@unwind\n", name,
 	       flags & SECTION_WRITE ? "aw" : "a");
+#endif
       return;
     }
   default_elf_asm_named_section (name, flags, decl);

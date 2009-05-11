@@ -143,6 +143,36 @@ along with GCC; see the file COPYING3.  If not see
    (where the only alternative is to output character sequences as
    comma separated lists of numbers).  */
 
+#ifdef TARGET_CPU_x86
+/* RAT-TODO revert of original code when eliminate side door file
+#define ASM_OUTPUT_LIMITED_STRING(FILE, STR)				\
+  do									\
+    {									\
+      const unsigned char *_limited_str =				\
+        (const unsigned char *) (STR);					\
+      unsigned ch;							\
+      fprintf ((FILE), "%s\"", STRING_ASM_OP);				\
+      for (; (ch = *_limited_str); _limited_str++)			\
+        {								\
+	  int escape = ESCAPES[ch];					\
+	  switch (escape)						\
+	    {								\
+	    case 0:							\
+	      putc (ch, (FILE));					\
+	      break;							\
+	    case 1:							\
+	      fprintf ((FILE), "\\%03o", ch);				\
+	      break;							\
+	    default:							\
+	      putc ('\\', (FILE));					\
+	      putc (escape, (FILE));					\
+	      break;							\
+	    }								\
+        }								\
+      fprintf ((FILE), "\\000\"\n");					\
+    }									\
+  while (0)
+#else
 #define ASM_OUTPUT_LIMITED_STRING(FILE, STR)				\
   do									\
     {									\
@@ -170,6 +200,7 @@ along with GCC; see the file COPYING3.  If not see
       fprintf ((FILE), "\"\n");						\
     }									\
   while (0)
+#endif
 
 /* The routine used to output sequences of byte values.  We use a special
    version of this for most svr4 targets because doing so makes the

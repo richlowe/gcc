@@ -77,6 +77,23 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 
 /* The Solaris assembler wants a .local for non-exported aliases.  */
+#ifdef TARGET_CPU_x86
+/* RAT-TODO revert to original code when remove side door file */
+#define ASM_OUTPUT_DEF_FROM_DECLS(FILE, DECL, TARGET)	\
+  do {							\
+    const char *declname =				\
+      IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (DECL));	\
+    ASM_OUTPUT_DEF ((FILE), declname,			\
+		    IDENTIFIER_POINTER (TARGET));	\
+    if (! TREE_PUBLIC (DECL))				\
+      {							\
+        switch_to_section(bss_section);			\
+	fprintf ((FILE), "%s", LOCAL_ASM_OP);		\
+	assemble_name ((FILE), declname);		\
+	fprintf ((FILE), "\n");				\
+      }							\
+  } while (0)
+#else
 #define ASM_OUTPUT_DEF_FROM_DECLS(FILE, DECL, TARGET)	\
   do {							\
     const char *declname =				\
@@ -90,6 +107,7 @@ along with GCC; see the file COPYING3.  If not see
 	fprintf ((FILE), "\n");				\
       }							\
   } while (0)
+#endif
 
 /* Solaris-specific #pragmas are implemented on top of attributes.  Hook in
    the bits from config/sol2.c.  */

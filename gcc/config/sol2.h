@@ -121,7 +121,37 @@ along with GCC; see the file COPYING3.  If not see
 #undef STARTFILE_ARCH_SPEC
 #define STARTFILE_ARCH_SPEC STARTFILE_ARCH32_SPEC
 
-#undef LINK_ARCH32_SPEC_BASE
+#ifdef TARGET_CPU_sparc
+#define LINK_ARCH32_SPEC_BASE_LIBGUTS \
+  "  %{!YP,*:%{p|pg :%{mcpu=ultrasparc|Zarchm32=v8plusa:-Y P,%J/v8plusa:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       mcpu=ultrasparc3|Zarchm32=v8plusb:-Y P,%J/v8plusb:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8plus:-Y P,%J/v8plus:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8plusc:-Y P,%J/v8plusc:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8plusd:-Y P,%J/v8plusd:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                       Zarchm32=v8:-Y P,%J/v8:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                                :-Y P,%J/v8plus:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib } } \
+             %{!p:%{!pg:%{mcpu=ultrasparc|Zarchm32=v8plusa:-Y P,%J/v8plusa:%J:/usr/ccs/lib:/usr/lib ; \
+                          mcpu=ultrasparc3|Zarchm32=v8plusb:-Y P,%J/v8plusb:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8plus:-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8plusc:-Y P,%J/v8plusc:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8plusd:-Y P,%J/v8plusd:%J:/usr/ccs/lib:/usr/lib ; \
+                          Zarchm32=v8:-Y P,%J/v8:%J:/usr/ccs/lib:/usr/lib ; \
+                                :-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib}}} \
+             } "
+#else
+#ifdef TARGET_CPU_x86
+#define LINK_ARCH32_SPEC_BASE_LIBGUTS \
+  "  %{!YP,*:%{p|pg :\
+        %{Zarchm32=sse2*|Zarchm32=sse3*|Zarchm32=sse4*:-Y P,%J/sse2:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
+                                :-Y P,%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib } } \
+             %{!p:%{!pg:%{Zarchm32=sse2*|Zarchm32=sse3*|Zarchm32=sse4*:-Y P,%J/sse2:%J:/usr/ccs/lib:/usr/lib ; \
+                                :-Y P,%J:/usr/ccs/lib:/usr/lib}}} \
+             } "
+#endif
+#endif
+
+
+#undef SPEC_BASE
 #define LINK_ARCH32_SPEC_BASE \
   "%{G:-G} \
    %{YP,*} \
@@ -136,25 +166,9 @@ along with GCC; see the file COPYING3.  If not see
              %{!p:%{!pg:-Y P,/usr/ucblib:/usr/ccs/lib:/usr/lib}}} \
              %{!norpath:%{!nodefaultlibs:%{!nostdlib:-R /usr/ucblib}}}} \
    %{!compat-bsd: \
-     %{!YP,*:%{p|pg :%{mcpu=ultrasparc|Zarchm32=v8plusa:-Y P,%J/v8plusa:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
-                       mcpu=ultrasparc3|Zarchm32=v8plusb:-Y P,%J/v8plusb:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
-                       Zarchm32=v8plus:-Y P,%J/v8plus:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
-                       Zarchm32=v8plusc:-Y P,%J/v8plusc:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
-                       Zarchm32=v8plusd:-Y P,%J/v8plusd:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
-                       Zarchm32=v8:-Y P,%J/v8:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib ; \
-                                :-Y P,%J/v8plus:%J:/usr/lib/libp:/usr/ccs/lib:/usr/lib } } \
-             %{!p:%{!pg:%{mcpu=ultrasparc|Zarchm32=v8plusa:-Y P,%J/v8plusa:%J:/usr/ccs/lib:/usr/lib ; \
-                          mcpu=ultrasparc3|Zarchm32=v8plusb:-Y P,%J/v8plusb:%J:/usr/ccs/lib:/usr/lib ; \
-                          Zarchm32=v8plus:-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib ; \
-                          Zarchm32=v8plusc:-Y P,%J/v8plusc:%J:/usr/ccs/lib:/usr/lib ; \
-                          Zarchm32=v8plusd:-Y P,%J/v8plusd:%J:/usr/ccs/lib:/usr/lib ; \
-                          Zarchm32=v8:-Y P,%J/v8:%J:/usr/ccs/lib:/usr/lib ; \
-                                :-Y P,%J/v8plus:%J:/usr/ccs/lib:/usr/lib}}} \
-             } \
-     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}} \
-                 %{xprofile=collect=*: -L %J/../usr/lib -R %J/../usr/lib}} \
-     %{fstack-protector|fstack-protector-all: -R %H} \
-    } "
+   %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}}} " \
+LINK_ARCH32_SPEC_BASE_LIBGUTS \
+"  } "
 
 #undef LINK_ARCH32_SPEC
 #define LINK_ARCH32_SPEC LINK_ARCH32_SPEC_BASE

@@ -282,9 +282,15 @@ asm(".globl _mcount\n"
     );
 #else
 /* Solaris 2 libraries use _mcount.  */
-asm(".globl _mcount; _mcount: jmp internal_mcount");
+#ifdef TARGET_CPU_x86
+/* IR2HF wants a new line instead of semi-colon */
+asm(".globl _mcount\n_mcount: jmp internal_mcount");
+asm(".globl mcount\nmcount: jmp internal_mcount");
+#else
 /* This is for compatibility with old versions of gcc which used mcount.  */
 asm(".globl mcount; mcount: jmp internal_mcount");
+asm(".globl _mcount; _mcount: jmp internal_mcount");
+#endif
 #endif
 
 void

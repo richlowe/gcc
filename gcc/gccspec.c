@@ -123,6 +123,7 @@ const struct {
   const char *const option_found;
   const char *const replacements;
 } target_option_translations[] =
+#ifdef TARGET_CPU_sparc
 #ifndef __linux__
 {
   { "-fast", "-Zfast -xtarget=native -Zfns=yes -ffast-math -Zfsimple=2 -Zftrap=%none -xbuiltin=%all -xlibmil -xlibmopt -Zalias_level=basic -xdepend=yes -xprefetch=auto,explicit -xprefetch_level=2" },
@@ -151,6 +152,23 @@ const struct {
   TARGET_OPTION_TRANSLATE_TABLE,
   { 0, 0 }
 };
+#endif
+#else
+#ifdef TARGET_CPU_x86
+{
+  { "-fast", "-Zfast -xtarget=native -Zfns=yes -ffast-math -Zfsimple=2 -Zftrap=%none -xbuiltin=%all -Zalias_level=basic -xdepend=yes -xprefetch=auto,explicit -xprefetch_level=1 -xregs=frameptr" },
+  { "-Zpecdummy", "-Zpecdummyc" },
+  { "-xautopar", "-xautopar -xdepend=yes"},
+  { "-xinstrument=datarace", "-xinstrument=datarace -g"},
+  { "-O1", "-O1 -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  { "-O", "-O -Zalias_level=any -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=no"}, \
+  { "-O2", "-O2 -Zalias_level=basic -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-O3", "-O3 -Zalias_level=std -xprefetch=auto,explicit -xprefetch_level=2 -xdepend=yes"}, \
+  { "-Os", "-O2 -Zalias_level=basic -xspace -xprefetch=auto,explicit -xprefetch_level=1 -xdepend=no"}, \
+  TARGET_OPTION_TRANSLATE_TABLE,
+  { 0, 0 }
+};
+#endif
 #endif
 #endif
 

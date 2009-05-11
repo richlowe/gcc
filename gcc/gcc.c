@@ -356,6 +356,10 @@ static void add_preprocessor_option (const char *, int);
 static void add_assembler_option (const char *, int);
 static void add_linker_option (const char *, int);
 static void process_command (int, const char **);
+#ifdef TARGET_CPU_x86
+static void add_ir2hf_option (const char *, int);
+static void add_ube_option (const char *, int);
+#endif
 static int execute (void);
 static void alloc_args (void);
 static void clear_args (void);
@@ -527,6 +531,7 @@ or with constant text in a single argument.
  %C     process CPP_SPEC as a spec.
  %1	process CC1_SPEC as a spec.
  %2	process CC1PLUS_SPEC as a spec.
+ %3     Output the accumulated ir2hf options specifed by compilations
  %*	substitute the variable part of a matched option.  (See below.)
 	Note that each comma in the substituted string is replaced by
 	a single space.
@@ -760,6 +765,7 @@ proper position among the other output files.  */
 #define LINKER_PATH "/usr/ccs/bin/ld "
 #endif
 
+#ifdef TARGET_CPU_sparc
 #ifndef __linux__
 #define LINK_COMMAND_LIB  "\
     %{!xlibmopt: %{O3: -lmopt } }\
@@ -780,6 +786,50 @@ proper position among the other output files.  */
          -Bdynamic -lxprof -lpthread} } \
 "
 #endif
+#else
+#ifdef TARGET_CPU_x86
+#ifndef __linux__
+#define LINK_COMMAND_LIB  "\
+    %{!xlibmopt: %{O3: -lmopt } }\
+    %{xautopar: -lmtsk -lthread} %{Zmt: -lthread}\
+    %{!shared: %{xprofile=collect* : \
+      %{m64 : %J/amd64/xprof_fini.o ; \
+        m32 : %J/xprof_fini.o ; \
+            : %J/xprof_fini.o } \
+         -Bdynamic -ldl } } \
+"
+#else
+#define LINK_COMMAND_LIB "\
+    %{xautopar: -lmtsk -lpthread} %{Zmt: -lpthread}\
+    %{!shared: %{xprofile=collect* : \
+      %{m64 : %J/amd64/xprof_fini.o ; \
+        m32 : %J/xprof_fini.o ; \
+            : %J/xprof_fini.o } \
+         -Bdynamic -ldl -lm -lpthread} } \
+"
+#endif
+#endif 
+#endif
+ 
+#ifdef TARGET_CPU_sparc
+static const char* LINK_COMMAND_GUTS_sparc_x86 =
+"   %{xpagesize* : %{m64: %J/v9/pagesize.o ; \
+                     m32: %J/pagesize.o ; \
+                        : %J/pagesize.o} } \
+    %{xinstrument=datarace : %{m64: %J/v9/libtha.so.1; \
+                               m32: %J/libtha.so.1; \
+                                  : %J/libtha.so.1} } ";
+#else
+#ifdef TARGET_CPU_x86
+static const char* LINK_COMMAND_GUTS_sparc_x86 =
+"   %{xpagesize* : %{m64: %J/amd64/pagesize.o ; \
+                     m32: %J/pagesize.o ; \
+                        : %J/pagesize.o} } \
+    %{xinstrument=datarace : %{m64: %J/amd64/libtha.so.1; \
+                               m32: %J/libtha.so.1; \
+                                  : %J/libtha.so.1} } ";
+#endif
+#endif
 
 /* Moved out guts of LINK_COMMAND_SPEC since it needs to be shared with
    ipo phase 2 */
@@ -790,15 +840,10 @@ proper position among the other output files.  */
     %{s} %{t} %{u*} %{x} %{z} %{Z} \
     %{static:} %{L*} %(mfwrap) %(link_libgcc) %o %(mflib)\
     %{xlibmopt: -lmopt }\
+    %(LINK_COMMAND_GUTS_sparc_x86) \
     %{Zfprofile-arcs|Zfprofile-generate:-lgcov}\
     %{!nostdlib:%{!nodefaultlibs:%(link_gcc_c_sequence)}}\
     %{R*} \
-    %{xpagesize* : %{m64: %J/v9/pagesize.o ; \
-                     m32: %J/pagesize.o ; \
-                        : %J/pagesize.o} } \
-    %{xinstrument=datarace : %{m64: %J/v9/libtha.so.1; \
-                               m32: %J/libtha.so.1; \
-                                  : %J/libtha.so.1} }\
     %{fopenmp|xopenmp|xopenmp=noopt|xopenmp=parallel: -lmtsk} \
     %{fstack-protector|fstack-protector-all: -lssp_nonshared -lssp} \
     %{xvector: -lmvec} %{xvector=yes: -lmvec} \
@@ -814,6 +859,7 @@ proper position among the other output files.  */
 #ifdef __linux__
 #define LINK_ANNOTATE_GCCFSS ""
 #else
+#ifdef TARGET_CPU_SPARC
 #define LINK_ANNOTATE_GCCFSS \
 "  %{xannotate=no: ; \
      xannotate=yes: \
@@ -821,6 +867,9 @@ proper position among the other output files.  */
      !xannotate=*: \
 	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/v9/libld_annotate.so  \
 }"
+#else
+#define LINK_ANNOTATE_GCCFSS ""
+#endif
 #endif
 
 /* these options are passed only to iropt and not to ipo */
@@ -937,12 +986,14 @@ static const char *cpp_unique_options =
  %{H} %C %{D*&U*&A*} %{i*} %Z %i\
  %{fmudflap:-D_MUDFLAP -include mf-runtime.h}\
  %{fmudflapth:-D_MUDFLAP -D_MUDFLAPTH -include mf-runtime.h}\
- %{E|M|MM:%W{o*}} \
- %{m32: %{Zarchm32=v8plusc: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
+ %{E|M|MM:%W{o*}} "
+#ifdef TARGET_CPU_sparc
+"%{m32: %{Zarchm32=v8plusc: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
         %{Zarchm32=v8plusd: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
    m64: %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } \
-        %{Zarchm64=v9d: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } } \
- %:prod-dir-include() \
+        %{Zarchm64=v9d: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } } "
+#endif
+"%:prod-dir-include() \
  %{!frtl-backend: %:add-sun-prefetch()} \
 ";
 
@@ -1053,7 +1104,7 @@ static const char *cpp_debug_options = "%{d*}";
       Zfast: ;\
         : -O1 %N`-xprofile' requires `-O1', `-O2', `-O3' or `-fast', assuming `-O1' option } }\
  %{ftest-coverage: %{xipo*: %<xipo* %e`-ftest-coverage' and `-xipo' are incompatible}}\
- %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants}"
+ %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants}" 
 
 /* NB: This is shared amongst all front-ends.  */
 static const char *cc1_options =
@@ -1082,15 +1133,25 @@ static const char *gccfss_cc1_options =
  %{xdebugformat=dwarf: %{g*:-gdwarf-2}} \
  %{xpagesize=*: -xpagesize_heap=%* -xpagesize_stack=%* }\
  %{xpagesize_heap=*} %{xpagesize_stack=*} \
- %{m32: -m32 %{Zarchm32=v8plusc: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
-   m64: -m64 %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
-      : -m32 } \
  %{Zpec=*: %:is-it-pec_dummy() }\
  %{xpec|Zpec=*: -ftree-ir-crossfile } \
  %{!fsyntax-only:  \
               %{frtl-backend: %{S: %{!o*: -o %b.s; : %{o*}} ; : -o %U.s }; \
-                            : -o %U.s}\
-              -r %{save-temps:%b.ir} %{!save-temps: %d%U.ir} }\
+"
+#ifdef TARGET_CPU_sparc
+" \
+                           : -o %U.s}\
+ %{m32: -m32 %{Zarchm32=v8plusc: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
+   m64: -m64 %{Zarchm64=v9c: -D__FP_FAST_FMA__ -D__FP_FAST_FMAF__ } ; \
+      : -m32 } \
+"
+#else
+#ifdef TARGET_CPU_x86
+" : -o %U.acs } "
+#endif
+#endif
+" \
+              -r %{save-temps:%b.ir} %{!save-temps: %U.ir} }\
  %{xautopar: -fno-tree-ir-regalloc} \
  %{xreduction: %{!xautopar: %e-xreduction requires -xautopar } }\
  %r \
@@ -1128,6 +1189,7 @@ static const char *cc1_unique_options =
 /* used in config/sparc/sol-bi.h for assembler */
 /* match on Zarch, Zarchm32, Zarchm64 to prevent warning about not using it */
 static const char *ssbe_xarch =
+#ifdef TARGET_CPU_sparc
 "%{m32: %{Zarchm32=v8plusd: -xarch=sparcima ; \
           Zarchm32=*: -xarch=%* ; \
                     : -xarch=v8plus} ;\
@@ -1138,10 +1200,22 @@ static const char *ssbe_xarch =
           Zarchm32=*: -xarch=%*; \
                     : -xarch=v8plus} } \
  %{Zarch=*: } %{Zarchm32=*: } %{Zarchm64=*: }";
+#else
+#ifdef TARGET_CPU_x86
+"%{m32: %{Zarchm32=*: -xarch=%*; \
+                    : -xarch=generic}; \
+   m64: %{Zarchm64=*: -xarch=%*; \
+                    : -xarch=generic}; \
+      : %{Zarchm32=*: -xarch=%*; \
+                    : -xarch=generic} } \
+ %{Zarch=*: } %{Zarchm32=*: } %{Zarchm64=*: }";
+#endif
+#endif
 
 /* The following two variables are defined in the language specific 
    spec files.  They hold language specific flags passed to iropt and cg */
 /* for C */
+#ifdef TARGET_CPU_sparc
 const char *ssiropt_lang_spec = 
 "%{fexceptions: -h_exception=gcc} \
 ";
@@ -1168,6 +1242,29 @@ const char *ssiropt_lang_spec_fortran =
 "";
 const char *sscg_lang_spec_fortran =
 "";           
+#else
+#ifdef TARGET_CPU_x86
+/*RAT-TODO: come back and delete this and use the above for both x86 and sparc
+        when we can pass this stuff to ube 
+ */
+const char *ssiropt_lang_spec = 
+"";
+const char *sscg_lang_spec =
+"";           
+ 
+/* for C++ */
+const char *ssiropt_lang_spec_gxx = 
+"";
+ 
+const char *sscg_lang_spec_gxx =
+"";
+/* for Fortran */
+const char *ssiropt_lang_spec_fortran = 
+"";
+const char *sscg_lang_spec_fortran =
+"";           
+#endif
+#endif
 
 /* NB: This is shared amongst all front-ends.  */
 static const char *invoke_as =
@@ -1211,7 +1308,9 @@ static const char *sscg_xarch_xchip =
  %{xprefetch=* : -xprefetch=%* } \
  %{xprefetch_level=* : -xprefetch_level=%* }";
 
+/* RAT-TODO come back and see whether to change the x86 values */
 static const char *ssbe_optlevel =
+#ifdef TARGET_CPU_sparc
 "%{O:-O3;\
    O0: %{xprofile=* : -O3  ;\
                     : -OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 \
@@ -1225,6 +1324,22 @@ static const char *ssbe_optlevel =
      : %{xprofile=* : -O3 ; \
                     : -OO0 -T3 -Qiselect-C0 -Qrm:newregman:coalescing=0 \
                            -gen_loclist_gcc=1} }";
+#else
+#ifdef TARGET_CPU_x86
+"%{O:-O3;\
+   O0: %{xprofile=* : -O3  ;\
+                    : -OO0 } ; \
+   O1:-O3;\
+   O2:-O3;\
+   O3:-O5;\
+   Os:-O3; \
+   O*:-O5; \
+   Zfast:-O5 ;\
+     : %{xprofile=* : -O3 ; \
+                    : -OO0 } }";
+
+#endif /* TARGET_CPU_x86 */
+#endif
 
 /* some slightly different stuff for iropt */
 static const char *ssiropt_optlevel =
@@ -1307,6 +1422,7 @@ static const char *iropt_ipo_options =
  %{fwrapv: -xwrap_int }\
 ";
 
+#ifdef TARGET_CPU_sparc
 static const char *mvis_il =
 "%{mvis: %{xarch=v8plusa: -il %J/v8plusa/vis.il } \
          %{xarch=v8plusb: -il %J/v8plusb/vis.il } \
@@ -1325,34 +1441,89 @@ static const char *mvis_il =
                    : -il %J/sparcima/vis.il } } \
          %{!xarch=*: %{m64: -il %J/v9a/vis.il ; \
                              : -il %J/v8plusa/vis.il } } }";
+
+static const char *libm_il =
+"%{xlibmil: \
+    %{m64: %{Zarchm64=v9: -il %J/v9/libm.il;\
+             Zarchm64=v9a: -il %J/v9a/libm.il; \
+             Zarchm64=v9b: -il %J/v9b/libm.il; \
+             Zarchm64=v9c: -il %J/v9c/libm.il; \
+             Zarchm64=v9d: -il %J/v9d/libm.il; \
+                         : -il %J/v9/libm.il} ; \
+      m32: %{Zarchm32=v7: -il %J/v7/libm.il;\
+             Zarchm32=v8: -il %J/v8/libm.il;\
+             Zarchm32=v8plus: -il %J/v8plus/libm.il;\
+             Zarchm32=v8plusa: -il %J/v8plusa/libm.il;\
+             Zarchm32=v8plusb: -il %J/v8plusb/libm.il;\
+             Zarchm32=v8plusc: -il %J/v8plusc/libm.il;\
+             Zarchm32=v8plusd: -il %J/v8plusd/libm.il;\
+                        : -il %J/libm.il};\
+         : %{Zarch=v7: -il %J/v7/libm.il;\
+             Zarch=v8: -il %J/v8/libm.il;\
+             Zarch=v8plus: -il %J/v8plus/libm.il;\
+             Zarch=v8plusa: -il %J/v8plusa/libm.il;\
+             Zarch=v8plusb: -il %J/v8plusb/libm.il;\
+             Zarch=v8plusc: -il %J/v8plusc/libm.il;\
+             Zarch=v8plusd: -il %J/v8plusd/libm.il;\
+                          : -il %J/libm.il} } }" ;
+#else
+#ifdef TARGET_CPU_x86
+static const char *mvis_il =
+"%{mvis: %e-mvis and -xvis are not valid x86 options }";
+
+static const char *libm_il =
+"%{xlibmil: \
+    %{m64: -il %J/amd64/libm.il; \
+      m32: -il %J/libm.il; \
+         : -il %J/libm.il} }";
+#endif
+#endif
+
 #ifdef __linux__
 #define CG_IPO_OPTIONS \
 " %{xannotate*: %N-xannotate is not supported}"
-#else // sparc
+#else /* solaris */
+#ifdef TARGET_CPU_sparc
 #define CG_IPO_OPTIONS \
 " %{xannotate=yes: -xannotate=yes; \
     xannotate=no: ; \
     !xannotate: -xannotate=yes} "
-#endif
+#else
+#ifdef TARGET_CPU_x86
+/* RAT-TODO how do we want to handle this ? */
+#define CG_IPO_OPTIONS ""
+#endif /* solaris x86 */
+#endif /* solaris TARGET_CPU */
+#endif /* os type */
 
 static const char *cg_ipo_options =
  CG_IPO_OPTIONS
 "-Qy %(sscg_xarch_xchip) %(xtarget) \
  %{m32} %{m64} \
  %{g0: ; g*:-g -gen_loclist_gcc=1} \
- %(ssbe_optlevel) \
- %{xcode=*} \
+ %(ssbe_optlevel) "
+#ifdef TARGET_CPU_sparc
+"%{xcode=*} \
  %{!xcode=*: %{mcmodel=medlow: -xcode=abs32; \
                    : %{m64: -xcode=abs44 ; \
                        m32: -xcode=abs32 ; \
                           : -xcode=abs32 } }}\
+"
+#endif
+" \
  %{xcache=* : -xcache=%* ; \
             : -xcache=generic }\
  %{xcheck : -xcheck=%%all } %{xcheck=*} \
  %{xsafe=mem} \
  %{xspace} \
  %{p} %{pg} \
- %{xmemalign=* : -xmemalign=%* } \
+ %{xmemalign=* : -xmemalign=%* } "
+#ifdef TARGET_CPU_sparc
+" \
+ %{xregs=*} \
+ %{Zfma=*: -fma=%* } \
+ %{xhwcprof} %{xhwcprof=enable: -xhwcprof}\
+ %{xsafe=unboundsym} \
  %{!xmemalign=*: \
       %{mno-integer-ldd-std: %{m64: -xmemalign=8s; \
                                m32: -xmemalign=4s; \
@@ -1360,6 +1531,8 @@ static const char *cg_ipo_options =
                            : %{m64: -xmemalign=8s ; \
                                m32: -xmemalign=8i ;\
                                    : -xmemalign=8i }}} \
+ %{xlibmopt: -xlibmopt } \
+ %{Zfns=yes: -fns }\
  %{m64 : -il %F/"
  #ifdef __linux__
   "64"
@@ -1393,15 +1566,29 @@ static const char *cg_ipo_options =
              Zarch=v8plusc: -il %J/v8plusc/libm.il;\
              Zarch=v8plusd: -il %J/v8plusd/libm.il;\
                           : -il %J/libm.il} } }\
+"
+#else
+#ifdef TARGET_CPU_x86
+" %{xlibmopt: } \
+  %{xcode=pic12: -pic;\
+    xcode=pic32: -PIC} \
+  %{Zfsimple=2: -fsr=1; \
+              : -ZW} \
+  %{Zfsimple=*: -fsimple=%*} \
+  %{xregs=frameptr: -xregs=frameptr -ZB; \
+           : -Z~B} \
+  %{xbuiltin=*: -xbuiltin=%*} \
+  %{Zfns=*: }"
+#endif
+#endif
+"%(libm_il) \
  %(mvis_il) \
  %{xvector*} %{!xvector* : -xvector=no } \
  %{xthreadvar*} \
  %{!xthreadvar* : %{xcode=pic32|xcode=pic13 : -xthreadvar=dynamic ; \
                                             : -xthreadvar=no%%dynamic }} \
  %{xbuiltin=* : -xbuiltin=%* ; : -xbuiltin=%%none} \
- %{xlibmopt: -xlibmopt } \
  %{Zfsimple*: -fsimple%*} \
- %{Zfns=yes: -fns }\
  %{xautopar|fopenmp|xopenmp|xopenmp=parallel|xopenmp=noopt|Zmt : -mt }\
  %{fno-jump-tables: -Qiselect-sw_table=0}\
  %{xprefetch_auto_type=* } \
@@ -1419,6 +1606,9 @@ static const char *cg_ipo_options =
  %{mno-app-regs: -xregs=no%%appl} \
  %{mfpu: -xregs=float} \
  %{mno-fpu: -xregs=no%%float} \
+"
+#ifdef TARGET_CPU_sparc
+" \
  %{fno-unit-at-a-time: -Qassembler-ounrefsym=0; \
    funit-at-a-time: ;\
                   : %{O: -Qassembler-ounrefsym=0; \
@@ -1442,31 +1632,113 @@ static const char *cg_ipo_options =
 #else
  " -comdat -h_gcc"
 #endif
+#else
+#ifdef TARGET_CPU_x86
+#if USE_GNU_LD
+#else
+ " -comdat"
+#endif
+#endif
+#endif
  ;
 
 /* the namelist file which is the -N option to iropt and -n option to ipo
    is not created by the sgcc front end so use /dev/null */
 static const char *invoke_iropt =
-"|\n iropt -F %(iropt_ipo_options) %(iropt_only_options) \
- -o %{save-temps: %b.ircg} %{!save-temps: %d%u.ircg} \
-  %{save-temps:%b.ir} %{!save-temps:%d%U.ir} \
- -N/dev/null \
- -is %U.s \
- %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: %{Zipo_fast_phase_1: -O0 } } } ";
+"|\n iropt -F %(iropt_ipo_options) "
+#ifdef TARGET_CPU_sparc
+ "-o %{save-temps: %b.ircg} %{!save-temps: %u.ircg} "
+#else
+#ifdef TARGET_CPU_x86
+ " -I -fstore \
+  -o %{save-temps: %b.irhf} %{!save-temps: %u.irhf} "
+#endif /* TARGET_CPU_x86 */
+#endif
+"  %{save-temps:%b.ir} %{!save-temps:%U.ir} \
+ -N/dev/null "
+#ifdef TARGET_CPU_sparc
+ " -is %U.s "
+#else
+#ifdef TARGET_CPU_x86
+ " -is %U.acs"
+#endif /* TARGET_CPU_x86 */
+#endif
+ " %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: %{Zipo_fast_phase_1: -O0 } } } ";
+ 
+static const char *cg_name_spec =
+#ifdef TARGET_CPU_sparc
+"cg"
+#else
+"ube"
+#endif
+;
 
 static const char *invoke_cg = 
-"|\n cg %:add-user-il-routines() %(cg_ipo_options) \
- -is %U.s \
- -ir %{save-temps:%b.ircg} %{!save-temps:%d%U.ircg} \
+#ifdef TARGET_CPU_x86
+"|\n ir2hf -verbose  \
+     %{m32} %{m64} \
+     %{save-temps: %b.irhf} %{!save-temps: %U.irhf} \
+     %{save-temps: %b.acs} %{!save-temps: %U.acs} \
+     %{save-temps: %b.ircg} %{!save-temps: %U.ircg} \
+     %J/../bin/fbe \
+     %(ssbe_optlevel) -Qy %3\
+"
+#endif
+"|\n %(cg) "
+#ifdef TARGET_CPU_x86
+" -iropt -s -fstore -fbe %J/../bin/fbe -comdat  \
+  %{m64: -m64 %{mcmodel=*: -xmodel=%*} %{!mcmodel: -xmodel=small} } \
+  %{Zfstore: -fstore; \
+    Znofstore: -nofstore; \
+           : -fstore} \
+"
+#endif
+"%:add-user-il-routines() %(cg_ipo_options) \
+"
+#ifdef TARGET_CPU_sparc
+" -is %U.s \
+"
+#endif
+#ifdef TARGET_CPU_sparc
+" -ir %{save-temps:%b.ircg} %{!save-temps:%U.ircg} \
  %{!xforceas: \
      %{!S: %{c:%{!o*:-oo %w%b%O}%W{o*:-oo %*}}%{!c: %{Zpec=*: -oo %d%w%U%O; :-oo %d%w%u%O} }} \
      %{S: %W{s*} %{!o*:-os %w%b.s} %{o*:-os %*} } }\
  %{xforceas: \
      %{!S: %{!o*: -os %w%u.s} %{o*: -os %w%u.s} } \
      %{S: %W{s*} %{!o*:-os %w%b.s} %{o*:-os %*} } }\
- %{xlinkopt: -xlinkopt=1 ; \
-   xlinkopt=*: -xlinkopt=%* } \
- %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: -xcrossfile=1 %{Zipo_fast_phase_1: -OO0} } } ";
+"
+#else
+#ifdef TARGET_CPU_x86
+" %{xipo=1|xipo=2: -ipo %{o*: %*} %{!o*: %w%b.o} }\
+  %{!S: -S %{save-temps: %b.cgs} %{!save-temps: %w%u.cgs} } \
+  %{S: %W{s*} -S %{!o*: %w%b.s} %{o*:-os %*} } \
+  %{save-temps:%b.ircg} %{!save-temps:%U.ircg} \
+" 
+#endif /* TARGET_CPU_x86 */
+#endif
+" %{xlinkopt: -xlinkopt=1 ; \
+   xlinkopt=*: -xlinkopt=%* } "
+#ifdef TARGET_CPU_sparc
+" %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: -xcrossfile=1 %{Zipo_fast_phase_1: -OO0} } } "
+#else
+#ifdef TARGET_CPU_x86
+" %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*:  %{Zipo_fast_phase_1: -OO0} } } \
+ %T \
+  %{!S: %(invoke_fbe) } "
+#endif
+#endif
+;
+
+static const char *invoke_fbe =
+"|\n fbe \
+   %{c:%{!o*:-o %w%b%O}%W{o*:-o %*}} \
+   %{!c: %{Zpec=*: -o %d%w%U%O; :-o %d%w%u%O} } \
+   -Qy -s \
+   %{m32} %{m64: -m64 %{mcmodel=*} %{!mcmodel: -xmodel=small} } \
+   %{save-temps: %b.cgs} %{!save-temps: %U.cgs} \
+";
+
 
 static const char *invoke_ipo1 = 
 "|\n ipo -phase1 %{v: -#} %{save-temps: -keeptmp}\
@@ -1478,11 +1750,25 @@ static const char *invoke_ipo1 =
  %{Ztime: -xtime=1 } \
  %{xpec:-pec -cmdline %:print-orig-cmdline() %i}\
  %{!S: %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c: -o %d%U%O}} \
- -a %U.s \
  -ir %d%U.ir \
  -n /dev/null \
- -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec) %Q -ipo_iroptoption_end \
- -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec) %T -ipo_cgoption_end %P\
+ -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec) %Q -ipo_iroptoption_end "
+#ifdef TARGET_CPU_sparc
+" -a %U.s \
+  -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec) %T -ipo_cgoption_end"
+#else
+#ifdef TARGET_CPU_x86
+" -a %U.acs \
+  -ipo_ir2hfoption_start \
+       -verbose %{m32} %{m64} %{xbuiltin=: -xbuiltin} \
+       %J/../bin/fbe \
+       %(ssbe_optlevel) -Qy %3\
+  -ipo_ir2hfoption_end \
+  -ipo_ubeoption_start -iropt %(cg_ipo_options) %(sscg_spec) %T -ipo_ubeoption_end \
+  -ipo_fbeoption_start %{xchip=*} -Qy -ipo_fbeoption_end "
+#endif
+#endif
+" %P \
  ";
 
 static const char *invoke_fortranipo1 = 
@@ -1495,11 +1781,25 @@ static const char *invoke_fortranipo1 =
  %{Ztime: -xtime=1 } \
  %{xpec:-pec -cmdline %:print-orig-cmdline() %i}\
  %{!S: %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c: -o %d%U%O}} \
- -a %U.s \
  -ir %d%U.ir \
  -n /dev/null \
- -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec_fortran) %Q -ipo_iroptoption_end \
- -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec_fortran) %T -ipo_cgoption_end %P\
+ -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec_fortran) %Q -ipo_iroptoption_end "
+#ifdef TARGET_CPU_sparc
+" -a %U.s \
+  -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec) %T -ipo_cgoption_end"
+#else
+#ifdef TARGET_CPU_x86
+" -a %U.acs \
+  -ipo_ir2hfoption_start \
+       -verbose %{m32} %{m64} %{xbuiltin=: -xbuiltin} \
+       %J/../bin/fbe \
+       %(ssbe_optlevel) -Qy %3\
+  -ipo_ir2hfoption_end \
+  -ipo_ubeoption_start -iropt %(cg_ipo_options) %(sscg_spec) %T -ipo_ubeoption_end \
+  -ipo_fbeoption_start %{xchip=*} -Qy -ipo_fbeoption_end "
+#endif
+#endif
+" %P \
  ";
 
 static const char *invoke_cppipo1 = 
@@ -1509,11 +1809,25 @@ static const char *invoke_cppipo1 =
          :-level=0 } \
  %{xpec:-pec -cmdline %:print-orig-cmdline() %i}\
  %{!S: %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c: -o %d%U%O}} \
- -a %U.s \
  -ir %d%U.ir \
  -n /dev/null \
- -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec_gxx) %Q -ipo_iroptoption_end \
- -ipo_cgoption_start -xcrossfile=1  %(cg_ipo_options) %(sscg_spec_gxx) %T -ipo_cgoption_end %P\
+ -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec_gxx) %Q -ipo_iroptoption_end "
+#ifdef TARGET_CPU_sparc
+" -a %U.s \
+  -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec) %T -ipo_cgoption_end"
+#else
+#ifdef TARGET_CPU_x86
+" -a %U.acs \
+  -ipo_ir2hfoption_start \
+       -verbose %{m32} %{m64} %{xbuiltin=: -xbuiltin} \
+       %J/../bin/fbe \
+       %(ssbe_optlevel) -Qy %3\
+  -ipo_ir2hfoption_end \
+  -ipo_ubeoption_start -iropt %(cg_ipo_options) %(sscg_spec) %T -ipo_ubeoption_end \
+  -ipo_fbeoption_start %{xchip=*} -Qy -ipo_fbeoption_end "
+#endif
+#endif
+" %P \
  ";
 
 static const char *invoke_ipo2 = 
@@ -1529,8 +1843,15 @@ static const char *invoke_ipo2 =
  %{Zpec=*:-i %* -cmdline %:print-orig-cmdline() X \
           -temp %{save-temps: %w%U%O} %{!save-temps: %w%d%U%O} } \
  %{xipo_archive=readonly} %{xipo_archive=writeback} \
- -iroptpath %Kiropt -cgpath %Kcg \
- -ipo_ldarg_start " LINKER_PATH LINK_COMMAND_GUTS LINK_COMMAND_GUTS2 " -ipo_ldarg_end %P\
+ -iroptpath %Kiropt "
+#ifdef TARGET_CPU_sparc
+" -cgpath %Kcg "
+#else
+#ifdef TARGET_CPU_x86
+" -ubepath %Kube -ir2hfpath %Kir2hf -fbepath %Kfbe"
+#endif
+#endif
+" -ipo_ldarg_start " LINKER_PATH LINK_COMMAND_GUTS LINK_COMMAND_GUTS2 " -ipo_ldarg_end %P\
  ";
 
 
@@ -1836,6 +2157,20 @@ static char **postopt_options;
    and substituted into the preprocessor command with %Z.  */
 static int n_preprocessor_options;
 static char **preprocessor_options;
+
+#ifdef TARGET_CPU_x86
+/* A vector of options to give to the ir2hf.
+   These options are accumulated by -Wh,
+   and substituted into the preprocessor command with %3.  */
+static int n_ir2hf_options;
+static char **ir2hf_options;
+
+/* A vector of options to give to the ube.
+   These options are accumulated by -Wu,
+   and substituted into the preprocessor command with %T.  */
+static int n_ube_options;
+static char **ube_options;
+#endif
 
 /* Define how to map long options into short ones.  */
 
@@ -1953,10 +2288,15 @@ static const struct option_map option_map[] =
    /* because specs can't match on '%auto' */
    {"-xinline=%auto", "-xinline=@auto", "*j"},
    /* because TARGET_OPTION_TRANSLATION_TABLE can't handle complex stuff */
+#ifdef TARGET_CPU_x86
+   {"-fstore", "-Zfstore", 0},
+   {"-nofstore", "-Znofstore", 0},
+#endif  
    {"-fns", "-Zfns=", "*j"},
    {"-ftrap=", "-Zftrap=", "*j"},
    {"-keeptmp", "-save-temps", 0},
    {"-mt", "-Zmt", 0},
+   {"-xmodel", "-mcmodel=", "*j"},
    {"-Wd,-pec","-Zpec=", "*j"}
  };
 
@@ -1986,7 +2326,11 @@ translate_options (int *argcp, const char *const **argvp)
 
   i = 0;
   newv[newindex++] = argv[i];
+#ifdef TARGET_CPU_sparc
   argv[i] = xstrdup("-mcpu=v9"); /* the default */
+#else
+  argv[i] = xstrdup("-mtune=nocona"); /* the default */   /*RAT-TODO is this the right one? */
+#endif
   newv[newindex++] = xstrdup("-Zsunir-backend"); /* the default */
 
   while (i < argc)
@@ -2300,6 +2644,7 @@ crack_xprefetch (char * p)
 static int xregs_appl = 1; /* 1=> xregs=appl 0=> xregs=no%appl */
 static int xregs_float = 1; /* likewise for float */
 static int xregs_syst = -1; /* -1=>neither syst nor no%syst  */
+static int xregs_frameptr = 0; /* 1=>xregs=frameptr 0=>xregs=no%frameptr */
 
 static int 
 crack_xregs (char * p)
@@ -2314,6 +2659,7 @@ crack_xregs (char * p)
 
    while ((e = strchr (p, ','))) /* values are comma delimited */
    {
+#ifdef TARGET_CPU_sparc
       if (strncmp( p, "appl", 4) == 0)
         xregs_appl = 1;
       else if (strncmp ( p, "no%appl", 7) == 0)
@@ -2326,6 +2672,14 @@ crack_xregs (char * p)
         xregs_syst = 1;
       else if (strncmp ( p, "no%syst", 7) == 0)
         xregs_syst = 0;
+#else
+#ifdef TARGET_CPU_x86
+      if (strncmp( p, "frameptr", 8) == 0)
+        xregs_frameptr = 1;
+      else if (strncmp( p, "no%frameptr", 11) == 0)
+        xregs_frameptr = 0;
+#endif
+#endif
       else {
         *e = 0;
         error ( "%s is an invalid value for -xregs", p );
@@ -2333,6 +2687,8 @@ crack_xregs (char * p)
       }
       p = e + 1; /* skip over "," */
    }
+
+#ifdef TARGET_CPU_sparc
    if (strncmp( p, "appl", 4) == 0)
      xregs_appl = 1;
    else if (strncmp ( p, "no%appl", 7) == 0)
@@ -2345,6 +2701,14 @@ crack_xregs (char * p)
      xregs_syst = 1;
    else if (strncmp ( p, "no%syst", 7) == 0)
      xregs_syst = 0;
+#else
+#ifdef TARGET_CPU_x86
+   if (strncmp( p, "frameptr", 8) == 0)
+     xregs_frameptr = 1;
+   else if (strncmp( p, "no%frameptr", 11) == 0)
+     xregs_frameptr = 0;
+#endif
+#endif
    else {
      error ( "%s is an invalid value for -xregs", p );
      badval = 1;
@@ -2481,6 +2845,50 @@ delete_duplicate_options (int *argcp, char ***argvp)
           /* set the old one to NULL, and try another option */
           argv[i] = NULL;
 	  if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-mcpu", 5) == 0 ) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-mtune", 6) == 0 ||
+               strncmp(argv[j], "-mcpu", 5) == 0) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+         if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-mtune", 6) == 0 ) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-mtune", 6) == 0 ||
+               strncmp(argv[j], "-mcpu", 5) == 0) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+         if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
+          newc--;
+          goto NEXTI;
+        } /* if argv */
+        j++;
+      } /* while (j < argc ) */
+    }
+    else if (argv[i] && strncmp(argv[i], "-march", 6) == 0 ) {
+      j = i + 1;
+      while (j < argc) {
+        if (argv[j] && 
+              (strncmp(argv[j], "-march", 6) == 0 ) ) {
+          /* set the old one to NULL, and try another option */
+          argv[i] = NULL;
+         if ((debug_driver_val & 0x01)) fprintf(stdout,"setting argv[%d] to NULL\n",i);
           newc--;
           goto NEXTI;
         } /* if argv */
@@ -3016,10 +3424,16 @@ delete_duplicate_options (int *argcp, char ***argvp)
 	  if ((debug_driver_val & 0x01)) 
              fprintf(stdout,"setting argv[%d] to NULL\n",i);
           argv[j] = concat ( "-xregs=",
+#ifdef TARGET_CPU_sparc
                              xregs_appl == 1 ? "appl," : "no%appl,",
                              xregs_float == 1 ? "float" : "no%float",
                              xregs_syst == 1 ? ",syst" 
                                              : (xregs_syst == 0 ? ",no%syst" : NULL),
+#else
+#ifdef TARGET_CPU_x86
+#endif
+                             xregs_frameptr == 1 ? "frameptr" : "no%frameptr",
+#endif
                              NULL);
 	  if ((debug_driver_val & 0x01)) 
              fprintf(stdout,"setting argv[%d] to %s\n",j,argv[j]);
@@ -3039,10 +3453,16 @@ delete_duplicate_options (int *argcp, char ***argvp)
       else 
         {
           argv[i] = concat ( "-xregs=",
+#ifdef TARGET_CPU_sparc
                              xregs_appl == 1 ? "appl," : "no%appl,",
                              xregs_float == 1 ? "float" : "no%float",
                              xregs_syst == 1 ? ",syst" 
                                              : (xregs_syst == 0 ? ",no%syst" : NULL),
+#else
+#ifdef TARGET_CPU_x86
+#endif
+                             xregs_frameptr == 1 ? "frameptr" : "no%frameptr",
+#endif
                              NULL);
 	  if ((debug_driver_val & 0x01)) 
              fprintf(stdout,"setting argv[%d] to %s\n",i,argv[i]);
@@ -3374,6 +3794,8 @@ static char *alternate_iropt = NULL;
 static char *alternate_cg = NULL;
 static char *alternate_ipo = NULL;
 static char *alternate_postopt = NULL;
+static char *alternate_ir2hf = NULL;
+static char *alternate_ube = NULL;
 static char *current_work_directory = NULL;
 
 /* Subdirectory to use for locating libraries.  Set by
@@ -3458,6 +3880,7 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("sysroot_hdrs_suffix_spec",	&sysroot_hdrs_suffix_spec),
   INIT_STATIC_SPEC ("invoke_iropt",		&invoke_iropt),
   INIT_STATIC_SPEC ("invoke_cg",		&invoke_cg),
+  INIT_STATIC_SPEC ("invoke_fbe",              &invoke_fbe),
   INIT_STATIC_SPEC ("ssbe_xarch",		&ssbe_xarch),
   INIT_STATIC_SPEC ("ssbe_xarch_xchip",		&ssbe_xarch_xchip),
   INIT_STATIC_SPEC ("sscg_xarch_xchip",		&sscg_xarch_xchip),
@@ -3469,6 +3892,7 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("sscg_spec_fortran",        &sscg_lang_spec_fortran),
   INIT_STATIC_SPEC ("ssiropt_spec",		&ssiropt_lang_spec),
   INIT_STATIC_SPEC ("sscg_spec",	        &sscg_lang_spec),
+  INIT_STATIC_SPEC ("cg",                       &cg_name_spec),
   INIT_STATIC_SPEC ("xtarget",			&xtarget),
   INIT_STATIC_SPEC ("invoke_ipo1",		&invoke_ipo1),
   INIT_STATIC_SPEC ("invoke_fortranipo1",	&invoke_fortranipo1),
@@ -3478,6 +3902,8 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("iropt_only_options",       &iropt_only_options),
   INIT_STATIC_SPEC ("cg_ipo_options",           &cg_ipo_options),
   INIT_STATIC_SPEC ("mvis_il",                  &mvis_il),
+  INIT_STATIC_SPEC ("libm_il",                  &libm_il),
+  INIT_STATIC_SPEC ("LINK_COMMAND_GUTS_sparc_x86",        &LINK_COMMAND_GUTS_sparc_x86),
   INIT_STATIC_SPEC ("asm_name",			&asm_name),
 };
 
@@ -3691,6 +4117,7 @@ init_spec (void)
     libgcc_spec = XOBFINISH (&obstack, const char *);
   }
 #endif
+#ifndef TARGET_CPU_x86
 #ifdef USE_AS_TRADITIONAL_FORMAT
   /* Prepend "--traditional-format" to whatever asm_spec we had before.  */
   {
@@ -3699,6 +4126,7 @@ init_spec (void)
     obstack_grow0 (&obstack, asm_spec, strlen (asm_spec));
     asm_spec = XOBFINISH (&obstack, const char *);
   }
+#endif
 #endif
 #ifdef LINK_EH_SPEC
   /* Prepend LINK_EH_SPEC to whatever link_spec we had before.  */
@@ -4593,14 +5021,14 @@ static char *make_absolute_from_Y(const char *path, const char *name)
   char *p;
 
     if(path[0] == '/') {
-      p = xmalloc(strlen(path) + strlen(name) + 2);
+      p = (char *)xmalloc(strlen(path) + strlen(name) + 2);
       (void) strcpy(p, path);
     } else {
       if (current_work_directory == NULL) {
-        current_work_directory = xmalloc(MAXPATHLEN+1);
+        current_work_directory = (char *)xmalloc(MAXPATHLEN+1);
         (void) getcwd(current_work_directory, MAXPATHLEN+1);
       }
-      p = xmalloc(strlen(current_work_directory) + strlen(path) + 
+      p = (char *)xmalloc(strlen(current_work_directory) + strlen(path) + 
                  strlen(name) + 3);
       (void) strcpy(p, current_work_directory);
       (void) strcat(p, "/");
@@ -4653,6 +5081,12 @@ find_a_file (const struct path_prefix *pprefix, const char *name, int mode,
 
   if (!strcmp (name, "fbe") && alternate_as)
     return xstrdup (alternate_as);
+
+  if (!strcmp(name, "ube") && alternate_ube)
+    return xstrdup (alternate_ube);
+
+  if (!strcmp(name, "ir2hf") && alternate_ir2hf)
+    return xstrdup (alternate_ir2hf);
   
   /* Determine the filename to execute (special case for absolute paths).  */
 
@@ -5286,7 +5720,7 @@ display_help (void)
   fputs (_("  -xc99                    (gcc only) Works with -Xc for c99 standard\n"), stdout);
   fputs (_("  -xdepend                 Analyzes loops for inter-iteration data dependencies\n"), stdout);
   fputs (_("  -xexplicitpar            Parallelize loops explicitly marked with directives\n"), stdout);
-  fputs (_("  -xhwcprof[=<eord>]       Hardware counter profiling\n"), stdout);
+  fputs (_("  -xhwcprof[=<eord>]       (SPARC) Hardware counter profiling\n"), stdout);
   fputs (_("  -xinline=[<f>]           Control inlining\n"), stdout);
   fputs (_("  -xipo[=0|1|2]            Invoke IPO at level 1 or 2\n"), stdout);
   fputs (_("  -xipo_archive=[<a>]      Optimize files in library with IPO\n"), stdout);
@@ -5307,7 +5741,7 @@ display_help (void)
   fputs (_("  -xregs=<val>             Specifies the usage of registers for the generated code\n"), stdout);
   fputs (_("  -xreduction              Autoparallize reductions (needs -xautopar too)\n"), stdout);
   fputs (_("  -xrestrict[=<funcs>]     Treats pointer-valued function parameters as restricted pointers\n"), stdout);
-  fputs (_("  -xsafe=mem               Assume no memory-based traps occur\n"), stdout);
+  fputs (_("  -xsafe=mem               (SPARC) Assume no memory-based traps occur\n"), stdout);
   fputs (_("  -xspace                  Does no optimization or parallelization that increase code size\n"), stdout);
   fputs (_("  -xtarget=<targ>          Compile for <targ>\n"), stdout);
   fputs (_("  -xthreadvar              Control implementation of thread local variables\n"), stdout);
@@ -5351,9 +5785,9 @@ add_frontend_option (const char *option, int len)
   n_frontend_options++;
 
   if (! frontend_options)
-    frontend_options = xmalloc (n_frontend_options * sizeof (char *));
+    frontend_options = (char *)xmalloc (n_frontend_options * sizeof (char *));
   else
-    frontend_options = xrealloc (frontend_options,
+    frontend_options = (char *)xrealloc (frontend_options,
 				  n_frontend_options * sizeof (char *));
 
   frontend_options [n_frontend_options - 1] = save_string (option, len);
@@ -5365,9 +5799,9 @@ add_iropt_option (const char *option, int len)
   n_iropt_options++;
 
   if (! iropt_options)
-    iropt_options = xmalloc (n_iropt_options * sizeof (char *));
+    iropt_options = (char *)xmalloc (n_iropt_options * sizeof (char *));
   else
-    iropt_options = xrealloc (iropt_options,
+    iropt_options = (char *)xrealloc (iropt_options,
 				  n_iropt_options * sizeof (char *));
 
   iropt_options [n_iropt_options - 1] = save_string (option, len);
@@ -5379,9 +5813,9 @@ add_sscg_option (const char *option, int len)
   n_sscg_options++;
 
   if (! sscg_options)
-    sscg_options = xmalloc (n_sscg_options * sizeof (char *));
+    sscg_options = (char *)xmalloc (n_sscg_options * sizeof (char *));
   else
-    sscg_options = xrealloc (sscg_options,
+    sscg_options = (char *)xrealloc (sscg_options,
 				  n_sscg_options * sizeof (char *));
 
   sscg_options [n_sscg_options - 1] = save_string (option, len);
@@ -5393,9 +5827,9 @@ add_ipo_option (const char *option, int len)
   n_ipo_options++;
 
   if (! ipo_options)
-    ipo_options = xmalloc (n_ipo_options * sizeof (char *));
+    ipo_options = (char *)xmalloc (n_ipo_options * sizeof (char *));
   else
-    ipo_options = xrealloc (ipo_options,
+    ipo_options = (char *)xrealloc (ipo_options,
 				  n_ipo_options * sizeof (char *));
 
   ipo_options [n_ipo_options - 1] = save_string (option, len);
@@ -5407,9 +5841,9 @@ add_postopt_option (const char *option, int len)
   n_postopt_options++;
 
   if (! postopt_options)
-    postopt_options = xmalloc (n_postopt_options * sizeof (char *));
+    postopt_options = (char *)xmalloc (n_postopt_options * sizeof (char *));
   else
-    postopt_options = xrealloc (postopt_options,
+    postopt_options = (char *)xrealloc (postopt_options,
 				  n_postopt_options * sizeof (char *));
 
   postopt_options [n_postopt_options - 1] = save_string (option, len);
@@ -5441,6 +5875,36 @@ add_linker_option (const char *option, int len)
 
   linker_options [n_linker_options - 1] = save_string (option, len);
 }
+
+#ifdef TARGET_CPU_x86
+static void
+add_ir2hf_option (const char *option, int len)
+{
+  n_ir2hf_options++;
+
+  if (! ir2hf_options)
+    ir2hf_options = (char *)xmalloc (n_ir2hf_options * sizeof (char *));
+  else
+    ir2hf_options = (char *)xrealloc (ir2hf_options,
+                                 n_ir2hf_options * sizeof (char *));
+
+  ir2hf_options [n_ir2hf_options - 1] = save_string (option, len);
+}
+
+static void
+add_ube_option (const char *option, int len)
+{
+  n_ube_options++;
+
+  if (! ube_options)
+    ube_options = (char *)xmalloc (n_ube_options * sizeof (char *));
+  else
+    ube_options = (char *)xrealloc (ube_options,
+                                 n_ube_options * sizeof (char *));
+
+  ube_options [n_ube_options - 1] = save_string (option, len);
+}
+#endif
 
 /* Create the vector `switches' and its contents.
    Store its length in `n_switches'.  */
@@ -5489,7 +5953,7 @@ process_command (int argc, const char **argv)
       if (temp)
         {
           const char *startp, *endp;
-          char *nstore = alloca (strlen (temp) + 3);
+          char *nstore = (char *)alloca (strlen (temp) + 3);
 
           startp = endp = temp;
           while (1)
@@ -5533,10 +5997,10 @@ process_command (int argc, const char **argv)
       char *p;
       if (current_work_directory == NULL) 
         {
-          current_work_directory = xmalloc (MAXPATHLEN+1);
+          current_work_directory = (char *)xmalloc (MAXPATHLEN+1);
           (void) getcwd (current_work_directory, MAXPATHLEN+1);
         }
-      p = xmalloc (strlen (current_work_directory) + strlen (path_to_driver) + 2);
+      p = (char *)xmalloc (strlen (current_work_directory) + strlen (path_to_driver) + 2);
       (void) strcpy (p, current_work_directory);
       (void) strcat (p, "/");
       (void) strcat (p, path_to_driver);
@@ -5669,14 +6133,14 @@ process_command (int argc, const char **argv)
           else
             new_machine = "sparc-sun-solaris2.10";
 
-          new_argv0 = xmemdup (progname, baselen,
+          new_argv0 = (char *)xmemdup (progname, baselen,
                                baselen + concat_length (new_machine, "-", 
                                                         progname + baselen, NULL) + 1);
           strcpy (new_argv0 + baselen, new_machine);
           strcat (new_argv0, "-");
           strcat (new_argv0, progname + baselen);
 
-          new_argv = xmemdup (argv, (argc + 1) * sizeof (argv[0]),
+          new_argv = (char *)xmemdup (argv, (argc + 1) * sizeof (argv[0]),
                               (argc + 1 + 1) * sizeof (argv[0]));
           new_argv[0] = new_argv0;
           new_argv[argc+1] = new_argv[argc];
@@ -6355,6 +6819,42 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	  /* Record the part after the last comma.  */
 	  add_preprocessor_option (argv[i] + prev, j - prev);
 	}
+#ifdef TARGET_CPU_x86
+      else if (! strncmp (argv[i], "-Wh,", 4))
+       {
+         int prev, j;
+         /* Pass the rest of this option to ir2hf.  */
+
+         /* Split the argument at commas.  */
+         prev = 4;
+         for (j = 4; argv[i][j]; j++)
+           if (argv[i][j] == ',')
+             {
+               add_ir2hf_option (argv[i] + prev, j - prev);
+               prev = j + 1;
+             }
+
+         /* Record the part after the last comma.  */
+         add_ir2hf_option (argv[i] + prev, j - prev);
+       }
+      else if (! strncmp (argv[i], "-Wu,", 4))
+       {
+         int prev, j;
+         /* Pass the rest of this option to ube.  */
+
+         /* Split the argument at commas.  */
+         prev = 4;
+         for (j = 4; argv[i][j]; j++)
+           if (argv[i][j] == ',')
+             {
+               add_ube_option (argv[i] + prev, j - prev);
+               prev = j + 1;
+             }
+
+         /* Record the part after the last comma.  */
+         add_ube_option (argv[i] + prev, j - prev);
+       }
+#endif
       else if (argv[i][0] == '+' && argv[i][1] == 'e')
 	/* The +e options to the C++ front-end.  */
 	n_switches++;
@@ -6491,10 +6991,12 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
         {
           alternate_as = make_absolute_from_Y(argv[i]+4, "fbe");
         }
+#ifdef TARGET_CPU_sparc
       else if (! strncmp (argv[i], "-Yc,", 4))
         {
           alternate_cg = make_absolute_from_Y(argv[i]+4, "cg");
         }
+#endif
       else if (! strncmp (argv[i], "-Yo,", 4))
         {
           alternate_postopt = make_absolute_from_Y(argv[i]+4, "postopt");
@@ -6507,6 +7009,16 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
         {
           alternate_ipo = make_absolute_from_Y(argv[i]+4, "ipo");
         }
+#ifdef TARGET_CPU_x86
+      else if (! strncmp (argv[i], "-Yh,", 4))
+        {
+          alternate_ir2hf = make_absolute_from_Y(argv[i]+4, "ir2hf");
+        }
+      else if (! strncmp (argv[i], "-Yu,", 4))
+        {
+          alternate_ube = make_absolute_from_Y(argv[i]+4, "ube");
+        }
+#endif
       else if (! strncmp (argv[i], "-xgccdriver=", 12))
         {
           int ii;
@@ -8170,14 +8682,25 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	      }
 	    break;
 
-	  /* Dump out the options accumulated previously using -Wc,.  */
+	  /* Dump out the options accumulated previously using -Wc,. or -Wu,. */
 	  case 'T':
+#ifdef TARGET_CPU_sparc
 	    for (i = 0; i < n_sscg_options; i++)
 	      {
 		do_spec_1 (sscg_options[i], 1, NULL);
 		/* Make each accumulated option a separate argument.  */
 		do_spec_1 (" ", 0, NULL);
 	      }
+#else
+#ifdef TARGET_CPU_x86
+           for (i = 0; i < n_ube_options; i++)
+             {
+               do_spec_1 (ube_options[i], 1, NULL);
+               /* Make each accumulated option a separate argument.  */
+               do_spec_1 (" ", 0, NULL);
+             }
+#endif
+#endif
 	    break;
             
 	  case 's':
@@ -8283,6 +8806,18 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	    if (value != 0)
 	      return value;
 	    break;
+
+#ifdef TARGET_CPU_x86
+         /* Dump out the options accumulated previously using -Wh,.  */
+         case '3':
+           for (i = 0; i < n_ir2hf_options; i++)
+             {
+               do_spec_1 (ir2hf_options[i], 1, NULL);
+               /* Make each accumulated option a separate argument.  */
+               do_spec_1 (" ", 0, NULL);
+             }
+           break;
+#endif
 
 	  case 'a':
 	    value = do_spec_1 (asm_spec, 0, NULL);
@@ -11370,6 +11905,7 @@ CONT:
   return retval;
 }
 #else /* Solaris */
+#ifdef TARGET_CPU_sparc
 static  int
 translate_native_options (int *argcp, char ***argvp)
 {
@@ -11530,6 +12066,460 @@ skipit:
   
   return retval;
 }
+#endif
+#ifdef TARGET_CPU_x86
+/* Bits in the ecx, edx feature flags of cpuid function 1 */
+#define SSE_FFLAG          0x02000000
+#define SSE2_FFLAG         0x04000000
+#define SSE3_FFLAG         0x1
+#define SSE4A_FFLAG        0x40 
+#define SSSE3_FFLAG        0x200
+#define SSE4_1_FLAG       0x80000
+#define SSE4_2_FLAG       0x100000
+ 
+/* Bits in the ecx, edx feature flags of cpuid function 80000001 */
+#define AMD3DNOW_EFFLAG    0x80000000
+#define AMD3DNOWEXT_EFFLAG 0x40000000
+#define MMXEXT_EFFLAG      0x00400000
+
+typedef struct x86_cpu_type_info_tag {
+       unsigned  family;
+       unsigned  model;
+       unsigned  stepping;
+       unsigned  basic_features_ecx;
+       unsigned  basic_features_edx;
+       unsigned  ext_features_ecx;
+       unsigned  ext_features_edx;
+} x86_cpu_type_info_t;
+
+typedef struct {
+       char *rep;
+       char *arch;
+       char *chip;
+       char *cache;
+} target_info, *target_infoP;
+
+#if defined(__i386)
+
+static void
+get_amd64_cache_info(char* cache_info, size_t len)
+{
+    extern unsigned char* amd64_cpu_cache_info(void);
+
+    struct CacheInfo {
+        unsigned int size;         /* in Kbytes */
+        unsigned int associativity;
+        unsigned int lines_per_tag;
+        unsigned int line_size;    /* in bytes */
+    } info[2];
+
+       unsigned int L2_cache_size_table[] = {
+               0,      /* 00h -- The L2 cache is off (disabled) */
+               0,      /* 01h -- Direct mapped */
+               2,      /* 02h -- 2-way associative */
+               0,      /* reserved */
+               4,      /* 04h -- 4-way associative */
+               0,      /* reserved */
+               8,      /* 06h -- 8-way associative */
+               0,      /* reserved */
+               16,     /* 08h -- 16-way assiciative */
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    /* 09h..0Eh reserved */
+               0,      /* 0Fh -- Fully associative */
+       };
+
+    unsigned char* cache = amd64_cpu_cache_info();
+    info[0].line_size = cache[0];
+    info[0].lines_per_tag = cache[1];
+    info[0].associativity = cache[2];
+    info[0].size = cache[3];
+    info[1].line_size = cache[4];
+    info[1].lines_per_tag = cache[5] & 0x0f;
+    info[1].associativity = L2_cache_size_table[(cache[5] & 0xf0) >> 4];
+    info[1].size = (cache[7] << 8) + cache[6];
+
+    snprintf(cache_info,
+             len,
+             "-xcache=%d/%d/%d:%d/%d/%d",
+             info[0].size,
+             info[0].line_size,
+             info[0].associativity,
+             info[1].size,
+             info[1].line_size,
+             info[1].associativity);
+}
+
+/*
+ * if -fast or -native is specified
+ * determine xcache value      
+ */
+static char* 
+get_x86_cache_value()
+{
+   extern unsigned char* x86_cpu_cache_info(unsigned* count);
+   static char  cache_value[64];
+
+   const char* vendor = x86_cpu_vendor();
+   if (vendor && (strcmp(vendor, "AuthenticAMD") == 0))
+   {
+      get_amd64_cache_info(cache_value, sizeof cache_value);
+      return cache_value;
+   }
+
+   char* l1_cache = "";
+   char* l2_cache = NULL;
+   char* l3_cache = NULL;
+   unsigned no_l2_or_l3_cache = 0;
+   unsigned ci_coint;
+   unsigned char* ci = x86_cpu_cache_info(&ci_coint);
+   unsigned i;
+
+   if(ci == NULL)
+      return "-xcache=generic";
+
+   for(i=0; i < ci_coint; i++) {
+      switch(ci[i]) {
+      case 0x6:  /*L1 code cache 8k 32 bytes line, 4 way set associative */
+               l1_cache = "8/32/4";
+               break;
+      case 0x8:         /*L1 code cache 16k 32 bytes line, 4 way set associative */
+               l1_cache = "16/32/4";
+               break;
+      case 0xa:   /* L1 data cache */
+         l1_cache = "8/32/2";
+         break;
+      case 0xc:   /* L1 data cache */
+         l1_cache = "16/32/4";
+         break;
+      case 0x22:
+         l3_cache = ":512/64/4";
+        break;
+      case 0x23:
+         l3_cache = ":1024/64/8";
+        break;
+      case 0x25:
+        l3_cache = ":2048/64/8";
+        break;
+      case 0x29:
+         l3_cache = ":4096/64/8";
+        break;
+      case 0x2c: /* L1 data cache */
+         l1_cache = "32/64/8";
+        break;
+      case 0x30: /*L1 code cache 32k 64 bytes line, 8 way set associative */
+               l1_cache = "32/64/8";
+        break;
+      case 0x39:
+        l2_cache = ":128/64/4";
+        break;
+      case 0x3b:
+        l2_cache = ":128/64/2";
+        break;
+      case 0x3c:
+        l2_cache = ":256/64/4";
+        break;
+      case 0x40: /* No Level 2 cache or, if processor contains valid L2 cache, no L3 cache */
+       no_l2_or_l3_cache = 1;
+        break;
+      case 0x41:
+        l2_cache = ":128/32/4";
+        break;
+      case 0x42:
+        l2_cache = ":256/32/4";
+        break;
+      case 0x43:
+        l2_cache = ":512/32/4";
+        break;
+      case 0x44:
+        l2_cache = ":1024/32/4";
+        break;
+      case 0x45:
+        l2_cache = ":2048/32/4";
+        break;
+      case 0x46:
+        l3_cache = ":4096/64/4";
+        break;
+      case 0x47:
+        l3_cache = ":8192/64/8";
+        break;
+      case 0x48:
+        l2_cache = ":3072/64/12";
+        break;
+      case 0x49:
+        l2_cache = ":4096/64/16";
+        break;
+      case 0x4a:
+        l3_cache = ":6144/64/12";
+        break;
+      case 0x4b:
+        l3_cache = ":8192/64/16";
+        break;
+      case 0x4d:
+        l3_cache = ":16384/64/16";
+        break;
+      case 0x4e:
+        l2_cache = ":6144/64/24";
+        break;
+      case 0x60:
+        l1_cache = "16/64/8";
+        break;
+      case 0x66: /* L1 data cache */
+         l1_cache = "8/64/4";
+        break;
+      case 0x67: /* L1 data cache */
+         l1_cache = "16/64/4";
+        break;
+      case 0x68: /* L1 data cache */
+         l1_cache = "32/64/4";
+        break;
+      case 0x70: /* Trace cache: 12K uops 8-way set associative */
+      case 0x71: /* Trace cache: 16K uops 8-way set associative */
+      case 0x72: /* Trace cache: 32K uops 8-way set associative */
+      case 0x78:
+        l2_cache = ":1024/64/4";
+        break;
+      case 0x79:
+        l2_cache = ":128/64/8";
+        break;
+      case 0x7a:
+        l2_cache = ":256/64/8";
+        break;
+      case 0x7b:
+        l2_cache = ":512/64/8";
+        break;
+      case 0x7c:
+        l2_cache = ":1024/64/8";
+        break;
+      case 0x7d:
+        l2_cache = ":2048/64/8";
+        break;
+      case 0x7f:
+        l2_cache = ":512/64/2";
+        break;
+      case 0x82:
+        l2_cache = ":256/32/8";
+        break;
+      case 0x83:
+        l2_cache = ":512/32/8";
+        break;
+      case 0x84:
+        l2_cache = ":1024/32/8";
+        break;
+      case 0x85:
+        l2_cache = ":2048/32/8";
+        break;
+      case 0x86:
+        l2_cache = ":512/64/4";
+        break;
+      case 0x87:
+        l2_cache = ":1024/64/8";
+        break;
+      }
+   }
+   (void)strcpy(cache_value, "-xcache=");
+   (void)strcat(cache_value, l1_cache);
+   if(l2_cache != NULL) 
+      (void)strcat(cache_value, l2_cache);
+   else if(no_l2_or_l3_cache != 0 && l3_cache != NULL)
+      (void)strcat(cache_value, ":");
+   if(l3_cache != NULL) 
+      (void)strcat(cache_value, l3_cache);
+
+  return cache_value;
+}
+/*
+* Determine -xchip value from family, 
+ * model and stepping for intel processors 
+ */
+static char * get_intel_chip_value(int family, int model, int stepping){
+  /* In this function we consider only 
+     families starting from 6, earlier family's -xchip values are trivial */     
+
+ /* We might want more detailed -xchip values, in that case,
+  * this fuction should be modified appropriatly. For now we just 
+  * need to choose -xchip value from pentium_pro, pentium3, pentium4 
+  */
+  if ( family == 6 ){
+         if ( model < 7 ){
+                 /* That's Pentium Pro, PentiumII */
+                 return "-xtarget=pentium_pro";
+         }else if ( model < 15 ) { 
+                 /* That's PentiumIII, PentiumM, Core Duo/Solo */
+                 return "-xtarget=pentium3";
+         }else if ( model == 15 ){
+                 /* That's Pentium Core2 Duo or higher */
+                 return "-xtarget=core2";
+         }else if ( (model == 23) || (model == 29) ) {
+                 return "-xtarget=penryn";
+         }else if ( model == 26 ) {
+                 return "-xtarget=nehalem";
+         }else{
+                 /* unknown model of the family 6 processors */
+                 return "-xtarget=generic";
+         }
+
+  }else if ( family == 15 ){
+         return "-xtarget=pentium4";
+  }else{
+         /* We don't know about such families of intel processors */
+         return "-xtarget=generic";
+  }
+}
+
+/*
+ * Determine -xchip value from family, 
+ * model and stepping for amd processors 
+ */
+static char * get_amd_chip_value(int family, int model, int stepping){
+
+  /* In this function we consider only  families starting from 6, 
+   * earlier family's -xchip values are trivial 
+   */     
+
+  if ( family == 15 ){
+         if ( model < 0x41 ){
+                 /* That's an early versions of the K8: revisions B-E */
+                 return "-xtarget=opteron";
+         } else {
+                 /* That's revision F of the K8 */
+                 return "-xtarget=k8f";
+         }
+  }else if ( family == 16 ){
+         /* That's a Family 10h chip */
+         return "-xtarget=amdfam10";
+  }else{
+         /* We do not have appropriate AMD -xchip values for K6, K7, so
+          * we'll imitate old behavior - pass -xchip=pentium_pro 
+          */
+         return "-xtarget=pentium_pro";
+  }
+
+}
+
+/*
+ * handle -native
+ */
+static void
+get_target_info_x86 (target_info * ti)
+{
+        const char* vendor = x86_cpu_vendor();
+       x86_cpu_type_info_t cpu_type;
+
+       x86cpu_type(&cpu_type);
+
+/* 
+ * From the -xarch proposal by Lawrence Crowl on 2005:     
+ *     Add new -xarch values to support the additional instructions
+ *     embodied by AMD's extensions.  These include: 3DNow, 3DNow
+ *     extensions, MMX extensions.  The new -xarch values are:
+ *             "pentium_proa"  -- "pentium_pro" with AMD extensions
+ *             "ssea"          -- "sse" with AMD extensions
+ *             "sse2a"         -- "sse2" with AMD extensions
+ *             "amd64a"        -- "amd64" with AMD extensions
+ *
+ * Thus under "a" suffix in -xarch value means availability of *all* 3
+ * AMD extentions. 
+ */
+       int have_amd_extensions=0;
+       int have_arch_value=0;
+
+       /* In case of processor={386,486,pentium} - just set appropriate 
+        * -xarch, -xtarget and -xcache values 
+        */
+        switch ( cpu_type.family ) {
+                case 3: /* 386 */
+                case 0:        /* unknown, (a non-Intel processor) */
+                       /* fall through to 486 case         */
+                case 4: ti->arch = "-xarch=generic";
+                       ti->cache = "-xcache=generic";
+                       ti->chip = "-xtarget=generic";
+                        break;
+                case 5: ti->arch = "-xarch=generic";
+                       ti->cache = "-xcache=generic";
+                       ti->chip = "-xtarget=pentium";
+                        break;
+                default:
+
+                       /* In all other cases take -xchip value from appropriate table */
+                       if ( vendor && (strcmp(vendor,"AuthenticAMD") == 0)){
+                               ti->chip = get_amd_chip_value(cpu_type.family, cpu_type.model, cpu_type.stepping);
+                               have_amd_extensions =  ( cpu_type.ext_features_edx & AMD3DNOW_EFFLAG    ) &&
+                                                      ( cpu_type.ext_features_edx & AMD3DNOWEXT_EFFLAG ) &&
+                                                      ( cpu_type.ext_features_edx & MMXEXT_EFFLAG   );
+                               if ( cpu_type.ext_features_ecx  & SSE4A_FFLAG ) {
+                                       ti->arch = "-xarch=amdsse4a";
+                                       have_arch_value = 1;
+                               }
+                       }else if ( vendor && (strcmp(vendor,"GenuineIntel") == 0)){
+                               ti->chip = get_intel_chip_value(cpu_type.family, cpu_type.model, cpu_type.stepping);
+                               if ( cpu_type.basic_features_ecx & SSE4_2_FLAG ) {
+                                       ti->arch = "-xarch=sse4_2";
+                                      have_arch_value = 1;
+                               }else if ( cpu_type.basic_features_ecx & SSE4_1_FLAG ) {
+                                      ti->arch = "-xarch=sse4_1";
+                                       have_arch_value = 1;
+                               }else if ( cpu_type.basic_features_ecx & SSSE3_FFLAG ) {
+                                       ti->arch = "-xarch=ssse3";
+                                       have_arch_value = 1;
+                               }
+                       }else{
+                               /* If it's unknown vendor - xchip value is set to generic */
+                               ti->chip = "-xtarget=generic";
+                       }
+
+                       ti->cache = get_x86_cache_value();
+
+                       if ( ! have_arch_value ) {
+                               if ( cpu_type.basic_features_ecx & SSE3_FFLAG ){
+                                       ti->arch = ( have_amd_extensions ? "-xarch=sse3a" : "-xarch=sse3" );
+                               } else if ( cpu_type.basic_features_edx & SSE2_FFLAG ){
+                                       ti->arch = ( have_amd_extensions ? "-xarch=sse2a" : "-xarch=sse2" );
+                               } else if ( cpu_type.basic_features_edx & SSE_FFLAG ){
+                                       ti->arch = ( have_amd_extensions ? "-xarch=ssea"  : "-xarch=sse" );
+                               } else {
+                                       /* 
+                                        * Will -xarch=pentium_pro work on any processor which have family > 5 ?
+                                        */
+                                       ti->arch = ( have_amd_extensions ? "-xarch=pentium_proa" : "-xarch=pentium_pro" );
+                               }
+                       }
+
+                        break;
+        }
+}
+
+static  int
+translate_native_options (int *argcp, char ***argvp)
+{
+  int argc = *argcp;
+  char **argv = *argvp;
+  int i;
+  int retval = 0;
+  target_info ti;
+
+  get_target_info_x86(&ti);
+
+  i = 0;
+  while (i < argc) {
+    if (strcmp(argv[i], "-xtarget=native" ) == 0 ) {
+      argv[i] = xstrdup(ti.chip);
+      retval = 1;
+    } else if (strcmp(argv[i], "-xarch=native") == 0) {
+      argv[i] = xstrdup(ti.arch);
+      retval = 1;
+    } else if (strcmp(argv[i], "-xtarget=native64") == 0 ) {
+      argv[i] = xstrdup(ti.chip);
+      retval = 1;
+    } else if (strcmp(argv[i], "-xarch=native64") == 0 ) {
+      argv[i] = xstrdup(ti.arch);
+      retval = 1;
+    }
+    i++;
+  } // while i < argc
+  
+  return retval;
+}
+#endif
+#endif
 #endif
 
 /* If we are compiling pec_dummy then add -w to turn off warnings */

@@ -155,6 +155,11 @@ section *tls_comm_section;
 section *comm_section;
 section *lcomm_section;
 
+/* RAT-TODO: remove when eliminate side door file */
+#ifdef TARGET_CPU_x86
+section *bss_switch_section;
+#endif
+
 /* A SECTION_NOSWITCH section used for declaring global BSS variables.
    May be null.  */
 section *bss_noswitch_section;
@@ -1875,6 +1880,11 @@ emit_local (tree decl ATTRIBUTE_UNUSED,
 	    unsigned HOST_WIDE_INT size ATTRIBUTE_UNUSED,
 	    unsigned HOST_WIDE_INT rounded ATTRIBUTE_UNUSED)
 {
+/* RAT-TODO revert to orig when remove side door file */
+#ifdef TARGET_CPU_x86
+  switch_to_section(bss_switch_section);
+#endif
+
 #if defined ASM_OUTPUT_ALIGNED_DECL_LOCAL
   ASM_OUTPUT_ALIGNED_DECL_LOCAL (asm_out_file, decl, name,
 				 size, DECL_ALIGN (decl));
@@ -1915,6 +1925,15 @@ emit_common (tree decl ATTRIBUTE_UNUSED,
 	     unsigned HOST_WIDE_INT size ATTRIBUTE_UNUSED,
 	     unsigned HOST_WIDE_INT rounded ATTRIBUTE_UNUSED)
 {
+/* RAT-TODO revert to orig when eliminate side door file */
+#ifdef TARGET_CPU_x86
+  switch_to_section(bss_switch_section);
+#else
+      targetm.asm_out.named_section (bss_section->named.name,
+                                    bss_section->named.common.flags,
+                                    bss_section->named.decl);
+#endif
+
 #if defined ASM_OUTPUT_ALIGNED_DECL_COMMON
   ASM_OUTPUT_ALIGNED_DECL_COMMON (asm_out_file, decl, name,
 				  size, DECL_ALIGN (decl));
@@ -5653,6 +5672,13 @@ init_varasm_once (void)
   comm_section = get_noswitch_section (SECTION_WRITE | SECTION_BSS
 				       | SECTION_COMMON, emit_common);
 
+/* RAT-TODO remove when eliminate side door file */
+#ifdef TARGET_CPU_x86
+  bss_switch_section = get_unnamed_section (SECTION_WRITE | SECTION_BSS,
+                                    output_section_asm_op,
+                                    BSS_SECTION_ASM_OP);
+#endif
+
 #if defined ASM_OUTPUT_ALIGNED_BSS || defined ASM_OUTPUT_BSS
   bss_noswitch_section = get_noswitch_section (SECTION_WRITE | SECTION_BSS,
 					       emit_bss);
@@ -5834,7 +5860,12 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
       if (strcmp (ASM_COMMENT_START, "@") == 0)
 	format = ",%%%s";
 #endif
+
+/* RAT-TODO revert to orig when remove side door file */
+#ifndef TARGET_CPU_x86
+      // not liked by ir2hf
       fprintf (asm_out_file, format, type);
+#endif
 
       if (flags & SECTION_ENTSIZE)
 	fprintf (asm_out_file, ",%d", flags & SECTION_ENTSIZE);
@@ -6457,6 +6488,17 @@ default_file_start (void)
 
   if (targetm.file_start_file_directive)
     output_file_directive (asm_out_file, main_input_filename);
+
+/* RAT-TODO remove when eliminate side door file */
+#ifdef TARGET_CPU_x86
+  fprintf(asm_out_file, "\t.section\t.bss,\"aw\"\n");
+  fprintf(asm_out_file, "Bbss.bss:\n");
+  fprintf(asm_out_file, "\t.section\t.data,\"aw\"\n");
+  fprintf(asm_out_file, "Ddata.data:\n");
+  fprintf(asm_out_file, "\t.section\t.rodata,\"a\"\n");
+  fprintf(asm_out_file, "Drodata.rodata:\n");
+#endif
+
 }
 
 /* This is a generic routine suitable for use as TARGET_ASM_FILE_END

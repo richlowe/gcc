@@ -79,6 +79,30 @@ Boston, MA 02111-1307, USA.  */
   { "-mno-app-regs", "-mno-app-regs -xregs=no%appl" }, \
   { "-mfpu", "-mfpu -xregs=float" }, \
   { "-mno-fpu", "-mno-fpu -xregs=no%float" }, \
+  { "-time", "-time -Ztime" }, \
+  { "-xannotate", "-xannotate=yes" }, \
+  { "-xbuiltin", "-xbuiltin=%all" }, \
+  { "-xdepend", "-xdepend=yes" }, \
+  { "-xipo", "-xipo=1" }, \
+  { "-xinline=", "-xinline=@none" } /* add @none so lack of func wont cause problems with other matchin */, \
+  { "-xinline=%auto", "-xinline=@auto" } /* want to match on %auto but speclang won't allow it */, \
+  { "-xmemalign", "-xmemalign=1i" }, \
+  { "-xparallel", "-xautopar -xdepend=yes -xexplicitpar" }, \
+  { "-xprefetch", "-xprefetch=auto,explicit" }, \
+  { "-xprofile=collect", "-xprofile=collect=a.out" }, \
+  { "-xprofile=use", "-xprofile=use=a.out" }, \
+  { "-xsunir-backend", "-Zsunir-backend" }, \
+  { "-xvector", "-xvector=yes"}, \
+  { "-xvis=no", "-mno-vis"}, \
+  { "-xvis=yes", "-mvis"}, \
+  { "-xvis", "-mvis"}, \
+  { "-Wd,-fast_phase_1", "-Zipo_fast_phase_1"}, \
+  { "-Wd,-pec", "-xpec"}, \
+  { "-Wd,-xsafe=unboundsym", "-xsafe=unboundsym"}, \
+  { "-Wd,-w", "-Zquietdriver" }
+
+#ifdef TARGET_CPU_sparc
+#define MCPU_MTUNE_XTARGET_XARCH_XCHIP \
   { "-mcpu=v7", "-mcpu=v7 -Zarch=v7 -Zarchm32=v7 -mno-vis -xchip=generic -xcache=generic"}, \
   { "-mcpu=cypress", "-mcpu=cypress -Zarch=v7 -Zarchm32=v7 -mno-vis -xchip=generic -xcache=generic"}, \
   { "-mcpu=v8", "-mcpu=v8 -Zarch=v8 -Zarchm32=v8 -mno-vis -xchip=generic -xcache=generic"}, \
@@ -144,8 +168,6 @@ Boston, MA 02111-1307, USA.  */
   { "-mtune=sparc64vii", "-mtune=sparc64vii -xchip=sparc64vii" },\
   { "-mtune=sparc64vi", "-mtune=sparc64vi -xchip=sparc64vi" },\
   { "-mv8", "-mcpu=v8 -Zarch=v8 -Zarchm32=v8 -Zarchm64=v9 -mno-vis -xchip=generic -xcache=generic"}, \
-  { "-time", "-time -Ztime" }, \
-  { "-xannotate", "-xannotate=yes" }, \
   { "-xarch=sparcima", "-Zarch=v8plusd -Zarchm32=v8plusd -Zarchm64=v9d -Zm=32" },\
   { "-xarch=sparcfmaf", "-Zarch=v8plusc -Zarchm32=v8plusc -Zarchm64=v9c -Zm=32" },\
   { "-xarch=sparcvis2", "-Zarch=v8plusb -Zarchm32=v8plusb -Zarchm64=v9b -Zm=32" },\
@@ -167,17 +189,6 @@ Boston, MA 02111-1307, USA.  */
   { "-xarch=v9", "-Zarch=v9 -Zarchm64=v9 -Zm=64" },\
   { "-xarch=generic64", "-Zarch=v9 -Zarchm64=v9 -Zm=64" },\
   { "-xarch=generic", "-Zarch=v8plus -Zarchm32=v8plus -Zarchm64=v9 -Zm=32" },\
-  { "-xbuiltin", "-xbuiltin=%all" }, \
-  { "-xdepend", "-xdepend=yes" }, \
-  { "-xipo", "-xipo=1" }, \
-  { "-xinline=", "-xinline=@none" } /* add @none so lack of func wont cause problems with other matchin */, \
-  { "-xinline=%auto", "-xinline=@auto" } /* want to match on %auto but speclang won't allow it */, \
-  { "-xmemalign", "-xmemalign=1i" }, \
-  { "-xparallel", "-xautopar -xdepend=yes -xexplicitpar" }, \
-  { "-xprefetch", "-xprefetch=auto,explicit" }, \
-  { "-xprofile=collect", "-xprofile=collect=a.out" }, \
-  { "-xprofile=use", "-xprofile=use=a.out" }, \
-  { "-xsunir-backend", "-Zsunir-backend" }, \
   { "-xtarget=sparc64vii", "-mcpu=sparc64vii -Zarch=v8plusd -Zarchm32=v8plusd -Zarchm64=v9d -xchip=sparc64vii -xcache=128/64/2:5120/64/10"}, \
   { "-xtarget=sparc64vi", "-mcpu=sparc64vi -Zarch=v8plusc -Zarchm32=v8plusc -Zarchm64=v9c -xchip=sparc64vi -xcache=128/64/2:5120/256/4"}, \
   { "-xtarget=ultra", "-mcpu=ultrasparc -Zarch=v8plusa -Zarchm32=v8plusa -Zarchm64=v9a -xchip=ultra -xcache=16/32/1:512/64/1"}, \
@@ -196,17 +207,66 @@ Boston, MA 02111-1307, USA.  */
   { "-xtarget=ultraT2", "-mcpu=ultraT2 -Zarch=v8plusb -Zarchm32=v8plusb -Zarchm64=v9b -xchip=ultraT2 -xcache=8/16/4:4096/64/16"}, \
   { "-xtarget=ultraT2plus", "-mcpu=ultraT2plus -Zarch=sparcvis2 -Zarchm32=sparcvis2 -Zarchm64=v9b -xchip=ultraT2plus -xcache=8/16/4:4096/64/16"}, \
   { "-xtarget=generic", "-Zarch=generic -Zarchm32=generic -Zarchm64=v9 -xchip=generic -xcache=generic -Zm=32"}, \
-  { "-xtarget=generic64", "-Zarch=generic -Zarchm32=generic -Zarchm64=v9 -xchip=generic -xcache=generic -Zm=64"}, \
-  { "-xvector", "-xvector=yes"}, \
-  { "-xvis=no", "-mno-vis"}, \
-  { "-xvis=yes", "-mvis"}, \
-  { "-xvis", "-mvis"}, \
-  { "-Wd,-fast_phase_1", "-Zipo_fast_phase_1"}, \
-  { "-Wd,-pec", "-xpec"}, \
-  { "-Wd,-xsafe=unboundsym", "-xsafe=unboundsym"}, \
-  { "-Wd,-w", "-Zquietdriver" }
-
+  { "-xtarget=generic64", "-Zarch=generic -Zarchm32=generic -Zarchm64=v9 -xchip=generic -xcache=generic -Zm=64"},
+#else
+#ifdef TARGET_CPU_x86
+#define MCPU_MTUNE_XTARGET_XARCH_XCHIP \
+  { "-xarch=386", ""}, \
+  { "-xarch=pentium_pro", "-Zarch=pentium_pro -Zarchm32=pentium_pro -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=pentiumpro", "-Zarch=pentium_pro -Zarchm32=pentium_pro -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=pentium4", "-Zarch=generic -Zarchm32=generic -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=pentium3", "-Zarch=generic -Zarchm32=generic -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=pentium", "-Zarch=generic -Zarchm32=generic -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=sse3", "-Zarch=sse3 -Zarchm32=sse3 -Zarchm64=sse3 -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=sse2a", "-Zarch=sse2a -Zarchm32=sse2a -Zarchm64=sse2a -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=sse2", "-Zarch=sse2 -Zarchm32=sse2 -Zarchm64=sse2 -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=ssea", "-Zarch=ssea -Zarchm32=ssea -Zarchm64=ssea -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=sse", "-Zarch=sse -Zarchm32=sse -Zarchm64=sse -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-xarch=amd64a", "-Zarch=sse2a -Zarchm64=sse2a -Zm=64"}, \
+  { "-xarch=amd64", "-Zarch=sse2 -Zarchm64=sse2 -Zm=64"}, \
+  { "-mcpu=pentium_pro", "-mcpu=pentium_pro -Zarch=pentium_pro -Zarchm32=pentium_pro -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-mcpu=pentiumpro", "-mcpu=pentium_pro -Zarch=pentium_pro -Zarchm32=pentium_pro -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-mcpu=pentium4", "-mcpu=pentium4 -Zarch=generic -Zarchm32=generic -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-mcpu=pentium3", "-mcpu=pentium3 -Zarch=generic -Zarchm32=generic -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-mcpu=pentium", "-mcpu=pentium -Zarch=generic -Zarchm32=generic -xchip=generic -xcache=generic -Zm=32"}, \
+  { "-mcpu=barcelona", "-mcpu=barcelona -Zarch=amdsse4a -Zarchm32=amdsse4a -xchip=amdfam10 -xcache=64/64/2:512/64/16 -Zm=32"}, \
+  { "-mcpu=core2", "-mcpu=core2 -Zarch=sse3 -Zarchm32=sse3 -xchip=core2 -xcache=generic -Zm32"}, \
+  { "-mcpu=nehalem", "-mcpu=hehalem -Zarch=sse4_2 -Zarchm32=sse4_2 -xchip=nehalem -xcache=generic -Zm=32"}, \
+  { "-mcpu=nocona", "-mcpu=nocona -Zarch=sse2a -Zarchm32=sse2a -xchip=nocona -xcache=generic -Zm=32"}, \
+  { "-mcpu=opteron", "-mcpu=opteron -Zarch=sse2a -Zarchm32=sse2a -xchip=opteron -xcache=64/64/2:1024/64/16 -Zm=32"}, \
+  { "-mcpu=penryn", "-mcpu=penryn -Zarch=sse4_1 -Zarchm32=sse4_1 -xchip=penryn -xcache=32/64/8:6144/64/16 -Zm=32"}, \
+  { "-mcpu=woodcrest", "-mcpu=woodcrest -Zarch=sse3 -Zarchm32=sse3 -xchip=core2 -xcache=32/64/8:4096/64/16 -Zm=32"}, \
+  { "-mtune=barcelona", "-mtune=barcelona -xchip=amdfam10"}, \
+  { "-mtune=core2", "-mtune=core2 -xchip=core2"}, \
+  { "-mtune=nehalem", "-mtune=nehalem -xchip=nehalem"}, \
+  { "-mtune=nocona", "-mtune=nocona -xchip=nocona"}, \
+  { "-mtune=opteron", "-mtune=opteron -xchip=opteron"}, \
+  { "-mtune=penryn", "-mtune=penryn -xchip=penryn"}, \
+  { "-mtune=pentiumpro", "-mtune=pentium_pro -xchip=pentium_pro"}, \
+  { "-mtune=pentium_pro", "-mtune=pentium_pro -xchip=pentium_pro"}, \
+  { "-mtune=pentium3", "-mtune=pentium3 -xchip=pentiume"}, \
+  { "-mtune=pentium4", "-mtune=pentium4 -xchip=pentium4"}, \
+  { "-mtune=pentium", "-mtune=pentium -xchip=pentium"}, \
+  { "-mtune=woodcrest", "-mtune=woodcrest"}, \
+  { "-xtarget=barcelona", "-mtune=barcelona -Zarch=amdsse4a -Zarchm32=amdsse4a -xchip=amdfam10 -xcache=64/64/2:512/64/16 -Zm=32"}, \
+  { "-xtarget=core2", "-mtune=core2 -Zarch=sse3 -Zarchm32=sse3 -xchip=core2 -xcache=generic -Zm32"}, \
+  { "-xtarget=nehalem", "-mtune=nehalem -Zarch=sse4_2 -Zarchm32=sse4_2 -xchip=nehalem -xcache=generic -Zm=32"}, \
+  { "-xtarget=nocona", "-mtune=nocona -Zarch=sse2a -Zarchm32=sse2a -xchip=nocona -xcache=generic -Zm=32"}, \
+  { "-xtarget=opteron", "-mtune=opteron -Zarch=sse2a -Zarchm32=sse2a -xchip=opteron -xcache=64/64/2:1024/64/16 -Zm=32"}, \
+  { "-xtarget=penryn", "-mtune=penryn -Zarch=sse4_1 -Zarchm32=sse4_1 -xchip=penryn -xcache=32/64/8:6144/64/16 -Zm=32"}, \
+  { "-xtarget=pentiumpro", "-mtune=pentium_pro -Zarch=pentium_pro -Zarchm32=pentium_pro -xchip=pentium_pro -xcache=generic -Zm=32"}, \
+  { "-xtarget=pentium_pro", "-mtune=pentium_pro -Zarch=pentium_pro -Zarchm32=pentium_pro -xchip=pentium_pro -xcache=generic -Zm=32"}, \
+  { "-xtarget=pentium3", "-mtune=pentium3 -Zarch=generic -Zarchm32=generic -Zarch64=generic64 -xchip=pentiume -xcache=16/32/4:256/32/4 -Zm=32"}, \
+  { "-xtarget=pentium4", "-mtune=pentium4 -Zarch=generic -Zarchm32=generic -Zarch64=generic64 -xchip=pentium4 -xcache=8/64/4:256/128/8 -Zm=32"}, \
+  { "-xtarget=pentium", "-mtune=pentium -Zarch=generic -Zarchm32=generic -Zarch64=generic64 -xchip=pentium -xcache=generic -Zm=32"}, \
+  { "-xtarget=woodcrest", "-mtune=woodcrest -Zarch=sse3 -Zarchm32=sse3 -xchip=core2 -xcache=32/64/8:4096/64/16 -Zm=32"}, \
+  { "-fprecision=single", "-mpc32"}, \
+  { "-fprecision=double", "-mpc64"}, \
+  { "-fprecision=extended", "-mpc80"},
+#endif
+#endif
 #define TARGET_OPTION_TRANSLATE_TABLE \
+             MCPU_MTUNE_XTARGET_XARCH_XCHIP \
 	      NATIVE_OPTION_TRANSLATE_TABLE \
               LINUX_TARGET_OPTION_TRANSLATE_TABLE \
               SUN_TARGET_OPTION_TRANSLATE_TABLE 

@@ -182,7 +182,20 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #define LOCAL_ASM_OP	"\t.local\t"
 
+/*RAT-TODO revert to original code when eliminate side door file */
 #undef  ASM_OUTPUT_ALIGNED_LOCAL
+#ifdef TARGET_CPU_x86
+#define ASM_OUTPUT_ALIGNED_LOCAL(FILE, NAME, SIZE, ALIGN)	\
+  do								\
+    {								\
+      switch_to_section(bss_section);				\
+      fprintf ((FILE), "%s", LOCAL_ASM_OP);			\
+      assemble_name ((FILE), (NAME));				\
+      fprintf ((FILE), "\n");					\
+      ASM_OUTPUT_ALIGNED_COMMON (FILE, NAME, SIZE, ALIGN);	\
+    }								\
+  while (0)
+#else
 #define ASM_OUTPUT_ALIGNED_LOCAL(FILE, NAME, SIZE, ALIGN)	\
   do								\
     {								\
@@ -192,6 +205,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
       ASM_OUTPUT_ALIGNED_COMMON (FILE, NAME, SIZE, ALIGN);	\
     }								\
   while (0)
+#endif
 
 /* This is the pseudo-op used to generate a contiguous sequence of byte
    values from a double-quoted string WITHOUT HAVING A TERMINATING NUL
@@ -201,7 +215,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define ASCII_DATA_ASM_OP	"\t.ascii\t"
 
 /* Support a read-only data section.  */
+/* RAT-TODO revert to original when eliminate side door file */
+#ifdef TARGET_CPU_x86
+#define READONLY_DATA_SECTION_ASM_OP   "\t.section\t.rodata,\"a\""
+#else
 #define READONLY_DATA_SECTION_ASM_OP	"\t.section\t.rodata"
+#endif
 
 /* On svr4, we *do* have support for the .init and .fini sections, and we
    can put stuff in there to be executed before and after `main'.  We let
@@ -393,6 +412,42 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    (where the only alternative is to output character sequences as
    comma separated lists of numbers).  */
 
+/* RAT-TODO revert to original code when we eliminate side door file */
+#ifdef TARGET_CPU_x86
+#define ASM_OUTPUT_LIMITED_STRING(FILE, STR)		\
+  do							\
+    {							\
+      register const unsigned char *_limited_str =	\
+	(const unsigned char *) (STR);			\
+      register unsigned ch;				\
+							\
+      fprintf ((FILE), "%s\"", STRING_ASM_OP);		\
+							\
+      for (; (ch = *_limited_str); _limited_str++)	\
+        {						\
+	  register int escape;				\
+							\
+	  switch (escape = ESCAPES[ch])			\
+	    {						\
+	    case 0:					\
+	      putc (ch, (FILE));			\
+	      break;					\
+	    case 1:					\
+	      fprintf ((FILE), "\\%03o", ch);		\
+	      break;					\
+	    default:					\
+	      putc ('\\', (FILE));			\
+	      putc (escape, (FILE));			\
+	      break;					\
+	    }						\
+        }						\
+							\
+      fprintf ((FILE), "\"\n");				\
+      /* RAT-TODO add null term since ube has a different idea about .string than intel */ \
+      fprintf ((FILE), "\\000\"\n");			\
+    }							\
+  while (0)
+#else
 #define ASM_OUTPUT_LIMITED_STRING(FILE, STR)		\
   do							\
     {							\
@@ -424,6 +479,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
       fprintf ((FILE), "\"\n");				\
     }							\
   while (0)
+#endif
 
 /* The routine used to output sequences of byte values.  We use a special
    version of this for most svr4 targets because doing so makes the
