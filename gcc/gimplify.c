@@ -555,7 +555,6 @@ create_tmp_var (tree type, const char *prefix)
      The processing for variable sizes is performed in gimple_add_tmp_var,
      point at which it really matters and possibly reached via paths not going
      through this function, e.g. after direct calls to create_tmp_var_raw.  */
-  if (gate_generate_rtl()) /*FIXME.*/
   gcc_assert (!TREE_ADDRESSABLE (type) && COMPLETE_TYPE_P (type));
 
   tmp_var = create_tmp_var_raw (type, prefix);
@@ -3500,9 +3499,7 @@ rhs_predicate_for (tree lhs)
 {
   if (is_gimple_formal_tmp_var (lhs))
     return is_gimple_formal_tmp_or_call_rhs;
-  else if (gate_generate_ir ())
-    return is_gimple_reg_rhs;
-  else if (is_gimple_reg (lhs))
+  else if (gate_generate_ir () || is_gimple_reg (lhs))
     return is_gimple_reg_or_call_rhs;
   else
     return is_gimple_mem_or_call_rhs;
