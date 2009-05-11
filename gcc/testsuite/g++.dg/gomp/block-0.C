@@ -1,5 +1,5 @@
 // { dg-do compile }
-// { dg-options "-fopenmp -fdump-tree-omplower" }
+// { dg-options "-fopenmp -frtl-backend -fdump-tree-omplower" }
 
 void bar();
 void foo()

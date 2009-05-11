@@ -14,4 +14,4 @@ func ()
   return var2;
 }
 
-// { dg-final { scan-assembler-times "var2\[^\n\r\]*DW_AT_name" 1 } }
+// { dg-final { scan-assembler-times "var2\[^\n\r\]*DW_AT_name" 1 { xfail sparc*-*-* } } }

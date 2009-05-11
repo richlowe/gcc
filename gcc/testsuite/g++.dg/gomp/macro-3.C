@@ -1,6 +1,6 @@
 // PR preprocessor/27746
 // { dg-do compile }
-// { dg-options "-fopenmp -fdump-tree-omplower" }
+// { dg-options "-fopenmp -frtl-backend -fdump-tree-omplower" }
 
 #define omp		FOO
 #define p		parallel

@@ -4,7 +4,7 @@ void foo()
 {
   #pragma omp master
     {
-      goto bad1;	// { dg-error "from here|invalid exit" }
+      goto bad1;	// { dg-error "from here|invalid branch" }
     }
 
   #pragma omp master

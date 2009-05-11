@@ -1,4 +1,5 @@
 // { dg-do compile }
+// { dg-options "-frtl-backend" } /* cg disallow redefinition of symbol 'f' */
 // PR c++/37553
 typedef unsigned int ui32;
 __extension__ typedef unsigned long long int ui64;

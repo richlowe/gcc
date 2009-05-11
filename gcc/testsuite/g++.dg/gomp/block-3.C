@@ -18,12 +18,12 @@ void foo()
     #pragma omp section
       { bad1: ; }		// { dg-error "jump to label" }
     #pragma omp section
-      goto bad1;		// { dg-error "from here|enters OpenMP|invalid exit" }
+      goto bad1;		// { dg-error "from here|enters OpenMP|invalid branch" }
     }
 
   #pragma omp sections
     {
-      goto bad2;		// { dg-error "from here|invalid exit" }
+      goto bad2;		// { dg-error "from here|invalid branch" }
     }
   bad2:;			// { dg-error "jump|exits OpenMP" }
 
