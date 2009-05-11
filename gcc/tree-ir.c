@@ -10492,7 +10492,8 @@ dump_omp_for (gimple stmt)
   
   /* Generate the loop body */
   final = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
-  cond = build_ir_triple (IR_LT, index, final, inttype, NULL);
+  cond = build_ir_triple (conv_treecode2ir (gimple_omp_for_cond (stmt, 0)),
+                          index, final, inttype, NULL);
   loop_body = build_ir_labelref (l0_lab, 1);
   loop_exit = build_ir_labelref (l1_lab, 0);
   t = (TRIPLE *) loop_body;
@@ -10527,12 +10528,12 @@ dump_omp_for_end (gimple stmt)
   generate_exception_label(cur_omp_context);
 
   index = dump_ir_expr (gimple_omp_for_index (stmt, 0), MAP_FOR_VALUE);
-  incr = dump_ir_expr (gimple_omp_for_index (stmt, 0), MAP_FOR_VALUE);
-  t = build_ir_triple (IR_PLUS, index, incr, index->operand.type, NULL);
-  t = build_ir_triple (IR_ASSIGN, index, t, index->operand.type, NULL);
+  incr = dump_ir_expr (gimple_omp_for_incr (stmt, 0), MAP_FOR_VALUE);
+  t = build_ir_triple (IR_ASSIGN, index, incr, index->operand.type, NULL);
 
   final = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
-  cond = (IR_NODE *)build_ir_triple (IR_LT, index, final, inttype, NULL);
+  cond = (IR_NODE *)build_ir_triple (conv_treecode2ir (gimple_omp_for_cond (stmt, 0)),
+                                     index, final, inttype, NULL);
   loop_body = build_ir_labelref (cur_omp_context->l2_lab, 1);
   loop_exit = build_ir_labelref (cur_omp_context->l1_lab, 0);
   t = (TRIPLE *) loop_body;
