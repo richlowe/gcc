@@ -26,22 +26,33 @@ LOGDIR = $(BUILDDIR)/logs
 JOBS = 4
 ROOTDIR = $(BUILDDIR)/lang
 TRAIN_NAME = sstrunk
-ALT_SHELF_386=/ws/gccfss/cross-compiler/crossshelf                  
+ALT_SHELF_386=/ws/gccfss/cross-compiler/crossshelf
+
+# For cross compilers we need to pass in CHIP 
+# in explicitly as i386-sparc
+# by default we will look up the native platforms
+# only
+               
 CHIP:sh = /bin/uname -p
 OSNAME:sh = /bin/uname -s
 
 CBE-i386 = /shared/dp/sstrunk/cbe/inst/intel-S2
+CBE-i386-sparc = /shared/dp/sstrunk/cbe/inst/intel-S2
 CBE-sparc = /shared/dp/sstrunk/cbe/inst/sparc-S2
 CBE-unknown = /shared/dp/sstrunk/cbe/inst/sparc-S2
 SPARCCBE = $(CBE-$(CHIP))
 
-CPU-SunOS = sparc-S2
-CPU-Linux = sparc-Linux
-CPU = $(CPU-$(OSNAME))
+CPU-SunOS-i386 = intel-S2
+CPU-SunOS-i386-sparc = sparc-S2
+CPU-SunOS-sparc = sparc-S2
+CPU-Linux-sparc = sparc-Linux
+CPU = $(CPU-$(OSNAME)-$(CHIP))
 
-CPUV9-SunOS = sparcv9-S2
-CPUV9-Linux = sparcv9-Linux
-CPUV9 = $(CPUV9-$(OSNAME))
+CPUV9-SunOS-i386 = amd64-S2
+CPUV9-SunOS-i386-sparc = sparcv9-S2
+CPUV9-SunOS-sparc = sparcv9-S2
+CPUV9-Linux-sparc = sparc-Linux
+CPUV9 = $(CPUV9-$(OSNAME)-$(CHIP))
 
 # The RDT libraries are not built--they are pulled over 
 # in pre-compiled form.
@@ -56,6 +67,7 @@ BRINGOVER-SunOS = /ws/onnv-tools/SUNWspro/SC6.1/bin/bringover
 BRINGOVER-Linux = /ws/gccfss/linux/bin/remotebringover
 BRINGOVER = $(BRINGOVER-$(OSNAME))
 
+COMPILERS-intel-S2 = sunc
 COMPILERS-sparc-S2 = sunc
 COMPILERS-sparc-Linux = gcc
 COMPILERS = $(COMPILERS-$(CPU))
@@ -91,27 +103,29 @@ INSTALL-sunc = /usr/sbin/install
 INSTALL-gcc = /set/sstrunk/src/tools/intel-Linux/bin/install-solaris.sh
 INSTALL = $(INSTALL-$(COMPILERS))
 
+DMAKE-intel-S2 = $(SPARCCBE)/bin/dmake
 DMAKE-sparc-S2 = $(SPARCCBE)/bin/dmake
 DMAKE-sparc-Linux = /opt/dmake/bin/dmake
 DMAKE = $(DMAKE-$(CPU))
 
-MCS-sparc-S2 = /usr/ccs/bin/mcs
-MCS-sparc-Linux = true
-MCS = $(MCS-$(CPU))
+MCS-SunOS = /usr/ccs/bin/mcs
+MCS-Linux = true
+MCS = $(MCS-$(OSNAME))
 
-PERL-sparc-S2 = /bin/perl
-PERL-sparc-Linux = /usr/bin/perl
-PERL = $(PERL-$(CPU))
+PERL-SunOS = /bin/perl
+PERL-Linux = /usr/bin/perl
+PERL = $(PERL-$(OSNAME))
 
 SCCS-SunOS = /usr/ccs/bin/sccs
 SCCS-Linux = /ws/gccfss/linux/bin/remotesccs
 SCCS = $(SCCS-$(OSNAME))
 
-STRIP-sparc-S2 = /usr/ccs/bin/strip
-STRIP-sparc-Linux = /usr/bin/strip
-STRIP = $(STRIP-$(CPU))
+STRIP-SunOS = /usr/ccs/bin/strip
+STRIP-Linux = /usr/bin/strip
+STRIP = $(STRIP-$(OSNAME))
 
 GOLDEN_SHELF-i386 = $(BM_IMPORT)/shelf/intel-S2
+GOLDEN_SHELF-i386-sparc = $(BM_IMPORT)/shelf/intel-S2
 GOLDEN_SHELF-sparc = $(BM_IMPORT)/shelf/sparc-S2
 GOLDEN_SHELF-unknown = /import/backend-src/mars_gcc/linuxshelf
 GOLDEN_SHELF- = /bad/directory
@@ -160,11 +174,13 @@ build-$(CPU) :  $(DONEDIR)/build-v8 \
 		.WAIT libm-$(CPU) \
 		.WAIT $(DONEDIR)/linkandcopy
 
-BUILDLIBS-i386 = libxprof libtdf
+BUILDLIBS-i386-sparc = libxprof libtdf
+BUILDLIBS-i386 = libm libfast libxprof libtdf 
 BUILDLIBS-sparc = liblv libm libfast libxprof libtdf 
 BUILDLIBS-unknown = 
 
-BUILDTOOLS-i386 = dbg_gen ir ipo proflib iropt cg
+BUILDTOOLS-i386-sparc = dbg_gen ir ipo proflib iropt cg
+BUILDTOOLS-i386 = csu as dbg_gen include ir ipo proflib version postopt iropt ube
 BUILDTOOLS-sparc = csu as dbg_gen include ir fpversion ipo perfextra proflib version postopt iropt cg
 BUILDTOOLS-unknown = as dbg_gen ir ipo proflib iropt cg
 
@@ -172,6 +188,8 @@ build-sparc-Linux := BUILDLIBS = $(BUILDLIBS-$(CHIP))
 build-sparc-Linux := BUILDTOOLS = $(BUILDTOOLS-$(CHIP))
 build-sparc-S2	:= BUILDLIBS = $(BUILDLIBS-$(CHIP))
 build-sparc-S2	:= BUILDTOOLS = $(BUILDTOOLS-$(CHIP))
+build-intel-S2	:= BUILDLIBS = $(BUILDLIBS-$(CHIP))
+build-intel-S2	:= BUILDTOOLS = $(BUILDTOOLS-$(CHIP))
 
 $(DONEDIR)/build-v8 :
 	cd $(BUILDDIR)/lang && \
@@ -188,7 +206,7 @@ $(DONEDIR)/build-v8 :
 		C_COMPONENTS= \
 		TOOLS="$(BUILDTOOLS)" \
 		> $(BUILDDIR)/logs/build.lang 2>&1
-	cd $(BUILDDIR)/lang/as/sparc-S2 && \
+	cd $(BUILDDIR)/lang/as/$(VARIANT) && \
 	$(DMAKE) -j $(JOBS) install \
 		$(ENVPARMS) \
 		CC="$(CC)" \
@@ -204,11 +222,13 @@ $(DONEDIR)/linkandcopy :
 	cd $(RDT_DIR); find . -name 'libtha.so.1' -print | cpio -pd -u $(DESTDIR)
 	touch $@
 
-BUILDLIBSV9-i386 = 
+BUILDLIBSV9-i386-sparc=
+BUILDLIBSV9-i386 = csu libm libxprof libtdf
 BUILDLIBSV9-sparc = csu liblv libm libxprof libtdf
 BUILDLIBSV9-unknown = 
 
-BUILDTOOLSV9-i386 = ipo 
+BUILDTOOLSV9-i386-sparc = ipo 
+BUILDTOOLSV9-i386 = proflib ipo postopt
 BUILDTOOLSV9-sparc = proflib ipo postopt
 BUILDTOOLSV9-unknown = proflib 
 
@@ -216,6 +236,8 @@ build-sparc-Linux := BUILDLIBSV9 = $(BUILDLIBSV9-$(CHIP))
 build-sparc-Linux := BUILDTOOLSV9 = $(BUILDTOOLSV9-$(CHIP))
 build-sparc-S2	:= BUILDLIBSV9 = $(BUILDLIBSV9-$(CHIP))
 build-sparc-S2	:= BUILDTOOLSV9 = $(BUILDTOOLSV9-$(CHIP))
+build-intel-S2	:= BUILDLIBSV9 = $(BUILDLIBSV9-$(CHIP))
+build-intel-S2	:= BUILDTOOLSV9 = $(BUILDTOOLSV9-$(CHIP))
 
 # dbg_gen include liblv libm iropt cg proflib ipo postopt
 # Turning on annotation by default requires libld_annotate.so
@@ -261,6 +283,9 @@ $(DONEDIR)/libm-% : install-libm-Linux-%
 	touch $@
 
 libm-sparc-S2 :
+	echo No need to build libm specially for Solaris
+
+libm-intel-S2 :
 	echo No need to build libm specially for Solaris
 
 libm-sparc-Linux : build-libm-Linux .WAIT install-libm-Linux
@@ -322,11 +347,15 @@ $(DONEDIR)/init_shelf : init_shelf_$(CPU) .WAIT init_shelf_$(CHIP)
 
 init_shelf_sparc-S2 : copy_shelf .WAIT build_ct-common
 
-init_shelf_i386 : copy_386_shelf
+init_shelf_intel-S2 : copy_shelf .WAIT build_ct-common
+
+init_shelf_i386-sparc : copy_386_shelf
 
 init_shelf_unknown :
 
 init_shelf_sparc:
+
+init_shelf_i386:
 
 copy_shelf:
 	mkdir -p $(BM_COMMON_IMPORT) ;

@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/ksh -f
 
 PATH=/bin:/usr/bin
 
@@ -52,6 +52,7 @@ function waitForFile {
 
 
 # OS should either be "Linux" "i386" or the SunOS version number (e.g. "5.10")
+# For cross compilers make sure you set this correctly to i386-sparc
 OS=`uname -s`
 if [ $OS = SunOS ]
 then
@@ -64,12 +65,13 @@ fi
 
 XSUFFIX=x
 S11SUFFIX=_s11
-
+INTELSUFFIX=i
 case $OS in
 	5.10)	INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION;;
         5.11)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$S11SUFFIX;;
 	Linux)	INSTALLAREA=/net/perftech-064/data/compilers;;
-        i386)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$XSUFFIX;;
+        i386)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$INTELSUFFIX;;
+        i386-sparc)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$XSUFFIX;;
 	*)	echo >&2 "Error:  Unknown OS"
 		exit 1;;
 esac
@@ -89,19 +91,20 @@ fi
 BUILDDIR=$BUILDAREA/$BUILDNAME
 INSTALLDIR=$INSTALLAREA/$BUILDNAME
 
-if [ $OS == i386 ]
+if [ $OS == i386-sparc ]
 then
     # cross compiler still waits for the sparc build to complete
     waitForFile /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/xprof_fini.o
-    ${SCRIPTDIR}/gcc2ir_master_build -n -i $INSTALLDIR -p /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION -v $GCC_VERSION -t $BUILDDIR
+
+    ${SCRIPTDIR}/gcc2ir_master_build -x -i $INSTALLDIR -p /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION -v $GCC_VERSION -t $BUILDDIR
 elif [ $OS == 5.11 ]
 then
     # Solaris 11 FE build needs to have the backend build ready
     waitForFile /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/xprof_fini.o
-    ${SCRIPTDIR}/gcc2ir_master_build -n -i $INSTALLDIR -v $GCC_VERSION -s /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR $BUILDDIR
+
+    ${SCRIPTDIR}/gcc2ir_master_build -o -i $INSTALLDIR -v $GCC_VERSION -s /ws/gccfss/builds/$GCC_VERSION/$BACKEND_COMP_BUILDNAME/$SUNINSTSUBDIR $BUILDDIR
 else
-    # specify -n to tell about Nightly build mode
-    ${SCRIPTDIR}/gcc2ir_master_build -n -i $INSTALLDIR -v $GCC_VERSION $BUILDDIR
+    ${SCRIPTDIR}/gcc2ir_master_build -i $INSTALLDIR -v $GCC_VERSION $BUILDDIR
 fi
 
 if [ $? -ne 0 ]
@@ -121,7 +124,8 @@ case $OS in
 		# If we get here we know that both Solaris 9 and 10 builds
 		# finished and found no new test failures.
 		# Update the current link.
-		${SCRIPTDIR}/newcurrent gcc
+                (cd $INSTALLAREA; rm current_gcc ; ln -s $BUILDNAME current_gcc)
+                echo Build $INSTALLDIR is now current.
 		;;
         5.11)	# Check the test results for new failures.
 		if [ 1 = `testsHaveFailures $BUILDDIR/logs/test.comparison` ]
@@ -133,7 +137,8 @@ case $OS in
 		# If we get here we know that both Solaris 9 and 10 builds
 		# finished and found no new test failures.
 		# Update the current link.
-		${SCRIPTDIR}/newcurrent gcc
+		(cd $INSTALLAREA; rm current_gcc ; ln -s $BUILDNAME current_gcc)
+                echo Build $INSTALLDIR is now current.
 		;;
 	Linux)	# Copy the compiler to common place.
 		echo "Copy the compiler to common place /ws/gccfss/builds. " 
@@ -147,11 +152,11 @@ case $OS in
 			echo "Sparc/Linux build has new test failures."
 			echo "Current has not been updated."
 			exit 1;
-		else
-			# Update the current link.
-			${SCRIPTDIR}/newcurrent gcc
-			(cd $COMMONDIR ; rm -f current_gcc; ln -s $BUILDNAME current_gcc)
 		fi
+		# Update the current link.
+		(cd $INSTALLAREA; rm current_gcc ; ln -s $BUILDNAME current_gcc)
+                echo Build $INSTALLDIR is now current.
+		(cd $COMMONDIR ; rm -f current_gcc; ln -s $BUILDNAME current_gcc)
 		;;
 	*)	;;
 esac

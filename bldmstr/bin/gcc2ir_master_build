@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/ksh -f
 
 PATH=/usr/bin:/bin
 unset LANG
@@ -9,45 +9,58 @@ SCRIPTDIR=$(dirname $0)
 
 # Set common configuration variables
 . $SCRIPTDIR/commonconfig
-if [ `uname -p` == i386 ]
-then
-	LANGWSLISTDEFAULT="$LANGWSLISTDEFAULT /ws/gccfss/cross-compiler/ceres-lang"
-fi
 
-OS_NAME=`uname -s`
-if [ "$OS_NAME" == "Linux" ]
-then
+CROSSCOMPILER_BUILD=0
+EXTRALANGWS=
+EXTRALANG=0
+LANGWSLIST="$LANGWSLISTDEFAULT"
+INSTALLDIR=""
+RUNTESTS=1 
+SUNINSTALL=
+BUILDOPTIONS=
+INSTALL_BACKEND=1 
+CROSSCOMPONENTS_INSTALL_DIR=
+JOBS=2
+MAKE="/usr/ccs/bin/make"
+CPUS=2
+
+setup_defaults()
+{
+    if [ $CROSSCOMPILER_BUILD == 1 ]
+    then
+	LANGWSLISTDEFAULT="$LANGWSLISTDEFAULT /ws/gccfss/cross-compiler/ceres-lang"
+    fi
+
+    if [ `uname -s` == "Linux" ]
+    then
 	MAKE="/opt/dmake/bin/dmake"
 	CPUS=`cat /proc/cpuinfo | grep 'ncpus active' | awk '{print $NF}'`
-else
-	MAKE="/usr/ccs/bin/make"
-        # OS_NAME should either be "Linux" or the SunOS version number (e.g. "5.10")
-        OS_NAME=`uname -r`
-	CPUS=`/usr/sbin/psrinfo | wc -l`
-fi
+        LANGWSLIST="/ws/gccfss/linux/ceres_linux $LANGWSLIST"
+    else
+        CPUS=`/usr/sbin/psrinfo | wc -l`
+    fi
 
-EXTRALANGWS=
-LANGWSLIST="$LANGWSLISTDEFAULT"
-INSTALLDIR=
-RUNTESTS=1 
-if [ `uname -p` == i386 ]
-then
-    RUNTESTS=0
-fi
-SUNINSTALL=
-TESTOPTION=
-INSTALL_BACKEND=1 
-NIGHTLY_BUILD_MODE=
-SPARC_INSTALL_DIR=
-((JOBS=CPUS*2))
-if [ $JOBS -gt 50 ]
-then
+    if [ $INSTALLDIR == "" ]
+    then
+	INSTALLDIR=$BUILDDIR/install
+    fi
+    
+    if [ $EXTRALANG == 1 ]
+    then
+	LANGWSLIST="$EXTRALANGWS $LANGWSLIST"
+    fi
+
+    ((JOBS=CPUS*2))
+
+    if [ $JOBS -gt 50 ]
+    then
 	JOBS=50
-fi
+    fi
+}
 
 function usage {
 	cat <<EOF
-Usage: $0 [-g <GCC2IR_WS>] [-i <INSTALL_DIR>] [-l <PROJ_LANG_WS>] [-L "<LANG_WS_LIST>"] [-s <EXISTING_SUN_INSTALLATION>] [-p <EXISTING_CROSS_COMPONENTS>] [-t] <build_dir>
+Usage: $0 [-g <GCC2IR_WS>] [-i <INSTALL_DIR>] [-l <PROJ_LANG_WS>] [-L "<LANG_WS_LIST>"] [-s <EXISTING_SUN_INSTALLATION>] [-p <EXISTING_CROSS_COMPONENTS>] [-o] [-t] [-x] <build_dir>
 where
 	<GCC2IR_WS>	is a fully populated gcc2ir source workspace.
 			Default: $GCC2IRWS
@@ -70,38 +83,42 @@ where
                         It is only used to obtain libraries and other components needed for sparc during cross compilation. 
 	<build_dir>	is the directory to be created under which the build
 			will be done
+        -o              OpenSolaris build
 	-t		do not run tests. This option disables testing.
         -I              do not install Sun backend
-        -n              Nightly build mode. sol9 build will wait for sol10 to finish
+        -x              Cross compiler build
 EOF
 	exit 1
 }
 
-while getopts Ig:i:l:nL:p:s:v:t optflag
+while getopts Ig:i:l:L:op:s:v:tx optflag
 do
         case $optflag in
 		g)	GCC2IRWS=$OPTARG
 			;;
 		i)	INSTALLDIR=$OPTARG
 			;;
-		l)	EXTRALANGWS="$OPTARG"
+		l)	EXTRALANG=1
+                        EXTRALANGWS="$OPTARG"
 			;;
 		L)	LANGWSLIST="$OPTARG"
 			;;
-		p)      SPARC_INSTALL_DIR="-p $OPTARG"
+		p)      CROSSCOMPONENTS_INSTALL_DIR="-p $OPTARG"
 			;;
+                o)      BUILDOPTIONS="-o $BUILDOPTIONS"
+                        ;;
 		s)	SUNINSTALL=$OPTARG
 			;;
 		v)      GCC_VERSION="$OPTARG"
 			;;
 		t)	RUNTESTS=0
-			TESTOPTION="-t $TESTOPTION"
+			BUILDOPTIONS="-t $BUILDOPTIONS"
 			;;
 		I)	INSTALL_BACKEND=0
-                        TESTOPTION="-I $TESTOPTION"
+                        BUILDOPTIONS="-I $BUILDOPTIONS"
                         ;;
-                n)      NIGHTLY_BUILD_MODE=1
-                        TESTOPTION="-n $TESTOPTION"
+                x)      CROSSCOMPILER_BUILD=1
+                        BUILDOPTIONS="-x $BUILDOPTIONS"
                         ;;
                 *)      usage
                         ;;
@@ -116,20 +133,7 @@ fi
 
 BUILDDIR=$1
 
-if [ "$INSTALLDIR" = "" ]
-then
-	INSTALLDIR=$BUILDDIR/install
-fi
-
-if [ "" != "$EXTRALANGWS" ]
-then
-	LANGWSLIST="$EXTRALANGWS $LANGWSLIST"
-fi
-
-if [ $OS_NAME = "Linux" ]
-then
-	LANGWSLIST="/ws/gccfss/linux/ceres_linux $LANGWSLIST"
-fi
+setup_defaults
 
 cat <<EOF
 Build options being used:
@@ -144,44 +148,32 @@ EOF
 
 if [ "" = "$SUNINSTALL" ]
 then
-	# Build the Sun backend components
-	$MAKE -f ${SCRIPTDIR}/../data/Makefile.langbuild -j $JOBS JOBS=$JOBS BUILDDIR=$BUILDDIR LANGWSLIST="$LANGWSLIST" GCC_VERSION="$GCC_VERSION" all
+    # Build the Sun backend components
+    if [ $CROSSCOMPILER_BUILD == 1 ]
+    then
+	$MAKE -f ${SCRIPTDIR}/../data/Makefile.langbuild -j $JOBS JOBS=$JOBS BUILDDIR=$BUILDDIR LANGWSLIST="$LANGWSLIST" GCC_VERSION="$GCC_VERSION" CHIP=i386-sparc all
+    else
+        $MAKE -f ${SCRIPTDIR}/../data/Makefile.langbuild -j $JOBS JOBS=$JOBS BUILDDIR=$BUILDDIR LANGWSLIST="$LANGWSLIST" GCC_VERSION="$GCC_VERSION" all
+    fi
 
-	if [ $? -ne 0 ]
-	then
-		echo "Build of lang workspace failed."
-		exit 1
-	fi
-
-	SUNINSTALL="$BUILDDIR/langinstall"
+    if [ $? -ne 0 ]
+    then
+	echo "Build of lang workspace failed."
+	exit 1
+    fi
+    
+    SUNINSTALL="$BUILDDIR/langinstall"
 fi
 
 # Build and install gcc2ir
-/bin/ksh $SCRIPTDIR/build_gcc2ir $TESTOPTION "-w $GCC2IRWS" -i $INSTALLDIR/$GCCINSTSUBDIR -s $SUNINSTALL $SPARC_INSTALL_DIR -v $GCC_VERSION $BUILDDIR
+
+$SCRIPTDIR/build_gcc2ir $BUILDOPTIONS "-w $GCC2IRWS" -i $INSTALLDIR/$GCCINSTSUBDIR -s $SUNINSTALL $CROSSCOMPONENTS_INSTALL_DIR -v $GCC_VERSION  $BUILDDIR
 
 if [ $? -ne 0 ]
 then
 	echo Build and install failed.
 	echo current_gcc2ir has not been updated.
 	exit 1
-fi
-
-if [ $RUNTESTS = 1 ]
-then
-
-  if [ `uname -r` != 5.11 ]
-  then
-    # Run gdb testsuite with -m32 option
-    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparc-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
-    # Run gdb testsuite with -m64 option
-    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparcv9-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m64" -r $BUILDDIR/gdb_tests_64 > $BUILDDIR/logs/gdbtest_m64.log 2>&1 &
-  fi
-
-  wait
-
-  # Compare test results with the golden files
-  /bin/ksh ${SCRIPTDIR}/compareTestResults $OS_NAME $BUILDDIR > $BUILDDIR/logs/test.comparison 2>&1
-
 fi
 
 exit 0

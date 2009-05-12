@@ -1,84 +1,63 @@
-#!/bin/ksh -fx
-
-PATH=/usr/bin:/bin
+#!/bin/ksh -f
 
 date
 
 # Remove any alias for the cd command if it exists.
 # Common aliases for cd print stuff.
-alias | grep cd > /dev/null
-if [ $? = 0 ]
-then
-	unalias cd
-fi
-
 # Remove any setting for the C compiler already in the environment.
 # This can wreak havoc in some of the Gnu makefiles.
+unalias cd
 unset CC
+unset CCC
+unset CXX
+unset LD_LIBRARY_PATH
 
-# Get the name and version of the OS.  This is used for pieces of code that
-# differ between Linux and the different versions of Solaris.
-OS_NAME=`/bin/uname -s`
-OS_VERSION=`/bin/uname -r`
+# The path is set by default for the SPARC/Solaris 10 builds.
+# Builds on other platforms can massage them appropriately
+export PATH=/ws/gccfss/builds/$CBE_VERSION/current_gcc/gcc/bin:/opt/gccfss-build-tools/bin:/usr/sfw/bin:/usr/ccs/bin:/usr/bin:/bin
 
-# We should be able to use any gcc to build sgcc in the future.
-# However, current configuration file would make sgcc depend on libiconv,
-# if the bootstrap gcc depends on libiconv.  So, we use sgcc to bootstrap.
-case "$OS_NAME" in
-    "SunOS")
-	GNU_TOOL_BIN=/ws/gccfss/builds/4.2.1/current_gcc/gcc/bin/
-	LIB_SUFFIX="lib"
-	export PATH=$GNU_TOOL_BIN:/usr/sfw/bin:/usr/ccs/bin:/usr/bin:/bin
-	GMAKE=/usr/sfw/bin/gmake
-	TEAMWARE_BIN=/ws/onnv-tools/SUNWspro/SC6.2/bin
-	BRINGOVER=$TEAMWARE_BIN/bringover
-        GIT=/import/pkg/local/bin/git
-        TEST_TOOLS=/import/dr3/gnu
-        	# EXPECT will be set later.
-	EXPECT=
-	CPUS=`/usr/sbin/psrinfo | wc -l`
-	ERROR_TRAP=ERR
-	;;
-    "Linux")
-	# Change this to use SGCC in the future once it is avialable on linux!!!
-	GNU_TOOL_BIN=/usr/bin
-	export PATH=$GNU_TOOL_BIN:/usr/bin:/bin
-        LIB_SUFFIX="lib"
-	BRINGOVER=/ws/gccfss/linux/bin/remotebringover
-        GIT=/usr/bin/git
-	EXPECT=/usr/bin/expect
-	CPUS=`cat /proc/cpuinfo | grep 'ncpus active' | awk '{print $NF}'`
-	ERROR_TRAP=ZERR
-	GMAKE=/usr/bin/make
-	;;
-    *)
-	echo "Error: Operating system $OS_NAME is unrecognized"
-	exit 1
-	;;
-esac
-
+GMAKE=/usr/sfw/bin/gmake
+BRINGOVER=/ws/onnv-tools/SUNWspro/SC6.2/bin/bringover
+GIT=/import/pkg/local/bin/git
+EXPECT=/opt/gccfss-build-tools/bin/expect
+CPUS=`/usr/sbin/psrinfo | wc -l`
+ERROR_TRAP=ERR
 DEFAULT_SUN_DIR=/ws/gccfss/builds/$GCC_VERSION/current_gcc/SUNW0scgfss
 SPARC_INSTALL_DIR=
 ROOT=
 FORCE_BRINGOVER=0
 RUN_TESTS=1
 INSTALL_BACKEND=1
-NIGHTLY_BUILD_MODE=0
-
-((JOBS = CPUS * 2))
-PARALLEL_BUILD_OPTION="-j $JOBS"
 BOOTSTRAP_OPTION=
 DEBUG_MODE=0
-LIBMTSK_DIR=/import/backend-blds/compilers/current_aten/prod/usr/lib/nightly/
+SUNCC_PATH=
+SN_SERIAL_FILE=
+CROSSCOMPILER_BUILD=0
+OPENSOLARIS_BUILD=0
+LINUX_BUILD=0
 INCLUDE_HEADERS=/ws/gccfss/source/Studio12U1_include_headers
+SCRIPTDIR=$(dirname $0)
+
+# Source the commonconfig to obtain the standard information
+. $SCRIPTDIR/commonconfig
+
+# Has to be after linux specific configuration
+((JOBS = CPUS * 2))
+PARALLEL_BUILD_OPTION="-j $JOBS"
+
+#================================================================================
+#
+# Generic functions to handle various options
+#
+#================================================================================
 
 trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
 
 usage()
 {
-	cat >&2 <<EOF
-Usage: $0 [-w <gcc2ir_ws>] [-B] [-i <install_dir>]
-	[-s <suncc_dir>] [-p <cross_cmpnt>] [-j <jobs>] [-v <gcc version>] [-b] [-t] <target_dir>
+    cat >&2 <<EOF
+Usage: $0 [-w <workspace>] [-B] [-i <install_dir>]
+	[-s <suncc_dir>] [-p <cross_cmpnt>] [-j <jobs>] [-v <gcc version>] [-b] [-l] [-o] [-t] [-x] <target_dir>
 where
 	<workspace>	is a gcc2ir workspace to be used as the source base
 	-B		indicates that <workspace> is to be brought over rather
@@ -88,16 +67,19 @@ where
 	<suncc_dist>	is the Sun compiler distribution directory from which
 			the libraries necessary for gcc2ir are obtained.
 			Default: /ws/gccfss/builds/4.2.1/current_gcc/SUNW0scgfss
-        <cross_cmpnt>  is a pre-existing cross-compiler components installation.
-                        It is only used for cross compilation on i386 to obtain cross binutils and other components.
+        <cross_cmpnt>   is a pre-existing cross-compiler components installation.
+                        It is only used for cross compilation on i386 to obtain 
+                        cross binutils and other components.
 	<jobs>		is the number of make jobs to run in parallel
 			Default: twice the number of cpus
         <gcc version>   is the gcc version, eg 4.2.1
 	-b		run through bootstrap
 	-g		compile with -g -frtl-backend, no bootstrap
+        -l              linux build
+        -o              opensolaris build
 	-t		do not run tests
         -I              do not install Sun backend
-        -n              Nightly build mode. sol9 build will wait for sol10 to finish
+        -x              cross compiler build
 
 If <target_dir> already exists, it is assumed that this build is to be a
 continuation of a previous build.  Differences between the current set of
@@ -109,17 +91,21 @@ EOF
 	exit 1
 }
 
-# Check that the specified command-line options make sense.
-#
-# Arguments: none
-
-check_options()
+set_linux_options()
 {
-        if [ ! -e $GNU_TOOL_BIN/gcc ]
-        then
-            echo >&2 ERROR: cannot configure without $GNU_TOOL_BIN/gcc
-            exit 2
-        fi
+    # switch some paths on linux
+    if [ $LINUX_BUILD == 1 ]
+    then
+        # Change this to use GCCFSS to self bootstrap
+        GNU_TOOL_BIN=/usr/bin
+        export PATH=/usr/bin:/bin
+        BRINGOVER=/ws/gccfss/linux/bin/remotebringover
+        GIT=/usr/bin/git
+        EXPECT=/usr/bin/expect
+        CPUS=`cat /proc/cpuinfo | grep 'ncpus active' | awk '{print $NF}'`
+        ERROR_TRAP=ZERR
+        GMAKE=/usr/bin/make
+    fi
 }
 
 # Process the command-line options.
@@ -129,144 +115,133 @@ check_options()
 
 get_options()
 {
-	while getopts BIbngi:j:p:s:tw:v: optflag
-	do
-        	case $optflag in
-			B)	FORCE_BRINGOVER=1
-				;;
-			I)	INSTALL_BACKEND=0
-				;;
-			n)	NIGHTLY_BUILD_MODE=1
-				;;
-			i)	INSTALL_DIR="$OPTARG"
-				;;
-			j)	if [ "0" = "$OPTARG" ]
-				then
-					PARALLEL_BUILD_OPTION=""
-				else
-					PARALLEL_BUILD_OPTION="-j $OPTARG"
-				fi
-				;;
-			b)	BOOTSTRAP_OPTION="bootstrap"
-				;;
-			g)	BOOTSTRAP_OPTION=
-				DEBUG_MODE=1
-				;;
-			s)	SUN_DIR="$OPTARG"
-				;;
-			t)	RUN_TESTS=0
-				;;
-			w)	ORIG_WS="$OPTARG"
-				;;
-			p)      SPARC_INSTALL_DIR="$OPTARG"
-				;;
-			v)      GCC_VERSION="$OPTARG"
-				;;
-			*)	echo "Invalid option: $optflag" >&2
-				usage
-				exit 1
-				;;
-		esac
-	done
-	shift `expr $OPTIND - 1`
-	if [ $# -ne 1 ]
-	then
+    while getopts BIbogi:j:p:s:tw:v:x optflag
+    do
+        case $optflag in
+	    B)	FORCE_BRINGOVER=1
+		;;
+	    I)	INSTALL_BACKEND=0
+		;;
+	    i)	INSTALL_DIR="$OPTARG"
+		;;
+	    j)	if [ "0" = "$OPTARG" ]
+		then
+		PARALLEL_BUILD_OPTION=""
+		else
+		PARALLEL_BUILD_OPTION="-j $OPTARG"
+		fi
+		;;
+	    b)	BOOTSTRAP_OPTION="bootstrap"
+		;;
+	    g)	BOOTSTRAP_OPTION=
+		DEBUG_MODE=1
+		;;
+            l)  LINUX_BUILD=1
+                ;;
+            o)  OPENSOLARIS_BUILD=1
+                ;;
+	    s)	SUN_DIR="$OPTARG"
+		;;
+	    t)	RUN_TESTS=0
+		;;
+	    w)	ORIG_WS="$OPTARG"
+		;;
+	    p)  SPARC_INSTALL_DIR="$OPTARG"
+		;;
+	    v)  GCC_VERSION="$OPTARG"
+		;;
+            x)  CROSSCOMPILER_BUILD=1
+                ;;
+	    *)	echo "Invalid option: $optflag" >&2
 		usage
 		exit 1
-	fi
-	ROOT="$1"
+		;;
+	esac
+    done
+    shift `expr $OPTIND - 1`
+    if [ $# -ne 1 ]
+    then
+	usage
+	exit 1
+    fi
+    ROOT="$1"
 }
-
 
 # We are performing a build in an area that already exists.
 # Take whatever information is needed from the previous build and handle
 # any conflict between the options for this build and the options for the
 # previous build.
-
 process_previous_options()
 {
-	# If a particular value was not set on the command-line, set it to
-	# its previous value (which may be the empty string).
-	if [ "$INSTALL_DIR" == "" ]
-	then
-		INSTALL_DIR="$PREV_INSTALL_DIR"
-	fi
-	if [ "$SUN_DIR" == "" ]
-	then
-		SUN_DIR="$PREV_SUN_DIR"
-	fi
-	if [ "$ORIG_WS" == "" ]
-	then
-		ORIG_WS="$PREV_ORIG_WS"
-	fi
+    if [ ! -e $ROOT/previous ]
+    then
+        return
+    fi
 
-	# If current and previous installation directory do not match,
-	# we must reconfigure and reinstall everything.
-	if [ "$INSTALL_DIR" != "$PREV_INSTALL_DIR" ]
-	then
-		echo >&2 "WARNING: Current installation directory does not match previous installation directory.  Reconfiguration and reinstallation will be performed."
-		rm -f $ROOT/done/config.gcc2ir
-		rm -f $ROOT/done/install.*
-	fi
+    # By sourcing this file, some environment variables name PREV_* are set.
+    . $ROOT/previous
 
-	# If the location of the Sun libraries has changed, they must be
-	# reinstalled.
-	if [ "$SUN_DIR" != "$PREV_SUN_DIR" ]
+    # If a particular value was not set on the command-line, set it to
+    # its previous value (which may be the empty string).
+    if [ "$INSTALL_DIR" == "" ]
+    then
+	INSTALL_DIR="$PREV_INSTALL_DIR"
+    fi
+    if [ "$SUN_DIR" == "" ]
+    then
+	SUN_DIR="$PREV_SUN_DIR"
+    fi
+    if [ "$ORIG_WS" == "" ]
+    then
+	ORIG_WS="$PREV_ORIG_WS"
+    fi
+    
+    # If current and previous installation directory do not match,
+    # we must reconfigure and reinstall everything.
+    if [ "$INSTALL_DIR" != "$PREV_INSTALL_DIR" ]
+    then
+	echo >&2 "WARNING: Current installation directory does not match previous installation directory.  Reconfiguration and reinstallation will be performed."
+	rm -f $ROOT/done/config.gcc2ir
+	rm -f $ROOT/done/install.*
+    fi
+    
+    # If the location of the Sun libraries has changed, they must be
+    # reinstalled.
+    if [ "$SUN_DIR" != "$PREV_SUN_DIR" ]
+    then
+	echo >&2 "WARNING: Sun compiler release directory does not match the one specified in a previous build.  Sun libraries will be reinstalled during the installation step."
+	rm -f $ROOT/done/install.suncomponents
+    fi
+    
+    # If the original workspace has changed, warn the user.
+    # If we are not doing a bringover from there, force a reconfiguration,
+    # rebuild, and reinstallation.
+    if [ "$ORIG_WS" != "$PREV_ORIG_WS" ]
+    then
+	echo >&2 "WARNING: Parent gcc2ir source workspace has been changed since the previous build.  Future builds will recognize the new parent."
+	if [ "$FORCE_BRINGOVER" == 0 ]
 	then
-		echo >&2 "WARNING: Sun compiler release directory does not match the one specified in a previous build.  Sun libraries will be reinstalled during the installation step."
-		rm -f $ROOT/done/install.suncomponents
+	    echo >&2 "WARNING:  Due to change in parent, gcc2ir will be reconfigured, rebuilt, and reinstalled."
+	    rm -f $ROOT/done/config.gcc2ir
+	    rm -f $ROOT/done/build.gcc2ir
+	    rm -f $ROOT/done/install.gcc2ir
 	fi
-
-	# If the original workspace has changed, warn the user.
-	# If we are not doing a bringover from there, force a reconfiguration,
-	# rebuild, and reinstallation.
-	if [ "$ORIG_WS" != "$PREV_ORIG_WS" ]
-	then
-		echo >&2 "WARNING: Parent gcc2ir source workspace has been changed since the previous build.  Future builds will recognize the new parent."
-		if [ "$FORCE_BRINGOVER" == 0 ]
-		then
-			echo >&2 "WARNING:  Due to change in parent, gcc2ir will be reconfigured, rebuilt, and reinstalled."
-			rm -f $ROOT/done/config.gcc2ir
-			rm -f $ROOT/done/build.gcc2ir
-			rm -f $ROOT/done/install.gcc2ir
-		fi
-	fi
+    fi
 }
-
 
 preserve_options()
 {
-	echo "PREV_INSTALL_DIR=$INSTALL_DIR"	> $ROOT/previous
-	echo "PREV_SUN_DIR=$SUN_DIR"		>> $ROOT/previous
-	echo "PREV_ORIG_WS=$ORIG_WS"		>> $ROOT/previous
+    echo "PREV_INSTALL_DIR=$INSTALL_DIR"	>  $ROOT/previous
+    echo "PREV_SUN_DIR=$SUN_DIR"		>> $ROOT/previous
+    echo "PREV_ORIG_WS=$ORIG_WS"		>> $ROOT/previous
 }
 
 # copy gcc to local build directory
-do_copy_gnu_tools()
-{
-    echo "==== copying gnu tools on Solaris"
-    date
-
-    # use 'perl' from PATH
-    # but always copy pod2man, to create man pages
-    mkdir -p $ROOT/tools/bin
-    cp -pf $TEST_TOOLS/bin/pod2man $ROOT/tools/bin
-
-    # need to use 'objdump' during configure otherwise "--traditional-format" flag
-    # will be added
-    cp -pf $TEST_TOOLS/bin/objdump $ROOT/tools/bin
-    cp -pf $TEST_TOOLS/bin/c++filt $ROOT/tools/bin
-
-    echo "==== copied gnu tools"
-    date
-}
-
-# copy gcc to local build directory
-do_copy_gnu_tools_cross()
+copy_gnu_tools_cross()
 {
     echo "==== copying i386 gnu tools on Solaris"
     date
-
+    
     # use 'perl' from PATH
     # but always copy pod2man, to create man pages
     mkdir -p $ROOT/tools/bin
@@ -292,26 +267,76 @@ add_cross_libs()
     LIB_DIR="$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib"
     LIB_LOCATION="/ws/gccfss/cross-compiler/tools/lib"
     echo "Installation of sparc libraries for cross-compiler...from $LIB_LOCATION to $LIB_DIR"
-  
+    
     files=`sed '/^#/'d $SCRIPTDIR/cross_feature_libs.txt |awk '{print $1}'`
     (cd $LIB_LOCATION; \
-    for file in ${files}; \
-    do \
-      find . -name "$file*" |cpio -pdum $LIB_DIR ;\
+        for file in ${files}; \
+        do \
+        find . -name "$file*" |cpio -pdum $LIB_DIR ;\
     done)
-
+    
     echo "Linking some solaris libs to gcc directory"
     ( rm -rf $INSTALL_DIR/sparc-sun-solaris2.10/lib ; \
-      mkdir -p $INSTALL_DIR/sparc-sun-solaris2.10/lib ; \
-      cd $INSTALL_DIR/sparc-sun-solaris2.10/lib ; \
-      ln -s ../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/values-Xa.o ; \
-      ln -s ../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/values-Xc.o ; \
-      mkdir -p sparcv9 ; \
-      cd sparcv9 ; \
-      ln -s ../../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9/values-Xa.o ;\
+        mkdir -p $INSTALL_DIR/sparc-sun-solaris2.10/lib ; \
+        cd $INSTALL_DIR/sparc-sun-solaris2.10/lib ; \
+        ln -s ../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/values-Xa.o ; \
+        ln -s ../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/values-Xc.o ; \
+        mkdir -p sparcv9 ; \
+        cd sparcv9 ; \
+        ln -s ../../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9/values-Xa.o ;\
       ln -s ../../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9/values-Xc.o ;)
-
+    
     echo "Installation of sparc libraries for cross-compiler from $LIB_LOCATION to $LIB_DIR completed at $(date)" > $ROOT/done/install.crosslibs
+}
+
+backend_post_install()
+{
+    # Create the links for the user tools and their man pages.
+    mkdir -p $INSTALL_DIR/man/man1
+    mkdir -p $INSTALL_DIR/bin
+    for TOOL in bit ats discover
+    do
+        # Create the link for the binary.
+	rm -f $INSTALL_DIR/bin/${TOOL}
+	ln -s ../../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin/${TOOL} \
+	    $INSTALL_DIR/bin/${TOOL}
+	# Create the link for the man page.
+	rm -fr $INSTALL_DIR/man/man1/${TOOL}.1
+	ln -s ../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/man/man1/${TOOL}.1 \
+	    $INSTALL_DIR/man/man1/${TOOL}.1
+    done
+    
+    # copy specific header files from the Studio install area to our
+    # install area
+    mkdir -p  $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
+    cp -r $INCLUDE_HEADERS/* $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
+
+    # create soft links for v8plusc/v9c subdirectories
+    cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
+    ln -s sparcfmaf v8plusc
+    ln -s sparcfmaf/64 v9c
+    # create soft links for sparcima subdirectory
+    ln -s sparcfmaf sparcima
+    # create soft links for v8plusd/,v9d subdirectories
+    # CR 6829027. vis.il lives in v8plusd and v9d,
+    # move it to sparcfmaf, and create links to
+    # sparcima. sparcima is again a link to sparcfmaf
+    mv v8plusd/vis.il sparcfmaf/vis.il
+    mv v9d/vis.il sparcfmaf/64/vis.il
+    rm -rf v8plusd
+    rm -rf v9d
+    ln -s sparcima v8plusd
+    ln -s sparcima/64 v9d
+    # create links for sparcvis and sparcvis2
+    ln -s v8plusa sparcvis
+    ln -s v8plusb sparcvis2
+    ln -s v8plus sparc
+    
+    find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
+
+    # Add the legal licenses
+    (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION ; \
+     tar -xf /ws/gccfss/source/scgfss_legal_$GCC_VERSION.tar)
 }
 
 # Copy Sun compiler components required by cross compiler gcc2ir 
@@ -331,85 +356,63 @@ add_cross_libs()
 
 install_crosscompiler_suncomponents ()
 {
-	# SPARC_INSTALL_DIR is the location of the sparc build's
-	# install directory
-	if [ ! -d $SPARC_INSTALL_DIR ]
-	then
-	    echo >&2 "ERROR: Invalid directory for sparc components:  $SPARC_INSTALL_DIR"
-	    exit 1
-        fi
-
-	SUN_DIR_ROOT=$SUN_DIR/$GCC_VERSION/prod
-
-	if [ ! -d $SUN_DIR_ROOT ]
-	then
-		echo >&2 "ERROR: Invalid directory for back-end components: $SUN_DIR_ROOT"
-		exit 1
-	fi
-
-	mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
-
-	# Remove Sun components that may have been installed previously
-	(cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION;
-	 rm -rf prod;
-	 mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod)
-
-	echo "Installing Cross-compiler components from $SPARC_INSTALL_DIR/prod to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
-
-	# copy all the files over from the sparc build
-	 (cd $SPARC_INSTALL_DIR/prod
-	  find . | cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod)
-
-	echo "Installing Sun components from $SUN_DIR_ROOT to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
-
-	# overwrite with the cross compiler specific files
-	cd $SUN_DIR_ROOT
-	cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SCRIPTDIR/sun_cross_components.txt
-	# Set read/execute permission on directories created by cpio.  
-	# This is only necessary for Linux
-	find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
-
-	# Fixup the assembler to point to the gnu cross assembler just for build
-	echo "Fixingup fbe to point to gnu assembler"
-	(cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin ; \
-	 rm -f fbe ; \
-	 ln -s /ws/gccfss/cross-compiler/gnu-i386/gcc42-cross/bin/sparc-sun-solaris2.10-as fbe)
-
-	# create soft links for v8plusc/v9c subdirectories
-	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
-	ln -s sparcfmaf v8plusc
-	ln -s sparcfmaf/64 v9c
-        # create soft links for sparcima subdirectory
-        ln -s sparcfmaf sparcima
-        # create soft links for v8plusd/,v9d subdirectories
-        # CR 6829027. vis.il lives in v8plusd and v9d,
-        # move it to sparcfmaf, and create links to
-        # sparcima. sparcima is again a link to sparcfmaf
-        mv v8plusd/vis.il sparcfmaf/vis.il
-        mv v9d/vis.il sparcfmaf/64/vis.il
-        rm -rf v8plusd
-        rm -rf v9d
-        ln -s sparcima v8plusd
-        ln -s sparcima/64 v9d
-        # create links for sparcvis and sparcvis2
-        ln -s v8plusa sparcvis
-        ln -s v8plusb sparcvis2
-        ln -s v8plus sparc
-
-        # copy solaris include files
-        echo "Linking Solaris include header files, for build purpose only"
-        ( mkdir -p $INSTALL_DIR/sparc-sun-solaris2.10 ;
-          cd $INSTALL_DIR/sparc-sun-solaris2.10 ;
-          ln -s /ws/gccfss/cross-compiler/solaris-include sys-include)
-        
-        # copy solaris libs
-        echo "Copyng SPARC/Solaris libraries"
-	if [ ! -e $ROOT/done/install.crosslibs -a `uname -p` = i386 ]
-	then
-            add_cross_libs
-	fi
-        
-	echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
+    # SPARC_INSTALL_DIR is the location of the sparc build's
+    # install directory
+    if [ ! -d $SPARC_INSTALL_DIR ]
+    then
+	echo >&2 "ERROR: Invalid directory for sparc components:  $SPARC_INSTALL_DIR"
+	exit 1
+    fi
+    
+    SUN_DIR_ROOT=$SUN_DIR/$GCC_VERSION/prod
+    
+    if [ ! -d $SUN_DIR_ROOT ]
+    then
+	echo >&2 "ERROR: Invalid directory for back-end components: $SUN_DIR_ROOT"
+	exit 1
+    fi
+    
+    mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
+    
+    # Remove Sun components that may have been installed previously
+    (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION;
+	rm -rf prod;
+	mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod)
+    
+    echo "Installing Cross-compiler components from $SPARC_INSTALL_DIR/prod to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
+    
+    # copy all the files over from the sparc build
+    (cd $SPARC_INSTALL_DIR/prod
+	find . | cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod)
+    
+    echo "Installing Sun components from $SUN_DIR_ROOT to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
+    
+    # overwrite with the cross compiler specific files
+    cd $SUN_DIR_ROOT
+    cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SCRIPTDIR/sun_cross_components.txt
+    
+    # Fixup the assembler to point to the gnu cross assembler just for build
+    echo "Fixingup fbe to point to gnu assembler"
+    (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin ; \
+	rm -f fbe ; \
+	ln -s /ws/gccfss/cross-compiler/gnu-i386/gcc42-cross/bin/sparc-sun-solaris2.10-as fbe)
+    
+    backend_post_install
+    
+    # copy solaris include files
+    echo "Linking Solaris include header files, for build purpose only"
+    ( mkdir -p $INSTALL_DIR/sparc-sun-solaris2.10 ;
+        cd $INSTALL_DIR/sparc-sun-solaris2.10 ;
+        ln -s /ws/gccfss/cross-compiler/solaris-include sys-include)
+    
+    # copy solaris libs
+    echo "Copyng SPARC/Solaris libraries"
+    if [ ! -e $ROOT/done/install.crosslibs ]
+    then
+        add_cross_libs
+    fi
+    
+    echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
 }
 
 # Copy Sun compiler components required by gcc2ir to gcc2ir installation dir.
@@ -424,507 +427,364 @@ install_crosscompiler_suncomponents ()
 
 install_suncomponents()
 {
-	# SUN_DIR_ROOT is the dir just above the bin and lib directories
-	# from which we want to copy.
-	SUN_DIR_ROOT=$SUN_DIR/$GCC_VERSION/prod
-	
-	echo "Installing Sun components from $SUN_DIR_ROOT to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
-
-	if [ ! -d $SUN_DIR_ROOT ]
-	then
-		echo >&2 "ERROR: Invalid directory for back-end components: $SUN_DIR_ROOT"
-		exit 1
-	fi
-
-	mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
-
-	# Remove Sun components that may have been installed previously
-	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
-	rm -rf prod
-
-	mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod
-
-	# Copy the files.
-	cd $SUN_DIR_ROOT
-	cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SOURCE_WS/bldmstr/bin/sun_components.txt
-	# Set read/execute permission on directories created by cpio.  
-	# This is only necessary for Linux
-	find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
-
-	# Install the libraries which support gccfss fundamental features.
-	# This is only necessary for Linux.
-	if [ "$OS_NAME" = "Linux" ]
-	then
-		echo "Installation of libraries on Linux list in linux_feature_libs.txt."
-		files=`sed '/^#/'d $SCRIPTDIR/linux_feature_libs.txt |awk '{print $1}'`
-		(cd /ws/gccfss/linux/prod/lib; \
-		for file in ${files}; \
-		do \
-			find . -name "$file*" |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib ;\
+    # SUN_DIR_ROOT is the dir just above the bin and lib directories
+    # from which we want to copy.
+    SUN_DIR_ROOT=$SUN_DIR/$GCC_VERSION/prod
+    
+    echo "Installing Sun components from $SUN_DIR_ROOT to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
+    
+    if [ ! -d $SUN_DIR_ROOT ]
+    then
+	echo >&2 "ERROR: Invalid directory for back-end components: $SUN_DIR_ROOT"
+	exit 1
+    fi
+    
+    mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
+    
+    # Remove Sun components that may have been installed previously
+    cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
+    rm -rf prod
+    
+    mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod
+    
+    # Copy the files.
+    cd $SUN_DIR_ROOT
+    cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SCRIPTDIR/sun_components.txt
+    find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
+    
+    # Install the libraries which support gccfss fundamental features.
+    # This is only necessary for Linux.
+    if [ $LINUX_BUILD == 1 ]
+    then
+	echo "Installation of libraries on Linux list in linux_feature_libs.txt."
+	files=`sed '/^#/'d $SCRIPTDIR/linux_feature_libs.txt |awk '{print $1}'`
+	(cd /ws/gccfss/linux/prod/lib; \
+	    for file in ${files}; \
+	    do \
+	    find . -name "$file*" |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib ;\
 		done)
-		#else
-		# Do not need install developing libmtsk.so.1.
-		# Install libmtsk.so.1 from current_aten build area.
-		# cd $LIBMTSK_DIR
-		# ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib
-		# cd sparcv9; ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9
-	fi
-
-	# Create the links for the user tools and their man pages.
-        # Dont bother on Solaris 11 (OpenSolaris)
-        if [ `uname -r` == 5.10 ]
-        then
-	    mkdir -p $INSTALL_DIR/man/man1
-	    mkdir -p $INSTALL_DIR/bin
-	    for TOOL in bit ats discover
-	    do
-		# Create the link for the binary.
-		rm -f $INSTALL_DIR/bin/${TOOL}
-		ln -s ../../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin/${TOOL} \
-			$INSTALL_DIR/bin/${TOOL}
-		# Create the link for the man page.
-		rm -fr $INSTALL_DIR/man/man1/${TOOL}.1
-		ln -s ../../../$SUNINSTSUBDIR/$GCC_VERSION/prod/man/man1/${TOOL}.1 \
-			$INSTALL_DIR/man/man1/${TOOL}.1
-	    done
-        fi
-
-        # copy specific header files from the Studio install area to our
-        # install area
-        mkdir -p  $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
-        cp -r $INCLUDE_HEADERS/* $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
-
-	# create soft links for v8plusc/v9c subdirectories
-	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
-	ln -s sparcfmaf v8plusc
-	ln -s sparcfmaf/64 v9c
-        # create soft links for sparcima subdirectory
-        ln -s sparcfmaf sparcima
-        # create soft links for v8plusd,v9d subdirectories
-        # CR 6829027. vis.il lives in v8plusd and v9d,
-        # move it to sparcfmaf, and create links to
-        # sparcima. sparcima is again a link to sparcfmaf
-        mv v8plusd/vis.il sparcfmaf/vis.il
-        mv v9d/vis.il sparcfmaf/64/vis.il
-        rm -rf v8plusd
-        rm -rf v9d
-        ln -s sparcima v8plusd
-        ln -s sparcima/64 v9d
-        # create links for sparcvis and sparcvis2
-        ln -s v8plusa sparcvis
-        ln -s v8plusb sparcvis2
-        ln -s v8plus sparc
-
-        # Add the legal licenses
-        (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION ; \
-         tar -xf /ws/gccfss/source/scgfss_legal_4.3.2.tar)
+    fi
+    
+    backend_post_install
         
-	echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
-}
-
-prepare_tests()
-{
-  echo "Preparing tests ..."
-  date
-
-  mkdir -p $ROOT/tools/bin
-  mkdir -p $ROOT/tools/lib
-  mkdir -p $ROOT/tools/share
-
-  rm -f $ROOT/tools/bin/runtest
-  cp -p $TEST_TOOLS/bin/runtest $ROOT/tools/bin/runtest
-  rm -f $ROOT/tools/bin/objdump
-  rm -f $ROOT/tools/bin/expect*
-  rm -f $ROOT/tools/bin/tcl*
-
-  (cd $TEST_TOOLS/share ; tar -cf - dejagnu) \
-    | (cd $ROOT/tools/share; tar -xf -)
-
-  if [ "$OS_NAME" != "Linux" ]
-  then
-    cp -p $TEST_TOOLS/bin/objdump $ROOT/tools/bin/objdump
-    cp -p $TEST_TOOLS/bin/expect* $ROOT/tools/bin
-    cp -p $TEST_TOOLS/bin/tcl* $ROOT/tools/bin
-    (cd $TEST_TOOLS/lib ; tar -cf - tcl* libtcl* expect*) \
-      | (cd $ROOT/tools/lib; tar -xf -)
-  fi
-
-  # make sure to work without SUNCC_PATH
-  SUNCC_PATH=
-  export SUNCC_PATH
-
-  # make sure to work without license file
-  SN_SERIAL_FILE=
-  export SN_SERIAL_FILE
-
-  # Do not need link developing libmtsk.so.1.
-  # for libmtsk.so
-  #cd $ROOT/build.gcc2ir/gcc; ln -s $LIBMTSK_DIR/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
-  #cd $ROOT/build.gcc2ir/gcc/sparcv9; ln -s $LIBMTSK_DIR/sparcv9/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
+    echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
 }
 
 prepare_tests_cross()
 {
-  echo "Preparing cross tests ..."
-  date
+    echo "Preparing cross tests ..."
+    date
+    
+    mkdir -p $ROOT/tools/bin
+    mkdir -p $ROOT/tools/lib
+    mkdir -p $ROOT/tools/share
+    
+    rm -f $ROOT/tools/bin/runtest
+    cp -p /ws/gccfss/cross-compiler/tools/bin/runtest $ROOT/tools/bin/runtest
+    rm -f $ROOT/tools/bin/objdump
+    rm -f $ROOT/tools/bin/expect*
+    rm -f $ROOT/tools/bin/tcl*
+    
+    (cd /ws/gccfss/cross-compiler/gnu-i386/share ; tar -cf - dejagnu) \
+        | (cd $ROOT/tools/share; tar -xf -)
+    
+    if [ $LINUX_BUILD == 1 ]
+    then
+        cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/objdump $ROOT/tools/bin/objdump
+        cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/expect* $ROOT/tools/bin
+        cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/tcl* $ROOT/tools/bin
+        (cd /ws/gccfss/cross-compiler/gnu-i386/lib ; tar -cf - tcl* libtcl* expect*) \
+            | (cd $ROOT/tools/lib; tar -xf -)
+    fi
 
-  mkdir -p $ROOT/tools/bin
-  mkdir -p $ROOT/tools/lib
-  mkdir -p $ROOT/tools/share
-
-  rm -f $ROOT/tools/bin/runtest
-  cp -p /ws/gccfss/cross-compiler/tools/bin/runtest $ROOT/tools/bin/runtest
-  rm -f $ROOT/tools/bin/objdump
-  rm -f $ROOT/tools/bin/expect*
-  rm -f $ROOT/tools/bin/tcl*
-
-  (cd /ws/gccfss/cross-compiler/gnu-i386/share ; tar -cf - dejagnu) \
-    | (cd $ROOT/tools/share; tar -xf -)
-
-  if [ "$OS_NAME" != "Linux" ]
-  then
-    cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/objdump $ROOT/tools/bin/objdump
-    cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/expect* $ROOT/tools/bin
-    cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/tcl* $ROOT/tools/bin
-    (cd /ws/gccfss/cross-compiler/gnu-i386/lib ; tar -cf - tcl* libtcl* expect*) \
-      | (cd $ROOT/tools/lib; tar -xf -)
-  fi
-
-  # make sure to work without SUNCC_PATH
-  SUNCC_PATH=
-  export SUNCC_PATH
-
-  # make sure to work without license file
-  SN_SERIAL_FILE=
-  export SN_SERIAL_FILE
 }
 
 run_tests_installed()
 {
-  # Running test for Objc and Fortran
-  echo "Running tests for Objc and Fortran"
+    # Running test for Objc and Fortran
+    echo "Running tests for Objc and Fortran"
 
-  FINAL_INSTALL_DIR=$INSTALL_DIR/usr
-  # Create links: gcc -> gcc-$GCC_VERSION,
-  #          gfortran -> gfortran-$GCC_VERSION
-  cd $FINAL_INSTALL_DIR/bin
-  ln -s gcc-$GCC_VERSION gcc
-  ln -s gfortran-$GCC_VERSION gfortran
+    FINAL_INSTALL_DIR=$INSTALL_DIR/usr
 
-  cd $ROOT/build.gcc2ir/gcc
+    # Create links: gcc -> gcc-$GCC_VERSION,
+    #          gfortran -> gfortran-$GCC_VERSION
+    cd $FINAL_INSTALL_DIR/bin
+    ln -s gcc-$GCC_VERSION gcc
+    ln -s gfortran-$GCC_VERSION gfortran
 
-  rm -rf testsuite.objc-fortran.m32
-  mkdir testsuite.objc-fortran.m32
-  if [ ! -d $ROOT/logs/result.m32 ]
-  then
-    mkdir -p $ROOT/logs/result.m32 
-  fi
-
-  rm -rf testsuite.objc-fortran.m64
-  mkdir testsuite.objc-fortran.m64
-  if [ ! -d $ROOT/logs/result.m64 ]
-  then
-    mkdir -p $ROOT/logs/result.m64 
-  fi
-
-  # For compile time. cc1 need them.
-  export LD_LIBRARY_PATH_32=$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/sys:$LD_LIBRARY_PATH_32
-  export LD_LIBRARY_PATH_32=$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib:$LD_LIBRARY_PATH_32
-
-  # NB: use stock gcc's testsuit.
-  # For run time. libgfortran.so path.
-  (cd testsuite.objc-fortran.m32; \
-   export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/lib:$LD_LIBRARY_PATH; \
-  ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
-    --with-testsuite=/net/gccfss-v890-1/export/prash/gcc-4.3.2/gcc/testsuite \
-    --without-gcc --without-g++ \
+    cd $ROOT/build.gcc2ir/gcc
+    
+    rm -rf testsuite.objc-fortran.m32
+    mkdir testsuite.objc-fortran.m32
+    if [ ! -d $ROOT/logs/result.m32 ]
+    then
+        mkdir -p $ROOT/logs/result.m32 
+    fi
+    
+    rm -rf testsuite.objc-fortran.m64
+    mkdir testsuite.objc-fortran.m64
+    if [ ! -d $ROOT/logs/result.m64 ]
+    then
+        mkdir -p $ROOT/logs/result.m64 
+    fi
+    
+    # For compile time. cc1 need them.
+    export LD_LIBRARY_PATH_32=$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/sys:$LD_LIBRARY_PATH_32
+    export LD_LIBRARY_PATH_32=$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib:$LD_LIBRARY_PATH_32
+    
+    # NB: use stock gcc's testsuit.
+    # For run time. libgfortran.so path.
+    (cd testsuite.objc-fortran.m32; \
+        export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/lib:$LD_LIBRARY_PATH; \
+        ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
+        --with-testsuite=$SOURCE_WS/gcc/testsuite \
+        --without-gcc --without-g++ \
 	> $ROOT/logs/tests.objc-fortran.m32.log 2>&1); \
     mv *.log *.sum $ROOT/logs/result.m32 )
 
   (cd testsuite.objc-fortran.m64; \
    export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/lib/sparcv9:$LD_LIBRARY_PATH; \
   ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
-    --with-testsuite=/net/gccfss-v890-1/export/prash/gcc-4.3.2/gcc/testsuite \
+    --with-testsuite=$SOURCE_WS/gcc/testsuite \
     --without-gcc --without-g++ --target_board=unix/-m64 \
 	> $ROOT/logs/tests.objc-fortran.m64.log 2>&1); \
     mv *.log *.sum $ROOT/logs/result.m64 )
-
-  # Remove links: gcc -> gcc-4.3.2, gfortran -> gfortran-4.3.2
-  cd $FINAL_INSTALL_DIR/bin
-  rm gcc gfortran
 }
 
-run_tests_parallel()
+run_native_tests()
 {
-  # test both -m32 and -m64 at the same time
-  mkdir -p $ROOT/logs/result.m32
-  mkdir -p $ROOT/logs/result.m64
-
-  echo "Running tests ..."
-  date
-
-  # test {gcc,g++} {-m32,-m64} at the same time, if more than 2 CPUs
-  cd $ROOT/build.gcc2ir/gcc
-  # make site.exp for all 4 child processes
-  $GMAKE site.exp
-
-   if [ "$EXPECT" = "" ]
-   then
-  	EXPECT=$ROOT/tools/bin/expect
-   fi
-
-if [ `uname -p` != i386 ]
-then
-  $GMAKE -k check-gcc EXPECT=$EXPECT \
-    TESTSUITEDIR="testsuite.gcc.m32" \
-    RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
-		> $ROOT/logs/tests.gcc.m32.log 2>&1 &
-
-  # Let the first child process do all if any common preparation work
-  # for both check-gcc and check-g++.
-  sleep 3
-  $GMAKE -k check-gcc EXPECT=$EXPECT \
-    TESTSUITEDIR="testsuite.gcc.m64" \
-    RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
-		> $ROOT/logs/tests.gcc.m64.log 2>&1 &
-  sleep 3
-  $GMAKE  -k check-g++ EXPECT=$EXPECT  \
-      TESTSUITEDIR="testsuite.g++.m32" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
+    $GMAKE -k check-gcc EXPECT=$EXPECT \
+        TESTSUITEDIR="testsuite.gcc.m32" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
+	> $ROOT/logs/tests.gcc.m32.log 2>&1 &
+    
+    # Let the first child process do all if any common preparation work
+    # for both check-gcc and check-g++.
+    sleep 3
+    $GMAKE -k check-gcc EXPECT=$EXPECT \
+        TESTSUITEDIR="testsuite.gcc.m64" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
+	> $ROOT/logs/tests.gcc.m64.log 2>&1 &
+    sleep 3
+    $GMAKE  -k check-g++ EXPECT=$EXPECT  \
+        TESTSUITEDIR="testsuite.g++.m32" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
       	> $ROOT/logs/tests.g++.m32.log 2>&1 &
-  sleep 3
-  $GMAKE -k check-g++ EXPECT=$EXPECT \
-      TESTSUITEDIR="testsuite.g++.m64" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
+    sleep 3
+    $GMAKE -k check-g++ EXPECT=$EXPECT \
+        TESTSUITEDIR="testsuite.g++.m64" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
 	> $ROOT/logs/tests.g++.m64.log 2>&1 &
-  
-  sleep 3
-  
-  if [ `uname -r` == 5.11 ]
-  then
-    run_tests_installed &
-  else
-    $GMAKE  -k check-fortran EXPECT=$EXPECT  \
-      TESTSUITEDIR="testsuite.gfortran.m32" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
-      	> $ROOT/logs/tests.gfortran.m32.log 2>&1 &
+    
+    sleep 3
+        
+    if [ $OPENSOLARIS_BUILD == 1 ]
+    then
+        run_tests_installed &
+    else
+        $GMAKE  -k check-fortran EXPECT=$EXPECT  \
+            TESTSUITEDIR="testsuite.gfortran.m32" \
+            RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
+      	    > $ROOT/logs/tests.gfortran.m32.log 2>&1 &
+        sleep 3
+        $GMAKE  -k check-fortran EXPECT=$EXPECT  \
+            TESTSUITEDIR="testsuite.gfortran.m64" \
+            RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
+      	    > $ROOT/logs/tests.gfortran.m64.log 2>&1 &
+    fi
+        
+    # libstdc++ must be tested in the testsuite directory
+    # So, we cannot run both -m32 and -m64 in parallel.
+    sleep 3
+    cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
+    $GMAKE -k check EXPECT=$EXPECT RUNTESTFLAGS="--target_board=unix/-m64" > $ROOT/logs/tests.stdc++.m64.log 2>&1
+    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m64
+    $GMAKE -k check EXPECT=$EXPECT > $ROOT/logs/tests.stdc++.m32.log 2>&1
+    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m32
+    
+     # Run gdb testsuite with -m32 option
+    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparc-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
+    # Run gdb testsuite with -m64 option
+    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparcv9-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m64" -r $BUILDDIR/gdb_tests_64 > $BUILDDIR/logs/gdbtest_m64.log 2>&1 &
+
+    # wait for all above 6 tests in 5 or 4 child processes
+    wait
+}
+
+run_cross_tests()
+{
+    $GMAKE -k check-gcc EXPECT=$EXPECT \
+        TESTSUITEDIR="testsuite.gcc.m32" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m32 --target_board=sparcboard_sshscp" \
+        > $ROOT/logs/tests.gcc.m32.log 2>&1 &
+    
+    # Let the first child process do all if any common preparation work
+    # for both check-gcc and check-g++.
+    sleep 3
+    $GMAKE -k check-gcc EXPECT=$EXPECT \
+        TESTSUITEDIR="testsuite.gcc.m64" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=sparcboard_sshscp/-m64" \
+        > $ROOT/logs/tests.gcc.m64.log 2>&1 &
+    sleep 3
+    $GMAKE  -k check-g++ EXPECT=$EXPECT  \
+        TESTSUITEDIR="testsuite.g++.m32" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m32 --target_board=sparcboard_sshscp" \
+        > $ROOT/logs/tests.g++.m32.log 2>&1 &
+    sleep 3
+    $GMAKE -k check-g++ EXPECT=$EXPECT \
+        TESTSUITEDIR="testsuite.g++.m64" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=sparcboard_sshscp/-m64" \
+        > $ROOT/logs/tests.g++.m64.log 2>&1 &
     sleep 3
     $GMAKE  -k check-fortran EXPECT=$EXPECT  \
-      TESTSUITEDIR="testsuite.gfortran.m64" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
-      	> $ROOT/logs/tests.gfortran.m64.log 2>&1 &
-  fi
-
-  # libstdc++ must be tested in the testsuite directory
-  # So, we cannot run both -m32 and -m64 in parallel.
-  sleep 3
-  cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
-  ( \
-    ($GMAKE -k check EXPECT=$EXPECT \
-    RUNTESTFLAGS="--target_board=unix/-m64" \
-		> $ROOT/logs/tests.stdc++.m64.log 2>&1 ) ; \
-    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m64 ; \
-    ($GMAKE -k check EXPECT=$EXPECT \
-		> $ROOT/logs/tests.stdc++.m32.log 2>&1 ) ; \
-    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m32 ; \
-  ) &
-
-  # wait for all above 6 tests in 5 or 4 child processes
-  wait
-  touch $ROOT/done/tests
-else
-  $GMAKE -k check-gcc EXPECT=$EXPECT \
-    TESTSUITEDIR="testsuite.gcc.m32" \
-    RUNTESTFLAGS="--outdir $ROOT/logs/result.m32 --target_board=sparcboard_sshscp" \
-                > $ROOT/logs/tests.gcc.m32.log 2>&1 &
-
-  # Let the first child process do all if any common preparation work
-  # for both check-gcc and check-g++.
-  sleep 3
-  $GMAKE -k check-gcc EXPECT=$EXPECT \
-    TESTSUITEDIR="testsuite.gcc.m64" \
-    RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=sparcboard_sshscp/-m64" \
-                > $ROOT/logs/tests.gcc.m64.log 2>&1 &
-  sleep 3
-  $GMAKE  -k check-g++ EXPECT=$EXPECT  \
-      TESTSUITEDIR="testsuite.g++.m32" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m32 --target_board=sparcboard_sshscp" \
-        > $ROOT/logs/tests.g++.m32.log 2>&1 &
-  sleep 3
-  $GMAKE -k check-g++ EXPECT=$EXPECT \
-      TESTSUITEDIR="testsuite.g++.m64" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=sparcboard_sshscp/-m64" \
-        > $ROOT/logs/tests.g++.m64.log 2>&1 &
-  sleep 3
-  $GMAKE  -k check-fortran EXPECT=$EXPECT  \
-      TESTSUITEDIR="testsuite.gfortran.m32" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m32 --target_board=sparcboard_sshscp" \
+        TESTSUITEDIR="testsuite.gfortran.m32" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m32 --target_board=sparcboard_sshscp" \
         > $ROOT/logs/tests.gfortran.m32.log 2>&1 &
-  sleep 3
-  $GMAKE  -k check-fortran EXPECT=$EXPECT  \
-      TESTSUITEDIR="testsuite.gfortran.m64" \
-      RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=sparcboard_sshscp/-m64" \
+    sleep 3
+    $GMAKE  -k check-fortran EXPECT=$EXPECT  \
+        TESTSUITEDIR="testsuite.gfortran.m64" \
+        RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=sparcboard_sshscp/-m64" \
         > $ROOT/logs/tests.gfortran.m64.log 2>&1 &
-
-  # libstdc++ must be tested in the testsuite directory
-  # So, we cannot run both -m32 and -m64 in parallel.
-  sleep 3
-  cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
-  ( \
-    ($GMAKE -k check EXPECT=$EXPECT \
-    RUNTESTFLAGS="--target_board=sparcboard_sshscp/-m64" \
-                > $ROOT/logs/tests.stdc++.m64.log 2>&1 ) ; \
-    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m64 ; \
-    ($GMAKE -k check EXPECT=$EXPECT \
-    RUNTESTFLAGS="--target_board=sparcboard_sshscp/-m32" \
-                > $ROOT/logs/tests.stdc++.m32.log 2>&1 ) ; \
-    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m32 ; \
-  ) &
-
-  # wait for all above 6 tests in 5 or 4 child processes
-  wait 
-  touch $ROOT/done/tests
-fi
-  # check the content of logs/fails.m* and logs/passes.m*
-  (cd $ROOT/logs/result.m32 ; egrep '^FAIL' *sum ) > $ROOT/logs/fails.m32
-  (cd $ROOT/logs/result.m64 ; egrep '^FAIL' *sum ) > $ROOT/logs/fails.m64
-  (cd $ROOT/logs/result.m32 ; egrep '^PASS' *sum ) > $ROOT/logs/passes.m32
-  (cd $ROOT/logs/result.m64 ; egrep '^PASS' *sum ) > $ROOT/logs/passes.m64
+    
+    # libstdc++ must be tested in the testsuite directory
+    # So, we cannot run both -m32 and -m64 in parallel.
+    sleep 3
+    cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
+    $GMAKE -k check EXPECT=$EXPECT RUNTESTFLAGS="--target_board=sparcboard_sshscp/-m64"  > $ROOT/logs/tests.stdc++.m64.log 2>&1
+    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m64
+    $GMAKE -k check EXPECT=$EXPECT RUNTESTFLAGS="--target_board=sparcboard_sshscp/-m32"  > $ROOT/logs/tests.stdc++.m32.log 2>&1
+    mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m32
+    
+    # wait for all above 6 tests in 5 or 4 child processes
+    wait 
 }
 
 run_tests()
 {
-  if [ `uname -p` != i386 ]
-  then
-    prepare_tests
-  else
-    prepare_tests_cross
-  fi
+    # Run tests if necessary
+    if [ $RUN_TESTS != 1]
+    then
+        return
+    fi
 
-  run_tests_parallel
+    if [ -e $ROOT/done/tests ]
+    then
+	return
+    fi
+
+    # test both -m32 and -m64 at the same time
+    mkdir -p $ROOT/logs/result.m32
+    mkdir -p $ROOT/logs/result.m64
+    
+    echo "Running tests ..."
+    date
+
+    if [ $CROSSCOMPILER_BUILD == 1 ]
+    then
+        prepare_tests_cross
+    fi
+    
+    # test {gcc,g++} {-m32,-m64} at the same time, if more than 2 CPUs
+    cd $ROOT/build.gcc2ir/gcc
+    # make site.exp for all 4 child processes
+    $GMAKE site.exp
+
+    if [ "$EXPECT" = "" ]
+    then
+  	echo "EXPECT is not set to anything, cannot run tests ..."
+        exit 1
+    fi
+
+    if [ $CROSSCOMPILER_BUILD == 1 ]
+    then
+        run_cross_tests
+    else
+        run_native_tests
+    fi
+
+    touch $ROOT/done/tests
+    # check the content of logs/fails.m* and logs/passes.m*
+    (cd $ROOT/logs/result.m32 ; egrep '^FAIL' *sum ) > $ROOT/logs/fails.m32
+    (cd $ROOT/logs/result.m64 ; egrep '^FAIL' *sum ) > $ROOT/logs/fails.m64
+    (cd $ROOT/logs/result.m32 ; egrep '^PASS' *sum ) > $ROOT/logs/passes.m32
+    (cd $ROOT/logs/result.m64 ; egrep '^PASS' *sum ) > $ROOT/logs/passes.m64
+
+    # Compare test results with the golden files
+    /bin/ksh ${SCRIPTDIR}/compareTestResults $OS_NAME $BUILDDIR > $BUILDDIR/logs/test.comparison 2>&1
 }
 
 canonicalize_path()
 {
-	typeset path=$1
-
-	if [[ "$path" == "" ]]
+    typeset path=$1
+    
+    if [[ "$path" == "" ]]
+    then
+	echo ""
+	return
+    fi
+    
+    # If the path is relative, prefix it with the current directory.
+    if [[ ${path#/} == $path ]]
+    then
+	path="$(pwd)/$path"
+    fi
+    
+    # Replace // with /
+    prev=
+    while [[ $prev != $path ]]
+    do
+	prev=$path
+	path=$(echo $path | sed 's!//!/!g')
+    done
+    
+    # Replace /. with /
+    prev=
+    while [[ $prev != $path ]]
+    do
+	prev=$path
+	path=$(echo $path | sed 's!/\./!/!')
+    done
+    path=$(echo $path | sed 's!/\.$!!g')
+    
+    # Remove /xyz/..
+    prev=
+    while [[ $prev != $path ]]
+    do
+	prev=$path
+	if ( echo $path | egrep '^/\.\.($|/)' > /dev/null )
 	then
-		echo ""
-		return
+	    # Path starts with /..
+	    echo >&2 "ERROR:  path is above root"
+	    exit 1
 	fi
-
-	# If the path is relative, prefix it with the current directory.
-	if [[ ${path#/} == $path ]]
-	then
-		path="$(pwd)/$path"
-	fi
-
-	# Replace // with /
-	prev=
-	while [[ $prev != $path ]]
-	do
-		prev=$path
-		path=$(echo $path | sed 's!//!/!g')
-	done
-
-	# Replace /. with /
-	prev=
-	while [[ $prev != $path ]]
-	do
-		prev=$path
-		path=$(echo $path | sed 's!/\./!/!')
-	done
-	path=$(echo $path | sed 's!/\.$!!g')
-
-	# Remove /xyz/..
-	prev=
-	while [[ $prev != $path ]]
-	do
-		prev=$path
-		if ( echo $path | egrep '^/\.\.($|/)' > /dev/null )
-		then
-			# Path starts with /..
-			echo >&2 "ERROR:  path is above root"
-			exit 1
-		fi
-		path=$(echo $path | sed 's!/[^/]*/\.\./!/!')
-	done
-	path=$(echo $path | sed 's!/[^/]*/\.\.$!!')
-
-	# Remove trailing /
-	path=$(echo $path | sed 's!/$!!')
-
-	if [[ "$path" == "" ]]
-	then
-		path=/
-	fi
-
-	echo $path
+	path=$(echo $path | sed 's!/[^/]*/\.\./!/!')
+    done
+    path=$(echo $path | sed 's!/[^/]*/\.\.$!!')
+    
+    # Remove trailing /
+    path=$(echo $path | sed 's!/$!!')
+    
+    if [[ "$path" == "" ]]
+    then
+	path=/
+    fi
+    
+    echo $path
 }
-
 
 canonicalize_paths()
 {
-	ROOT=$(canonicalize_path $ROOT)
-	INSTALL_DIR=$(canonicalize_path $INSTALL_DIR)
-	SUN_DIR=$(canonicalize_path $SUN_DIR)
-        # don't, for svn path
-	# ORIG_WS=$(canonicalize_path $ORIG_WS)
+    ROOT=$(canonicalize_path $ROOT)
+    INSTALL_DIR=$(canonicalize_path $INSTALL_DIR)
+    SUN_DIR=$(canonicalize_path $SUN_DIR)
 }
 
-# Installed libstdc++.la and libsupc++.la files should not refer to
-# the build directory, or C++ applications cannot link with libtool.
-patch_la_files()
+# Eliminate the *.la files from the install area
+# as they only cause trouble
+delete_la_files()
 {
-    # The following code was used to install these .la files to
-    # Solaris 11 /usr/sfw/lib
-    # gccfss libs are located in version and platform specific dirs
-    LIB_DIR="$INSTALL_DIR/$LIB_SUFFIX"
-    
-    DASH_L="/usr/sfw/lib/"
-    DASH_L_V9="/usr/sfw/lib/sparcv9"
-    
-    case "$OS_NAME" in
-     "SunOS")
-        LIB_DIR_V9="$INSTALL_DIR/$LIB_SUFFIX/sparcv9"
- 	;;
-     "Linux")
-        LIB_DIR_V9="$INSTALL_DIR/$LIB_SUFFIX/64"
- 	;;
-     *)
-	echo "Error: Operating system $OS_NAME is unrecognized"
-	exit 1
-	;;
-    esac
-    
-    rm -f $ROOT/done/sed$$
-    echo "/^dependency_libs/c\\
-dependency_libs=' -L$DASH_L -lgcc_s -lm'" > $ROOT/done/sed$$
-
-    for f in libstdc++.la libsupc++.la
-    do
-         # remove .la for now until we can fix libtool with relocatable gccfss
-         rm -f $LIB_DIR/$f
-#        sed -f $ROOT/done/sed$$ $LIB_DIR/$f > $LIB_DIR/$f.1
-#        mv -f $LIB_DIR/$f.1 $LIB_DIR/$f
-#        chmod 755 $LIB_DIR/$f
-    done
-    rm -f $ROOT/done/sed$$
-
-    # patch v9 as well
-    echo "/^dependency_libs/c\\
-dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
-
-    for f in libstdc++.la libsupc++.la
-    do
-         # remove .la for now until we can fix libtool with relocatable gccfss
-         rm -f $LIB_DIR_V9/$f
-#        sed -f $ROOT/done/sed$$ $LIB_DIR_V9/$f > $LIB_DIR_V9/$f.1
-#        mv -f $LIB_DIR_V9/$f.1 $LIB_DIR_V9/$f
-#        chmod 755 $LIB_DIR_V9/$f
-    done
-    rm -f $ROOT/done/sed$$
+    (cd $INSTALL_DIR;
+        find . -name "*.la" -print | xargs rm)
 }
 
 # On OpenSolaris we want the install structure to resemble what we will
@@ -934,87 +794,33 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
 # /ws/gccfss/builds/4.3.2_s11/<date>/usr/lib/gcc/sparc-sun-solaris2.11/gccfss
 #
 # We will move SUNW0scgfss also into /usr/compilers first
-manipulate_install_area ()
+build_opensolaris_packages ()
 {
-    if [ `uname -r` == 5.11 ]
-    then
-        # layer the fortran and objc binaries
-        ( cd $INSTALL_DIR ;
-          bzip2 -cd /ws/gccfss/source/gfortran_objc_2.tar.bz2 | tar xf - )
-
-        # Move the SUNWscgfss firectory also into usr/compilers
-        #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
-	( cd $INSTALL_DIR;
-	  mv ../$SUNINSTSUBDIR usr/lib/gcc/sparc-sun-solaris2.11/gccfss )
-
-        # correct SUNW_SCGFSS_PATH for future tests.         
-        SUNW_SCGFSS_PATH=$INSTALL_DIR/usr/lib/gcc/sparc-sun-solaris2.11/gccfss
-        export SUNW_SCGFSS_PATH
-
-        # Lets create the packages
-	echo "Create packages ..."
-        # 1. SUNWgcc432
-        /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
-	  > $ROOT/logs/packages.log 2>&1
+    # layer the fortran and objc binaries
+    ( cd $INSTALL_DIR ;
+        bzip2 -cd /ws/gccfss/source/gfortran_objc_$GCC_VERSION.tar.bz2 | tar xf - )
+    
+    # Move the SUNWscgfss firectory also into usr/compilers
+    #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
+    ( cd $INSTALL_DIR;
+	mv ../$SUNINSTSUBDIR usr/lib/gcc/sparc-sun-solaris2.11/gccfss )
+    
+    # Lets create the packages
+    echo "Create packages ..."
+    # 1. SUNWgcc432
+    /bin/pkgmk -f ${SCRIPTDIR}/../OpenSolarisPackages/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	> $ROOT/logs/packages.log 2>&1
 
         
-        # 2. SUNWgccruntime
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
-	  >> $ROOT/logs/packages.log 2>&1
-	  
+    # 2. SUNWgccruntime
+    /bin/pkgmk -f ${SCRIPTDIR}/../OpenSolarisPackages/SUNWgccruntime/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	>> $ROOT/logs/packages.log 2>&1
+    
        
-       # 3. SUNWscgfss432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
-	  >> $ROOT/logs/packages.log 2>&1
-    fi
+    # 3. SUNWscgfss432
+    /bin/pkgmk -f ${SCRIPTDIR}/../OpenSolarisPackages/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+	>> $ROOT/logs/packages.log 2>&1
 }
-
-# Parse the command-line options
-get_options $@
-
-# Convert all relative paths given into full paths.
-canonicalize_paths
-
-# Check that the options specified make sense
-check_options
-
-# If the root directory exists and contains a previous build info file, read it.
-if [ -f $ROOT/previous ]
-then
-	# By sourcing this file, some environment variables name PREV_* are set.
-	. $ROOT/previous
-
-	# Handle interaction between previous and current options.
-	process_previous_options
-fi
-
-mkdir -p $ROOT
-mkdir -p $ROOT/done
-mkdir -p $ROOT/logs
-mkdir -p $ROOT/build.gcc2ir
-
-# Save the current command options
-preserve_options
-
-# Set default values for command-line arguments if they have not already
-# been set.
-if [ "$INSTALL_DIR" == "" ]
-then
-	INSTALL_DIR="$ROOT/install"
-fi
-if [ "$SUN_DIR" == "" ]
-then
-	SUN_DIR="$DEFAULT_SUN_DIR"
-fi
-
-if [ `uname -p` = i386 ]
-then
-    export LD_LIBRARY_PATH=$ROOT/tools/lib:/usr/sfw/lib
-    export PATH=$ROOT/tools/bin:/usr/sfw/bin:/ws/gccfss/cross-compiler/gnu-i386/gcc42-cross/bin:/ws/gccfss/cross-compiler/tools/bin:/usr/ccs/bin:/bin
-else
-    export LD_LIBRARY_PATH=$ROOT/tools/lib:/usr/sfw/lib
-    export PATH=$ROOT/tools/bin:$GNU_TOOL_BIN:/usr/sfw/bin:/usr/ccs/bin:/usr/bin:/bin
-fi
 
 do_bringover()
 {
@@ -1029,53 +835,146 @@ do_bringover()
     else
         echo "Bringing over the gcc2ir source workspace $src_ws ...."
         $GIT clone -q --depth 1 $src_ws $ROOT/src > $ROOT/logs/bringover.gcc2ir
-	(cd $ROOT/src ; $GIT checkout -q -b gccfss440 origin/gccfss440)
+        (cd $ROOT/src ; $GIT checkout -q -b tmp origin/$GIT_BRANCH)
         echo "Untarring gmp amd mpfr into the source area ...."
         (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/gmp-4.2.1-renamed.tar.bz2 | tar xf -)
-        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/mpfr-2.4.1-renamed.tar.bz2 | tar xf - )
+        (cd  $ROOT/src ; bzip2 -cd /ws/gccfss/source/mpfr-2.3.0-renamed.tar.bz2 | tar xf - )
         echo "Bringover from $src_ws completed at $(date)" > \
              $ROOT/done/bringover.gcc2ir
     fi
-}
 
-# Bringover workspace if necessary
-do_bringover $ORIG_WS
-
-mkdir -p $ROOT/build.gcc2ir
-cd $ROOT/build.gcc2ir
-
-if [[ "$OS_NAME" == "SunOS" && ! -e $ROOT/done/copy_gnu_tools ]]
-then
-    if [ `uname -p` != i386 ]
+    if [ ! -d $ROOT/src ]
     then
-	do_copy_gnu_tools
-    else
-        do_copy_gnu_tools_cross
-    fi
-    touch $ROOT/done/copy_gnu_tools
-fi
-
-SOURCE_WS=$ROOT/src
-
-if [ ! -d $SOURCE_WS ]
-then
 	echo >&2 "ERROR:  Source workspace $SOURCE_WS does not exist"
 	exit 1
-fi
+    fi
+}
 
-# All scripts are run from the bldmstr/bin directory under the SOURCE_WS
-SCRIPTDIR=$SOURCE_WS/bldmstr/bin
+setup_defaults()
+{
+    mkdir -p $ROOT
+    mkdir -p $ROOT/done
+    mkdir -p $ROOT/logs
+    mkdir -p $ROOT/build.gcc2ir
+    mkdir -p $ROOT/build.gcc2ir
 
-# Set common configuration variables
-. $SCRIPTDIR/commonconfig
+    SOURCE_WS=$ROOT/src
 
-# Configure the gcc2ir build area if necessary
-if [ ! -e $ROOT/done/config.gcc2ir ]
-then
+    # Set default values for command-line arguments if they have not already
+    # been set.
+    if [ "$INSTALL_DIR" == "" ]
+    then
+	INSTALL_DIR="$ROOT/install"
+    fi
+    if [ "$SUN_DIR" == "" ]
+    then
+	SUN_DIR="$DEFAULT_SUN_DIR"
+    fi
+
+    if [ $CROSSCOMPILER_BUILD == 1 ]
+    then
+        export PATH=$ROOT/tools/bin:/usr/sfw/bin:/ws/gccfss/cross-compiler/gnu-i386/gcc42-cross/bin:/ws/gccfss/cross-compiler/tools/bin:/usr/ccs/bin:/bin
+    fi
+}
+
+configure_cross_compiler()
+{
+    $SOURCE_WS/configure \
+        --prefix=$INSTALL_DIR \
+	--target=sparc-sun-solaris2.10 \
+	--disable-gnattools \
+	--disable-libmudflap \
+	--enable-languages=c,c++ \
+	--with-gnu-as \
+        --with-ld=/usr/ccs/bin/ld \
+	--without-gnu-ld > $ROOT/logs/config.gcc2ir.log 2>&1
+}
+
+configure_opensolaris_compiler()
+{
+    # building for OpenSolaris, use different configure options
+    # mainly enable prefix and objective C
+    export AS="/usr/ccs/bin/as"
+    export AS_FOR_TARGET="/usr/ccs/bin/as"
+    $SOURCE_WS/configure \
+        --prefix=/usr \
+        --program-suffix=-$GCC_VERSION \
+        --infodir=/usr/share/info \
+	--mandir=/usr/share/man \
+	--libexecdir=/usr/lib \
+        --enable-shared \
+        --disable-static \
+        --with-system-zlib \
+        --enable-checking=release \
+        --enable-languages=c,c++,objc \
+        --disable-libobjc \
+        --with-cpu=v9 \
+	--without-gnu-ld \
+	--with-ld=/usr/ccs/bin/ld \
+	--without-gnu-as \
+	--with-as=/usr/ccs/bin/as \
+	--with-gmp-include=/usr/include/gmp \
+	--with-gmp-lib=/usr/lib \
+	--with-mpfr-include=/usr/include/mpfr \
+	--with-mpfr-lib=/usr/lib \
+        --disable-libtool-lock \
+        --enable-threads=posix \
+	--enable-tls=yes \
+	--enable-c99 \
+        --enable-libssp \
+        --enable-nls \
+        --enable-wchar_t \
+        --enable-libstdcxx-allocator=mt \
+        --with-pic > $ROOT/logs/config.gcc2ir.log 2>&1
+}
+
+configure_linux_compiler()
+{
+    $SOURCE_WS/configure \
+	--prefix= \
+	--enable-shared \
+        --disable-static \
+	--with-system-zlib \
+	--enable-checking=release \
+	--enable-languages=c,c++ \
+        --with-cpu=v8 sparc64-linux-gnu \
+        --disable-libgomp \
+        --disable-gnattools \
+        --disable-bootstrap > $ROOT/logs/config.gcc2ir.log 2>&1
+}
+
+configure_native_compiler()
+{
+    export AS="/usr/ccs/bin/as"
+    export AS_FOR_TARGET="/usr/ccs/bin/as"
+    $SOURCE_WS/configure \
+	--prefix= \
+	--enable-shared \
+        --disable-static \
+	--with-system-zlib \
+	--enable-checking=release \
+	--enable-languages=c,c++ \
+	--with-cpu=v9 \
+        --with-ld=/usr/ccs/bin/ld \
+        --without-gnu-ld \
+        --disable-gnattools \
+        --enable-tls \
+        --with-as=/usr/ccs/bin/as \
+        --without-gnu-as \
+        --disable-bootstrap > $ROOT/logs/config.gcc2ir.log 2>&1
+}
+
+configure_gccfss()
+{
+    # Configure the gcc2ir build area if necessary
+    if [ -e $ROOT/done/config.gcc2ir ]
+    then
+        echo "gccfss is already configured...."
+        return
+    fi
+
     echo "Configuring gcc2ir build area using sources in $SOURCE_WS ..."
 
-    # LD_LIBRARY_PATH wreaks havoc with studio components during config
-    OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
     unset LD_LIBRARY_PATH
 
     # set the DATESTAMP file so that the build date gets into
@@ -1085,182 +984,168 @@ then
 
     cd $ROOT/build.gcc2ir
 
-    if [ `uname -p` = i386 ]
+    if [ $CROSSCOMPILER_BUILD == 1 ]
     then
-	# When building cross compiler we need quite a bit of
-	# different setup and configure.
-        $SOURCE_WS/configure \
-            --prefix=$INSTALL_DIR \
-	    --target=sparc-sun-solaris2.10 \
-	    --disable-gnattools \
-	    --disable-libmudflap \
-	    --enable-languages=c,c++ \
-	    --with-gnu-as \
-            --with-ld=/usr/ccs/bin/ld \
-	    --without-gnu-ld > $ROOT/logs/config.gcc2ir.log 2>&1
-    elif [ `uname -r` = 5.11 ]
+        configure_cross_compiler
+    elif [ $OPENSOLARIS_BUILD == 1 ]
     then
-	# building for OpenSolaris, use different configure options
-        # mainly enable prefix and objective C
-	export AS="/usr/ccs/bin/as"
-        export AS_FOR_TARGET="/usr/ccs/bin/as"
-	$SOURCE_WS/configure \
-            --prefix=/usr \
-            --program-suffix=-$GCC_VERSION \
-            --infodir=/usr/share/info \
-	    --mandir=/usr/share/man \
-	    --libexecdir=/usr/lib \
-            --enable-shared \
-            --disable-static \
-            --with-system-zlib \
-            --enable-checking=release \
-            --enable-languages=c,c++,objc \
-            --disable-libobjc \
-            --with-cpu=v9 \
-	    --without-gnu-ld \
-	    --with-ld=/usr/ccs/bin/ld \
-	    --without-gnu-as \
-	    --with-as=/usr/ccs/bin/as \
-	    --with-gmp-include=/usr/include/gmp \
-	    --with-gmp-lib=/usr/lib \
-	    --with-mpfr-include=/usr/include/mpfr \
-	    --with-mpfr-lib=/usr/lib \
-            --disable-libtool-lock \
-            --enable-threads=posix \
-	    --enable-tls=yes \
-	    --enable-c99 \
-            --enable-libssp \
-            --enable-nls \
-            --enable-wchar_t \
-            --enable-libstdcxx-allocator=mt \
-            --with-pic > $ROOT/logs/config.gcc2ir.log 2>&1
+        configure_opensolaris_compiler
+    elif [ $LINUX_BUILD == 1 ]
+    then
+        configure_linux_compiler
     else
-	if [ "$OS_NAME" = "Linux" ]
-	then
-	    CONFIG_FLAGS="--with-cpu=v8 sparc64-linux-gnu --disable-libgomp --disable-gnattools --disable-bootstrap"
-	else
-	    # use system 'as' during configure, gccfss driver will use 'fbe'
-	    export AS="/usr/ccs/bin/as"
-	    export AS_FOR_TARGET="/usr/ccs/bin/as"
-	    CONFIG_FLAGS="--with-cpu=v9 --with-ld=/usr/ccs/bin/ld --without-gnu-ld --disable-gnattools --enable-tls --with-as=/usr/ccs/bin/as --without-gnu-as --disable-bootstrap"
-	fi
-
-	# make sure $CONFIG_FLAGS is the last parameter on the list
-	$SOURCE_WS/configure \
-	    --prefix= \
-	    --enable-shared \
-            --disable-static \
-	    --with-system-zlib \
-	    --enable-checking=release \
-	    --enable-languages=c,c++ \
-	    $CONFIG_FLAGS > $ROOT/logs/config.gcc2ir.log 2>&1
+        configure_native_compiler
     fi
 
     echo "Configuration of gcc2ir from $SOURCE_WS completed at $(date)" \
 	> $ROOT/done/config.gcc2ir
+}
 
-    # Reinstate the LD_LIBRARY_PATH
-    export LD_LIBRARY_PATH=$OLD_LD_LIBRARY_PATH
-fi
-
-# Install Sun components used by gcc2ir if necessary
-if [ 1 = $INSTALL_BACKEND -a ! -e $ROOT/done/install.suncomponents ]
-then
-    if [ `uname -p` = i386 ]
+install_backend()
+{
+    if [ 1 = $INSTALL_BACKEND -a ! -e $ROOT/done/install.suncomponents ]
     then
-	# Completely different strategy of mixing and
-	# matching Sun components x86/sparc
-	install_crosscompiler_suncomponents
-    else
-	install_suncomponents
+        if [ $CROSSCOMPILER_BUILD == 1 ]
+        then
+	    # Completely different strategy of mixing and
+	    # matching Sun components x86/sparc
+	    install_crosscompiler_suncomponents
+        else
+	    install_suncomponents
+        fi
     fi
-fi
 
-export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR"
+    export SUNW_SCGFSS_PATH="$INSTALL_DIR/../$SUNINSTSUBDIR"
+}
 
-if [ "$OS_NAME" != "Linux" ]
-then
-  export LD_LIBRARY_PATH_32=/ws/gccfss/tools/lib
-fi
+build_gccfss()
+{
+    # Build sgcc if necessary, try 7 times because parallel make
+    # could fail on multi-CPU systems. gcc makefile issues
+    trap 'echo >&2 ERROR: a command has failed--check log files' $ERROR_TRAP
 
-# Build sgcc if necessary, try 7 times because parallel make
-# could fail on multi-CPU systems.
-trap 'echo >&2 ERROR: a command has failed--check log files' $ERROR_TRAP
-for try in 1 2 3 4 5 6 7
-do
+    for try in 1 2 3 4 5 6 7
+    do
+        if [ ! -e $ROOT/done/build.gcc2ir ]
+        then
+	    echo "Building gcc2ir ... try $try SUNW_SCGFSS_PATH=$SUNW_SCGFSS_PATH"
+	    cd $ROOT/build.gcc2ir
+	    echo "$BOOTSTRAP_OPTION $DEBUG_FLAGS"
+            if [ $DEBUG_MODE == 1 ]
+            then
+                # no bootstrap in debug mode
+	        $GMAKE $PARALLEL_BUILD_OPTION \
+                    CFLAGS="-g -frtl-backend" CXXFLAGS="-g -frtl-backend" \
+                    CFLAGS_FOR_BUILD="-g -frtl-backend" \
+		    > $ROOT/logs/build.gcc2ir.log.$try 2>&1
+            else
+	        $GMAKE $PARALLEL_BUILD_OPTION CFLAGS=-g \
+		    > $ROOT/logs/build.gcc2ir.log.$try 2>&1
+            fi
+            if [ "$?" == "0" ]
+            then
+	        echo "Build of gcc2ir completed at $(date)" > $ROOT/done/build.gcc2ir
+            fi
+        fi
+    done
+
     if [ ! -e $ROOT/done/build.gcc2ir ]
     then
-	echo "Building gcc2ir ... try $try SUNW_SCGFSS_PATH=$SUNW_SCGFSS_PATH"
-	cd $ROOT/build.gcc2ir
-	echo "$BOOTSTRAP_OPTION $DEBUG_FLAGS"
-        if [ $DEBUG_MODE == 1 ]
-        then
-            # no bootstrap in debug mode
-	    $GMAKE $PARALLEL_BUILD_OPTION \
-            CFLAGS="-g -frtl-backend" CXXFLAGS="-g -frtl-backend" \
-            CFLAGS_FOR_BUILD="-g -frtl-backend" \
-		> $ROOT/logs/build.gcc2ir.log.$try 2>&1
-        else
-	    $GMAKE $PARALLEL_BUILD_OPTION CFLAGS=-g \
-		> $ROOT/logs/build.gcc2ir.log.$try 2>&1
-        fi
-        if [ "$?" == "0" ]
-        then
-	    echo "Build of gcc2ir completed at $(date)" > $ROOT/done/build.gcc2ir
-        fi
+        echo >&2 ERROR: fail to build sgcc, check logs/build.gcc2ir.log.\*
+        exit 2
     fi
-done
+    
+    trap 'echo >&2 ERROR: a command has failed--check log files; exit 2' $ERROR_TRAP
+}
 
-if [ ! -e $ROOT/done/build.gcc2ir ]
-then
-  echo >&2 ERROR: fail to build sgcc, check logs/build.gcc2ir.log.\*
-  exit 2
-fi
+install_gccfss()
+{
+    # Install gcc2ir if necessary
+    if [ -e $ROOT/done/install.gcc2ir ]
+    then
+        return
+    fi
 
-  trap 'echo >&2 ERROR: a command has failed--check log files; exit 2' $ERROR_TRAP
+    echo "Installing gcc2ir ..."
+    cd $ROOT/build.gcc2ir
 
-# Install gcc2ir if necessary
-if [ ! -e $ROOT/done/install.gcc2ir ]
-then
-	echo "Installing gcc2ir ..."
-	cd $ROOT/build.gcc2ir
-	# in some circumstances 'install' step may be forced to do compilation,
-	# so need to set SUNW_SCGFSS_PATH above
-	# install into DESTDIR instead of '--prefix'
-	if [ `uname -p` = i386 ]
+    # in some circumstances 'install' step may be forced to do compilation,
+    # so need to set SUNW_SCGFSS_PATH above
+    # install into DESTDIR instead of '--prefix'
+    if [ $CROSSCOMPILER_BUILD == 1 ]
+    then
+	$GMAKE install > $ROOT/logs/install.gcc2ir.log 2>&1
+    else
+        $GMAKE install DESTDIR=$INSTALL_DIR > $ROOT/logs/install.gcc2ir.log 2>&1
+    fi
+            
+    #link the sparc-solaris-2.10-{gcc,g++,gfortran} to {gcc,g++,gfortran}
+    cd $INSTALL_DIR/bin
+    for file in g++ gcc gfortran
+    do
+	if [ ! -e $file -a -e sparc-sun-solaris2.10-$file ]
 	then
-		$GMAKE install > $ROOT/logs/install.gcc2ir.log 2>&1
-
-		#link the sparc-solaris-2.10-{gcc,g++} to {gcc,g++}
-		(cd $INSTALL_DIR/bin; \
-		for file in g++ gcc; \
-		do \
-			if [ ! -e $file -a -e sparc-sun-solaris2.10-$file ]; \
-			then \
-				ln -s sparc-sun-solaris2.10-$file $file; \
-			fi; \
-		done)
-		
-		# Delete the sys-include link for header files
-		#( cd $INSTALL_DIR/sparc-sun-solaris2.10 ; rm -f sys-include)
-		
-		# Fix the assembler to point to cg
-		(cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin ; \
-	         rm -f fbe ; \
-		 ln -s cg fbe)
-
-        else
-		$GMAKE install DESTDIR=$INSTALL_DIR > $ROOT/logs/install.gcc2ir.log 2>&1
-
-                manipulate_install_area
-
-	        patch_la_files
+	    ln -s sparc-sun-solaris2.10-$file $file
 	fi
-	echo "Install of gcc2ir completed at $(date)" >$ROOT/done/install.gcc2ir
-fi
+    done
+	    
+    # Delete the sys-include link for header files
+    if [ $CROSSCOMPILER_BUILD == 1 ]
+    then
+        cd $INSTALL_DIR/sparc-sun-solaris2.10 ; rm -f sys-include
+	    
+        # Fix the assembler to point to cg
+        cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin
+        rm -f fbe
+	ln -s cg fbe
+    fi
+    
+    if [ $OPENSOLARISBUILD == 1 ]
+    then
+        build_opensolaris_packages
+    fi
+
+    echo "Install of gcc2ir completed at $(date)" >$ROOT/done/install.gcc2ir
+}
+#================================================================================
+#
+# Start actual workings of the script
+#
+#================================================================================
+
+# Parse the command-line options
+get_options $@
+
+# If this is linux build, we need to fix a few things
+set_linux_options
+
+# Convert all relative paths given into full paths.
+canonicalize_paths
+
+# If the root directory exists and contains a previous build info file, read it.
+process_previous_options
+
+# Save the current command options
+preserve_options
+
+# set up directories, and other default paths
+setup_defaults
+
+# Bringover workspace if necessary
+do_bringover $ORIG_WS
+
+# configure gcc sources
+configure_gccfss
+
+# Install Sun components used by gccfss if necessary
+install_backend
+
+# build gccfss
+build_gccfss
+
+#install
+install_gccfss
 
 # Run tests if necessary
-if [ 1 = $RUN_TESTS -a ! -e $ROOT/done/tests ]
-then
-	run_tests
-fi
+run_tests
+

@@ -16,18 +16,25 @@ export BUILDAREA_clptv4901=/net/clpt-v490-1/export/data1/bldmstr
 export BUILDAREA_perftech057=/net/perftech-057/export/home/gccbuilds
 export BUILDAREA_clptgccx861=/net/clpt-gccx86-1/export/home/nightlybuilds
 export BUILDAREA_gccv20zs01=/export/home/gccbldmstr
+export BUILDAREA_gccv20zs02=/export/home/prash
 export BUILDAREA_gccfssv8901=/net/gccsvn/export/gccfss_disk1/nevadabuilds
 
 # Subdirectories under which Studio and gcc components are installed
 export SUNINSTSUBDIR=SUNW0scgfss
 export GCCINSTSUBDIR=gcc
 
-# Names of Solaris packages for Studio and gcc components
-export SUNPACKAGE=SUNW0scgfss
-export GCCPACKAGE=SUNW0gccfss
-
 # Lang workspaces used by gcc4ss builds
 export LANGWSINT=/shared/dp/sstrunk/latest/src/lang
 export LANGWSLISTDEFAULT="$LANGWSINT /import/backend-src/aten/lang"
 export GCC2IRWS="/ws/gccfss/source/gcc.git"
 export GCC_VERSION="4.4.0" 
+
+# The compiler version that will be used to build the
+# gccfss compiler. Typically the previous released
+# gccfss compiler
+export CBE_VERSION="4.3.2"
+
+# GCCFSS sources are all located in a branch in the
+# main repository. This variable specifies the
+# branch we are interested in
+export GIT_BRANCH="gccfss440"
