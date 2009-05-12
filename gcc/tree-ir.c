@@ -7899,21 +7899,6 @@ dump_ir_stmt (gimple stmt)
       {
         IR_NODE * ir_op0 = 0, * ir_op1 = 0, * ret = 0;
 
-        if ( gimple_call_fndecl (stmt)
-          && DECL_BUILT_IN (gimple_call_fndecl (stmt)))
-          {
-            gcc_assert (DECL_BUILT_IN_CLASS (gimple_call_fndecl (stmt))
-                        != BUILT_IN_FRONTEND);
-            ir_op1 = dump_ir_builtin_call (stmt, gimple_has_lhs (stmt) ? 1 : 0);
-          }
-        else
-          {
-            ir_op1 = dump_ir_call (stmt, gimple_has_lhs (stmt) ? 1 : 0);
-          }
-
-        if (!gimple_has_lhs (stmt))
-          break;
-
         if (gimple_call_return_slot_opt_p (stmt) 
            && TREE_CODE (gimple_call_fn (stmt)) == ADDR_EXPR)
          {
@@ -7934,6 +7919,21 @@ dump_ir_stmt (gimple stmt)
             && gimple_call_public_p (stmt) /* internal convention. see cp/semantics.c */)
           /* using extended IR to pass struct values out of funcs */
           return dump_ir_call_main (stmt, 0, gimple_call_lhs (stmt));
+
+        if ( gimple_call_fndecl (stmt)
+          && DECL_BUILT_IN (gimple_call_fndecl (stmt)))
+          {
+            gcc_assert (DECL_BUILT_IN_CLASS (gimple_call_fndecl (stmt))
+                        != BUILT_IN_FRONTEND);
+            ir_op1 = dump_ir_builtin_call (stmt, gimple_has_lhs (stmt) ? 1 : 0);
+          }
+        else
+          {
+            ir_op1 = dump_ir_call (stmt, gimple_has_lhs (stmt) ? 1 : 0);
+          }
+
+        if (!gimple_has_lhs (stmt))
+          break;
 
         ir_op0 = dump_ir_expr (gimple_call_lhs (stmt), MAP_FOR_ADDR); /* get left */
         if (errorcount != 0)
