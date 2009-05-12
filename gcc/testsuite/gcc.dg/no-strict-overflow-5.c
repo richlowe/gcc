@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-fno-strict-overflow -O2 -fdump-tree-final_cleanup" } */
+/* { dg-options "-fno-strict-overflow -O2 -frtl-backend -fdump-tree-final_cleanup" } */
 
 /* Dual of strict-overflow-5.c.  */
 

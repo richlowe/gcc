@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-vrp" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-vrp" } */
 
 extern void abort (void);
 

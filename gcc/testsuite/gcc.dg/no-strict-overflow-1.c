@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-fno-strict-overflow -O2 -fdump-tree-final_cleanup" } */
+/* { dg-options "-fno-strict-overflow -O2 -frtl-backend -fdump-tree-final_cleanup" } */
 
 /* Source: Ian Lance Taylor.  Dual of strict-overflow-1.c.  */
 

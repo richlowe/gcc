@@ -1,7 +1,7 @@
 /* PR 31847 */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-pre-all" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-pre-all" } */
 
 extern int bar(int);
 

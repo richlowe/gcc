@@ -1,6 +1,6 @@
 /* PR middle-end/29215 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-gimple" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-gimple" } */
 
 char buf[5 * sizeof (int) + 1] __attribute__((aligned (__alignof__ (int))));
 

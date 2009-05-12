@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-Os -fdump-tree-optimized" } */
+/* { dg-options "-Os -frtl-backend -fdump-tree-optimized" } */
 
 unsigned long foobar(unsigned long ns)
 {

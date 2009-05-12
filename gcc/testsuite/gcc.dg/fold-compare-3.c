@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-cfg" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-cfg" } */
 
 #include <limits.h>
 

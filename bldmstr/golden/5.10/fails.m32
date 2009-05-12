@@ -40,6 +40,7 @@ gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O1
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 -finline-functions 
+gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 -g 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -Os 
@@ -105,9 +106,13 @@ gcc.sum:FAIL: gcc.c-torture/execute/ieee/mul-subnormal-single-1.c execution,  -f
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/mul-subnormal-single-1.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/mzero2.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/pr38016.c execution,  -fast 
+gcc.sum:FAIL: gcc.c-torture/execute/ieee/pr38016.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c -fno-show-column (test for excess errors)
+gcc.sum:FAIL: gcc.dg/20040206-1.c  (test for warnings, line 10)
+gcc.sum:FAIL: gcc.dg/20040206-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
 gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/attr-weakref-1.c (test for excess errors)

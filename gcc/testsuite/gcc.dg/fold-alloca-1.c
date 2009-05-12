@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-fdump-tree-cfg" } */
+/* { dg-options "-frtl-backend -fdump-tree-cfg" } */
 
 void *alloca (__SIZE_TYPE__);
 void link_error ();

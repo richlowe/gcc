@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized" } */
 /* Same test as 990128-1.c.  */
 
 extern int printf (const char *,...);

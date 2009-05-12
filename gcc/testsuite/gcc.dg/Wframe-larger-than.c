@@ -3,7 +3,7 @@
    Origin: Seongbae Park <seongbae.park@gmail.com> */
 
 /* { dg-do compile } */
-/* { dg-options "-Wframe-larger-than=2048" } */
+/* { dg-options "-frtl-backend -Wframe-larger-than=2048" } */
 
 extern void func(char *);
 

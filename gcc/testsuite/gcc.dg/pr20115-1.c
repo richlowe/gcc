@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-dom1" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-dom1" } */
 
 extern int foo (void) __attribute__((pure));
 

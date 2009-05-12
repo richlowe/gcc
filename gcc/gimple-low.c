@@ -308,36 +308,6 @@ lower_sequence (gimple_seq seq, struct lower_data *data)
     lower_stmt (&gsi, data);
 }
 
-/* If exceptions are enabled, wrap *STMT_P in a MUST_NOT_THROW catch
-   handler.  This prevents programs from violating the structured
-   block semantics with throws.  */
-
-static void
-maybe_catch_exception (tree *stmt_p)
-{
-  tree f, t;
-
-  if (!flag_exceptions)
-    return;
-  
-  if (lang_protect_cleanup_actions)
-    t = lang_protect_cleanup_actions ();
-  else
-    {
-      t = built_in_decls[BUILT_IN_TRAP];
-      t = build_function_call_expr (t, NULL);
-    }
-  f = build2 (EH_FILTER_EXPR, void_type_node, NULL, NULL);
-  EH_FILTER_MUST_NOT_THROW (f) = 1;
-  gimplify_and_add (t, &EH_FILTER_FAILURE (f));
-  
-  t = build2 (TRY_CATCH_EXPR, void_type_node, *stmt_p, NULL);
-  append_to_statement_list (f, &TREE_OPERAND (t, 1));
-
-  *stmt_p = NULL;
-  append_to_statement_list (t, stmt_p);
-}
-
 /* Lower the OpenMP directive statement pointed by GSI.  DATA is
    passed through the recursion.  */
 
@@ -350,7 +320,8 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
 
   if (flag_use_rtl_backend == 0)
     {
-      gimple bind;
+      gimple bind, omp_ret;
+      gimple_seq seq = 0;
         /* For C++ exceptions to work correctly, first off
            wrap the complete omp structured block in a
            try-finally region. No exception must propagate
@@ -369,19 +340,23 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
           gimple_omp_for_set_pre_body (stmt, NULL); 
         } 
 
-      if (gimple_seq_first (gimple_omp_body (stmt)))
+      if (1 || gimple_seq_first (gimple_omp_body (stmt)))
+      /* FIXME: I don't think the condition is necessary. */
 	{
           bind = gsi_stmt( gsi_start (gimple_omp_body (stmt)));
+          seq = gimple_omp_body (stmt);
           if (gimple_code (bind) == GIMPLE_BIND)
 	    {
 	      record_vars (gimple_bind_vars (bind));
-              gimple_omp_set_body (stmt, gimple_bind_body (bind));
+              seq = gimple_bind_body (bind);
 	    }
         }
-	/* FIXME: maybe_catch_exception (&bind);*/
-      gsi_insert_after (gsi, gimple_build_omp_return (0), GSI_SAME_STMT);
-      if (gimple_seq_first (gimple_omp_body (stmt)))
-        gsi_insert_seq_after (gsi, gimple_omp_body (stmt), GSI_SAME_STMT);
+      seq = maybe_catch_exception (seq);
+      omp_ret = gimple_build_omp_return (0);
+      /* Set location for OMP_RETURN. */
+      gimple_set_location (omp_ret, input_location);
+      gimple_seq_add_stmt (&seq, omp_ret);
+      gsi_insert_seq_after (gsi, seq, GSI_SAME_STMT);
       gimple_omp_set_body (stmt, NULL);
     }
   else

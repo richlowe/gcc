@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized" } */
 
 int spinlock[2];
 int main ()

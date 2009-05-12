@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-optimized -frounding-math" } */
+/* { dg-options "-O -frtl-backend -fdump-tree-optimized -frounding-math" } */
 
 void bar(float x);
 void foo(double x)

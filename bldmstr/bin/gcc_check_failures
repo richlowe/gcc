@@ -46,7 +46,8 @@ then
 fi
 
 SUMMARYFILES="`/bin/find $BUILDDIR -name '*.sum'`"
-grep ^FAIL $SUMMARYFILES | sed 's/^[^ ]* //' | sort
+#Ignore such complaining from gcc that desires tree-ssa or rtl based opts.  
+grep ^FAIL $SUMMARYFILES | grep -v "dump file does not exist" | sed 's/^[^ ]* //' | sort
 
 if [ ! "" = "$ARCHIVEDIR" ]
 then

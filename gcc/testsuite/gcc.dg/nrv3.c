@@ -1,7 +1,7 @@
 /* Verify that gimple-level NRV is occurring when values other than the
    return slot are call-clobbered.  */
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-optimized" } */
+/* { dg-options "-O -frtl-backend -fdump-tree-optimized" } */
 
 #ifdef __SPU__
 /* SPU returns aggregates up to 1172 bytes in registers.  */

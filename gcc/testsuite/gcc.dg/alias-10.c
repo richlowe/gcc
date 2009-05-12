@@ -1,7 +1,7 @@
 /* For PR tree-optimization/14784  */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -funswitch-loops -fdump-tree-unswitch-details" } */
+/* { dg-options "-O2 -frtl-backend -funswitch-loops -fdump-tree-unswitch-details" } */
 
 typedef struct bitmap_element_def
 {

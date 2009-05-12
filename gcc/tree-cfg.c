@@ -231,12 +231,6 @@ execute_build_cfg (void)
   return 0;
 }
 
-static bool 
-gate_build_cfg (void)
-{
-  return gate_generate_rtl ();
-}
-
 struct gimple_opt_pass pass_build_cfg =
 {
  {
@@ -7115,9 +7109,9 @@ execute_warn_function_return_nocfg (void)
   for (gsi = gsi_start (gimple_body (current_function_decl));
        !gsi_end_p (gsi); gsi_next (&gsi))
     {
-      tree stmt = gsi_stmt (gsi);
-      if (TREE_CODE (stmt) == RETURN_EXPR 
-	      && (location = EXPR_LOCATION (stmt)) != UNKNOWN_LOCATION)
+      gimple stmt = gsi_stmt (gsi);
+      if (gimple_code (stmt) == GIMPLE_RETURN 
+          && (location = gimple_location (stmt)) != UNKNOWN_LOCATION)
         {
           has_return = 1;
 	  break;
@@ -7142,12 +7136,12 @@ execute_warn_function_return_nocfg (void)
       for (gsi = gsi_start (gimple_body (cfun->decl));
            !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-          tree stmt = gsi_stmt (gsi);
-	  if (TREE_CODE (stmt) == RETURN_EXPR
-	      && TREE_OPERAND (stmt, 0) == NULL
-	      && !TREE_NO_WARNING (stmt))
+          gimple stmt = gsi_stmt (gsi);
+	  if (gimple_code (stmt) == GIMPLE_RETURN 
+	      && gimple_return_retval (stmt) == NULL
+	      && !gimple_no_warning_p (stmt))
 	    {
-	      location = EXPR_LOCATION (stmt);
+	      location = gimple_location (stmt);
 	      if (location == UNKNOWN_LOCATION)
 		  location = cfun->function_end_locus;
 	      warning (OPT_Wreturn_type, "%Hcontrol reaches end of non-void function", &location);

@@ -1,7 +1,7 @@
 /* Verify that NRV optimizations are prohibited when the LHS is
    something that may be call-clobbered. */
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-optimized" } */
+/* { dg-options "-O -frtl-backend -fdump-tree-optimized" } */
 
 typedef struct { int x[20]; void *y; } S;
 typedef struct { int a; S b; } T;

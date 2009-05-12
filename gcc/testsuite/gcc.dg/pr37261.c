@@ -1,6 +1,6 @@
 /* PR c/37261 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized" } */
 
 unsigned
 foo (int x)

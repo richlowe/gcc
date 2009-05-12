@@ -5,7 +5,7 @@
    in presence of tail recursion within a noreturn function.  */
 
 /* { dg-do compile } */
-/* { dg-options "-O2 -Wreturn-type -Wmissing-noreturn" } */
+/* { dg-options "-O2 -frtl-backend -Wreturn-type -Wmissing-noreturn" } */
 
 
 void f(void) __attribute__ ((__noreturn__));

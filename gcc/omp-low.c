@@ -1214,7 +1214,8 @@ new_omp_context (gimple stmt, omp_context *outer_ctx)
   return ctx;
 }
 
-static gimple_seq maybe_catch_exception (gimple_seq);
+/* Also used in gimple-low.c. */
+gimple_seq maybe_catch_exception (gimple_seq);
 
 /* Finalize task copyfn.  */
 
@@ -3068,7 +3069,7 @@ expand_task_call (basic_block bb, gimple entry_stmt)
    catch handler and return it.  This prevents programs from violating the
    structured block semantics with throws.  */
 
-static gimple_seq
+gimple_seq
 maybe_catch_exception (gimple_seq body)
 {
   gimple f, t;

@@ -1,7 +1,7 @@
 /* This was a missed optimization in tree constant propagation
    that CSE would catch later on.  */
 /* { dg-do compile } */
-/* { dg-options "-O -fdump-tree-dce2" } */
+/* { dg-options "-O -frtl-backend -fdump-tree-dce2" } */
 
 double _Complex *a; 
 static const double _Complex b[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; 

@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized" } */
 /* { dg-final { scan-tree-dump-times "memmove" 0 "optimized" } } */
 /* { dg-final { cleanup-tree-dump "optimized" } } */
 static const char a[100]={1,2,3,4};

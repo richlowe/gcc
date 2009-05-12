@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O3 -frtl-backend -fnon-call-exceptions -fdump-tree-pre-details -w" } */
+/* { dg-options "-O2 -frtl-backend -ftree-pre -fnon-call-exceptions -fdump-tree-pre-details -w" } */
 
 extern volatile int y;
 

@@ -1,5 +1,5 @@
 /* { dg-do compile { target { { { ! mips64 } && { ! ia64-*-* } } && { ! spu-*-* } } } } */
-/* { dg-options "-O -fdump-rtl-subreg1" } */
+/* { dg-options "-O -frtl-backend -fdump-rtl-subreg1" } */
 /* { dg-require-effective-target ilp32 } */
 
 long long test (long long a, long long b) { return a | b; }

@@ -1,6 +1,6 @@
 /* { dg-do compile } */
-/* { dg-options "-O3 -fdump-tree-optimized"  } */
-/* { dg-options "-O3 -fdump-tree-optimized -fpie" { target { ! nonpic } } } */
+/* { dg-options "-O3 -frtl-backend -fdump-tree-optimized"  } */
+/* { dg-options "-O3 -frtl-backend -fdump-tree-optimized -fpie" { target { ! nonpic } } } */
 
 int i;
 

@@ -1,6 +1,6 @@
 /* PR c/10175 */
 /* { dg-do compile } */
-/* { dg-options "-Wunreachable-code" } */
+/* { dg-options "-frtl-backend -Wunreachable-code" } */
 
 int i,j;
 int main(void)

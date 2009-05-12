@@ -1,6 +1,6 @@
 /* PR c/37171 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized" } */
 
 unsigned int f1 (void) __attribute__((const));
 unsigned int f2 (void) __attribute__((__const));

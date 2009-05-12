@@ -3,7 +3,7 @@
 
 /* { dg-do compile } */
 /* { dg-require-effective-target nonpic } */
-/* { dg-options "" } */
+/* { dg-options "-O1 -fdump-ipa-pure-const" } */
 
 int recurese1 (int i)
 {

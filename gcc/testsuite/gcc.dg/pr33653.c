@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -fdump-rtl-shorten" } */
+/* { dg-options "-O2 -frtl-backend -fdump-rtl-shorten" } */
 
 void f (volatile char *p)
 {
