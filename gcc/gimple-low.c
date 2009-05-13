@@ -340,11 +340,10 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
           gimple_omp_for_set_pre_body (stmt, NULL); 
         } 
 
-      if (1 || gimple_seq_first (gimple_omp_body (stmt)))
-      /* FIXME: I don't think the condition is necessary. */
+      seq = gimple_omp_body (stmt);
+      if (gimple_seq_first (seq))
 	{
-          bind = gsi_stmt( gsi_start (gimple_omp_body (stmt)));
-          seq = gimple_omp_body (stmt);
+          bind = gsi_stmt( gsi_start (seq));
           if (gimple_code (bind) == GIMPLE_BIND)
 	    {
 	      record_vars (gimple_bind_vars (bind));
@@ -353,6 +352,7 @@ lower_omp_directive (gimple_stmt_iterator *gsi, struct lower_data *data)
         }
       seq = maybe_catch_exception (seq);
       omp_ret = gimple_build_omp_return (0);
+
       /* Set location for OMP_RETURN. */
       gimple_set_location (omp_ret, input_location);
       gimple_seq_add_stmt (&seq, omp_ret);
