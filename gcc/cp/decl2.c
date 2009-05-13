@@ -4086,7 +4086,7 @@ build_cxx_tp_init_function (tree decl, tree init, bool initp)
   BLOCK_SUPERCONTEXT (DECL_INITIAL (fn_decl)) = fn_decl;
   DECL_CONTEXT (DECL_RESULT (fn_decl)) = fn_decl;
 
-  /* I am not sure whether the following is needed.*/
+  gimplify_function_tree (fn_decl);
   cgraph_finalize_function (fn_decl, IR_FALSE);
   struct cgraph_node *n = cgraph_node (fn_decl);
   cgraph_mark_needed_node (n);

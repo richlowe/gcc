@@ -3713,6 +3713,7 @@ generate_default_copy_ctor_function (tree decl)
   DECL_SAVED_TREE (fn_decl) = body;
   DECL_INITIAL (fn_decl) = make_node (BLOCK);
 
+  gimplify_function_tree (fn_decl);
   cgraph_finalize_function (fn_decl, IR_FALSE);
   n = cgraph_node (fn_decl);
   cgraph_mark_needed_node (n);
