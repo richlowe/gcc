@@ -859,7 +859,7 @@ static const char* LINK_COMMAND_GUTS_sparc_x86 =
 #ifdef __linux__
 #define LINK_ANNOTATE_GCCFSS ""
 #else
-#ifdef TARGET_CPU_SPARC
+#ifdef TARGET_CPU_sparc
 #define LINK_ANNOTATE_GCCFSS \
 "  %{xannotate=no: ; \
      xannotate=yes: \
@@ -1814,7 +1814,7 @@ static const char *invoke_cppipo1 =
  -ipo_iroptoption_start %(iropt_ipo_options) %(ssiropt_spec_gxx) %Q -ipo_iroptoption_end "
 #ifdef TARGET_CPU_sparc
 " -a %U.s \
-  -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec) %T -ipo_cgoption_end"
+  -ipo_cgoption_start -xcrossfile=1 %(cg_ipo_options) %(sscg_spec_gxx) %T -ipo_cgoption_end"
 #else
 #ifdef TARGET_CPU_x86
 " -a %U.acs \
@@ -1823,7 +1823,7 @@ static const char *invoke_cppipo1 =
        %J/../bin/fbe \
        %(ssbe_optlevel) -Qy %3\
   -ipo_ir2hfoption_end \
-  -ipo_ubeoption_start -iropt %(cg_ipo_options) %(sscg_spec) %T -ipo_ubeoption_end \
+  -ipo_ubeoption_start -iropt %(cg_ipo_options) %(sscg_spec_gxx) %T -ipo_ubeoption_end \
   -ipo_fbeoption_start %{xchip=*} -Qy -ipo_fbeoption_end "
 #endif
 #endif

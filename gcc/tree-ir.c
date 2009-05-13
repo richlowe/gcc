@@ -6416,7 +6416,7 @@ dump_builtin_printf (gimple stmt, tree arglist, int need_return, bool unlocked)
 	    {
 	      /* Create a NUL-terminated string that's one char shorter
 		 than the original, stripping off the trailing '\n'.  */
-	      char *newstr = alloca (len);
+	      char *newstr = (char *) alloca (len);
 	      memcpy (newstr, fmt_str, len - 1);
 	      newstr[len - 1] = 0;
 
@@ -7569,7 +7569,10 @@ dump_ir_builtin_call (gimple stmt, int need_return)
     case BUILT_IN_VA_ARG_PACK_LEN:
       /* All valid uses of __builtin_va_arg_pack () are removed during
          inlining.  */
-      error ("%Kinvalid use of %<__builtin_va_arg_pack ()%>", stmt);
+      {
+        location_t loc = gimple_location (stmt);
+        error ("%Hinvalid use of %<__builtin_va_arg_pack ()%>", &loc);
+      }
       break;
     CASE_FLT_FN (BUILT_IN_LCEIL):
     CASE_FLT_FN (BUILT_IN_LLCEIL):
@@ -7918,7 +7921,10 @@ dump_ir_stmt (gimple stmt)
         if (gimple_call_return_slot_opt_p (stmt)
             && gimple_call_public_p (stmt) /* internal convention. see cp/semantics.c */)
           /* using extended IR to pass struct values out of funcs */
-          return dump_ir_call_main (stmt, 0, gimple_call_lhs (stmt));
+          {
+            (void) dump_ir_call_main (stmt, 0, gimple_call_lhs (stmt));
+            return;
+          }
 
         if ( gimple_call_fndecl (stmt)
           && DECL_BUILT_IN (gimple_call_fndecl (stmt)))
@@ -7937,11 +7943,12 @@ dump_ir_stmt (gimple stmt)
 
         ir_op0 = dump_ir_expr (gimple_call_lhs (stmt), MAP_FOR_ADDR); /* get left */
         if (errorcount != 0)
-          return 0;
+          return;
 
         ret = dump_ir_modify_1 (gimple_call_lhs (stmt), 0 /*has_op1*/, ir_op0, ir_op1);
 
-        if (gimple_has_side_effects (stmt))
+        if (TREE_THIS_VOLATILE (gimple_call_lhs (stmt))
+            || gimple_has_volatile_ops (stmt))
           ret->triple.is_volatile = IR_TRUE;
       }
       break;
