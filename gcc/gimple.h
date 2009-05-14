@@ -2460,7 +2460,7 @@ gimple_cond_false_p (const_gimple gs)
   enum tree_code code = gimple_cond_code (gs);
 
   if (lhs != boolean_true_node && lhs != boolean_false_node
-      && (!integer_onep (lhs) && !integer_zerop (lhs))
+      && (!integer_onep (lhs) && !integer_zerop (lhs)))
     return false;
 
   if (rhs != boolean_true_node && rhs != boolean_false_node
