@@ -2434,7 +2434,14 @@ gimple_cond_true_p (const_gimple gs)
   if (lhs != boolean_true_node && lhs != boolean_false_node)
     return false;
 
+  /* GCCFSS: why not considering other values equaling to 1 or 0. */
+  if (!integer_onep (lhs) && !integer_zerop (lhs))
+    return false;
+
   if (rhs != boolean_true_node && rhs != boolean_false_node)
+    return false;
+
+  if (!integer_onep (rhs) && !integer_zerop (rhs))
     return false;
 
   if (code == NE_EXPR && lhs != rhs)
@@ -2459,7 +2466,13 @@ gimple_cond_false_p (const_gimple gs)
   if (lhs != boolean_true_node && lhs != boolean_false_node)
     return false;
 
+  if (!integer_onep (lhs) && !integer_zerop (lhs))
+    return false;
+
   if (rhs != boolean_true_node && rhs != boolean_false_node)
+    return false;
+
+  if (!integer_onep (rhs) && !integer_zerop (rhs))
     return false;
 
   if (code == NE_EXPR && lhs == rhs)
@@ -2478,7 +2491,8 @@ static inline bool
 gimple_cond_single_var_p (gimple gs)
 {
   if (gimple_cond_code (gs) == NE_EXPR
-      && gimple_cond_rhs (gs) == boolean_false_node)
+      && (gimple_cond_rhs (gs) == boolean_false_node
+          || integer_zerop (gimple_cond_rhs (gs))))
     return true;
 
   if (gimple_cond_code (gs) == EQ_EXPR
