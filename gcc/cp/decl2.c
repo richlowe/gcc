@@ -3966,7 +3966,7 @@ parm_index (tree parm)
 static void
 build_cxx_tp_init_function (tree decl, tree init, bool initp)
 {
-  tree fn_decl, list;
+  tree fn_decl;
   tree t, t1, body, type, fun_type;
   char *fun_name, *name;
 
@@ -4058,28 +4058,11 @@ build_cxx_tp_init_function (tree decl, tree init, bool initp)
         {
 	  /* generate a empty function body. use a artificial_label to make sure it is not deleted. */
 	  tree label_decl = create_artificial_label ();
-	  list = push_stmt_list();
-	  t = build1 (GOTO_EXPR, void_type_node, label_decl);
-	  add_stmt (t);
-	  t = build1 (LABEL_EXPR, void_type_node, label_decl);
-	  add_stmt (t);
-	  t1 = pop_stmt_list (list);
+	  t1 = build1 (GOTO_EXPR, void_type_node, label_decl);
+	  append_to_statement_list (t1, &BIND_EXPR_BODY (body));
+	  t1 = build1 (LABEL_EXPR, void_type_node, label_decl);
 	}
     }
-  /* we do not need a guard, libmtsk should gurantee that the var is 
-     only initialized once. */
-/*  list = push_stmt_list();
-  if (initp)
-    {
-      if (init)
-        finish_expr_stmt (t1);
-    }
-  else
-    finish_expr_stmt (build_cleanup (decl));
-  list = pop_stmt_list (list);
- 
-  append_to_statement_list (list, &BIND_EXPR_BODY (body));
-*/
   append_to_statement_list (t1, &BIND_EXPR_BODY (body));
   DECL_SAVED_TREE (fn_decl) = body;
   DECL_INITIAL (fn_decl) = make_node (BLOCK);

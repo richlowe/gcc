@@ -37,6 +37,7 @@ OPENSOLARIS_BUILD=0
 LINUX_BUILD=0
 INCLUDE_HEADERS=/ws/gccfss/source/Studio12U1_include_headers
 SCRIPTDIR=$(dirname $0)
+OS_NAME=`uname -r`
 
 # Source the commonconfig to obtain the standard information
 . $SCRIPTDIR/commonconfig
