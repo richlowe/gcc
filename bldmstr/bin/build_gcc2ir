@@ -1,4 +1,4 @@
-#!/bin/ksh -f
+#!/bin/ksh 
 
 date
 
@@ -603,9 +603,9 @@ run_native_tests()
     mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m32
     
      # Run gdb testsuite with -m32 option
-    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparc-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m32" -r $BUILDDIR/gdb_tests > $BUILDDIR/logs/gdbtest_m32.log 2>&1 &
+    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparc-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m32" -r $ROOT/gdb_tests > $ROOT/logs/gdbtest_m32.log 2>&1 &
     # Run gdb testsuite with -m64 option
-    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparcv9-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m64" -r $BUILDDIR/gdb_tests_64 > $BUILDDIR/logs/gdbtest_m64.log 2>&1 &
+    /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALLDIR/$GCCINSTSUBDIR/bin -g /ws/gccfss/gnutools/sparcv9-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m64" -r $ROOT/gdb_tests_64 > $ROOT/logs/gdbtest_m64.log 2>&1 &
 
     # wait for all above 6 tests in 5 or 4 child processes
     wait
@@ -662,7 +662,7 @@ run_cross_tests()
 run_tests()
 {
     # Run tests if necessary
-    if [ $RUN_TESTS != 1]
+    if [ $RUN_TESTS != 1 ]
     then
         return
     fi
@@ -710,7 +710,7 @@ run_tests()
     (cd $ROOT/logs/result.m64 ; egrep '^PASS' *sum ) > $ROOT/logs/passes.m64
 
     # Compare test results with the golden files
-    /bin/ksh ${SCRIPTDIR}/compareTestResults $OS_NAME $BUILDDIR > $BUILDDIR/logs/test.comparison 2>&1
+    /bin/ksh ${SCRIPTDIR}/compareTestResults $OS_NAME $ROOT > $ROOT/logs/test.comparison 2>&1
 }
 
 canonicalize_path()
@@ -1100,7 +1100,7 @@ install_gccfss()
 	ln -s cg fbe
     fi
     
-    if [ $OPENSOLARISBUILD == 1 ]
+    if [ $OPENSOLARIS_BUILD == 1 ]
     then
         build_opensolaris_packages
     fi
