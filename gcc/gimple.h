@@ -2431,17 +2431,13 @@ gimple_cond_true_p (const_gimple gs)
   tree rhs = gimple_cond_rhs (gs);
   enum tree_code code = gimple_cond_code (gs);
 
-  if (lhs != boolean_true_node && lhs != boolean_false_node)
-    return false;
-
+  if (lhs != boolean_true_node && lhs != boolean_false_node
   /* GCCFSS: why not considering other values equaling to 1 or 0. */
-  if (!integer_onep (lhs) && !integer_zerop (lhs))
+       && !integer_onep (lhs) && !integer_zerop (lhs))
     return false;
 
-  if (rhs != boolean_true_node && rhs != boolean_false_node)
-    return false;
-
-  if (!integer_onep (rhs) && !integer_zerop (rhs))
+  if (rhs != boolean_true_node && rhs != boolean_false_node
+      && !integer_onep (rhs) && !integer_zerop (rhs))
     return false;
 
   if (code == NE_EXPR && lhs != rhs)
@@ -2463,16 +2459,12 @@ gimple_cond_false_p (const_gimple gs)
   tree rhs = gimple_cond_rhs (gs);
   enum tree_code code = gimple_cond_code (gs);
 
-  if (lhs != boolean_true_node && lhs != boolean_false_node)
+  if (lhs != boolean_true_node && lhs != boolean_false_node
+      && (!integer_onep (lhs) && !integer_zerop (lhs))
     return false;
 
-  if (!integer_onep (lhs) && !integer_zerop (lhs))
-    return false;
-
-  if (rhs != boolean_true_node && rhs != boolean_false_node)
-    return false;
-
-  if (!integer_onep (rhs) && !integer_zerop (rhs))
+  if (rhs != boolean_true_node && rhs != boolean_false_node
+      && !integer_onep (rhs) && !integer_zerop (rhs))
     return false;
 
   if (code == NE_EXPR && lhs == rhs)
