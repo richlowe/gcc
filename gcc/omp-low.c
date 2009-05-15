@@ -6707,79 +6707,25 @@ static tree
 diagnose_sb_1 (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
     	       struct walk_stmt_info *wi)
 {
-  gimple context = (gimple) wi->info; 
-  gimple inner_context;
+  omp_context *ctx, *prev_ctx;
   gimple stmt = gsi_stmt (*gsi_p);
 
   *handled_ops_p = true;
 
-  switch (gimple_code (stmt))
-    {
-    WALK_SUBSTMTS;
-      
-    case GIMPLE_OMP_PARALLEL:
-    case GIMPLE_OMP_TASK:
-    case GIMPLE_OMP_SECTIONS:
-    case GIMPLE_OMP_SINGLE:
-    case GIMPLE_OMP_SECTION:
-    case GIMPLE_OMP_MASTER:
-    case GIMPLE_OMP_ORDERED:
-    case GIMPLE_OMP_CRITICAL:
-      /* The minimal context here is just the current OMP construct.  */
-      inner_context = stmt;
-      wi->info = inner_context;
-      walk_gimple_seq (gimple_omp_body (stmt), diagnose_sb_1, NULL, wi);
-      wi->info = context;
-      break;
-
-    case GIMPLE_OMP_FOR:
-      inner_context = stmt;
-      wi->info = inner_context;
-      /* gimple_omp_for_{index,initial,final} are all DECLs; no need to
-	 walk them.  */
-      walk_gimple_seq (gimple_omp_for_pre_body (stmt),
-	  	       diagnose_sb_1, NULL, wi);
-      walk_gimple_seq (gimple_omp_body (stmt), diagnose_sb_1, NULL, wi);
-      wi->info = context;
-      break;
-
-    case GIMPLE_LABEL:
-      splay_tree_insert (all_labels, (splay_tree_key) gimple_label_label (stmt),
-			 (splay_tree_value) context);
-      break;
-
-    default:
-      break;
-    }
-
-  return NULL_TREE;
-}
-#if 0 /* FIXME: gccfss440 merge conflict=======
-  struct walk_stmt_info *wi = data;
-  omp_context *ctx, *prev_ctx;
-  tree context;
-  tree inner_context;
-  tree t = *tp;
-
   prev_ctx = (omp_context *) wi->info;
-  if (prev_ctx)
-    context = prev_ctx->record_type;
-  else
-    context = NULL_TREE;
-
   ctx = NULL;
-  
-  if (EXPR_HAS_LOCATION (t))
-    input_location = EXPR_LOCATION (t);
-    
+
+  if (gimple_has_location (stmt))
+    input_location = gimple_location (stmt);
+
   /* Check the OpenMP nesting restrictions.  */
   if (prev_ctx != NULL)
     {
-      if (OMP_DIRECTIVE_P (t))
-        check_omp_nesting_restrictions (t, prev_ctx);
-      else if (TREE_CODE(t) == CALL_EXPR)
+      if (is_gimple_omp (stmt))
+        check_omp_nesting_restrictions (stmt, prev_ctx);
+      else if (is_gimple_call (stmt))
         {
-          tree fndecl = get_callee_fndecl (t);  
+          tree fndecl = gimple_call_fndecl (stmt);
           if (fndecl && DECL_BUILT_IN (fndecl))
             {
               enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
@@ -6788,7 +6734,7 @@ diagnose_sb_1 (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
                     /* check for nesting of barrier. This is not
                        currently done by check_omp_nesting_restrictions. */
                     for (ctx = prev_ctx; ctx != NULL; ctx = ctx->outer)
-                      switch (TREE_CODE (ctx->stmt))
+                      switch (gimple_code (ctx->stmt))
                         {
                         case OMP_FOR:
                         case OMP_SECTIONS:
@@ -6807,46 +6753,48 @@ diagnose_sb_1 (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
             }
         }
     }
-  
-  *walk_subtrees = 0;
-  switch (TREE_CODE (t))
+
+  switch (gimple_code (stmt))
     {
-    case OMP_PARALLEL:
-    case OMP_SECTIONS:
-    case OMP_SINGLE:
-    case OMP_TASK:
-      ctx = new_omp_context (t, prev_ctx);
-      ctx->record_type = context;
+    WALK_SUBSTMTS;
+      
+    case GIMPLE_OMP_PARALLEL:
+    case GIMPLE_OMP_TASK:
+    case GIMPLE_OMP_SECTIONS:
+    case GIMPLE_OMP_SINGLE:
+    case GIMPLE_OMP_SECTION:
+    case GIMPLE_OMP_MASTER:
+    case GIMPLE_OMP_ORDERED:
+    case GIMPLE_OMP_CRITICAL:
+      /* The minimal context here is just the current OMP construct.  */
+      ctx = new_omp_context (stmt, prev_ctx);
       wi->info = ctx;
-      walk_tree (&OMP_CLAUSES (t), diagnose_sb_1, wi, NULL);
-      /* FALLTHRU */
-    case OMP_SECTION:
-    case OMP_MASTER:
-    case OMP_ORDERED:
-    case OMP_CRITICAL:
-      /* The minimal context here is just a tree of statements.  */
-      inner_context = tree_cons (NULL, t, context);
-      if (ctx == NULL)
-        ctx = new_omp_context (t, prev_ctx);
-      ctx->record_type = inner_context;      
-      wi->info = ctx;
-      walk_stmts (wi, &OMP_BODY (t));
+      walk_gimple_seq (gimple_omp_body (stmt), diagnose_sb_1, NULL, wi);
       wi->info = prev_ctx;
       break;
 
-    case OMP_FOR:
-      walk_tree (&OMP_FOR_CLAUSES (t), diagnose_sb_1, wi, NULL);
-      inner_context = tree_cons (NULL, t, context);
-      ctx = new_omp_context (t, prev_ctx);
-      ctx->record_type = inner_context;
+    case GIMPLE_OMP_FOR:
+      ctx = new_omp_context (stmt, prev_ctx);
       wi->info = ctx;
-      walk_tree (&OMP_FOR_INIT (t), diagnose_sb_1, wi, NULL);
-      walk_tree (&OMP_FOR_COND (t), diagnose_sb_1, wi, NULL);
-      walk_tree (&OMP_FOR_INCR (t), diagnose_sb_1, wi, NULL);
-      walk_stmts (wi, &OMP_FOR_PRE_BODY (t));
-      walk_stmts (wi, &OMP_FOR_BODY (t));
+      /* gimple_omp_for_{index,initial,final} are all DECLs; no need to
+	 walk them.  */
+      walk_gimple_seq (gimple_omp_for_pre_body (stmt),
+	  	       diagnose_sb_1, NULL, wi);
+      walk_gimple_seq (gimple_omp_body (stmt), diagnose_sb_1, NULL, wi);
       wi->info = prev_ctx;
-#endif /* FIXME. >>>>>>> First cut at GCCFSS merge:gcc/omp-low.c */
+      break;
+
+    case GIMPLE_LABEL:
+      splay_tree_insert (all_labels, (splay_tree_key) gimple_label_label (stmt),
+			 (splay_tree_value) (prev_ctx->stmt));
+      break;
+
+    default:
+      break;
+    }
+
+  return NULL_TREE;
+}
 
 /* Pass 2: Check each branch and see if its context differs from that of
    the destination label's context.  */
