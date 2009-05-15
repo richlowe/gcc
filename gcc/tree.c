@@ -684,6 +684,7 @@ make_node_stat (enum tree_code code MEM_STAT_DECL)
 	    {
 	      DECL_ALIGN (t) = FUNCTION_BOUNDARY;
 	      DECL_MODE (t) = FUNCTION_MODE;
+	      DECL_DONT_GENERATE_SUNIR (t) = flag_use_rtl_backend == -1 ? 1 : 0;
 	    }
 	  else
 	    DECL_ALIGN (t) = 1;
