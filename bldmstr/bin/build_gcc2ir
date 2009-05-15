@@ -910,6 +910,15 @@ setup_defaults()
     then
         export PATH=$ROOT/tools/bin:/usr/sfw/bin:/ws/gccfss/cross-compiler/gnu-i386/gcc42-cross/bin:/ws/gccfss/cross-compiler/tools/bin:/usr/ccs/bin:/bin
     fi
+
+    if [ $BUILDTYPE == i386-solaris ]
+    then
+        # x86 builds seem extremely prone to race conditions
+        # disable parallelism for now until we can deal with
+        # other real issues
+        PARALLEL_BUILD_OPTION="-j 1"
+    fi
+
 }
 
 configure_cross_compiler()

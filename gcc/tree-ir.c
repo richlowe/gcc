@@ -6163,8 +6163,15 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
         count--;
 #endif
 
+#ifdef TARGET_CPU_sparc
 #ifndef SPARC_STACK_BIAS
-      abort ();
+      abort();
+#endif
+#else
+      /* x86 does no define a stack bias.
+         X86_TODO: Does not work for x86. This whole
+         routine is suspect */  
+#define SPARC_STACK_BIAS 0
 #endif
           
       cfun->builtin_return_addr_called = 1;
@@ -6289,7 +6296,8 @@ dump_ir_flushw (gimple stmt ATTRIBUTE_UNUSED)
   clobber->triple.is_volatile = IR_TRUE;
   TAPPEND (args, (TRIPLE *)clobber);
 
-  if (TARGET_V9)
+  if (TARGET_ARCH64)
+    /* X86_TODO: Does not work for x86 */
     n = build_ir_triple (IR_ASM_STMT, build_ir_string_const ("flushw"), (IR_NODE*)args, argtype, NULL);
   else
     n = build_ir_triple (IR_ASM_STMT, build_ir_string_const ("ta\t3"), (IR_NODE*)args, argtype, NULL);
@@ -9109,7 +9117,9 @@ global_ir_init (void)
 void
 global_ir_fini (void)
 {
+#ifdef TARGET_CPU_sparc
   sparc_output_scratch_registers (asm_out_file);
+#endif
   ir_backend_fini ();
   if (flag_xinline)
     {
