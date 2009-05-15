@@ -10,28 +10,25 @@ SCRIPTDIR=$(dirname $0)
 # Set common configuration variables
 . $SCRIPTDIR/commonconfig
 
-CROSSCOMPILER_BUILD=0
 EXTRALANGWS=
-EXTRALANG=0
 LANGWSLIST="$LANGWSLISTDEFAULT"
 INSTALLDIR=""
 RUNTESTS=1 
 SUNINSTALL=
 BUILDOPTIONS=
-INSTALL_BACKEND=1 
-CROSSCOMPONENTS_INSTALL_DIR=
 JOBS=2
 MAKE="/usr/ccs/bin/make"
 CPUS=2
+BUILDTYPE=
 
 setup_defaults()
 {
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE == i386-sparc ]
     then
-	LANGWSLISTDEFAULT="$LANGWSLISTDEFAULT /ws/gccfss/cross-compiler/ceres-lang"
+	LANGWSLIST="$LANGWSLIST /ws/gccfss/cross-compiler/ceres-lang"
     fi
 
-    if [ `uname -s` == "Linux" ]
+    if [ $BUILDTYPE == sparc-linux ]
     then
 	MAKE="/opt/dmake/bin/dmake"
 	CPUS=`cat /proc/cpuinfo | grep 'ncpus active' | awk '{print $NF}'`
@@ -40,12 +37,12 @@ setup_defaults()
         CPUS=`/usr/sbin/psrinfo | wc -l`
     fi
 
-    if [ $INSTALLDIR == "" ]
+    if [ "$INSTALLDIR" == "" ]
     then
 	INSTALLDIR=$BUILDDIR/install
     fi
     
-    if [ $EXTRALANG == 1 ]
+    if [ "$EXTRALANGWS" != "" ]
     then
 	LANGWSLIST="$EXTRALANGWS $LANGWSLIST"
     fi
@@ -58,9 +55,10 @@ setup_defaults()
     fi
 }
 
-function usage {
+usage()
+{
 	cat <<EOF
-Usage: $0 [-g <GCC2IR_WS>] [-i <INSTALL_DIR>] [-l <PROJ_LANG_WS>] [-L "<LANG_WS_LIST>"] [-s <EXISTING_SUN_INSTALLATION>] [-p <EXISTING_CROSS_COMPONENTS>] [-o] [-t] [-x] <build_dir>
+Usage: $0 [-g <GCC2IR_WS>] [-i <INSTALL_DIR>] [-l <PROJ_LANG_WS>] [-L "<LANG_WS_LIST>"] [-s <EXISTING_SUN_INSTALLATION>] [-p <EXISTING_CROSS_COMPONENTS>] [-t] [-I] -b <build_type> <build_dir>
 where
 	<GCC2IR_WS>	is a fully populated gcc2ir source workspace.
 			Default: $GCC2IRWS
@@ -83,52 +81,47 @@ where
                         It is only used to obtain libraries and other components needed for sparc during cross compilation. 
 	<build_dir>	is the directory to be created under which the build
 			will be done
-        -o              OpenSolaris build
+        <build_type>    One of the following {sparc-solaris, sparc-opensolaris, sparc-linux, i386-solaris, i386-sparc }
 	-t		do not run tests. This option disables testing.
         -I              do not install Sun backend
-        -x              Cross compiler build
 EOF
 	exit 1
 }
 
-while getopts Ig:i:l:L:op:s:v:tx optflag
+while getopts b:g:i:Il:L:op:s:v:t optflag
 do
-        case $optflag in
-		g)	GCC2IRWS=$OPTARG
-			;;
-		i)	INSTALLDIR=$OPTARG
-			;;
-		l)	EXTRALANG=1
-                        EXTRALANGWS="$OPTARG"
-			;;
-		L)	LANGWSLIST="$OPTARG"
-			;;
-		p)      CROSSCOMPONENTS_INSTALL_DIR="-p $OPTARG"
-			;;
-                o)      BUILDOPTIONS="-o $BUILDOPTIONS"
-                        ;;
-		s)	SUNINSTALL=$OPTARG
-			;;
-		v)      GCC_VERSION="$OPTARG"
-			;;
-		t)	RUNTESTS=0
-			BUILDOPTIONS="-t $BUILDOPTIONS"
-			;;
-		I)	INSTALL_BACKEND=0
-                        BUILDOPTIONS="-I $BUILDOPTIONS"
-                        ;;
-                x)      CROSSCOMPILER_BUILD=1
-                        BUILDOPTIONS="-x $BUILDOPTIONS"
-                        ;;
-                *)      usage
-                        ;;
-        esac
+    case $optflag in
+        b) BUILDTYPE=$OPTARG
+            BUILDOPTIONS="-b $BUILDTYPE $BUILDOPTIONS";;
+	g) GCC2IRWS=$OPTARG;;
+	i) INSTALLDIR=$OPTARG;;
+	l) EXTRALANGWS="$OPTARG";;
+	L) LANGWSLIST="$OPTARG"
+	    ;;
+	p) BUILDOPTIONS="-p $OPTARG $BUILDOPTIONS"
+	    ;;
+	s) SUNINSTALL=$OPTARG
+	    ;;
+	v) GCC_VERSION="$OPTARG"
+	    ;;
+	t) RUNTESTS=0
+	    BUILDOPTIONS="-t $BUILDOPTIONS"
+	    ;;
+	I) BUILDOPTIONS="-I $BUILDOPTIONS";;
+        *) usage;;
+    esac
 done
-         
+
+if [ "$BUILDTYPE" == "" ]
+then
+    usage
+fi
+
 shift `expr $OPTIND - 1`
+
 if [ $# -ne 1 ]
 then
-	usage
+    usage
 fi
 
 BUILDDIR=$1
@@ -149,7 +142,7 @@ EOF
 if [ "" = "$SUNINSTALL" ]
 then
     # Build the Sun backend components
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE == i386-sparc ]
     then
 	$MAKE -f ${SCRIPTDIR}/../data/Makefile.langbuild -j $JOBS JOBS=$JOBS BUILDDIR=$BUILDDIR LANGWSLIST="$LANGWSLIST" GCC_VERSION="$GCC_VERSION" CHIP=i386-sparc all
     else
@@ -166,13 +159,11 @@ then
 fi
 
 # Build and install gcc2ir
-
-$SCRIPTDIR/build_gcc2ir $BUILDOPTIONS "-w $GCC2IRWS" -i $INSTALLDIR/$GCCINSTSUBDIR -s $SUNINSTALL $CROSSCOMPONENTS_INSTALL_DIR -v $GCC_VERSION  $BUILDDIR
+$SCRIPTDIR/build_gcc2ir $BUILDOPTIONS "-w $GCC2IRWS" -i $INSTALLDIR/$GCCINSTSUBDIR -s $SUNINSTALL -v $GCC_VERSION  $BUILDDIR
 
 if [ $? -ne 0 ]
 then
 	echo Build and install failed.
-	echo current_gcc2ir has not been updated.
 	exit 1
 fi
 

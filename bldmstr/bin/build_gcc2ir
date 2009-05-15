@@ -1,4 +1,4 @@
-#!/bin/ksh 
+#!/bin/ksh -f
 
 date
 
@@ -28,13 +28,10 @@ ROOT=
 FORCE_BRINGOVER=0
 RUN_TESTS=1
 INSTALL_BACKEND=1
-BOOTSTRAP_OPTION=
 DEBUG_MODE=0
 SUNCC_PATH=
 SN_SERIAL_FILE=
-CROSSCOMPILER_BUILD=0
-OPENSOLARIS_BUILD=0
-LINUX_BUILD=0
+BUILDTYPE=
 INCLUDE_HEADERS=/ws/gccfss/source/Studio12U1_include_headers
 SCRIPTDIR=$(dirname $0)
 OS_NAME=`uname -r`
@@ -58,7 +55,7 @@ usage()
 {
     cat >&2 <<EOF
 Usage: $0 [-w <workspace>] [-B] [-i <install_dir>]
-	[-s <suncc_dir>] [-p <cross_cmpnt>] [-j <jobs>] [-v <gcc version>] [-b] [-l] [-o] [-t] [-x] <target_dir>
+	[-s <suncc_dir>] [-p <cross_cmpnt>] [-j <jobs>] [-v <gcc version>] -b <build_type> [-t] <target_dir>
 where
 	<workspace>	is a gcc2ir workspace to be used as the source base
 	-B		indicates that <workspace> is to be brought over rather
@@ -74,13 +71,10 @@ where
 	<jobs>		is the number of make jobs to run in parallel
 			Default: twice the number of cpus
         <gcc version>   is the gcc version, eg 4.2.1
-	-b		run through bootstrap
+	<build_type>    One of the following {sparc-solaris, sparc-opensolaris, sparc-linux, i386-solaris, i386-sparc }
 	-g		compile with -g -frtl-backend, no bootstrap
-        -l              linux build
-        -o              opensolaris build
 	-t		do not run tests
         -I              do not install Sun backend
-        -x              cross compiler build
 
 If <target_dir> already exists, it is assumed that this build is to be a
 continuation of a previous build.  Differences between the current set of
@@ -92,13 +86,12 @@ EOF
 	exit 1
 }
 
-set_linux_options()
+setup_paths()
 {
     # switch some paths on linux
-    if [ $LINUX_BUILD == 1 ]
+    if [ $BUILDTYPE == sparc-linux ]
     then
         # Change this to use GCCFSS to self bootstrap
-        GNU_TOOL_BIN=/usr/bin
         export PATH=/usr/bin:/bin
         BRINGOVER=/ws/gccfss/linux/bin/remotebringover
         GIT=/usr/bin/git
@@ -106,6 +99,11 @@ set_linux_options()
         CPUS=`cat /proc/cpuinfo | grep 'ncpus active' | awk '{print $NF}'`
         ERROR_TRAP=ZERR
         GMAKE=/usr/bin/make
+    elif [ $BUILDTYPE == i386-solaris ]
+    then
+        GIT=/set/sqe/tools/git6/intel-S2/bin/git
+        export PATH=/usr/sfw/bin:/usr/local/bin:/usr/ccs/bin:/usr/bin:/bin
+        EXPECT=/usr/local/bin/expect
     fi
 }
 
@@ -116,9 +114,10 @@ set_linux_options()
 
 get_options()
 {
-    while getopts BIbogi:j:p:s:tw:v:x optflag
+    while getopts b:BIbogi:j:p:s:tw:v:x optflag
     do
         case $optflag in
+            b)  BUILDTYPE=$OPTARG;;
 	    B)	FORCE_BRINGOVER=1
 		;;
 	    I)	INSTALL_BACKEND=0
@@ -132,15 +131,8 @@ get_options()
 		PARALLEL_BUILD_OPTION="-j $OPTARG"
 		fi
 		;;
-	    b)	BOOTSTRAP_OPTION="bootstrap"
+	    g)	DEBUG_MODE=1
 		;;
-	    g)	BOOTSTRAP_OPTION=
-		DEBUG_MODE=1
-		;;
-            l)  LINUX_BUILD=1
-                ;;
-            o)  OPENSOLARIS_BUILD=1
-                ;;
 	    s)	SUN_DIR="$OPTARG"
 		;;
 	    t)	RUN_TESTS=0
@@ -151,8 +143,6 @@ get_options()
 		;;
 	    v)  GCC_VERSION="$OPTARG"
 		;;
-            x)  CROSSCOMPILER_BUILD=1
-                ;;
 	    *)	echo "Invalid option: $optflag" >&2
 		usage
 		exit 1
@@ -313,25 +303,28 @@ backend_post_install()
     cp -r $INCLUDE_HEADERS/* $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
 
     # create soft links for v8plusc/v9c subdirectories
-    cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
-    ln -s sparcfmaf v8plusc
-    ln -s sparcfmaf/64 v9c
-    # create soft links for sparcima subdirectory
-    ln -s sparcfmaf sparcima
-    # create soft links for v8plusd/,v9d subdirectories
-    # CR 6829027. vis.il lives in v8plusd and v9d,
-    # move it to sparcfmaf, and create links to
-    # sparcima. sparcima is again a link to sparcfmaf
-    mv v8plusd/vis.il sparcfmaf/vis.il
-    mv v9d/vis.il sparcfmaf/64/vis.il
-    rm -rf v8plusd
-    rm -rf v9d
-    ln -s sparcima v8plusd
-    ln -s sparcima/64 v9d
-    # create links for sparcvis and sparcvis2
-    ln -s v8plusa sparcvis
-    ln -s v8plusb sparcvis2
-    ln -s v8plus sparc
+    if [ $BUILDTYPE == sparc-solaris ]
+    then
+        cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
+        ln -s sparcfmaf v8plusc
+        ln -s sparcfmaf/64 v9c
+        # create soft links for sparcima subdirectory
+        ln -s sparcfmaf sparcima
+        # create soft links for v8plusd/,v9d subdirectories
+        # CR 6829027. vis.il lives in v8plusd and v9d,
+        # move it to sparcfmaf, and create links to
+        # sparcima. sparcima is again a link to sparcfmaf
+        mv v8plusd/vis.il sparcfmaf/vis.il
+        mv v9d/vis.il sparcfmaf/64/vis.il
+        rm -rf v8plusd
+        rm -rf v9d
+        ln -s sparcima v8plusd
+        ln -s sparcima/64 v9d
+        # create links for sparcvis and sparcvis2
+        ln -s v8plusa sparcvis
+        ln -s v8plusb sparcvis2
+        ln -s v8plus sparc
+    fi
     
     find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
 
@@ -426,6 +419,50 @@ install_crosscompiler_suncomponents ()
 #	SUN_DIR		directory containing the Sun components to be used
 #	SOURCE_WS	gcc2ir source directory containing sun_components.txt
 
+install_i386_solaris_components()
+{
+    # SUN_DIR_ROOT is the dir just above the bin and lib directories
+    # from which we want to copy.
+    SUN_DIR_ROOT=$SUN_DIR/$GCC_VERSION/prod
+    
+    echo "Installing Sun components from $SUN_DIR_ROOT to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
+    
+    if [ ! -d $SUN_DIR_ROOT ]
+    then
+	echo >&2 "ERROR: Invalid directory for back-end components: $SUN_DIR_ROOT"
+	exit 1
+    fi
+    
+    mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
+    
+    # Remove Sun components that may have been installed previously
+    cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION
+    rm -rf prod
+    
+    mkdir -p $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod
+    
+    # Copy the files.
+    cd $SUN_DIR_ROOT
+    cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SCRIPTDIR/sun_i386_components.txt
+    find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
+    
+    backend_post_install
+        
+    echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
+}
+
+
+
+# Copy Sun compiler components required by gcc2ir to gcc2ir installation dir.
+# The directory from which the components are copied may be either a
+# Sun compiler installation directory or a pre-existing gcc2ir installation.
+# The files to be copied are contained in the file sun_components.txt in
+# the gcc2ir source workspace.
+# Global variables used:
+#	INSTALL_DIR	destination gcc2ir installation directory
+#	SUN_DIR		directory containing the Sun components to be used
+#	SOURCE_WS	gcc2ir source directory containing sun_components.txt
+
 install_suncomponents()
 {
     # SUN_DIR_ROOT is the dir just above the bin and lib directories
@@ -455,7 +492,7 @@ install_suncomponents()
     
     # Install the libraries which support gccfss fundamental features.
     # This is only necessary for Linux.
-    if [ $LINUX_BUILD == 1 ]
+    if [ $BUILD_TYPE == sparc-linux ]
     then
 	echo "Installation of libraries on Linux list in linux_feature_libs.txt."
 	files=`sed '/^#/'d $SCRIPTDIR/linux_feature_libs.txt |awk '{print $1}'`
@@ -489,15 +526,11 @@ prepare_tests_cross()
     (cd /ws/gccfss/cross-compiler/gnu-i386/share ; tar -cf - dejagnu) \
         | (cd $ROOT/tools/share; tar -xf -)
     
-    if [ $LINUX_BUILD == 1 ]
-    then
-        cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/objdump $ROOT/tools/bin/objdump
-        cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/expect* $ROOT/tools/bin
-        cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/tcl* $ROOT/tools/bin
-        (cd /ws/gccfss/cross-compiler/gnu-i386/lib ; tar -cf - tcl* libtcl* expect*) \
-            | (cd $ROOT/tools/lib; tar -xf -)
-    fi
-
+    cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/objdump $ROOT/tools/bin/objdump
+    cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/expect* $ROOT/tools/bin
+    cp -p /ws/gccfss/cross-compiler/gnu-i386/bin/tcl* $ROOT/tools/bin
+    (cd /ws/gccfss/cross-compiler/gnu-i386/lib ; tar -cf - tcl* libtcl* expect*) \
+        | (cd $ROOT/tools/lib; tar -xf -)
 }
 
 run_tests_installed()
@@ -579,7 +612,7 @@ run_native_tests()
     
     sleep 3
         
-    if [ $OPENSOLARIS_BUILD == 1 ]
+    if [ $BUILDTYPE == sparc-opensolaris ]
     then
         run_tests_installed &
     else
@@ -680,7 +713,7 @@ run_tests()
     echo "Running tests ..."
     date
 
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE == i386-sparc ]
     then
         prepare_tests_cross
     fi
@@ -696,7 +729,7 @@ run_tests()
         exit 1
     fi
 
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE == i386-sparc ]
     then
         run_cross_tests
     else
@@ -873,7 +906,7 @@ setup_defaults()
 	SUN_DIR="$DEFAULT_SUN_DIR"
     fi
 
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE == i386-sparc ]
     then
         export PATH=$ROOT/tools/bin:/usr/sfw/bin:/ws/gccfss/cross-compiler/gnu-i386/gcc42-cross/bin:/ws/gccfss/cross-compiler/tools/bin:/usr/ccs/bin:/bin
     fi
@@ -945,6 +978,24 @@ configure_linux_compiler()
         --disable-bootstrap > $ROOT/logs/config.gcc2ir.log 2>&1
 }
 
+configure_native_x86_compiler()
+{
+    $SOURCE_WS/configure \
+	--prefix= \
+	--enable-shared \
+        --disable-static \
+	--with-system-zlib \
+	--enable-checking=release \
+	--enable-languages=c,c++ \
+        --with-ld=/usr/ccs/bin/ld \
+        --without-gnu-ld \
+        --disable-gnattools \
+        --enable-tls \
+        --with-as=/usr/sfw/bin/gas \
+        --with-gnu-as \
+        --disable-bootstrap > $ROOT/logs/config.gcc2ir.log 2>&1
+}
+
 configure_native_compiler()
 {
     export AS="/usr/ccs/bin/as"
@@ -986,15 +1037,18 @@ configure_gccfss()
 
     cd $ROOT/build.gcc2ir
 
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE == i386-sparc ]
     then
         configure_cross_compiler
-    elif [ $OPENSOLARIS_BUILD == 1 ]
+    elif [ $BUILDTYPE == sparc-opensolaris ]
     then
         configure_opensolaris_compiler
-    elif [ $LINUX_BUILD == 1 ]
+    elif [ $BUILDTYPE == sparc-linux ]
     then
         configure_linux_compiler
+    elif [ $BUILDTYPE == i386-solaris ]
+    then
+        configure_native_x86_compiler
     else
         configure_native_compiler
     fi
@@ -1007,11 +1061,14 @@ install_backend()
 {
     if [ 1 = $INSTALL_BACKEND -a ! -e $ROOT/done/install.suncomponents ]
     then
-        if [ $CROSSCOMPILER_BUILD == 1 ]
+        if [ $BUILDTYPE == i386-sparc ]
         then
 	    # Completely different strategy of mixing and
 	    # matching Sun components x86/sparc
 	    install_crosscompiler_suncomponents
+        elif [ $BUILDTYPE == i386-solaris ]
+        then
+            install_i386_solaris_components
         else
 	    install_suncomponents
         fi
@@ -1074,7 +1131,7 @@ install_gccfss()
     # in some circumstances 'install' step may be forced to do compilation,
     # so need to set SUNW_SCGFSS_PATH above
     # install into DESTDIR instead of '--prefix'
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE = i386-sparc ]
     then
 	$GMAKE install > $ROOT/logs/install.gcc2ir.log 2>&1
     else
@@ -1092,7 +1149,7 @@ install_gccfss()
     done
 	    
     # Delete the sys-include link for header files
-    if [ $CROSSCOMPILER_BUILD == 1 ]
+    if [ $BUILDTYPE = i386-sparc ]
     then
         cd $INSTALL_DIR/sparc-sun-solaris2.10 ; rm -f sys-include
 	    
@@ -1102,7 +1159,7 @@ install_gccfss()
 	ln -s cg fbe
     fi
     
-    if [ $OPENSOLARIS_BUILD == 1 ]
+    if [ $BUILDTYPE = sparc-opensolaris ]
     then
         build_opensolaris_packages
     fi
@@ -1118,8 +1175,8 @@ install_gccfss()
 # Parse the command-line options
 get_options $@
 
-# If this is linux build, we need to fix a few things
-set_linux_options
+# If this is linux/cross/i386 build, we need to fix a few things
+setup_paths
 
 # Convert all relative paths given into full paths.
 canonicalize_paths
