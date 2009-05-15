@@ -1499,9 +1499,13 @@ static const char *libm_il =
 static const char *cg_ipo_options =
  CG_IPO_OPTIONS
 "-Qy %(sscg_xarch_xchip) %(xtarget) \
- %{m32} %{m64} \
- %{g0: ; g*:-g -gen_loclist_gcc=1} \
- %(ssbe_optlevel) "
+ %{m32} %{m64} "
+#ifdef TARGET_CPU_sparc
+"  %{g0: ; g*:-g -gen_loclist_gcc=1}"
+#else
+"  %{g0: ; g*:-g} "
+#endif
+" %(ssbe_optlevel) "
 #ifdef TARGET_CPU_sparc
 "%{xcode=*} \
  %{!xcode=*: %{mcmodel=medlow: -xcode=abs32; \
@@ -2329,7 +2333,7 @@ translate_options (int *argcp, const char *const **argvp)
 #ifdef TARGET_CPU_sparc
   argv[i] = xstrdup("-mcpu=v9"); /* the default */
 #else
-  argv[i] = xstrdup("-mtune=nocona"); /* the default */   /*RAT-TODO is this the right one? */
+  argv[i] = xstrdup("-mtune=i686"); /* the default */   /*RAT-TODO is this the right one? */
 #endif
   newv[newindex++] = xstrdup("-Zsunir-backend"); /* the default */
 

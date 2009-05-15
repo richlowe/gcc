@@ -74,6 +74,7 @@ lib/annotate.map
 lib/sys/liblni.so
 lib/sys/liblni.so.1
 lib/sys/libsunir.so
+lib/sys/lib_I_quad.so
 lib/xprof_fini.o
 lib/amd64/xprof_fini.o
 lib/amd64/libm.il

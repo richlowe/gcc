@@ -62,6 +62,10 @@ along with GCC; see the file COPYING3.  If not see
 	      fputc ('\n', (FILE));					\
 	      bytes_in_chunk = 0;					\
 	    }								\
+          /*#ifdef GCCFSS_DOES_NOT_WANT_THIS                            \
+            Looks like ube does not like the .string very much          \
+            Simply avoid generating it and generate .byte as            \
+            .string seems to be an optimization anyway                  \
 	  for (p = _ascii_bytes; p < limit && *p != '\0'; p++)		\
 	    continue;							\
 	  if (p < limit && (p - _ascii_bytes) <= (long) STRING_LIMIT)	\
@@ -75,6 +79,7 @@ along with GCC; see the file COPYING3.  If not see
 	      _ascii_bytes = p;						\
 	    }								\
 	  else								\
+          #endif*/                                                      \
 	    {								\
 	      if (bytes_in_chunk == 0)					\
 		fprintf ((FILE), "\t.byte\t");				\

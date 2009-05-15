@@ -1508,6 +1508,9 @@ dbg_gen_get_base_TypeID (tree type)
         case SFmode: /*"float"*/
         case DFmode: /*"double"*/
         case TFmode: /*"long double"*/
+#ifdef TARGET_CPU_x86
+        case XFmode: /* x86 extended float */
+#endif
           ret = dbg_type_basic_float (dbggendata.file, name, mode_size_bytes);
           break;
         default: gcc_unreachable ();
@@ -1531,7 +1534,10 @@ dbg_gen_get_base_TypeID (tree type)
         case DCmode: 
           ret = dbg_type_basic_complex (dbggendata.file, "double complex", mode_size_bytes);
           break;
-        case TCmode: 
+        case TCmode:
+#ifdef TARGET_CPU_x86
+        case XCmode: /* x86 extended float */
+#endif
           ret = dbg_type_basic_complex (dbggendata.file, "long double complex", mode_size_bytes);
           break;
 
