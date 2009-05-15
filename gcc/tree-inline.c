@@ -4953,6 +4953,16 @@ tree_can_inline_p (tree caller, tree callee)
     }
 #endif
 
+  /* Do not inline across IR and RTL functions. */
+  if (DECL_DONT_GENERATE_SUNIR (caller) != DECL_DONT_GENERATE_SUNIR (callee))
+    {
+      struct cgraph_node *node = cgraph_node (callee);
+      if (node)
+        cgraph_mark_needed_node (node);
+
+      return false;
+    }
+
   /* Allow the backend to decide if inlining is ok.  */
   return targetm.target_option.can_inline_p (caller, callee);
 }

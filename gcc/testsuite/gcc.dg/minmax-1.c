@@ -1,5 +1,6 @@
 /* { dg-do run } */
-/* { dg-options "-fdump-tree-original" } */
+/* gccfss don't fold min_expr or max_expr by default. */
+/* { dg-options "-frtl-backend -fdump-tree-original" } */
 
 /* Check that MIN-MAX and MAX-MIN combinations are folded.  */
 

@@ -12,7 +12,7 @@ union U{
 struct S{
     union U u;
 };
-void foo (void *);
+void foo (void *); /* { dg-message "expected 'void *' but argument is of type" } */
 
 struct S volatile ss1[10];
 volatile struct S ss2[10];
