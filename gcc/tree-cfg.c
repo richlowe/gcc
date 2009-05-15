@@ -568,7 +568,7 @@ make_edges (void)
 		 somewhere other than the next block.  This will be
 		 created later.  */
 	      cur_region->exit = bb;
-	      fallthru = cur_region->type != OMP_SECTION;
+	      fallthru = cur_region->type != GIMPLE_OMP_SECTION;
 	      cur_region = cur_region->outer;
 	      break;
 

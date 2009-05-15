@@ -16,27 +16,24 @@ g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast -xipo=2  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O2 -g  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -Os  (test for excess errors)
-g++.sum:FAIL: g++.dg/gomp/pr29965-3.C (test for excess errors)
 g++.sum:FAIL: g++.dg/libgomp/pr30703.C execution test
-g++.sum:FAIL: g++.dg/pch/array-1.C -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/array-1.C -O2 -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/empty.C -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/empty.C -O2 -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/local-1.C -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/local-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/pch.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/pch.C -O2 -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/static-1.C -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/static-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -O2 -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/template-1.C -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/template-1.C -O2 -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/uninst.C -g assembly comparison
-g++.sum:FAIL: g++.dg/pch/uninst.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/tls/static-1.C execution test
 g++.sum:FAIL: g++.dg/tree-ssa/pr22444.C (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O2  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O3  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -Os  (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O1 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O2 
 gcc.sum:FAIL: gcc.c-torture/execute/builtins/fputs.c execution,  -O3 
