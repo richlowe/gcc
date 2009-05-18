@@ -5,7 +5,7 @@
    But it is of course ok if we warn in bar about uninitialized use
    of j.  (not xfailed alternative)  */
 /* { dg-do compile } */
-/* { dg-options "-O1 -Wuninitialized" } */
+/* { dg-options "-O1 -frtl-backend -Wuninitialized" } */
 
 inline int
 foo (int i)

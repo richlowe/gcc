@@ -972,8 +972,8 @@ replace_field_acc (struct field_access_site *acc, tree new_type)
 
       wr_p = VEC_last (type_wrapper_t, wrapper); 
       if (wr_p->wrap) /* Array.  */
-	new_ref = build4 (ARRAY_REF, type, new_ref, 
-			  wr_p->domain, NULL_TREE, NULL_TREE);
+	new_ref = build5 (ARRAY_REF, type, new_ref, 
+			  wr_p->domain, NULL_TREE, NULL_TREE, NULL_TREE);
       else /* Pointer.  */
 	new_ref = build1 (INDIRECT_REF, type, new_ref);
       VEC_pop (type_wrapper_t, wrapper);

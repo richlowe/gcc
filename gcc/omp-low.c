@@ -6726,31 +6726,9 @@ diagnose_sb_1 (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
       else if (is_gimple_call (stmt))
         {
           tree fndecl = gimple_call_fndecl (stmt);
-          if (fndecl && DECL_BUILT_IN (fndecl))
-            {
-              enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
-              if (fcode == BUILT_IN_GOMP_BARRIER)
-                {
-                    /* check for nesting of barrier. This is not
-                       currently done by check_omp_nesting_restrictions. */
-                    for (ctx = prev_ctx; ctx != NULL; ctx = ctx->outer)
-                      switch (gimple_code (ctx->stmt))
-                        {
-                        case OMP_FOR:
-                        case OMP_SECTIONS:
-                        case OMP_SINGLE:
-                        case OMP_ORDERED:
-                        case OMP_MASTER:
-                        case OMP_CRITICAL:
-                          warning (0, "barrier are not permitted in the dynamic extent "
-                                   "of DO/for, ordered, sections, single, master, and "
-                                   "critical regions.");
-                          break;
-                        default:
-                          break;
-                        }
-                }
-            }
+          if (fndecl && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL
+              && DECL_FUNCTION_CODE (fndecl) == BUILT_IN_GOMP_BARRIER)
+            check_omp_nesting_restrictions (stmt, prev_ctx);
         }
     }
 

@@ -498,8 +498,8 @@ build_one_array (gimple swtch, int num, tree arr_index_type, gimple phi,
   name = make_ssa_name (SSA_NAME_VAR (PHI_RESULT (phi)), NULL);
   info.target_inbound_names[num] = name;
 
-  fetch = build4 (ARRAY_REF, value_type, decl, tidx, NULL_TREE,
-		  NULL_TREE);
+  fetch = build5 (ARRAY_REF, value_type, decl, tidx, NULL_TREE,
+		  NULL_TREE, NULL_TREE);
   load = gimple_build_assign (name, fetch);
   SSA_NAME_DEF_STMT (name) = load;
 

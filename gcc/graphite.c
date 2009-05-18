@@ -4256,7 +4256,7 @@ expand_scalar_variables_expr (tree type, tree op0, enum tree_code code,
 	      (TREE_TYPE (op01), op01, TREE_CODE (op01), NULL, bb, scop,
 	       map, gsi);
 
-	    return build4 (ARRAY_REF, type, base, subscript, op02, op03);
+	    return build5 (ARRAY_REF, type, base, subscript, op02, op03, NULL_TREE);
 	  }
 
 	default:

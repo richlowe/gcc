@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -Wuninitialized" } */
+/* { dg-options "-O -frtl-backend -Wuninitialized" } */
 extern int bar (int);
 extern void baz (int *);
 int

@@ -1,6 +1,6 @@
 /* Positive test for uninitialized variables.  */
 /* { dg-do compile } */
-/* { dg-options "-Wuninitialized" } */
+/* { dg-options "-frtl-backend -Wuninitialized" } */
 
 int sink;
 

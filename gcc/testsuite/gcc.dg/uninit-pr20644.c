@@ -1,6 +1,6 @@
 /* PR 20644 */
 /* { dg-do compile } */
-/* { dg-options "-O -Wuninitialized" } */
+/* { dg-options "-O -frtl-backend -Wuninitialized" } */
 int foo ()
 {
   int i = 0;

@@ -1365,9 +1365,9 @@ ref_at_iteration (struct loop *loop, tree ref, int iter)
 	  && !expr_invariant_in_loop_p (loop, TREE_OPERAND (ref, 3)))
 	return NULL_TREE;
 
-      ret = build4 (ARRAY_REF, TREE_TYPE (ref), op0, NULL_TREE,
+      ret = build5 (ARRAY_REF, TREE_TYPE (ref), op0, NULL_TREE,
 		    unshare_expr (TREE_OPERAND (ref, 2)),
-		    unshare_expr (TREE_OPERAND (ref, 3)));
+		    unshare_expr (TREE_OPERAND (ref, 3)), NULL_TREE);
       idx = TREE_OPERAND (ref, 1);
       idx_p = &TREE_OPERAND (ret, 1);
     }

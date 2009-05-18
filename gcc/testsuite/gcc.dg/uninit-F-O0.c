@@ -1,6 +1,6 @@
 /* Test we do warn about initializing variable with self in the initialization. */
 /* { dg-do compile } */
-/* { dg-options "-Wuninitialized" } */
+/* { dg-options "-frtl-backend -Wuninitialized" } */
 
 int f()
 {
