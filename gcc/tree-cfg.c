@@ -7101,36 +7101,42 @@ static unsigned int
 execute_warn_function_return_nocfg (void)
 {
   source_location location;
-  int has_return;
   gimple_stmt_iterator gsi;
+  int noreturn_p = 0;
 
-  location = UNKNOWN_LOCATION;
-  has_return = 0;
-  for (gsi = gsi_start (gimple_body (current_function_decl));
-       !gsi_end_p (gsi); gsi_next (&gsi))
+  if (TREE_THIS_VOLATILE (cfun->decl)) 
+    for (gsi = gsi_start (gimple_body (cfun->decl));
+               !gsi_end_p (gsi); gsi_next (&gsi))
+      {
+        gimple stmt = gsi_stmt (gsi);
+        if (is_gimple_call (stmt)
+            && gimple_call_noreturn_p (stmt))
+          {
+	    noreturn_p = true;
+            break;
+	  }
+      }
+
+  if (TREE_THIS_VOLATILE (cfun->decl)
+      && !noreturn_p)
     {
-      gimple stmt = gsi_stmt (gsi);
-      if (gimple_code (stmt) == GIMPLE_RETURN 
-          && (location = gimple_location (stmt)) != UNKNOWN_LOCATION)
+      location = UNKNOWN_LOCATION;
+      for (gsi = gsi_start (gimple_body (cfun->decl));
+                 !gsi_end_p (gsi); gsi_next (&gsi))
         {
-          has_return = 1;
-	  break;
-        }
-    }
-
-  /* If we have a path to EXIT, then we do return.  */
-  if (TREE_THIS_VOLATILE (cfun->decl) && has_return)
-    {
+          gimple stmt = gsi_stmt (gsi);
+	  if (gimple_code (stmt) == GIMPLE_RETURN
+	      && (location = gimple_location (stmt)) != UNKNOWN_LOCATION)
+            break;
+	}
       if (location == UNKNOWN_LOCATION)
-	location = cfun->function_end_locus;
+        location = cfun->function_end_locus;
       warning (0, "%H%<noreturn%> function does return", &location);
     }
-
   /* If we see "return;" in some basic block, then we do reach the end
      without returning a value.  */
   else if (warn_return_type
 	   && !TREE_NO_WARNING (cfun->decl)
-	   && has_return
 	   && !VOID_TYPE_P (TREE_TYPE (TREE_TYPE (cfun->decl))))
     {
       for (gsi = gsi_start (gimple_body (cfun->decl));
