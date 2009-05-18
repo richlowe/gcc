@@ -25,4 +25,4 @@ baz ()
   int j;
   bar (foo (j = i++));
   asm ("");
-}
+}		/* { dg-warning "does return" } */ /* gccfss issued one more */

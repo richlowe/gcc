@@ -7088,6 +7088,30 @@ map_sync2solaris_fname (enum built_in_function fcode)
     }
 }
 
+/* Emit warning if a free is called with address of a variable.  */
+
+static void
+maybe_emit_free_warning (gimple stmt)
+{
+  tree arg = gimple_call_arg (stmt, 0);
+  location_t loc = gimple_location (stmt);
+
+  STRIP_NOPS (arg);
+  if (TREE_CODE (arg) != ADDR_EXPR)
+    return;
+
+  arg = get_base_address (TREE_OPERAND (arg, 0));
+  if (arg == NULL || INDIRECT_REF_P (arg))
+    return;
+
+  if (SSA_VAR_P (arg))
+    warning_at (loc, 
+                0, "%Hattempt to free a non-heap object %qD", &loc, arg);
+  else
+    warning_at (loc, 
+                0, "%Hattempt to free a non-heap object", &loc);
+}
+
 static void
 warn_if_sync_nand_changed (enum built_in_function fcode)
 {
@@ -7588,6 +7612,9 @@ dump_ir_builtin_call (gimple stmt, int need_return)
     CASE_FLT_FN (BUILT_IN_LLFLOOR):
       ret = dump_ir_builtin_int_roundingfn (stmt, need_return);
       break;
+    case BUILT_IN_FREE:
+      maybe_emit_free_warning (stmt);
+    /* Fall through */
     default:
       ret = dump_ir_call (stmt, need_return);
       break;

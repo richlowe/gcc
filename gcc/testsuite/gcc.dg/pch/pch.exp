@@ -54,8 +54,9 @@ close $f
 set f [open $testh w]
 close $f
 dg-pch $subdir $test [concat [list {-O0 -g}] $torture_without_loops] ".h"    
-file delete $test
-file delete $testh
+# Keep the files to trace the segmentation fault. 
+#file delete $test
+#file delete $testh
 
 set dg-do-what-default "$old_dg_do_what_default"
 

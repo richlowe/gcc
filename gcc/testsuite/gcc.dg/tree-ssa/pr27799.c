@@ -1,5 +1,6 @@
 /* { dg-do link } */
-/* { dg-options "-O2" } */
+/* iropt could optimize the case under -xalias_level=std. */
+/* { dg-options "-O3" } */
 
 struct X { double m; int x; };
 struct Y { int y; short d; };
