@@ -3292,7 +3292,6 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
     {
       enum tree_code subcode = resultcode;
       tree int_type = TREE_TYPE (intop);
-      tree intop0, intop1;
       
       /* case of: ptrop +- ((intop, 0) +- (intop, 1)) 
                        ^^ resultcode

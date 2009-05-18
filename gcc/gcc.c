@@ -2324,7 +2324,7 @@ translate_options (int *argcp, const char *const **argvp)
   int i;
   int argc = *argcp;
   char **argv = *argvp;
-  int newvsize = (argc + 3) * 2 * sizeof (const char *);
+  int newvsize = (argc + 5) * 2 * sizeof (const char *);
   const char **newv = XNEWVAR (const char *, newvsize);
   int newindex = 0;
 

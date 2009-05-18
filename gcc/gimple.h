@@ -2057,7 +2057,7 @@ gimple_call_arg (const_gimple gs, unsigned index)
 }
 
 /* Build and Return a TREE_LIST of arguments. */
-static tree
+static inline tree
 gimple_call_arglist (const_gimple gs)
 {
   int i;

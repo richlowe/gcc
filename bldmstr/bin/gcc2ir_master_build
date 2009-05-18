@@ -1,4 +1,4 @@
-#!/bin/ksh -f
+#!/bin/ksh 
 
 PATH=/usr/bin:/bin
 unset LANG

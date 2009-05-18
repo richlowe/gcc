@@ -1,4 +1,4 @@
-#!/bin/ksh -f
+#!/bin/ksh 
 
 date
 

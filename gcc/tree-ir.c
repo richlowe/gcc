@@ -88,7 +88,7 @@ static IR_NODE *cfun_eh_exc_ptr = 0;
 tree fval_type;
 static tree __builtin_va_alist_node;
 
-static void ir_add_loopinfo (tree);
+static void ir_add_loopinfo (tree, gimple);
 
 static TYPE offsettype = {PCC_UNDEF, 0, 0}; /* to be initialized later */
 
@@ -4869,7 +4869,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
       {
         const char * abs_name;
         tree op0 = TREE_OPERAND (stmt, 0); /* argument */
-        tree fn, arglist, t;
+        tree fn;
 
         /* Unsigned abs is simply the operand.  
 	   Testing here means we don't risk generating incorrect code below.  */
@@ -7028,7 +7028,7 @@ conv_c99_treecode2ir (tree node)
 
 /* We could map the builtin's below to appropriate call in atomics.h on S10. 
    If can't, return NULL and later use inline templates. */
-static char *
+static const char *
 map_sync2solaris_fname (enum built_in_function fcode)
 {
   switch (fcode)
@@ -7555,7 +7555,7 @@ dump_ir_builtin_call (gimple stmt, int need_return)
       dump_ir_call (gimple_build_call (fn, 0), 0);
 #endif
 
-      fname = map_sync2solaris_fname (fcode);
+      fname = (char *) map_sync2solaris_fname (fcode);
       if (fname)
         {
           fn = build_decl (FUNCTION_DECL, get_identifier (fname), 
@@ -8099,7 +8099,7 @@ dump_ir_stmt (gimple stmt)
           add_to_label_list (labelno);
 
 	if (gimple_label_for_loop_p (stmt))
-          ir_add_loopinfo (op0);
+          ir_add_loopinfo (op0, stmt);
 
         if (DECL_NONLOCAL (op0)) /* don't need to mark FORCED_LABELs as volatile */
           {
@@ -8760,10 +8760,11 @@ dump_function_ir (tree fn)
      inline C++ functions with eh regions. */
   if ( flag_xinline)
     {
-    if (in_xinline_string (IDENTIFIER_POINTER (DECL_NAME (fn)), tree_ir_noinline_list)
-         || (flag_tree_ir_no_inline && !in_xinline_string (IDENTIFIER_POINTER (DECL_NAME (fn)), tree_ir_inline_list)))
+      char *fn_name = (char *)IDENTIFIER_POINTER (DECL_NAME (fn));
+      if (in_xinline_string (fn_name, tree_ir_noinline_list)
+          || (flag_tree_ir_no_inline && !in_xinline_string (fn_name, tree_ir_inline_list)))
       ir_proc_set_inline_control (irProc, DO_NOT_INLINE_CALL);
-    else if (in_xinline_string(IDENTIFIER_POINTER (DECL_NAME (fn)), tree_ir_inline_list))
+      else if (in_xinline_string(fn_name, tree_ir_inline_list))
       ir_proc_set_inline_control (irProc, HIGH_PRIORITY_INLINE_CALL);
     }
 
@@ -9156,20 +9157,20 @@ global_ir_fini (void)
 }
 
 static void
-ir_add_loopinfo (tree stmt)
+ir_add_loopinfo (tree stmt, gimple gimple_label)
 {
   LOOPINFO * lp;
   lp = build_ir_loop ();
 
   if (TREE_CODE (stmt) == LABEL_DECL)
     {
-      save_and_switch_line_information (stmt);
+      save_and_switch_line_information (gimple_label);
       lp->looplabel = (LEAF *) build_ir_int_const (get_ir_label (stmt),
                                                    inttype, 0);
       lp->loopfilename = (LEAF *) build_ir_string_const (ir_location.file);
       lp->looplineno = (LEAF *) build_ir_int_const (ir_location.line,
                                                     inttype, 0);
-      restore_line_information (stmt);
+      restore_line_information (gimple_label);
     }
   else if (TREE_CODE (stmt) == GOTO_EXPR)
     {
@@ -9715,7 +9716,8 @@ find_default_clause (tree clauses)
             case OMP_CLAUSE_DEFAULT_SHARED:
               return SCOPE_SHARED;
             case OMP_CLAUSE_DEFAULT_PRIVATE:
-              return SCOPE_PRIVATE;        
+              return SCOPE_PRIVATE;   
+            case OMP_CLAUSE_DEFAULT_FIRSTPRIVATE: /* TODO */
             case OMP_CLAUSE_DEFAULT_UNSPECIFIED:
             case OMP_CLAUSE_DEFAULT_NONE:
             case OMP_CLAUSE_DEFAULT_AUTO:
@@ -11809,7 +11811,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   gimple_body = gimple_seq_alloc ();
   push_gimplify_context (&gctx);
   gimplify_and_add (t, &gimple_body);
-  pop_gimplify_context (NULL_TREE);
+  pop_gimplify_context (NULL);
 
   info = make_tree_vec (3);
   clause = build_omp_clause (OMP_CLAUSE_PRIVATE);
@@ -11841,7 +11843,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
 
   push_gimplify_context (&gctx);
   gimplify_and_add (t, &gimple_body);
-  pop_gimplify_context (NULL_TREE);
+  pop_gimplify_context (NULL);
   bind = gimple_build_bind (NULL, gimple_body, NULL);
   gimple_body = gimple_seq_alloc ();
   gimple_seq_add_stmt (&gimple_body, bind);

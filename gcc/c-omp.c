@@ -437,7 +437,7 @@ c_finish_omp_for (location_t locus, tree declv, tree initv, tree condv,
     return NULL;
   else
     {
-      tree ret, t = make_node (OMP_FOR);
+      tree t = make_node (OMP_FOR);
 
       TREE_TYPE (t) = void_type_node;
       OMP_FOR_INIT (t) = initv;
