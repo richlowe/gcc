@@ -11559,6 +11559,7 @@ dump_ir_threadprivate_fn_1 (int initp)
   DECL_RESULT (decl) = resdecl;
 
   allocate_struct_function (decl, false);
+  cfun->language = GGC_CNEW (struct language_function);
 
   TREE_STATIC (decl) = 1;
   TREE_USED (decl) = 1;
@@ -11776,6 +11777,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   DECL_RESULT (wrapper) = t;
 
   allocate_struct_function (wrapper, false);
+  cfun->language = GGC_CNEW (struct language_function);
   cfun->function_end_locus = DECL_SOURCE_LOCATION (wrapper);
   
   if (TREE_CODE (var) == VAR_DECL && TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)

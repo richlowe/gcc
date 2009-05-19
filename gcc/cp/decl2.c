@@ -4010,6 +4010,7 @@ build_cxx_tp_init_function (tree decl, tree init, bool initp)
   DECL_ARGUMENTS (fn_decl) = t;
 
   allocate_struct_function (fn_decl, false);
+  cfun->language = GGC_CNEW (struct language_function);
 
   TREE_STATIC (fn_decl) = 1;
   TREE_USED (fn_decl) = 1;

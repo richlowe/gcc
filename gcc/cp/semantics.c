@@ -3683,6 +3683,7 @@ generate_default_copy_ctor_function (tree decl)
   DECL_ARGUMENTS (fn_decl) = arg1;
 
   allocate_struct_function (fn_decl, false);
+  cfun->language = GGC_CNEW (struct language_function);
 
   TREE_STATIC (fn_decl) = 1;
   TREE_USED (fn_decl) = 1;
