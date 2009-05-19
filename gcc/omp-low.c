@@ -1816,6 +1816,7 @@ check_omp_nesting_restrictions (gimple  stmt, omp_context *ctx)
 	  case GIMPLE_OMP_ORDERED:
 	  case GIMPLE_OMP_MASTER:
 	  case GIMPLE_OMP_TASK:
+          case GIMPLE_OMP_CRITICAL:
 	    if (is_gimple_call (stmt))
 	      {
 		warning (0, "barrier region may not be closely nested inside "
