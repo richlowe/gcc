@@ -644,8 +644,9 @@ is_gimple_reg_or_call_rhs (tree t)
      the assignment.  */
 
   if (is_gimple_reg_type (TREE_TYPE (t))
-      && ((TREE_CODE (t) == CALL_EXPR && TREE_SIDE_EFFECTS (t))
-	  || tree_could_throw_p (t)))
+      && ((flag_use_rtl_backend == -1 
+           && TREE_CODE (t) == CALL_EXPR && TREE_SIDE_EFFECTS (t))
+	  || tree_could_throw_p (t))) /* check only for throw in gcc4ss. */
     return false;
 
   return is_gimple_formal_tmp_or_call_rhs (t);

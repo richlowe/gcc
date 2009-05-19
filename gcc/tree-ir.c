@@ -7998,6 +7998,7 @@ dump_ir_stmt (gimple stmt)
 
         if (op0) 
           {
+#if 0
             if (TREE_CODE (op0) == MODIFY_EXPR)
               {
                 tree left, right;
@@ -8029,12 +8030,24 @@ dump_ir_stmt (gimple stmt)
                 else
                   dump_ir_modify (gimple_build_assign (left, right));
               }
-            else if (TREE_CODE (op0) != RESULT_DECL) /* new gcc case */
+#endif 
+            /* Since gcc 4.4, generate 'return_expr (var_decl)'. see gimplify_return_expr */
+            if (TREE_CODE (op0) == VAR_DECL) 
               {
-		gimple t = gimple_build_assign (DECL_RESULT (current_function_decl),
-						op0);
-                dump_ir_stmt (t);
+                IR_NODE * ret = dump_ir_expr (op0, MAP_FOR_VALUE);
+                gcc_assert (ret->operand.tag == ISLEAF);
+                if (!TREE_USED (DECL_RESULT (current_function_decl))
+                    && ret->leaf.type.tword == func_ret_leaf->leaf.type.tword
+                    && ret->leaf.typep == func_ret_leaf->leaf.typep)
+                  {
+                    func_ret_leaf = ret;
+                    TREE_USED (DECL_RESULT (current_function_decl)) = 1;
+                  }
+                else
+                  dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
               }
+            else
+              dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
           }  
 
         build_ir_goto (return_label_num);
