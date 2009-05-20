@@ -8046,7 +8046,7 @@ dump_ir_stmt (gimple stmt)
                 else
                   dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
               }
-            else
+            else if (TREE_CODE (op0) != RESULT_DECL)
               dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
           }  
 
