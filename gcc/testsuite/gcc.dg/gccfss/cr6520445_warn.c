@@ -1,4 +1,5 @@
 /* cr 6520445 incorrect warning */
+/* { dg-excess-errors "but argument is of type" } */
 /* { dg-do compile } */
 
 struct S1 {int i;};
@@ -12,7 +13,7 @@ union U{
 struct S{
     union U u;
 };
-void foo (void *); /* { dg-message "expected 'void \*' but argument is of type" } */
+void foo (void *); 
 
 struct S volatile ss1[10];
 volatile struct S ss2[10];

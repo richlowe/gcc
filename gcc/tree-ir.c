@@ -8004,6 +8004,7 @@ dump_ir_stmt (gimple stmt)
 
         if (op0) 
           {
+#if 0
             if (TREE_CODE (op0) == MODIFY_EXPR)
               {
                 tree left, right;
@@ -8035,12 +8036,24 @@ dump_ir_stmt (gimple stmt)
                 else
                   dump_ir_modify (gimple_build_assign (left, right));
               }
-            else if (TREE_CODE (op0) != RESULT_DECL) /* new gcc case */
+#endif 
+            /* Since gcc 4.4, generate 'return_expr (var_decl)'. see gimplify_return_expr */
+            if (TREE_CODE (op0) == VAR_DECL) 
               {
-		gimple t = gimple_build_assign (DECL_RESULT (current_function_decl),
-						op0);
-                dump_ir_stmt (t);
+                IR_NODE * ret = dump_ir_expr (op0, MAP_FOR_VALUE);
+                gcc_assert (ret->operand.tag == ISLEAF);
+                if (!TREE_USED (DECL_RESULT (current_function_decl))
+                    && ret->leaf.type.tword == func_ret_leaf->leaf.type.tword
+                    && ret->leaf.typep == func_ret_leaf->leaf.typep)
+                  {
+                    func_ret_leaf = ret;
+                    TREE_USED (DECL_RESULT (current_function_decl)) = 1;
+                  }
+                else
+                  dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
               }
+            else if (TREE_CODE (op0) != RESULT_DECL)
+              dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
           }  
 
         build_ir_goto (return_label_num);
@@ -11565,6 +11578,7 @@ dump_ir_threadprivate_fn_1 (int initp)
   DECL_RESULT (decl) = resdecl;
 
   allocate_struct_function (decl, false);
+  cfun->language = GGC_CNEW (struct language_function);
 
   TREE_STATIC (decl) = 1;
   TREE_USED (decl) = 1;
@@ -11782,6 +11796,7 @@ dump_one_constructor_wrapper_1 (splay_tree_node n, int flag)
   DECL_RESULT (wrapper) = t;
 
   allocate_struct_function (wrapper, false);
+  cfun->language = GGC_CNEW (struct language_function);
   cfun->function_end_locus = DECL_SOURCE_LOCATION (wrapper);
   
   if (TREE_CODE (var) == VAR_DECL && TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)

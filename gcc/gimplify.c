@@ -644,8 +644,9 @@ is_gimple_reg_or_call_rhs (tree t)
      the assignment.  */
 
   if (is_gimple_reg_type (TREE_TYPE (t))
-      && ((TREE_CODE (t) == CALL_EXPR && TREE_SIDE_EFFECTS (t))
-	  || tree_could_throw_p (t)))
+      && ((flag_use_rtl_backend == -1 
+           && TREE_CODE (t) == CALL_EXPR && TREE_SIDE_EFFECTS (t))
+	  || tree_could_throw_p (t))) /* check only for throw in gcc4ss. */
     return false;
 
   return is_gimple_formal_tmp_or_call_rhs (t);
@@ -4980,6 +4981,17 @@ gimple_push_cleanup (tree var, tree cleanup, bool eh_only, gimple_seq *pre_p)
   else
     {
       gimplify_stmt (&cleanup, &cleanup_stmts);
+
+      /* To fix cr6839313 (pointer_array.cc). A gimple statement
+	 like try{empty}catch{statements} is definitely wrong. */
+      if (gate_generate_ir() && gimple_seq_first (cleanup_stmts))
+	{
+	  gimple temp = gsi_stmt( gsi_start (cleanup_stmts));
+	  if (gimple_code (temp) == GIMPLE_TRY
+	      && gimple_try_kind(temp) == GIMPLE_TRY_CATCH
+	      && !gimple_seq_first (gimple_try_eval (temp)))
+	    return;
+	}
       wce = gimple_build_wce (cleanup_stmts);
       gimple_wce_set_cleanup_eh_only (wce, eh_only);
       gimplify_seq_add_stmt (pre_p, wce);

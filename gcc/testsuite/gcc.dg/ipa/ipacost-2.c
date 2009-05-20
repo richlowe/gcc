@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O3 -fipa-cp -fipa-cp-clone -fdump-ipa-cp -fno-early-inlining -fdump-tree-optimized"  } */
+/* { dg-options "-O3 -fipa-cp -fipa-cp-clone -frtl-backend -fno-early-inlining -fdump-tree-optimized"  } */
 /* { dg-options "-O3 -fipa-cp -fipa-cp-clone -fdump-ipa-cp -fno-early-inlining -fdump-tree-optimized -fpie" { target { ! nonpic } } } */
 
 int array[100];

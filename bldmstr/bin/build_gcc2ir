@@ -492,7 +492,7 @@ install_suncomponents()
     
     # Install the libraries which support gccfss fundamental features.
     # This is only necessary for Linux.
-    if [ $BUILD_TYPE == sparc-linux ]
+    if [ $BUILDTYPE == sparc-linux ]
     then
 	echo "Installation of libraries on Linux list in linux_feature_libs.txt."
 	files=`sed '/^#/'d $SCRIPTDIR/linux_feature_libs.txt |awk '{print $1}'`
