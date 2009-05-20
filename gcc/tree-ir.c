@@ -429,7 +429,13 @@ generate_prefix (void)
   unsigned pid = (unsigned) getpid ();
   unsigned bits;
 
+#ifdef TARGET_CPU_sparc
   strcpy (prefix, "$XA_sgcc");
+#elif TARGET_CPU_x86
+  strcpy (prefix, ".XA_sgcc");
+#else
+#error
+#endif
   encode_bits (prefix + 8, tod, 5);
   bits = (pid << 2) | (tod >> 30);
   encode_bits (prefix + 13, bits, 3);
@@ -8046,7 +8052,7 @@ dump_ir_stmt (gimple stmt)
                 else
                   dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
               }
-            else
+            else if (TREE_CODE (op0) != RESULT_DECL)
               dump_ir_stmt (gimple_build_assign (DECL_RESULT (current_function_decl), op0));
           }  
 

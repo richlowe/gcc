@@ -36,24 +36,17 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* Define the syntax of pseudo-ops, labels and comments.  */
 
 /* String containing the assembler's comment-starter.  */
-
-/* RAT-TODO revert when eliminate side door file */
-//#define ASM_COMMENT_START "/"
-#define ASM_COMMENT_START "!"
+#define ASM_COMMENT_START "/"
 
 /* Output to assembler file text saying following lines
    may contain character constants, extra white space, comments, etc.  */
 
-/* RAT-TODO revert when eliminate side door file */
-//#define ASM_APP_ON "/APP\n"
-#define ASM_APP_ON "!APP\n"
+#define ASM_APP_ON "/APP\n"
 
 /* Output to assembler file text saying following lines
    no longer contain unusual constructs.  */
 
-/* RAT-TODO revert when eliminate side door file */
-//#define ASM_APP_OFF "/NO_APP\n"
-#define ASM_APP_OFF "!NO_APP\n"
+#define ASM_APP_OFF "/NO_APP\n"
 
 /* Output before read-only data.  */
 
@@ -65,7 +58,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 /* RAT-TODO revert when eliminate side door file */
 //#define DATA_SECTION_ASM_OP "\t.data"
-#define DATA_SECTION_ASM_OP "\t.sectin\.data,\"aw\""
+#define DATA_SECTION_ASM_OP "\t.section\.data,\"aw\""
 
 /* Output before writable (uninitialized) data.  */
 

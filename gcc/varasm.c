@@ -1647,6 +1647,13 @@ assemble_start_function (tree decl, const char *fnname)
   char tmp_label[100];
   bool hot_label_written = false;
 
+#ifdef TARGET_CPU_x86
+  /* For gccfss push a fake marker into the side door
+     file signalling this is RTL code, for better
+     readibility */
+  fprintf (asm_out_file, "/ START GCCFSS RTL ASM\n");
+#endif
+
   crtl->subsections.unlikely_text_section_name = NULL;
 
   first_function_block_is_cold = false;
@@ -1811,6 +1818,14 @@ assemble_end_function (tree decl, const char *fnname ATTRIBUTE_UNUSED)
       ASM_OUTPUT_LABEL (asm_out_file, crtl->subsections.hot_section_end_label);
       switch_to_section (save_text_section);
     }
+  
+#ifdef TARGET_CPU_x86
+  /* For gccfss push a fake marker into the side door
+     file signalling this is RTL code, for better
+     readibility */
+  fprintf (asm_out_file, "/ END GCCFSS RTL ASM\n");
+#endif
+
 }
 
 /* Assemble code to leave SIZE bytes of zeros.  */
