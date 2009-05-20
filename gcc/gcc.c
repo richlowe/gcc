@@ -1515,6 +1515,12 @@ static const char *cg_ipo_options =
                        m32: -xcode=abs32 ; \
                           : -xcode=abs32 } }}\
 "
+#else
+#ifdef TARGET_CPU_x86
+"%{xcode=pic13: -pic; \
+   xcode=pic32: -PIC } \
+"
+#endif
 #endif
 " \
  %{xcache=* : -xcache=%* ; \
