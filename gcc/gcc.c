@@ -1165,9 +1165,9 @@ static const char *oldstyle_cc1_options =
 
 static const char *asm_name =
 #ifdef __linux__
-"%{xfbe: fbe; xas: as; : as}";
+"%{xfbe: fbe; xas: as; xgas: gas; : as}";
 #else
-"%{xfbe: fbe; xas: as; : fbe}";
+"%{xfbe: fbe; xas: as; xgas: gas; : fbe}";
 #endif
 
 static const char *asm_options =
@@ -1177,7 +1177,7 @@ static const char *asm_options =
    to the assembler equivalents.  */
 "%{v} %{w:-W} %{I*} "
 #endif
-"%a %Y %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c:-o %d%w%u%O}";
+"%{xgas: %{v} %{w:-W} %{I*} } %a %Y %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c:-o %d%w%u%O}";
 
 static const char *cc1_unique_options =
 " %{Xc: %{xc99: -std=c99 ; \
@@ -1328,7 +1328,7 @@ static const char *ssbe_optlevel =
 #ifdef TARGET_CPU_x86
 "%{O:-O3;\
    O0: %{xprofile=* : -O3  ;\
-                    : -OO0 } ; \
+                    : -O0 } ; \
    O1:-O3;\
    O2:-O3;\
    O3:-O5;\
@@ -1336,7 +1336,7 @@ static const char *ssbe_optlevel =
    O*:-O5; \
    Zfast:-O5 ;\
      : %{xprofile=* : -O3 ; \
-                    : -OO0 } }";
+                    : -O0 } }";
 
 #endif /* TARGET_CPU_x86 */
 #endif
@@ -1499,7 +1499,9 @@ static const char *libm_il =
 static const char *cg_ipo_options =
  CG_IPO_OPTIONS
 "-Qy %(sscg_xarch_xchip) %(xtarget) \
- %{m32} %{m64} "
+ %{m32: -m32; \
+   m64: -m64; \
+      : -m32} "
 #ifdef TARGET_CPU_sparc
 "  %{g0: ; g*:-g -gen_loclist_gcc=1}"
 #else
@@ -1579,7 +1581,7 @@ static const char *cg_ipo_options =
   %{Zfsimple=2: -fsr=1; \
               : -ZW} \
   %{Zfsimple=*: -fsimple=%*} \
-  %{xregs=frameptr: -xregs=frameptr -ZB; \
+  %{xregs=frameptr: -ZB; \
            : -Z~B} \
   %{xbuiltin=*: -xbuiltin=%*} \
   %{Zfns=*: }"
@@ -1605,7 +1607,6 @@ static const char *cg_ipo_options =
  %{xunroll=*} \
  %{xsafe=unboundsym} \
  %{fno-got: -Qiselect-gd_enable=0} \
- %{xregs=*} \
  %{mapp-regs: -xregs=appl} \
  %{mno-app-regs: -xregs=no%%appl} \
  %{mfpu: -xregs=float} \
@@ -1691,10 +1692,11 @@ static const char *invoke_cg =
 "|\n %(cg) "
 #ifdef TARGET_CPU_x86
 " -iropt -s -fstore -fbe %J/../bin/fbe -comdat  \
-  %{m64: -m64 %{mcmodel=*: -xmodel=%*} %{!mcmodel: -xmodel=small} } \
+  %{m64: %{mcmodel=*: -xmodel=%*} %{!mcmodel: -xmodel=small} } \
   %{Zfstore: -fstore; \
     Znofstore: -nofstore; \
            : -fstore} \
+  %{xgas: -as_info=no } \
 "
 #endif
 "%:add-user-il-routines() %(cg_ipo_options) \
@@ -1729,13 +1731,25 @@ static const char *invoke_cg =
 #ifdef TARGET_CPU_x86
 " %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*:  %{Zipo_fast_phase_1: -OO0} } } \
  %T \
-  %{!S: %(invoke_fbe) } "
+  %{!S: %{xgas: %(invoke_gas); : %(invoke_fbe) } }"
 #endif
 #endif
 ;
 
+static const char *invoke_gas =
+"|\n gas \
+   %{c:%{!o*:-o %w%b%O}%W{o*:-o %*}} \
+   %{!c: %{Zpec=*: -o %d%w%U%O; :-o %d%w%u%O} } \
+   -Qy -s \
+   %{m32: --32; \
+     m64: --64; \
+        : --32} \
+   %{save-temps: %b.cgs} %{!save-temps: %U.cgs} \
+   -mmnemonic=att -msyntax=att \
+";
+
 static const char *invoke_fbe =
-"|\n fbe \
+"|\n %(asm_name) \
    %{c:%{!o*:-o %w%b%O}%W{o*:-o %*}} \
    %{!c: %{Zpec=*: -o %d%w%U%O; :-o %d%w%u%O} } \
    -Qy -s \
@@ -2324,7 +2338,7 @@ translate_options (int *argcp, const char *const **argvp)
   int i;
   int argc = *argcp;
   char **argv = *argvp;
-  int newvsize = (argc + 5) * 2 * sizeof (const char *);
+  int newvsize = (2*argc + 5) * 2 * sizeof (const char *);
   const char **newv = XNEWVAR (const char *, newvsize);
   int newindex = 0;
 
@@ -3884,7 +3898,8 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("sysroot_hdrs_suffix_spec",	&sysroot_hdrs_suffix_spec),
   INIT_STATIC_SPEC ("invoke_iropt",		&invoke_iropt),
   INIT_STATIC_SPEC ("invoke_cg",		&invoke_cg),
-  INIT_STATIC_SPEC ("invoke_fbe",              &invoke_fbe),
+  INIT_STATIC_SPEC ("invoke_fbe",               &invoke_fbe),
+  INIT_STATIC_SPEC ("invoke_gas",               &invoke_gas),
   INIT_STATIC_SPEC ("ssbe_xarch",		&ssbe_xarch),
   INIT_STATIC_SPEC ("ssbe_xarch_xchip",		&ssbe_xarch_xchip),
   INIT_STATIC_SPEC ("sscg_xarch_xchip",		&sscg_xarch_xchip),
@@ -7300,7 +7315,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 
   /* Then create the space for the vectors and scan again.  */
 
-  switches = XNEWVEC (struct switchstr, n_switches + 1);
+  switches = XNEWVEC (struct switchstr, 2*n_switches + 1);
   infiles = XNEWVEC (struct infile, n_infiles + 1);
   ilfiles = XNEWVEC (struct infile, n_ilfiles + 1);
 
