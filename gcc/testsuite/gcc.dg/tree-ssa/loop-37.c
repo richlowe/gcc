@@ -1,5 +1,5 @@
 /* { dg-do link } */
-/* { dg-options "-O2 -fdump-tree-optimized" } */
+/* { dg-options "-O2 -frtl-backend -fdump-tree-optimized" } */
 
 extern void link_error (void);
 static const int my_array [3] = { 4, 5, 6 };
