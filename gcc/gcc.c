@@ -1724,7 +1724,7 @@ static const char *invoke_cg =
 #ifdef TARGET_CPU_x86
 " %{xipo=1|xipo=2: -ipo %{o*: %*} %{!o*: %w%b.o} }\
   %{!S: -S %{save-temps: %b.cgs} %{!save-temps: %w%u.cgs} } \
-  %{S: %W{s*} -S %{!o*: %w%b.s} %{o*: %*} } \
+  %{S:  -S %{!o*: %w%b.s} %{o*: %*} } \
   %{save-temps:%b.ircg} %{!save-temps:%U.ircg} \
 " 
 #endif /* TARGET_CPU_x86 */
