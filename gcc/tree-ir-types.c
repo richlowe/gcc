@@ -176,6 +176,9 @@ map_gnu_type_to_tword (tree node)
           ret = PCC_DOUBLE;
           break;
         case TFmode: 
+#ifdef TARGET_CPU_x86
+        case XFmode:
+#endif
           ret = PCC_LDOUBLE;
           break;
         default: abort ();
@@ -200,6 +203,9 @@ map_gnu_type_to_tword (tree node)
           ret = PCC_DOUBLE_COMPLEX; /*double complex*/
           break;
         case TCmode: 
+#ifdef TARGET_CPU_x86
+        case XCmode:
+#endif
           ret = PCC_LDOUBLE_COMPLEX; /*long double complex*/
           break;
         default: abort ();

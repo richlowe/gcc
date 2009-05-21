@@ -2775,10 +2775,14 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
               break;
             
             argtype = map_gnu_type_to_TYPE (TREE_TYPE (op0));
-            
+
+#ifdef TARGET_CPU_x86
+            /* __complex__ float is translated into type COMPLEX (8,4).*/
+#else
             /* llongs and doubles in 32-bit should be gimplified 
                by gimplify_parameters() */
             gcc_assert (argtype.size <= 4 || TARGET_ARCH64);
+#endif
                 
             ret = build_ir_addr_const (ret, 0,
                          map_gnu_type_to_TYPE (build_pointer_type (TREE_TYPE (op0))),
