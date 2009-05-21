@@ -58,7 +58,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 /* RAT-TODO revert when eliminate side door file */
 //#define DATA_SECTION_ASM_OP "\t.data"
-#define DATA_SECTION_ASM_OP "\t.section\.data,\"aw\""
+#define DATA_SECTION_ASM_OP "\t.section\t.data,\"aw\""
 
 /* Output before writable (uninitialized) data.  */
 
