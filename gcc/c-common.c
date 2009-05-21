@@ -8548,7 +8548,12 @@ warn_for_sign_compare (location_t location,
   /* Do not warn if the comparison is being done in a signed type,
      since the signed type will only be chosen if it can represent
      all the values of the unsigned type.  */
-  if (!TYPE_UNSIGNED (result_type))
+  /* For complex type, check COMPLEX_ORIG_INNER_TYPE for the sign bit. */
+  if (TREE_CODE (result_type) == COMPLEX_TYPE 
+      && !TYPE_UNSIGNED (COMPLEX_ORIG_INNER_TYPE (result_type)))
+    /* OK */;
+  else if (TREE_CODE (result_type) != COMPLEX_TYPE 
+           && !TYPE_UNSIGNED (result_type))
     /* OK */;
   /* Do not warn if both operands are unsigned.  */
   else if (op0_signed == op1_signed)

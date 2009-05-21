@@ -437,13 +437,14 @@ pp_c_specifier_qualifier_list (c_pretty_printer *pp, tree t)
       pp_c_specifier_qualifier_list (pp, TREE_TYPE (t));
       break;
 
-    case VECTOR_TYPE:
     case COMPLEX_TYPE:
+      pp_c_specifier_qualifier_list (pp, COMPLEX_ORIG_INNER_TYPE (t));
+      pp_c_identifier (pp, flag_isoc99 ? "_Complex" : "__complex__");
+      break;
+
+    case VECTOR_TYPE:
       pp_c_specifier_qualifier_list (pp, TREE_TYPE (t));
-      if (code == COMPLEX_TYPE)
-	pp_c_identifier (pp, flag_isoc99 ? "_Complex" : "__complex__");
-      else if (code == VECTOR_TYPE)
-	pp_c_identifier (pp, "__vector__");
+      pp_c_identifier (pp, "__vector__");
       break;
 
     default:

@@ -2085,6 +2085,12 @@ struct tree_block GTY(())
 #define TYPE_ORIG_SIZE_TYPE(NODE)			\
   (INTEGER_TYPE_CHECK (NODE)->type.values		\
   ? TREE_TYPE ((NODE)->type.values) : NULL_TREE)
+
+/* For a COMPLEX_TYPE, holds the "original" inner type. (detailed in build_complex_type.) */
+/* It's okay to overlapped with TYPE_CACHED_VALUES since this is only 
+   applied to complex_type. */ 
+#define COMPLEX_ORIG_INNER_TYPE(NODE) (TYPE_CHECK (NODE)->type.values)
+
 #define TYPE_METHODS(NODE) (RECORD_OR_UNION_CHECK (NODE)->type.maxval)
 #define TYPE_VFIELD(NODE) (RECORD_OR_UNION_CHECK (NODE)->type.minval)
 #define TYPE_ARG_TYPES(NODE) (FUNC_OR_METHOD_CHECK (NODE)->type.values)

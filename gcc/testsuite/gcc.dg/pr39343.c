@@ -1,6 +1,7 @@
 /* PR tree-optimization/39343 */
 /* { dg-do run } */
-/* { dg-options "-O2" } */
+/* gccfss don't inline foo to main. -std=c99 would keep the function body. */
+/* { dg-options "-std=c99 -O2" } */
 
 extern void abort (void);
 

@@ -6248,6 +6248,9 @@ build_complex_type (tree component_type)
 
   TREE_TYPE (t) = TYPE_MAIN_VARIANT (component_type);
 
+  /* Keep the original inner type. */
+  COMPLEX_ORIG_INNER_TYPE (t) = TREE_TYPE (t);
+
   /* need to fix inner types for CQI, CHI, CSI and CDI to SF and DF for gcc2ir */
   if (TREE_CODE (TREE_TYPE (t)) == INTEGER_TYPE)
     {

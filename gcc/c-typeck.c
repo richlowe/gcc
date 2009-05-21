@@ -667,13 +667,13 @@ c_common_type (tree t1, tree t2)
      required type.  */
   if (code1 == COMPLEX_TYPE || code2 == COMPLEX_TYPE)
     {
-      tree subtype1 = code1 == COMPLEX_TYPE ? TREE_TYPE (t1) : t1;
-      tree subtype2 = code2 == COMPLEX_TYPE ? TREE_TYPE (t2) : t2;
+      tree subtype1 = code1 == COMPLEX_TYPE ? COMPLEX_ORIG_INNER_TYPE (t1) : t1;
+      tree subtype2 = code2 == COMPLEX_TYPE ? COMPLEX_ORIG_INNER_TYPE (t2) : t2;
       tree subtype = c_common_type (subtype1, subtype2);
 
-      if (code1 == COMPLEX_TYPE && TREE_TYPE (t1) == subtype)
+      if (code1 == COMPLEX_TYPE && COMPLEX_ORIG_INNER_TYPE (t1) == subtype)
 	return t1;
-      else if (code2 == COMPLEX_TYPE && TREE_TYPE (t2) == subtype)
+      else if (code2 == COMPLEX_TYPE && COMPLEX_ORIG_INNER_TYPE (t2) == subtype)
 	return t2;
       else
 	return build_complex_type (subtype);

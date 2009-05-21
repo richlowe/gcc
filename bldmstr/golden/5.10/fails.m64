@@ -108,6 +108,25 @@ gcc.sum:FAIL: gcc.c-torture/execute/ieee/pr38016.c execution,  -fast -xipo=2
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c -fno-show-column (test for excess errors)
+gcc.sum:FAIL: gcc.dg/debug/pr35154.c scan-assembler .stabs.*i_inner:V
+gcc.sum:FAIL: gcc.dg/debug/pr35154.c scan-assembler .stabs.*i_inner:V
+gcc.sum:FAIL: gcc.dg/debug/pr35154.c scan-assembler .stabs.*i_inner:V
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/inline1.c scan-assembler-times  DW_AT_location 3
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr29609-1.c scan-assembler pr29609-1.c:18
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr29609-2.c scan-assembler pr29609-2.c:27
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr29609-2.c scan-assembler pr29609-2.c:30
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr36690-1.c scan-assembler pr36690-1.c:11
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr36690-2.c scan-assembler pr36690-2.c:24
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr36690-3.c scan-assembler pr36690-3.c:19
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr36690-3.c scan-assembler pr36690-3.c:22
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr36690-3.c scan-assembler pr36690-3.c:25
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr36690-3.c scan-assembler pr36690-3.c:28
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr36690-3.c scan-assembler pr36690-3.c:30
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr37616.c scan-assembler pr37616.c:17
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr37616.c scan-assembler pr37616.c:19
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr37616.c scan-assembler pr37616.c:21
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr37726.c scan-assembler-times "parm[^
+gcc.sum:FAIL: gcc.dg/debug/dwarf2/pr37726.c scan-assembler-times "var[^
 gcc.sum:FAIL: gcc.dg/20040206-1.c  (test for warnings, line 10)
 gcc.sum:FAIL: gcc.dg/20040206-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
@@ -129,6 +148,7 @@ gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
+gcc.sum:FAIL: gcc.dg/ipa/ipacost-1.c scan-tree-dump-not optimized "i_can_be_propagated"
 gcc.sum:FAIL: gcc.dg/pch/cpp-2.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/cpp-2.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/cpp-3.c -O0 -g assembly comparison
@@ -188,7 +208,10 @@ gcc.sum:FAIL: gcc.target/sparc/fornots.c scan-assembler-times fornot1s	% 4
 gcc.sum:FAIL: gcc.target/sparc/fpadd32s.c scan-assembler fpadd32s\t%
 gcc.sum:FAIL: gcc.target/sparc/fpmerge-2.c scan-assembler-not fpmerge\t%
 gcc.sum:FAIL: gcc.target/sparc/fpmul-2.c scan-assembler-not fmul8x16\t%
+gcc.sum:FAIL: gcc.target/sparc/fpmul-2.c scan-assembler-not fmul8x16au\t%
+gcc.sum:FAIL: gcc.target/sparc/fpmul-2.c scan-assembler-not fmul8x16al\t%
 gcc.sum:FAIL: gcc.target/sparc/fpsub32s.c scan-assembler fpsub32s\t%
 gcc.sum:FAIL: gcc.target/sparc/fxnor.c scan-assembler-times fxnor	% 6
 gcc.sum:FAIL: gcc.target/sparc/fxnors.c scan-assembler-times fxnors	% 4
 gcc.sum:FAIL: gcc.target/sparc/pdist-2.c scan-assembler-not pdist\t%
+libstdc++.sum:FAIL: ext/enc_filebuf/char/13598.cc execution test
