@@ -795,9 +795,11 @@ convert_to_complex (tree type, tree expr)
 
     case COMPLEX_TYPE:
       {
-	tree elt_type = TREE_TYPE (TREE_TYPE (expr));
+	tree elt_type = COMPLEX_ORIG_INNER_TYPE (TREE_TYPE (expr));
+        tree orig_subtype = TREE_CODE (type) == COMPLEX_TYPE ?
+                            COMPLEX_ORIG_INNER_TYPE (type) : TREE_TYPE (type);
 
-	if (TYPE_MAIN_VARIANT (elt_type) == TYPE_MAIN_VARIANT (subtype))
+	if (TYPE_MAIN_VARIANT (elt_type) == TYPE_MAIN_VARIANT (orig_subtype))
 	  return expr;
 	else if (TREE_CODE (expr) == COMPLEX_EXPR)
 	  return fold_build2 (COMPLEX_EXPR, type,

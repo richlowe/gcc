@@ -987,6 +987,24 @@ pp_c_complex_expr (c_pretty_printer *pp, tree e)
   tree realexpr = TREE_OPERAND (e, 0);
   tree imagexpr = TREE_OPERAND (e, 1);
 
+  /* gccfss: Cast of an COMPLEX_TYPE expression to a different COMPLEX_TYPE.  */
+  /* The format of complex_expr may look differ from plain gcc.  
+       arg 0 <realpart_expr type <real_type float>
+           arg 0 <save_expr type <complex_type ...>
+               arg 0 <var_decl ...>>> 
+       arg 1 ... */
+  if (TREE_CODE (realexpr) == REALPART_EXPR
+      && TREE_CODE (imagexpr) == IMAGPART_EXPR
+      && TREE_TYPE (realexpr) == TREE_TYPE (type)
+      && TREE_TYPE (imagexpr) == TREE_TYPE (type)
+      && TREE_OPERAND (TREE_OPERAND (realexpr, 0), 0)
+	 == TREE_OPERAND (TREE_OPERAND (imagexpr, 0), 0))
+    {
+      pp_c_type_cast (pp, type);
+      pp_expression (pp, TREE_OPERAND (TREE_OPERAND (realexpr, 0), 0));
+      return;
+    }
+
   /* Cast of an COMPLEX_TYPE expression to a different COMPLEX_TYPE.  */
   if (TREE_CODE (realexpr) == NOP_EXPR
       && TREE_CODE (imagexpr) == NOP_EXPR
@@ -1002,12 +1020,13 @@ pp_c_complex_expr (c_pretty_printer *pp, tree e)
       return;
     }
 
-  /* Cast of an scalar expression to COMPLEX_TYPE.  */
+  /* gccfss: Cast of an scalar expression to COMPLEX_TYPE.  */
   if ((integer_zerop (imagexpr) || real_zerop (imagexpr))
       && TREE_TYPE (realexpr) == TREE_TYPE (type))
     {
       pp_c_type_cast (pp, type);
-      if (TREE_CODE (realexpr) == NOP_EXPR)
+      if (TREE_CODE (realexpr) == FLOAT_EXPR /* Only for gccfss */
+          || TREE_CODE (realexpr) == NOP_EXPR) /* common gcc style */
 	realexpr = TREE_OPERAND (realexpr, 0);
       pp_expression (pp, realexpr);
       return;

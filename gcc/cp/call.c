@@ -749,7 +749,7 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
 	 the standard conversion sequence to perform componentwise
 	 conversion.  */
       conversion *part_conv = standard_conversion
-	(TREE_TYPE (to), TREE_TYPE (from), NULL_TREE, c_cast_p, flags);
+	(COMPLEX_ORIG_INNER_TYPE (to), COMPLEX_ORIG_INNER_TYPE (from), NULL_TREE, c_cast_p, flags);
 
       if (part_conv)
 	{

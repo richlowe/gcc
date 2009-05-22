@@ -279,14 +279,14 @@ cp_common_type (tree t1, tree t2)
      required type.  */
   if (code1 == COMPLEX_TYPE || code2 == COMPLEX_TYPE)
     {
-      tree subtype1 = code1 == COMPLEX_TYPE ? TREE_TYPE (t1) : t1;
-      tree subtype2 = code2 == COMPLEX_TYPE ? TREE_TYPE (t2) : t2;
+      tree subtype1 = code1 == COMPLEX_TYPE ? COMPLEX_ORIG_INNER_TYPE (t1) : t1;
+      tree subtype2 = code2 == COMPLEX_TYPE ? COMPLEX_ORIG_INNER_TYPE (t2) : t2;
       tree subtype
 	= type_after_usual_arithmetic_conversions (subtype1, subtype2);
 
-      if (code1 == COMPLEX_TYPE && TREE_TYPE (t1) == subtype)
+      if (code1 == COMPLEX_TYPE && COMPLEX_ORIG_INNER_TYPE (t1) == subtype)
 	return build_type_attribute_variant (t1, attributes);
-      else if (code2 == COMPLEX_TYPE && TREE_TYPE (t2) == subtype)
+      else if (code2 == COMPLEX_TYPE && COMPLEX_ORIG_INNER_TYPE (t2) == subtype)
 	return build_type_attribute_variant (t2, attributes);
       else
 	return build_type_attribute_variant (build_complex_type (subtype),
@@ -1137,7 +1137,7 @@ structural_comptypes (tree t1, tree t2, int strict)
       break;
 
     case COMPLEX_TYPE:
-      if (!same_type_p (TREE_TYPE (t1), TREE_TYPE (t2)))
+      if (!same_type_p (COMPLEX_ORIG_INNER_TYPE (t1), COMPLEX_ORIG_INNER_TYPE (t2)))
 	return false;
       break;
 
