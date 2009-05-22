@@ -5983,27 +5983,30 @@ dump_ir_builtin_va_end (tree arglist)
 static tree
 stabilize_va_list (tree valist, int needs_lvalue)
 {
-  if (TREE_CODE (va_list_type_node) == ARRAY_TYPE)
+  tree vatype = targetm.canonical_va_list_type (TREE_TYPE (valist));
+
+  gcc_assert (vatype != NULL_TREE);
+
+  if (TREE_CODE (vatype) == ARRAY_TYPE)
     {
       /* should never be the case for SPARC */
-      abort ();
+
+      /* For this case, the backends will be expecting a pointer to
+         TREE_TYPE (va_list_type_node), but it's possible we've
+         actually been given an array (an actual va_list_type_node).
+         So fix it.  */
+      if (TREE_CODE (TREE_TYPE (valist)) == ARRAY_TYPE)
+        {
+          tree p1 = build_pointer_type (TREE_TYPE (vatype));
+          valist = build_fold_addr_expr_with_type (valist, p1);
+        }
     }
   else
     {
-/*      tree pt;*/
 
       if (! needs_lvalue)
-	{
-/*	  if (! TREE_SIDE_EFFECTS (valist))*/
-	    return valist;
+	return valist;
 
-/*	  pt = build_pointer_type (va_list_type_node);
-	  valist = fold (build1 (ADDR_EXPR, pt, valist));
-	  TREE_SIDE_EFFECTS (valist) = 1;*/
-	}
-
-/*      if (TREE_SIDE_EFFECTS (valist))
-	valist = save_expr (valist);*/
       valist = fold (build1 (INDIRECT_REF, TREE_TYPE (TREE_TYPE (valist)),
 			     valist));
     }
@@ -6027,16 +6030,24 @@ dump_ir_builtin_va_copy (tree arglist)
   dst = stabilize_va_list (dst, 1);
   src = stabilize_va_list (src, 0);
 
-  if (TREE_CODE (va_list_type_node) != ARRAY_TYPE)
+  if (TREE_CODE (targetm.fn_abi_va_list (cfun->decl)) != ARRAY_TYPE)
     {
       t = gimple_build_assign (dst, src);
-      /* TREE_SIDE_EFFECTS (t) = 1; */
       dump_ir_stmt (t);
     }
   else
     {
+      tree fn, len;
       /* should never be the case for SPARC */
-      abort ();
+
+      /* copy. */
+      gcc_assert (TREE_CODE (TREE_TYPE (dst)) == POINTER_TYPE
+		 || TREE_CODE (TREE_TYPE (src)) == POINTER_TYPE);
+
+      len = TYPE_SIZE_UNIT (targetm.fn_abi_va_list (cfun->decl));
+      fn = implicit_built_in_decls[BUILT_IN_MEMCPY];
+      t = gimple_build_call (fn, 3, dst, src, len);
+      dump_ir_stmt (t);
     }
 }
 
@@ -6064,13 +6075,8 @@ dump_ir_builtin_va_start (gimple exp)
       return;
     }
 
-  /* FIXME: gimplify_call_expr has already invoked it. seems not need fold it once more.  
-  if (fold_builtin_next_arg (exp, true))
-    return;
-  */
-
   nextarg = dump_ir_builtin_next_arg ();
-  valist = stabilize_va_list (gimple_call_arg(exp, 0), 1);
+  valist = stabilize_va_list (gimple_call_arg (exp,0), 1);
 
   t = gimple_build_assign (valist, nextarg);
   /* FIXME: TREE_SIDE_EFFECTS (gimple_op (t, 0)) = 1; I think it's useless. */
@@ -7018,6 +7024,9 @@ conv_c99_treecode2ir (tree node)
     CASE_FLT_FN (BUILT_IN_ISINF):
       return IR_ISINF;
     CASE_FLT_FN (BUILT_IN_ISNAN):
+    case BUILT_IN_ISNAND32:
+    case BUILT_IN_ISNAND64:
+    case BUILT_IN_ISNAND128:
       return IR_ISNAN;
     CASE_FLT_FN (BUILT_IN_ISFINITE):
     CASE_FLT_FN (BUILT_IN_FINITE):
@@ -7181,11 +7190,6 @@ dump_ir_builtin_call (gimple stmt, int need_return)
   switch (fcode)
     {
     CASE_FLT_FN (BUILT_IN_SIGNBIT):
-      /* If no header files found, gccfss help to generate IR_* independent of 'gccbuiltins.il'. */
-      if (strncmp (IDENTIFIER_POINTER (DECL_NAME (fndecl)), "__builtin_", 10) == 0)
-        return dump_ir_call (stmt, need_return);
-
-      /* fall through */
     CASE_FLT_FN (BUILT_IN_ISINF):
     CASE_FLT_FN (BUILT_IN_ISNAN):
     CASE_FLT_FN (BUILT_IN_ISFINITE):
