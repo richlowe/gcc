@@ -3356,12 +3356,8 @@ dwarf2out_frame_init (void)
 void
 dwarf2out_frame_finish (void)
 {
-  #ifdef TARGET_CPU_x86
-  /* For gccfss push a fake marker into the side door
-     file signalling this is RTL code, for better
-     readibility */
-  fprintf (asm_out_file, "/ START GCCFSS RTL ASM\n");
-#endif
+
+#ifdef TARGET_CPU_sparc
 
   /* Output call frame information.  */
   if (DWARF2_FRAME_INFO)
@@ -3373,13 +3369,7 @@ dwarf2out_frame_finish (void)
     output_call_frame_info (1);
 #endif
 
-#ifdef TARGET_CPU_x86
-  /* For gccfss push a fake marker into the side door
-     file signalling this is RTL code, for better
-     readibility */
-  fprintf (asm_out_file, "/ END GCCFSS RTL ASM\n");
 #endif
-
 }
 
 /* Note that the current function section is being used for code.  */

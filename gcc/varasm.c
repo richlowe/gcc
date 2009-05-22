@@ -33,9 +33,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 
 /*this is to workaround weakref issue on linux and cross gccfss.*/
-#if defined(__linux__) || defined(CROSS_DIRECTORY_STRUCTURE)
+#if defined(__linux__) || defined(CROSS_DIRECTORY_STRUCTURE) || defined(TARGET_CPU_x86)
 #undef HAVE_GAS_WEAKREF
 #endif
+
+extern int app_on; /* X86 HACK */
 
 #include "tm.h"
 #include "rtl.h"
@@ -63,6 +65,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-iterator.h"
 #include "tree-ir.h"
 #include "c-common.h"
+
+/* fbe cannot support .weakref. We suppress HAVE_GAS_WEAKREF above, however, it seems to
+   get turned on later. So resuppress it again */
+#ifdef TARGET_CPU_x86
+#undef HAVE_GAS_WEAKREF
+#undef ASM_OUTPUT_WEAKREF
+#endif
 
 #ifdef XCOFF_DEBUGGING_INFO
 #include "xcoffout.h"		/* Needed for external data
@@ -1534,7 +1543,13 @@ default_named_section_asm_out_destructor (rtx symbol, int priority)
   else
     sec = get_section (".dtors", SECTION_WRITE, NULL);
 
+  int orig_app_on = app_on;
+  app_enable ();
+
   assemble_addr_to_section (symbol, sec);
+
+  if (!orig_app_on)
+    app_disable ();
 }
 
 #ifdef DTORS_SECTION_ASM_OP
@@ -1542,7 +1557,13 @@ void
 default_dtor_section_asm_out_destructor (rtx symbol,
 					 int priority ATTRIBUTE_UNUSED)
 {
+  int orig_app_on = app_on;
+  app_enable ();
+
   assemble_addr_to_section (symbol, dtors_section);
+
+  if (!orig_app_on)
+    app_disable ();
 }
 #endif
 
@@ -1552,6 +1573,9 @@ void
 default_stabs_asm_out_constructor (rtx symbol ATTRIBUTE_UNUSED,
 				   int priority ATTRIBUTE_UNUSED)
 {
+  int orig_app_on = app_on;
+  app_enable ();
+
 #if defined DBX_DEBUGGING_INFO || defined XCOFF_DEBUGGING_INFO
   /* Tell GNU LD that this is part of the static destructor set.
      This will work for any system that uses stabs, most usefully
@@ -1561,6 +1585,9 @@ default_stabs_asm_out_constructor (rtx symbol ATTRIBUTE_UNUSED,
 #else
   sorry ("global constructors not supported on this target");
 #endif
+
+  if (!orig_app_on)
+    app_disable ();
 }
 
 void
@@ -1574,7 +1601,13 @@ default_named_section_asm_out_constructor (rtx symbol, int priority)
   else
     sec = get_section (".ctors", SECTION_WRITE, NULL);
 
+  int orig_app_on = app_on;
+  app_enable ();
+
   assemble_addr_to_section (symbol, sec);
+
+  if (!orig_app_on)
+    app_disable ();
 }
 
 #ifdef CTORS_SECTION_ASM_OP
@@ -1582,7 +1615,11 @@ void
 default_ctor_section_asm_out_constructor (rtx symbol,
 					  int priority ATTRIBUTE_UNUSED)
 {
+  int orig_app_on = app_on;
+  app_enable ();
   assemble_addr_to_section (symbol, ctors_section);
+  if (!orig_app_on)
+    app_disable ();
 }
 #endif
 
@@ -1647,13 +1684,6 @@ assemble_start_function (tree decl, const char *fnname)
   char tmp_label[100];
   bool hot_label_written = false;
 
-#ifdef TARGET_CPU_x86
-  /* For gccfss push a fake marker into the side door
-     file signalling this is RTL code, for better
-     readibility */
-  fprintf (asm_out_file, "/ START GCCFSS RTL ASM\n");
-#endif
-
   crtl->subsections.unlikely_text_section_name = NULL;
 
   first_function_block_is_cold = false;
@@ -1680,6 +1710,8 @@ assemble_start_function (tree decl, const char *fnname)
   /* The following code does not need preprocessing in the assembler.  */
 
   app_disable ();
+
+  app_enable ();
 
   if (CONSTANT_POOL_BEFORE_FUNCTION)
     output_constant_pool (fnname, decl);
@@ -1819,12 +1851,7 @@ assemble_end_function (tree decl, const char *fnname ATTRIBUTE_UNUSED)
       switch_to_section (save_text_section);
     }
   
-#ifdef TARGET_CPU_x86
-  /* For gccfss push a fake marker into the side door
-     file signalling this is RTL code, for better
-     readibility */
-  fprintf (asm_out_file, "/ END GCCFSS RTL ASM\n");
-#endif
+  app_disable ();
 
 }
 
@@ -5548,6 +5575,9 @@ default_assemble_visibility (tree decl, int vis)
 
   const char *name, *type;
 
+  int orig_app_on = app_on;
+  app_enable ();
+
   name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
   type = visibility_types[vis];
 
@@ -5566,6 +5596,10 @@ default_assemble_visibility (tree decl, int vis)
     warning (OPT_Wattributes, "visibility attribute not supported "
              "in this configuration; ignored");
 #endif
+
+  if (!orig_app_on)
+    app_disable ();
+
 }
 
 /* A helper function to call assemble_visibility when needed for a decl.  */

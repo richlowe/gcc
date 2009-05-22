@@ -41,12 +41,14 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* Output to assembler file text saying following lines
    may contain character constants, extra white space, comments, etc.  */
 
-#define ASM_APP_ON "/APP\n"
+/*#define ASM_APP_ON "/APP\n"*/
+#define ASM_APP_ON "/ START GCCFSS RTL ASM\n"
 
 /* Output to assembler file text saying following lines
    no longer contain unusual constructs.  */
 
-#define ASM_APP_OFF "/NO_APP\n"
+/*#define ASM_APP_OFF "/NO_APP\n" */
+#define ASM_APP_OFF "/ END GCCFSS RTL ASM\n"
 
 /* Output before read-only data.  */
 

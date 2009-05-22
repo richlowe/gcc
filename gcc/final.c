@@ -186,7 +186,7 @@ static int block_depth;
 
 /* Nonzero if have enabled APP processing of our assembler output.  */
 
-static int app_on;
+int app_on;
 
 /* If we are outputting an insn sequence, this contains the sequence rtx.
    Zero otherwise.  */
@@ -1629,7 +1629,7 @@ profile_function (FILE *file ATTRIBUTE_UNUSED)
 void
 final_end_function (void)
 {
-  app_disable ();
+  //app_disable ();
 
   (*debug_hooks->end_function) (high_function_linenum);
 
@@ -1875,7 +1875,7 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	  break;
 
 	case NOTE_INSN_FUNCTION_BEG:
-	  app_disable ();
+	  //app_disable ();
 	  (*debug_hooks->end_prologue) (last_linenum, last_filename);
 
 	  if ((*seen & (SEEN_EMITTED | SEEN_NOTE)) == SEEN_NOTE)
@@ -1897,7 +1897,7 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	    {
 	      int n = BLOCK_NUMBER (NOTE_BLOCK (insn));
 
-	      app_disable ();
+	      //app_disable ();
 	      ++block_depth;
 	      high_block_linenum = last_linenum;
 
@@ -1930,7 +1930,7 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	    {
 	      int n = BLOCK_NUMBER (NOTE_BLOCK (insn));
 
-	      app_disable ();
+	      //app_disable ();
 
 	      /* End of a symbol-block.  */
 	      --block_depth;
@@ -2012,7 +2012,7 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
       if (LABEL_NAME (insn))
 	(*debug_hooks->label) (insn);
 
-      app_disable ();
+      //app_disable ();
 
       next = next_nonnote_insn (insn);
       if (next != 0 && JUMP_P (next))
@@ -2112,7 +2112,7 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	    else
 	      switch_to_section (current_function_section ());
 
-	    app_disable ();
+	    //app_disable ();
 
 #if defined(ASM_OUTPUT_ADDR_VEC) || defined(ASM_OUTPUT_ADDR_DIFF_VEC)
 	    if (GET_CODE (body) == ADDR_VEC)
@@ -2241,7 +2241,7 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	    break;
 	  }
 
-	app_disable ();
+	//app_disable ();
 
 	if (GET_CODE (body) == SEQUENCE)
 	  {

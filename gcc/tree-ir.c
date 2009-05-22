@@ -12009,6 +12009,13 @@ sunir_check_builtin_handling (tree function)
     case BUILT_IN_VSPRINTF_CHK:
     case BUILT_IN_BSWAP32:
     case BUILT_IN_BSWAP64:
+#ifdef TARGET_CPU_x86
+    case BUILT_IN_TRAP:
+    case BUILT_IN_STACK_SAVE:
+    case BUILT_IN_STACK_RESTORE:
+    case BUILT_IN_FRAME_ADDRESS:
+    case BUILT_IN_RETURN_ADDRESS:
+#endif
       DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
       DECL_DONT_GENERATE_SUNIR (function) = 1;
       break;

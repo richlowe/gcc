@@ -10135,13 +10135,9 @@ output_pic_addr_const (FILE *file, rtx x, int code)
 #endif
 	  assemble_name (file, name);
 	}
-#ifndef TARGET_CPU_x86
-      // ir2hf does not like @PLT
-      /* RAT-TODO perhaps can revert when remove side door file */
       if (!TARGET_MACHO && !(TARGET_64BIT && DEFAULT_ABI == MS_ABI)
 	  && code == 'P' && ! SYMBOL_REF_LOCAL_P (x))
 	fputs ("@PLT", file);
-#endif
       break;
 
     case LABEL_REF:
