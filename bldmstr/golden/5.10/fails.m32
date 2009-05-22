@@ -144,6 +144,7 @@ gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 15)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for warnings, line 16)
 gcc.sum:FAIL: gcc.dg/pr30643.c scan-assembler-not undefined
 gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
+gcc.sum:FAIL: gcc.dg/pr39343.c execution test
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
