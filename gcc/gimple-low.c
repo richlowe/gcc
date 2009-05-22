@@ -439,7 +439,7 @@ lower_stmt (gimple_stmt_iterator *gsi, struct lower_data *data)
 	if (decl
 	    && DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL
 	    && DECL_FUNCTION_CODE (decl) == BUILT_IN_SETJMP
-	    && 0/* TODO reimplement builtin_setjmp_* in GCCFSS*/)
+	    && gate_generate_rtl () /*TODO: reimplement builtin_setjmp_* in GCCFSS*/)
 	  {
 	    data->calls_builtin_setjmp = true;
 	    lower_builtin_setjmp (gsi);

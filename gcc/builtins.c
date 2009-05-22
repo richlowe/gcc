@@ -6688,6 +6688,7 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
       break;
 
     case BUILT_IN_SETJMP:
+#if 0
       {
         tree id, decl;
         tree call;
@@ -6703,8 +6704,9 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
 
         return expand_call (call, target, ignore);
       }
+#endif
       /* This should have been lowered to the builtins below.  */
-      /* gcc_unreachable (); Not for GCCFSS */
+      gcc_unreachable ();  /* Not for GCCFSS */
 
     case BUILT_IN_SETJMP_SETUP:
       /* __builtin_setjmp_setup is passed a pointer to an array of five words
