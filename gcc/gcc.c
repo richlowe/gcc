@@ -7357,8 +7357,15 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	;
       else if (! strncmp (argv[i], "-W2,", 4))
 	;
+#ifndef TARGET_CPU_x86
       else if (! strncmp (argv[i], "-Wc,", 4))
-	;      
+	; 
+#else
+      else if (! strncmp (argv[i], "-Wh,", 4))
+	; 
+      else if (! strncmp (argv[i], "-Wu,", 4))
+	; 
+#endif
       else if (! strncmp (argv[i], "-Wp,", 4))
 	;
       else if (! strncmp (argv[i], "-Wo,", 4))
