@@ -6688,11 +6688,14 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
       break;
 
     case BUILT_IN_SETJMP:
-#if 0
+      /* This should have been lowered to the builtins below.  */
+      if (flag_use_rtl_backend == -1)
+        gcc_unreachable ();  /* Not for -frtl-backend. GCCFSS */
+      else
       {
         tree id, decl;
         tree call;
-        id = get_identifier ("setjmp");
+        id = get_identifier ("setjmp"); /* need this name for CG */
         decl = build_decl (FUNCTION_DECL, id, TREE_TYPE (fndecl));
         DECL_EXTERNAL (decl) = 1;
         TREE_PUBLIC (decl) = 1;
@@ -6704,9 +6707,6 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
 
         return expand_call (call, target, ignore);
       }
-#endif
-      /* This should have been lowered to the builtins below.  */
-      gcc_unreachable ();  /* Not for GCCFSS */
 
     case BUILT_IN_SETJMP_SETUP:
       /* __builtin_setjmp_setup is passed a pointer to an array of five words
@@ -6773,7 +6773,27 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
 	      return const0_rtx;
 	    }
 
-	  expand_builtin_longjmp (buf_addr, value);
+          if (flag_use_rtl_backend == -1)
+	    expand_builtin_longjmp (buf_addr, value);
+          else
+          {
+            tree id, decl;
+            tree call;
+            id = get_identifier ("longjmp"); /* need this name for CG */
+            decl = build_decl (FUNCTION_DECL, id, TREE_TYPE (fndecl));
+            DECL_EXTERNAL (decl) = 1;
+            TREE_PUBLIC (decl) = 1;
+            DECL_ARTIFICIAL (decl) = 1;
+            TREE_NOTHROW (decl) = 1;
+            DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
+            DECL_VISIBILITY_SPECIFIED (decl) = 1;
+            call = build_call_expr (decl, 2, 
+                                    CALL_EXPR_ARG (exp, 0), 
+                                    CALL_EXPR_ARG (exp, 1));
+
+           (void) expand_call (call, target, ignore);
+          }
+
 	  return const0_rtx;
 	}
       break;

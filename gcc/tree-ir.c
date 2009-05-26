@@ -4889,7 +4889,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
              break;
           }
 
-        if (TREE_CODE (TREE_TYPE (stmt)) == INTEGER_TYPE)
+        if (INTEGRAL_TYPE_P (TREE_TYPE (stmt)))
           abs_name = "i_abs";
         else if (TREE_CODE (TREE_TYPE (stmt)) == REAL_TYPE)
           {
