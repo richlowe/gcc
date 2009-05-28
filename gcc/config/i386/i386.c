@@ -7358,7 +7358,7 @@ ix86_file_end (void)
       if (USE_HIDDEN_LINKONCE)
 	{
 	  tree decl;
-
+          fputs ("/ START GCCFSS RTL ASM\n", asm_out_file);
 	  decl = build_decl (FUNCTION_DECL, get_identifier (name),
 			     error_mark_node);
 	  TREE_PUBLIC (decl) = 1;
@@ -7384,6 +7384,7 @@ ix86_file_end (void)
       xops[1] = gen_rtx_MEM (Pmode, stack_pointer_rtx);
       output_asm_insn ("mov%z0\t{%1, %0|%0, %1}", xops);
       output_asm_insn ("ret", xops);
+      fputs ("/ END GCCFSS RTL ASM\n", asm_out_file);
     }
 
   if (NEED_INDICATE_EXEC_STACK)

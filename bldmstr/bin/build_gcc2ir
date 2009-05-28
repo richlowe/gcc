@@ -102,7 +102,7 @@ setup_paths()
     elif [ $BUILDTYPE == i386-solaris ]
     then
         GIT=/set/sqe/tools/git6/intel-S2/bin/git
-        export PATH=/usr/sfw/bin:/usr/local/bin:/usr/ccs/bin:/usr/bin:/bin
+        export PATH=/net/clpt-v490-1/export/data/prash/gas-dir:/usr/sfw/bin:/usr/local/bin:/usr/ccs/bin:/usr/bin:/bin
         EXPECT=/usr/local/bin/expect
     fi
 }
@@ -718,6 +718,11 @@ run_tests()
         prepare_tests_cross
     fi
     
+    if [ $BUILDTYPE == i386-solaris ]
+    then
+        export PATH=/usr/local/bin:$PATH
+    fi
+
     # test {gcc,g++} {-m32,-m64} at the same time, if more than 2 CPUs
     cd $ROOT/build.gcc2ir/gcc
     # make site.exp for all 4 child processes

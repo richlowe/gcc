@@ -56,7 +56,7 @@ function updateCurrent
     if [ $BUILDTYPE == "sparc-linux" ]
     then
         echo "Copy the compiler to common place /ws/gccfss/builds. " 
-	COMMONDIR=/ws/gccfss/builds/4.3.2_linux
+	COMMONDIR=/ws/gccfss/builds/$GCC_VERSION/sparc-Linux
 	mkdir $COMMONDIR/$BUILDNAME
 	(cd $INSTALLDIR; find . | cpio -pdum $COMMONDIR/$BUILDNAME/)
     fi
@@ -123,11 +123,11 @@ else
 fi
 
 case $BUILDTYPE in
-    sparc-solaris) INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION;;
-    sparc-opensolaris) INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$S11SUFFIX;;
+    sparc-solaris) INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION/sparc-S2;;
+    sparc-opensolaris) INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION/sparc-OpenSolaris;;
     sparc-linux)  INSTALLAREA=/net/perftech-064/data/compilers;;
-    i386-solaris)  INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$INTELSUFFIX;;
-    i386-sparc)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION$XSUFFIX;;
+    i386-solaris)  INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION/intel-S2;;
+    i386-sparc)   INSTALLAREA=/ws/gccfss/builds/$GCC_VERSION/intel-sparc;;
     *)	echo >&2 "Error:  Unsupported build type"
 	exit 1;;
 esac
