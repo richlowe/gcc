@@ -1000,7 +1000,7 @@ configure_native_x86_compiler()
         --disable-static \
 	--with-system-zlib \
 	--enable-checking=release \
-	--enable-languages=c,c++ \
+	--enable-languages=c \
         --with-ld=/usr/ccs/bin/ld \
         --without-gnu-ld \
         --disable-gnattools \
