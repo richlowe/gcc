@@ -5872,6 +5872,11 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
       return;
     }
 
+  /* RAT-TODO wrap this section declaration to make ir2hf happy */
+  int orig_app_on = app_on;
+  if (flags & SECTION_LINKONCE)
+    app_enable ();
+
   if (!(flags & SECTION_DEBUG))
     *f++ = 'a';
   if (flags & SECTION_WRITE)
@@ -5910,10 +5915,16 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
 	format = ",%%%s";
 #endif
 
-/* RAT-TODO revert to orig when remove side door file */
-#ifndef TARGET_CPU_x86
-      // not liked by ir2hf
+      /* RAT-TODO Hacks for x86. ir2hf wants to see @type
+         only for comdat sections only. On SPARC use
+         normal behavior */
+#ifdef TARGET_CPU_sparc
       fprintf (asm_out_file, format, type);
+#endif
+
+#ifdef TARGET_CPU_x86
+      if (flags & SECTION_LINKONCE)
+        fprintf (asm_out_file, format, type);
 #endif
 
       if (flags & SECTION_ENTSIZE)
@@ -5924,6 +5935,10 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
     }
 
   putc ('\n', asm_out_file);
+  
+  /* RAT-TODO wrap this section declaration to make ir2hf happy */
+  if ((flags & SECTION_LINKONCE) && !orig_app_on)
+    app_disable ();
 }
 
 void

@@ -7323,6 +7323,10 @@ get_pc_thunk_name (char name[32], unsigned int regno)
     ASM_GENERATE_INTERNAL_LABEL (name, "LPR", regno);
 }
 
+/* RAT-TODO: app_enable hack */
+extern int app_on;
+extern void app_enable();
+extern void app_disable();
 
 /* This function generates code for -fpic that loads %ebx with
    the return address of the caller and then returns.  */
@@ -7332,6 +7336,9 @@ ix86_file_end (void)
 {
   rtx xops[2];
   int regno;
+  int orig_app_on = app_on;
+  /* RAT-TODO wrap this section declaration to make ir2hf happy */
+  app_enable ();
 
   for (regno = 0; regno < 8; ++regno)
     {
@@ -7358,7 +7365,7 @@ ix86_file_end (void)
       if (USE_HIDDEN_LINKONCE)
 	{
 	  tree decl;
-          fputs ("/ START GCCFSS RTL ASM\n", asm_out_file);
+          
 	  decl = build_decl (FUNCTION_DECL, get_identifier (name),
 			     error_mark_node);
 	  TREE_PUBLIC (decl) = 1;
@@ -7384,9 +7391,12 @@ ix86_file_end (void)
       xops[1] = gen_rtx_MEM (Pmode, stack_pointer_rtx);
       output_asm_insn ("mov%z0\t{%1, %0|%0, %1}", xops);
       output_asm_insn ("ret", xops);
-      fputs ("/ END GCCFSS RTL ASM\n", asm_out_file);
     }
-
+  
+  /* RAT-TODO wrap this section declaration to make ir2hf happy */
+  if (!orig_app_on)
+    app_disable ();
+  
   if (NEED_INDICATE_EXEC_STACK)
     file_end_indicate_exec_stack ();
 }
