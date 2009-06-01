@@ -271,17 +271,6 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
 	 then we just build a jump back to the top.  */
       if (cond && !integer_nonzerop (cond))
 	{
-          tree orig_cond = cond;
-	  if (cond != error_mark_node)
-	    { 
-	      gimplify_expr (&cond, &exit_seq, NULL, is_gimple_val, fb_rvalue);
-	      stmt = gimple_build_cond (NE_EXPR, cond,
-					build_int_cst (TREE_TYPE (cond), 0),
-					gimple_label_label (top),
-					get_bc_label (bc_break));
-	      gimple_seq_add_stmt (&exit_seq, stmt);
-	    }
-
           if (cond_is_first)
             {
               if (incr)
@@ -291,9 +280,9 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
                 }
               else
 		{
-		  if (is_simple_condition_expr (orig_cond))
+		  if (is_simple_condition_expr (cond))
 		    {
-		      tree t = orig_cond;
+		      tree t = cond;
 
 		      walk_tree (&t, copy_tree_r, NULL, NULL);
 	              gimplify_expr (&t, &stmt_list, NULL, is_gimple_val, fb_rvalue);
@@ -309,6 +298,16 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
               gimple_set_location (stmt, stmt_locus);
               gimple_seq_add_stmt (&stmt_list, stmt);
             }
+
+	  if (cond != error_mark_node)
+	    { 
+	      gimplify_expr (&cond, &exit_seq, NULL, is_gimple_val, fb_rvalue);
+	      stmt = gimple_build_cond (NE_EXPR, cond,
+					build_int_cst (TREE_TYPE (cond), 0),
+					gimple_label_label (top),
+					get_bc_label (bc_break));
+	      gimple_seq_add_stmt (&exit_seq, stmt);
+	    }
         }
       else
         {
@@ -333,129 +332,6 @@ gimplify_cp_loop (tree cond, tree body, tree incr, bool cond_is_first)
   return finish_bc_block (bc_break, break_block, stmt_list);
 }
 
-static tree
-is_unshareable_expr_r (tree *tp, int *walk_subtrees, void *data)
-{
-  enum tree_code code = TREE_CODE (*tp);
-  if (TREE_CODE_CLASS (code) == tcc_type
-      || TREE_CODE_CLASS (code) == tcc_declaration
-      || TREE_CODE_CLASS (code) == tcc_constant
-      || code == SAVE_EXPR || code == TARGET_EXPR || code == BLOCK)
-    {
-      *walk_subtrees = 0;
-      if (code == SAVE_EXPR || code == TARGET_EXPR)
-        *(bool*)data = false;
-    }
-  else
-    {
-      gcc_assert (code != BIND_EXPR);
-      gcc_assert (code != STATEMENT_LIST);
-    }
-
-  return NULL_TREE;
-}
-
-static bool
-is_unshareable_expr (tree expr)
-{
-  bool data = true;
-  walk_tree (&expr, is_unshareable_expr_r, &data, NULL);
-  return data;
-}
-
-static tree
-gimplify_for_loop (tree cond, tree body, tree incr)
-{
-  tree top, entry, exit, cont_block, break_block, t;
-  gimple_seq stmt_list, body_seq, incr_seq, exit_seq;
-  location_t stmt_locus;
-  bool unshareable = true;
-
-  stmt_locus = input_location;
-  stmt_list = NULL;
-  body_seq = NULL;
-  incr_seq = NULL;
-  exit_seq = NULL;
-  entry = NULL_TREE;
-
-  break_block = begin_bc_block (bc_break);
-  cont_block = begin_bc_block (bc_continue);
-
-  /* If condition is zero don't generate a loop construct.  */
-  if (cond && integer_zerop (cond))
-    {
-      top = NULL_TREE;
-      exit = NULL_TREE;
-      t = gimple_build_goto (get_bc_label (bc_break));
-      append_to_statement_list (t, &stmt_list);
-    }
-  else
-    {
-      /* If we use a LOOP_EXPR here, we have to feed the whole thing
-	 back through the main gimplifier to lower it.  Given that we
-	 have to gimplify the loop body NOW so that we can resolve
-	 break/continue stmts, seems easier to just expand to gotos.  */
-      top = build1 (LABEL_EXPR, void_type_node, NULL_TREE);
-
-      /* If we have an exit condition, then we build an IF with gotos either
-	 out of the loop, or to the top of it.  If there's no exit condition,
-	 then we just build a jump back to the top.  */
-      exit = build_and_jump (&LABEL_EXPR_LABEL (top));
-      if (cond && !integer_nonzerop (cond))
-	{
-          if (is_unshareable_expr (cond))
-            {
-              tree cc = unshare_expr (cond);
-              t = gimple_build_goto (get_bc_label (bc_break));
-              entry = build_and_jump (&LABEL_EXPR_LABEL (top));
-              entry = build3 (COND_EXPR, void_type_node, cc, entry, t);
-              entry = fold (entry);
-              gimplify_stmt (&entry,&stmt_list);
-            }
-          else
-            {
-              unshareable = false;
-	      if (incr)
-		{
-		  entry = gimple_build_label (create_artificial_label ());
-		  t = gimple_build_goto (gimple_label_label (entry));
-		}
-	      else
-		t = gimple_build_goto (get_bc_label (bc_continue));
-	      append_to_statement_list (t, &stmt_list);
-            }
-
-	  t = gimple_build_goto (get_bc_label (bc_break));
-	  exit = build3 (COND_EXPR, void_type_node, cond, exit, t);
-	  exit = fold (exit);
-	  gimplify_stmt (&exit, &exit_seq);
-	}
-      else
-	{
-	  t = gimple_build_goto (gimple_label_label (top));
-	  gimple_seq_add_stmt (&exit_seq, t);
-	}
-    }
-
-  gimplify_stmt (&body, &body_seq);
-  gimplify_stmt (&incr, &incr_seq);
-
-  body_seq = finish_bc_block (bc_continue, cont_block, body_seq);
-
-  if (unshareable)
-    gimple_seq_add_stmt (&stmt_list, entry);
-  gimple_seq_add_stmt (&stmt_list, top);
-  gimple_seq_add_seq (&stmt_list, body_seq);
-  gimple_seq_add_seq (&stmt_list, incr_seq);
-  if (!unshareable)
-    gimple_seq_add_stmt (&stmt_list, entry);
-  gimple_seq_add_seq (&stmt_list, exit_seq);
-
-  annotate_all_with_location (stmt_list, stmt_locus);
-
-  return finish_bc_block (bc_break, break_block, stmt_list);
-}
-
 /* Gimplify a FOR_STMT node.  Move the stuff in the for-init-stmt into the
    prequeue and hand off to gimplify_cp_loop.  */
 
@@ -467,15 +343,6 @@ gimplify_for_stmt (tree *stmt_p, gimple_seq *pre_p)
   if (FOR_INIT_STMT (stmt))
     gimplify_and_add (FOR_INIT_STMT (stmt), pre_p);
 
-#if 0
-  /* FIXME: gimplify_for_loop needs reshaped with gimple. */
-  /* gcov tests are too sensitive if 'for' is represented as bottom tested loop
-*/
-  if (!flag_test_coverage)
-    /* generate bottom test "for" loop */
-    *stmt_p = gimplify_for_loop (FOR_COND (stmt), FOR_BODY (stmt), FOR_EXPR (stmt));
-  else
-#endif
   gimple_seq_add_seq (pre_p,
 		      gimplify_cp_loop (FOR_COND (stmt), FOR_BODY (stmt),
 					FOR_EXPR (stmt), 1));
