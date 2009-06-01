@@ -2873,7 +2873,7 @@ fold_stmt (gimple_stmt_iterator *gsi)
   /* Fold the individual operands.
      For example, fold instances of *&VAR into VAR, etc.  */
   res = walk_gimple_op (stmt, fold_stmt_r, &wi);
-  gcc_assert (!res);
+  gcc_assert (gate_generate_ir () || !res);
 
   /* Fold the main computation performed by the statement.  */
   switch (gimple_code (stmt))

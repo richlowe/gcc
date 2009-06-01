@@ -1503,9 +1503,13 @@ static const char *cg_ipo_options =
    m64: -m64; \
       : -m32} "
 #ifdef TARGET_CPU_sparc
-"  %{g0: ; g*:-g -gen_loclist_gcc=1}"
+"  %{g0: ; g*:-g -gen_loclist_gcc=1} \
+ %{p} %{pg} \
+"
 #else
-"  %{g0: ; g*:-g} "
+"  %{g0: ; g*:-g} \
+ %{p:-qp} %{pg:-qp} \
+"
 #endif
 " %(ssbe_optlevel) "
 #ifdef TARGET_CPU_sparc
@@ -1528,7 +1532,6 @@ static const char *cg_ipo_options =
  %{xcheck : -xcheck=%%all } %{xcheck=*} \
  %{xsafe=mem} \
  %{xspace} \
- %{p} %{pg} \
  %{xmemalign=* : -xmemalign=%* } "
 #ifdef TARGET_CPU_sparc
 " \
