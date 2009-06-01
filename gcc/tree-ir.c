@@ -2622,7 +2622,8 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
           }
         else if (map_for == MAP_FOR_VALUE)
           {
-            if (ret->operand.tag == ISLEAF && TREE_CODE (op0) == RESULT_DECL)
+            if (ret->operand.tag == ISLEAF && TREE_CODE (op0) == RESULT_DECL 
+                && ret->leaf.addressed_leaf)
               ret = (IR_NODE*) (ret->leaf.addressed_leaf);
             else
               {
