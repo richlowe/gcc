@@ -1006,7 +1006,7 @@ configure_native_x86_compiler()
         --disable-gnattools \
         --enable-tls \
         --with-as=/import/gccfss3/rt132876/localx86/bin/as \
-        --with-gnu-as \
+        --without-gnu-as \
         --disable-bootstrap > $ROOT/logs/config.gcc2ir.log 2>&1
 }
 
