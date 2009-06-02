@@ -2189,7 +2189,13 @@ fold_stmt_r (tree *expr_p, int *walk_subtrees, void *data)
       t = maybe_fold_stmt_indirect (expr, TREE_OPERAND (expr, 0),
 				    integer_zero_node);
       /* Avoid folding *"abc" = 5 into 'a' = 5.  */
-      if (wi->is_lhs && t && TREE_CODE (t) == INTEGER_CST)
+      /* For gccfss, also avoid folding 
+           if (st == (struct AVStream *) ((struct unaligned_32 *) "Axan")->l) 
+         into  
+           if (st == (struct AVStream *) (0.l)) 
+       */
+      if ((gate_generate_ir () || wi->is_lhs) 
+          && t && TREE_CODE (t) == INTEGER_CST)
 	t = NULL_TREE;
       if (!t
 	  && TREE_CODE (TREE_OPERAND (expr, 0)) == ADDR_EXPR)
@@ -2937,7 +2943,7 @@ fold_stmt_inplace (gimple stmt)
      a call to _builtin_trap.  This functionality is currently
      disabled, as noted in a FIXME, and cannot be supported here.  */
   res = walk_gimple_op (stmt, fold_stmt_r, &wi);
-  gcc_assert (!res);
+  gcc_assert (gate_generate_ir () || !res);
 
   /* Fold the main computation performed by the statement.  */
   switch (gimple_code (stmt))

@@ -23,24 +23,6 @@
 ! Boston, MA 02111-1307, USA.
 !
 
-.inline signbit,1
-  st      %f0,[%sp+0x87f]
-  ld      [%sp+0x87f],%o0
-  srl     %o0,31,%o0
-.end
-
-.inline signbitf,1
-  st      %f1,[%sp+0x87f]
-  ld      [%sp+0x87f],%o0
-  srl     %o0,31,%o0
-.end
-
-.inline signbitl,1
-  st      %f0,[%sp+0x87f]
-  ld      [%sp+0x87f],%o0
-  srl     %o0,31,%o0
-.end
-
 .inline __builtin_powil,2
   call	__powitf2
   nop
