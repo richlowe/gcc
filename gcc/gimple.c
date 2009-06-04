@@ -3327,6 +3327,7 @@ gimple_call_copy_skip_args (gimple stmt, bitmap args_to_skip)
   gimple_call_set_tail (new_stmt, gimple_call_tail_p (stmt));
   gimple_call_set_cannot_inline (new_stmt, gimple_call_cannot_inline_p (stmt));
   gimple_call_set_return_slot_opt (new_stmt, gimple_call_return_slot_opt_p (stmt));
+  gimple_call_set_public (new_stmt, gimple_call_public_p (stmt)); /* gccfss convertion */
   gimple_call_set_from_thunk (new_stmt, gimple_call_from_thunk_p (stmt));
   gimple_call_set_va_arg_pack (new_stmt, gimple_call_va_arg_pack_p (stmt));
   return new_stmt;
