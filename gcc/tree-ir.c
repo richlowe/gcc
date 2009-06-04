@@ -579,13 +579,6 @@ dump_ir_funcname (tree fn)
           case BUILT_IN_FFSL:  if (!TARGET_ARCH64) {real_name = "__ffssi2"; break;}
           case BUILT_IN_FFSLL: real_name = "__ffsdi2"; break;
           
-          case BUILT_IN_COPYSIGNF: real_name = "__builtin_copysignf"; break;
-          case BUILT_IN_COPYSIGN: real_name = "__builtin_copysign"; break;
-          case BUILT_IN_COPYSIGNL:
-            if ( LONG_DOUBLE_TYPE_SIZE == 64 && TARGET_ARCH32 ) real_name = "__builtin_copysign";
-            else real_name = "__builtin_copysignl";
-            break;
-
           default:
             real_name = (* targetm.strip_name_encoding) (
                          IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (fn)));
