@@ -52,39 +52,6 @@
   nop
 .end
 
-.inline	__builtin_copysign,4
-  set     0x80000000,%o3
-  and     %o2,%o3,%o2
-  andn    %o0,%o3,%o0
-  or      %o0,%o2,%o0
-  std      %o0,[%sp+0x48]
-  ldd     [%sp+0x48],%f0
-.end
-  
-.inline	__builtin_copysignf,2
-  set	0x80000000,%o2
-  andn	%o0,%o2,%o0
-  and	%o1,%o2,%o1
-  or	%o0,%o1,%o0
-  st	%o0,[%sp+0x44]
-  ld	[%sp+0x44],%f0
-.end
-
-.inline __builtin_copysignl,2
-  ld    [%o0], %o5
-  set   0x80000000,%o4
-  ld    [%o1], %o3
-  andn  %o5, %o4, %o2
-  ldx   [%o0 + 8], %o5
-  and   %o3, %o4, %o1
-  or    %o2, %o1, %o2
-  st    %o2, [%o0]
-  ldx   [%o0], %o3
-  ld    [%sp + 64], %o0
-  stx   %o3, [%o0]
-  stx   %o5, [%o0 + 8]
-.end
-
 .inline sqrtf,1
   st      %o0,[%sp+0x44]
   ld      [%sp+0x44],%f0
