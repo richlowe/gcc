@@ -257,7 +257,7 @@ restore_line_information (gimple stmt)
 static void
 add_region_list (omp_ir_context_t *c, int val)
 {
-  region_list *n = xmalloc (sizeof (struct region_list));
+  region_list *n = (region_list *) xmalloc (sizeof (struct region_list));
   n->region_number = val;
   n->next = c->r_list;
   c->r_list = n;
@@ -278,7 +278,7 @@ add_to_label_list (int labelno)
 
   /* otherwise add to the list */
   
-  n = xmalloc (sizeof (struct ir_node_list));
+  n = (struct ir_node_list *) xmalloc (sizeof (struct ir_node_list));
 
   n->u.label = labelno;
   n->next = 0;
@@ -902,7 +902,7 @@ make_global_name (const char * basename, int infunc, tree func_decl)
   int sname_len;
 
   if (text == NULL)
-    text = xmalloc (textsize + 1);
+    text = (char *) xmalloc (textsize + 1);
 
   if (infunc_glob_prefix == NULL) 
     {
@@ -5250,13 +5250,13 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
         && (attr = lookup_attribute ("error",
                                      DECL_ATTRIBUTES (fndecl))) != NULL)
       error ("%Kcall to %qs declared with attribute error: %s",
-                 stmt, lang_hooks.decl_printable_name (fndecl, 1),
+                 fndecl, lang_hooks.decl_printable_name (fndecl, 1),
                  TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
     if (fndecl
         && (attr = lookup_attribute ("warning",
                                      DECL_ATTRIBUTES (fndecl))) != NULL)
       warning (0, "%Kcall to %qs declared with attribute warning: %s",
-                   stmt, lang_hooks.decl_printable_name (fndecl, 1),
+                   fndecl, lang_hooks.decl_printable_name (fndecl, 1),
                    TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
   }
  
@@ -8203,7 +8203,7 @@ dump_ir_stmt (gimple stmt)
         else
           {
             IR_NODE *ir_op0 = dump_ir_expr (op0, MAP_FOR_VALUE);
-            struct ir_node_list *n = xmalloc (sizeof (struct ir_node_list));
+            struct ir_node_list *n = (struct ir_node_list *) xmalloc (sizeof (struct ir_node_list));
             
             n->u.node = build_ir_triple (IR_INDIRGOTO, ir_op0, NULL, longtype, NULL);
             n->next = 0;
@@ -8372,7 +8372,7 @@ dump_ir_stmt (gimple stmt)
               _value = TREE_VALUE (_clobbers);
               value = TREE_CODE (_value) != STRING_CST ||
                                  TREE_PURPOSE (_clobbers) ? abort (), NULL :
-                                 build_ir_string_const (TREE_STRING_POINTER (_value));
+                                 (IR_NODE *) build_ir_string_const (TREE_STRING_POINTER (_value));
               tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, value, NULL,
                                                   value->leaf.type, NULL);
 
@@ -8837,7 +8837,7 @@ dump_function_ir (tree fn)
      inline C++ functions with eh regions. */
   if ( flag_xinline)
     {
-      char *fn_name = (char *)IDENTIFIER_POINTER (DECL_NAME (fn));
+      char *fn_name = (char *) IDENTIFIER_POINTER (DECL_NAME (fn));
       if (in_xinline_string (fn_name, tree_ir_noinline_list)
           || (flag_tree_ir_no_inline && !in_xinline_string (fn_name, tree_ir_inline_list)))
       ir_proc_set_inline_control (irProc, DO_NOT_INLINE_CALL);
@@ -9254,7 +9254,7 @@ ir_add_loopinfo (tree stmt, gimple gimple_label)
       lp->looplabel = (LEAF *) build_ir_int_const (get_ir_label (TREE_OPERAND (stmt, 0)), 
                                                    inttype, 0);
       lp->loopfilename = (LEAF *) build_ir_string_const (get_filename (stmt));
-      lp->looplineno = (LEAF *) build_ir_int_const (get_lineno (stmt), inttype, 0);
+      lp->looplineno = (LEAF *) build_ir_int_const (get_lineno (gimple_label), inttype, 0);
     }
   else
     abort ();
@@ -9634,7 +9634,7 @@ ir_begin_scope_triple (TRIPLE *triple)
 static void
 ir_end_scope_triple (unsigned scope_id, TRIPLE *triple)
 {
-  ir_scope_t *ir_scope = VARRAY_GENERIC_PTR (ir_scopes_table, scope_id);
+  ir_scope_t *ir_scope = (ir_scope_t*) VARRAY_GENERIC_PTR (ir_scopes_table, scope_id);
   
   ir_scope->end_scope = triple;
 }
@@ -9673,7 +9673,7 @@ ir_update_scope_triples (tree scope, DbgScopeID dbg_cur_scope_id,
       else
         ir_parent_scope_id = 1;
 
-      ir_scope = VARRAY_GENERIC_PTR (ir_scopes_table, BLOCK_SCOPE_ID (scope));
+      ir_scope = (ir_scope_t*) VARRAY_GENERIC_PTR (ir_scopes_table, BLOCK_SCOPE_ID (scope));
       if ((ir_scope->begin_scope == NULL) || (ir_scope->end_scope == NULL))
         internal_error ("BEGIN_SCOPE and (or) END_SCOPE triples missing");
       
@@ -9691,7 +9691,7 @@ ir_remove_scope_triples (void)
   
   for (i = 1; i < (int)VARRAY_ACTIVE_SIZE (ir_scopes_table); i++)
     {
-      ir_scope = VARRAY_GENERIC_PTR (ir_scopes_table, i);
+      ir_scope = (ir_scope_t*) VARRAY_GENERIC_PTR (ir_scopes_table, i);
       if (ir_scope->begin_scope != NULL)
         remove_ir_triple (ir_scope->begin_scope);
       
@@ -10294,9 +10294,9 @@ fill_scope_info (pragmaEntry_t ptype,
     return;
 
   if (plist_head == NULL)
-    plist_head = (plist_cur = xmalloc (sizeof (struct pinfo_list)));
+    plist_head = (plist_cur = (struct pinfo_list *) xmalloc (sizeof (struct pinfo_list)));
   else
-    plist_cur = xmalloc (sizeof (struct pinfo_list));
+    plist_cur = (struct pinfo_list *) xmalloc (sizeof (struct pinfo_list));
   plist_cur->data = pinfo;
   plist_cur->next = NULL;
   if (plist_prev)
@@ -10663,10 +10663,10 @@ dump_omp_for_end (gimple stmt)
 
   index = dump_ir_expr (gimple_omp_for_index (stmt, 0), MAP_FOR_VALUE);
   incr = dump_ir_expr (gimple_omp_for_incr (stmt, 0), MAP_FOR_VALUE);
-  t = build_ir_triple (IR_ASSIGN, index, incr, index->operand.type, NULL);
+  t = (TRIPLE *) build_ir_triple (IR_ASSIGN, index, incr, index->operand.type, NULL);
 
   final = dump_ir_expr (gimple_omp_for_final (stmt, 0), MAP_FOR_VALUE);
-  cond = (IR_NODE *)build_ir_triple (conv_treecode2ir (gimple_omp_for_cond (stmt, 0)),
+  cond = build_ir_triple (conv_treecode2ir (gimple_omp_for_cond (stmt, 0)),
                                      index, final, inttype, NULL);
   loop_body = build_ir_labelref (cur_omp_context->l2_lab, 1);
   loop_exit = build_ir_labelref (cur_omp_context->l1_lab, 0);
@@ -11334,7 +11334,7 @@ register_threadprivate_variable (tree tpvar, tree ctor,
         DECL_IGNORED_P (decl) = 1;
         varpool_finalize_decl (decl);
 
-        tp = xmalloc (sizeof (tp_info));
+        tp = (tp_info *) xmalloc (sizeof (tp_info));
         tp->tp_var = decl;
         tp->default_ctor = ctor;
         tp->default_copyctor = copyctor;
@@ -11755,7 +11755,7 @@ static GTY((param1_is (tree), param2_is (tree)))
   splay_tree cxx_copy_ctor_list;
 
 static GTY((param1_is (tree), param2_is (tree)))
-  splay_tree cxx_copy_assign_list;;
+  splay_tree cxx_copy_assign_list;
 
 tree
 cxx_omp_constructor_wrapper_for_irgen (tree vecs, location_t location, int flag)

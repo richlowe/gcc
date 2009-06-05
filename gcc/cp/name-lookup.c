@@ -5404,4 +5404,28 @@ cp_emit_debug_info_for_using (tree t, tree context)
       }
 }
 
+/* Set *DECL to the (non-hidden) declaration for ID at global scope,
+   if present and return true; otherwise return false.  */
+
+bool
+get_global_value_if_present (tree id, tree *decl)
+{
+  tree global_value = namespace_binding (id, global_namespace);
+  if (global_value)
+    *decl = global_value;
+  return global_value != NULL;
+}
+
+/* True is the binding of IDENTIFIER at global scope names a type.  */
+
+bool
+is_typename_at_global_scope (tree id)
+{
+  tree global_value = namespace_binding (id, global_namespace);
+
+  return global_value && TREE_CODE (global_value) == TYPE_DECL;
+}
+
+
+
 #include "gt-cp-name-lookup.h"
