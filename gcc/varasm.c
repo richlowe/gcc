@@ -1974,10 +1974,6 @@ emit_common (tree decl ATTRIBUTE_UNUSED,
 /* RAT-TODO revert to orig when eliminate side door file */
 #ifdef TARGET_CPU_x86
   switch_to_section(bss_switch_section);
-#else
-      targetm.asm_out.named_section (bss_section->named.name,
-                                    bss_section->named.common.flags,
-                                    bss_section->named.decl);
 #endif
 
 #if defined ASM_OUTPUT_ALIGNED_DECL_COMMON
