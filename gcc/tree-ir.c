@@ -827,8 +827,14 @@ static IR_NODE *
 get_ir_stack_pointer_reg (void)
 {
   TYPE argtype = map_gnu_type_to_TYPE (ptr_type_node);
+  
+#ifdef TARGET_CPU_x86
+  IR_NODE * ret = build_ir_reg_var ("%esp", IR_REG_SP, argtype, 
+                                     map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+#else
   IR_NODE * ret = build_ir_reg_var ("%sp", IR_REG_SP, argtype, 
                                      map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+#endif
   ret->leaf.is_volatile = IR_TRUE;
   return ret;
 }
@@ -837,8 +843,13 @@ static IR_NODE *
 get_ir_frame_pointer_reg (void)
 {
   TYPE argtype = map_gnu_type_to_TYPE (ptr_type_node);
+#ifdef TARGET_CPU_x86
+  IR_NODE * ret = build_ir_reg_var ("%ebp", IR_REG_FP, argtype, 
+                                    map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+#else
   IR_NODE * ret = build_ir_reg_var ("%fp", IR_REG_FP, argtype, 
                                     map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+#endif
   ret->leaf.is_volatile = IR_TRUE;
   return ret;
 }
@@ -4803,6 +4814,9 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             imag_type.size = 8; imag_type.align = 8;
             break;
           case TCmode: 
+#ifdef TARGET_CPU_x86
+          case XCmode:
+#endif
             imag_type.tword = PCC_LDOUBLE_IMAGINARY; /*long double complex*/
             imag_type.size = 16; imag_type.align = 8;
             break;
@@ -6136,6 +6150,13 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
   crtl->has_nonlocal_goto = 1;*/
 }
 
+/* Return a pointer to a stack frame, follow the dynamic chain COUNT
+   times to get the address of either a higher stack frame, or a return
+   address located within it (depending on FNDECL_CODE).
+   __builtin_return_address(0) yields the address to which the current
+   function will return.  __builtin_return_address(1) yields the address to
+   which the caller will return, and so on up the stack.*/
+
 static IR_NODE *
 dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_return)
 {
@@ -6162,8 +6183,13 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
          all register windows to the stack.  */
 #ifdef SETUP_FRAME_ADDRESSES
       if (count > 0)
+#ifdef TARGET_CPU_sparc
         dump_ir_flushw (stmt);
+#else
+        SETUP_FRAME_ADDRESSES ();
 #endif
+#endif
+
       /* On the sparc, the return address is not in the frame, it is in a
          register.  There is no way to access it off of the current frame
          pointer, but it can be accessed off the previous frame pointer by
@@ -6173,21 +6199,15 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
         count--;
 #endif
 
+      cfun->builtin_return_addr_called = 1;
+
 #ifdef TARGET_CPU_sparc
 #ifndef SPARC_STACK_BIAS
       abort();
 #endif
-#else
-      /* x86 does no define a stack bias.
-         X86_TODO: Does not work for x86. This whole
-         routine is suspect */  
-#define SPARC_STACK_BIAS 0
-#endif
           
-      cfun->builtin_return_addr_called = 1;
       if (count == -1)
         {
-          //return get_ir_i7_reg ();
           IR_NODE * reg_i7 = get_ir_i7_reg ();
           if (cur_omp_context && (cur_omp_context->pinfo
               || (cur_omp_context->prev_ctx && cur_omp_context->prev_ctx->pinfo)))
@@ -6247,6 +6267,38 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
                                                  offsettype, 0),
                              fp->leaf.type, 0);
       return build_ir_triple (IR_IFETCH, tmp, 0, fp->leaf.type, fp->leaf.typep);
+#else /* x86 */
+      fp = tmp = get_ir_frame_pointer_reg ();
+      if (cur_omp_context && (cur_omp_context->pinfo
+          || (cur_omp_context->prev_ctx && cur_omp_context->prev_ctx->pinfo)))
+        {
+          LIST *lp;
+          PRAGMAINFO *pinfo;
+          pinfo = cur_omp_context->pinfo ? cur_omp_context->pinfo
+                                         : cur_omp_context->prev_ctx->pinfo;
+          lp = build_ir_proc_list ();
+          lp->datap = (LDATA *) fp;
+          LAPPEND (pinfo->u.s.omp_private, lp);
+        }
+
+      /* Scan back COUNT frames to the specified frame.  */
+      for (i = 0; i < count; i++)
+	{
+          tmp = build_ir_triple (IR_IFETCH, tmp, 0, fp->leaf.type, fp->leaf.typep);
+        }
+
+      /* For __builtin_frame_address, return what we've got.*/ 
+      if (fndecl_code == BUILT_IN_FRAME_ADDRESS)
+        return tmp;
+
+      /* For __builtin_return_address, Get the return address from that
+         frame.  */
+      tmp = build_ir_triple (IR_PLUS, tmp, 
+                             build_ir_int_const (4, 
+                                                 offsettype, 0),
+                             fp->leaf.type, 0);
+      return build_ir_triple (IR_IFETCH, tmp, 0, fp->leaf.type, fp->leaf.typep);
+#endif
     }
 }
 
@@ -6288,8 +6340,12 @@ dump_ir_builtin_trap (gimple stmt ATTRIBUTE_UNUSED)
   clobber = build_ir_triple (IR_ASM_CLOBBER, build_ir_string_const ("memory"), NULL, argtype, NULL);
   clobber->triple.is_volatile = IR_TRUE;
   TAPPEND (args, (TRIPLE *)clobber);
-  
+
+#ifdef TARGET_CPU_x86
+  n = build_ir_triple (IR_ASM_STMT, build_ir_string_const (".value\t0x0b0f"), (IR_NODE*)args, argtype, NULL);
+#else
   n = build_ir_triple (IR_ASM_STMT, build_ir_string_const ("ta\t5"), (IR_NODE*)args, argtype, NULL);
+#endif
   clobber->triple.right = n;
   n->triple.is_volatile = IR_TRUE;
   return n;
@@ -12003,13 +12059,6 @@ sunir_check_builtin_handling (tree function)
     case BUILT_IN_VSPRINTF_CHK:
     case BUILT_IN_BSWAP32:
     case BUILT_IN_BSWAP64:
-#ifdef TARGET_CPU_x86
-    case BUILT_IN_TRAP:
-    case BUILT_IN_STACK_SAVE:
-    case BUILT_IN_STACK_RESTORE:
-    case BUILT_IN_FRAME_ADDRESS:
-    case BUILT_IN_RETURN_ADDRESS:
-#endif
       DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
       DECL_DONT_GENERATE_SUNIR (function) = 1;
       break;

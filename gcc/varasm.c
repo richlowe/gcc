@@ -1479,12 +1479,16 @@ make_decl_rtl (tree decl)
 void
 assemble_asm (tree string)
 {
+  int orig_app_on = app_on;
   app_enable ();
 
   if (TREE_CODE (string) == ADDR_EXPR)
     string = TREE_OPERAND (string, 0);
 
   fprintf (asm_out_file, "\t%s\n", TREE_STRING_POINTER (string));
+
+  if (!orig_app_on)
+    app_disable ();
 }
 
 /* Record an element in the table of global destructors.  SYMBOL is
