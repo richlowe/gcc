@@ -272,4 +272,38 @@ extern ir_eh_node_hdl_t build_ir_eh_node (ir_eh_node_kind_t);
 extern void sunir_check_builtin_handling (tree function);
 extern int sunir_check_128bits_handling (tree node);
 
+typedef struct region_list
+{
+  int region_number;
+  struct region_list *next;
+}region_list;
+
+typedef struct omp_ir_context_t
+{
+    PRAGMAINFO *pinfo; /* pragma information.*/
+    gimple stmt;
+    int l1_lab, l2_lab; /* l1: loop_exit; l2: loop body.*/
+    int exception_label; /* pragma end. */
+    bool lab_used; /* omp region contains exception. */
+    region_list *r_list; /* record all eh region. */
+    struct omp_ir_context_t *prev_ctx;
+} omp_ir_context_t;
+
+extern omp_ir_context_t *cur_omp_context;
+extern tree __builtin_va_alist_node;
+enum MAP_FOR {
+    ERR,
+    MAP_FOR_ADDR,
+    MAP_FOR_VALUE
+};
+
+extern TYPE offsettype;
+extern expanded_location ir_location;
+extern IR_NODE * dump_ir_expr (tree stmt, enum MAP_FOR map_for);
+extern IR_NODE * dump_ir_call (gimple stmt, int for_value);
+extern void dump_ir_stmt (gimple stmt);
+
+/* tree-ir-builtins.c */
+extern IR_NODE * dump_ir_builtin_call (gimple stmt, int need_return);
+extern IR_NODE * get_ir_stack_pointer_reg (void);
 #endif  /* GCC_TREE_IR_H  */

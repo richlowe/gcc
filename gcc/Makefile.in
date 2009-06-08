@@ -1292,6 +1292,7 @@ OBJS-common = \
 	web.o \
 	xcoffout.o \
     tree-ir.o \
+    tree-ir-builtins.o \
     tree-ir-types.o \
     tree-ir-code.o \
     tree-ir-debug.o \
@@ -2246,6 +2247,11 @@ rtl-factoring.o : rtl-factoring.c $(CONFIG_H) $(SYSTEM_H) $(RTL_H) \
    $(PARAMS_H) $(EXPR_H) addresses.h $(TM_P_H) tree-pass.h $(TREE_FLOW_H) \
    $(TIMEVAR_H) output.h $(DF_H)
 tree-ir.o : tree-ir.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
+   $(RTL_H) $(TREE_H) $(TM_P_H) $(EXPR_H) $(GGC_H) $(FLAGS_H) output.h \
+   diagnostic.h errors.h function.h $(TIMEVAR_H) $(TM_H) coretypes.h \
+   $(TREE_DUMP_H) except.h langhooks.h $(CFGLOOP_H) tree-pass.h \
+   $(CFGLAYOUT_H) real.h tree-ir.h ir/ir_common.h
+tree-ir-builtins.o : tree-ir-builtins.c $(TREE_FLOW_H) $(CONFIG_H) $(SYSTEM_H) \
    $(RTL_H) $(TREE_H) $(TM_P_H) $(EXPR_H) $(GGC_H) $(FLAGS_H) output.h \
    diagnostic.h errors.h function.h $(TIMEVAR_H) $(TM_H) coretypes.h \
    $(TREE_DUMP_H) except.h langhooks.h $(CFGLOOP_H) tree-pass.h \
