@@ -3116,7 +3116,7 @@ mangle_ref_init_variable (const tree variable)
   start_mangling (variable);
   write_string ("_ZGR");
   write_name (variable, /*ignore_local_scope=*/0);
-  result = finish_mangling_get_identifier (/*warn=*/false);
+  result = finish_mangling (/*warn=*/false);
 
   if (TREE_STATIC (variable) && globalize_flag && !TREE_PUBLIC (variable))
     {
@@ -3126,10 +3126,10 @@ mangle_ref_init_variable (const tree variable)
                                  DECL_CONTEXT (variable)/* for future use*/);
       start_mangling (0);
       write_string (result);
-      result = finish_mangling_get_identifier (false);
+      result = finish_mangling (false);
     }
 
-  return result;
+  return get_identifier (result);
 }
 
 
