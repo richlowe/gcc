@@ -314,6 +314,185 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
     }
 }
 
+static IR_NODE *
+dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
+{
+  tree tramp = TREE_VALUE (arglist);
+  tree func = TREE_VALUE (TREE_CHAIN (arglist));
+  tree ctx = TREE_VALUE (TREE_CHAIN (TREE_CHAIN (arglist)));
+
+  if (TREE_CODE (TREE_TYPE (tramp)) != POINTER_TYPE
+      || TREE_CODE (TREE_TYPE (func)) != POINTER_TYPE 
+      || TREE_CODE (TREE_TYPE (ctx)) != POINTER_TYPE)
+    return dump_ir_call (stmt, need_return);
+
+  if (TARGET_ARCH64)
+    {
+      /* SPARC 64-bit trampoline:
+    
+            rd	%pc, %g1
+            ldx	[%g1+24], %g5
+            jmp	%g5
+            ldx	[%g1+16], %g5
+            +16 bytes data
+       */
+      IR_NODE *ir_tramp, *t;
+      TYPE uinttype = map_gnu_type_to_TYPE (unsigned_intSI_type_node);
+      IR_TYPE_NODE * ir_uinttype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intSI_type_node);
+      TYPE ulltype = map_gnu_type_to_TYPE (unsigned_intDI_type_node);
+      IR_TYPE_NODE * ir_ulltype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intDI_type_node);
+                             
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      t = build_ir_int_const (0x83414000, uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+      /*emit_move_insn (gen_rtx_MEM (SImode, tramp),
+            	  GEN_INT (trunc_int_for_mode (0x83414000, SImode)));*/
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (4, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      t = build_ir_int_const (0xca586018, uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+      /*emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 4)),
+            	  GEN_INT (trunc_int_for_mode (0xca586018, SImode)));*/
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (8, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      t = build_ir_int_const (0x81c14000, uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+      /*emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 8)),
+            	  GEN_INT (trunc_int_for_mode (0x81c14000, SImode)));*/
+      
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (12, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      t = build_ir_int_const (0xca586010, uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+      /*emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 12)),
+            	  GEN_INT (trunc_int_for_mode (0xca586010, SImode)));*/
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (16, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      t = dump_ir_expr (ctx, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, ulltype, ir_ulltype);
+      /*emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, 16)), cxt);*/
+      
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (24, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      t = dump_ir_expr (func, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, ulltype, ir_ulltype);
+      /*emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, 24)), fnaddr);*/
+
+     /* emit_insn (gen_flushdi (validize_mem (gen_rtx_MEM (DImode, tramp))));*/
+    
+      /*if (sparc_cpu != PROCESSOR_ULTRASPARC
+          && sparc_cpu != PROCESSOR_ULTRASPARC3)
+        emit_insn (gen_flushdi (validize_mem (gen_rtx_MEM (DImode, plus_constant (tramp, 8)))));*/
+    
+      /* Call __enable_execute_stack after writing onto the stack to make sure
+         the stack address is accessible.  */
+      func = build_decl (FUNCTION_DECL, get_identifier ("__enable_execute_stack"), /* func name */
+                       build_function_type (void_type_node, /* return type */
+                         build_tree_list (NULL_TREE, ptr_type_node))); /* arg1 type */
+      DECL_ARTIFICIAL (func) = 1;
+      DECL_EXTERNAL (func) = 1;
+      TREE_PUBLIC (func) = 1;
+      TREE_NOTHROW (func) = 1;
+
+      dump_ir_call (gimple_build_call (func, 1, tramp), 0);
+    }
+  else
+    {
+      /* SPARC 32-bit trampoline:
+    
+     	sethi	%hi(fn), %g1
+     	sethi	%hi(static), %g2
+     	jmp	%g1+%lo(fn)
+     	or	%g2, %lo(static), %g2
+    
+        SETHI i,r  = 00rr rrr1 00ii iiii iiii iiii iiii iiii
+        JMPL r+i,d = 10dd ddd1 1100 0rrr rr1i iiii iiii iiii
+       */
+    
+      IR_NODE *ir_tramp, *ir_func, *ir_ctx, *t;
+      TYPE uinttype = map_gnu_type_to_TYPE (unsigned_intSI_type_node);
+      IR_TYPE_NODE * ir_uinttype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intSI_type_node);
+                             
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_func = dump_ir_expr (func, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_RSHIFT, ir_func, build_ir_int_const (10, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x03000000, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+     /*  emit_move_insn
+        (gen_rtx_MEM (SImode, plus_constant (tramp, 0)),
+         expand_binop (SImode, ior_optab,
+            	   expand_shift (RSHIFT_EXPR, SImode, fnaddr,
+            			 size_int (10), 0, 1),
+            	   GEN_INT (trunc_int_for_mode (0x03000000, SImode)),
+            	   NULL_RTX, 1, OPTAB_DIRECT));*/
+    
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (4, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      ir_ctx = dump_ir_expr (ctx, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_RSHIFT, ir_ctx, build_ir_int_const (10, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x05000000, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+     /*  emit_move_insn
+        (gen_rtx_MEM (SImode, plus_constant (tramp, 4)),
+         expand_binop (SImode, ior_optab,
+            	   expand_shift (RSHIFT_EXPR, SImode, cxt,
+            			 size_int (10), 0, 1),
+            	   GEN_INT (trunc_int_for_mode (0x05000000, SImode)),
+            	   NULL_RTX, 1, OPTAB_DIRECT));*/
+    
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (8, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      ir_func = dump_ir_expr (func, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_AND, ir_func, build_ir_int_const (0x3ff, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x81c06000, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+     /*  emit_move_insn
+        (gen_rtx_MEM (SImode, plus_constant (tramp, 8)),
+         expand_binop (SImode, ior_optab,
+            	   expand_and (SImode, fnaddr, GEN_INT (0x3ff), NULL_RTX),
+            	   GEN_INT (trunc_int_for_mode (0x81c06000, SImode)),
+            	   NULL_RTX, 1, OPTAB_DIRECT));*/
+    
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (12, uinttype, 0), 
+                                  ir_tramp->operand.type, 0);
+      ir_ctx = dump_ir_expr (ctx, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_AND, ir_ctx, build_ir_int_const (0x3ff, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x8410a000, uinttype, 0), uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+     /*  emit_move_insn
+        (gen_rtx_MEM (SImode, plus_constant (tramp, 12)),
+         expand_binop (SImode, ior_optab,
+            	   expand_and (SImode, cxt, GEN_INT (0x3ff), NULL_RTX),
+            	   GEN_INT (trunc_int_for_mode (0x8410a000, SImode)),
+            	   NULL_RTX, 1, OPTAB_DIRECT));*/
+    
+      /* On UltraSPARC a flush flushes an entire cache line.  The trampoline is
+         aligned on a 16 byte boundary so one flush clears it all.  */
+     /*  emit_insn (gen_flush (validize_mem (gen_rtx_MEM (SImode, tramp))));*/
+      func = build_decl (FUNCTION_DECL, get_identifier ("__enable_execute_stack"), /* func name */
+                       build_function_type (void_type_node, /* return type */
+                         build_tree_list (NULL_TREE, ptr_type_node))); /* arg1 type */
+      DECL_ARTIFICIAL (func) = 1;
+      DECL_EXTERNAL (func) = 1;
+      TREE_PUBLIC (func) = 1;
+      TREE_NOTHROW (func) = 1;
+
+      dump_ir_call (gimple_build_call (func, 1, tramp), 0);
+    } 
+  return 0;
+}
+
 #endif /* TARGET_CPU_x86 */
 
 
@@ -983,186 +1162,6 @@ dump_builtin_bcopy (gimple stmt, tree arglist, int need_return)
   newarglist = tree_cons (NULL_TREE, dest, newarglist);
 
   return dump_builtin_memmove (stmt, newarglist, need_return);
-}
-
-
-static IR_NODE *
-dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
-{
-  tree tramp = TREE_VALUE (arglist);
-  tree func = TREE_VALUE (TREE_CHAIN (arglist));
-  tree ctx = TREE_VALUE (TREE_CHAIN (TREE_CHAIN (arglist)));
-
-  if (TREE_CODE (TREE_TYPE (tramp)) != POINTER_TYPE
-      || TREE_CODE (TREE_TYPE (func)) != POINTER_TYPE 
-      || TREE_CODE (TREE_TYPE (ctx)) != POINTER_TYPE)
-    return dump_ir_call (stmt, need_return);
-
-  if (TARGET_ARCH64)
-    {
-      /* SPARC 64-bit trampoline:
-    
-            rd	%pc, %g1
-            ldx	[%g1+24], %g5
-            jmp	%g5
-            ldx	[%g1+16], %g5
-            +16 bytes data
-       */
-      IR_NODE *ir_tramp, *t;
-      TYPE uinttype = map_gnu_type_to_TYPE (unsigned_intSI_type_node);
-      IR_TYPE_NODE * ir_uinttype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intSI_type_node);
-      TYPE ulltype = map_gnu_type_to_TYPE (unsigned_intDI_type_node);
-      IR_TYPE_NODE * ir_ulltype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intDI_type_node);
-                             
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      t = build_ir_int_const (0x83414000, uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-      /*emit_move_insn (gen_rtx_MEM (SImode, tramp),
-            	  GEN_INT (trunc_int_for_mode (0x83414000, SImode)));*/
-
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (4, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      t = build_ir_int_const (0xca586018, uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-      /*emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 4)),
-            	  GEN_INT (trunc_int_for_mode (0xca586018, SImode)));*/
-
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (8, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      t = build_ir_int_const (0x81c14000, uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-      /*emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 8)),
-            	  GEN_INT (trunc_int_for_mode (0x81c14000, SImode)));*/
-      
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (12, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      t = build_ir_int_const (0xca586010, uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-      /*emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 12)),
-            	  GEN_INT (trunc_int_for_mode (0xca586010, SImode)));*/
-
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (16, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      t = dump_ir_expr (ctx, MAP_FOR_VALUE);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, ulltype, ir_ulltype);
-      /*emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, 16)), cxt);*/
-      
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (24, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      t = dump_ir_expr (func, MAP_FOR_VALUE);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, ulltype, ir_ulltype);
-      /*emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, 24)), fnaddr);*/
-
-     /* emit_insn (gen_flushdi (validize_mem (gen_rtx_MEM (DImode, tramp))));*/
-    
-      /*if (sparc_cpu != PROCESSOR_ULTRASPARC
-          && sparc_cpu != PROCESSOR_ULTRASPARC3)
-        emit_insn (gen_flushdi (validize_mem (gen_rtx_MEM (DImode, plus_constant (tramp, 8)))));*/
-    
-      /* Call __enable_execute_stack after writing onto the stack to make sure
-         the stack address is accessible.  */
-      func = build_decl (FUNCTION_DECL, get_identifier ("__enable_execute_stack"), /* func name */
-                       build_function_type (void_type_node, /* return type */
-                         build_tree_list (NULL_TREE, ptr_type_node))); /* arg1 type */
-      DECL_ARTIFICIAL (func) = 1;
-      DECL_EXTERNAL (func) = 1;
-      TREE_PUBLIC (func) = 1;
-      TREE_NOTHROW (func) = 1;
-
-      dump_ir_call (gimple_build_call (func, 1, tramp), 0);
-    }
-  else
-    {
-      /* SPARC 32-bit trampoline:
-    
-     	sethi	%hi(fn), %g1
-     	sethi	%hi(static), %g2
-     	jmp	%g1+%lo(fn)
-     	or	%g2, %lo(static), %g2
-    
-        SETHI i,r  = 00rr rrr1 00ii iiii iiii iiii iiii iiii
-        JMPL r+i,d = 10dd ddd1 1100 0rrr rr1i iiii iiii iiii
-       */
-    
-      IR_NODE *ir_tramp, *ir_func, *ir_ctx, *t;
-      TYPE uinttype = map_gnu_type_to_TYPE (unsigned_intSI_type_node);
-      IR_TYPE_NODE * ir_uinttype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intSI_type_node);
-                             
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_func = dump_ir_expr (func, MAP_FOR_VALUE);
-      t = build_ir_triple (IR_RSHIFT, ir_func, build_ir_int_const (10, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x03000000, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-     /*  emit_move_insn
-        (gen_rtx_MEM (SImode, plus_constant (tramp, 0)),
-         expand_binop (SImode, ior_optab,
-            	   expand_shift (RSHIFT_EXPR, SImode, fnaddr,
-            			 size_int (10), 0, 1),
-            	   GEN_INT (trunc_int_for_mode (0x03000000, SImode)),
-            	   NULL_RTX, 1, OPTAB_DIRECT));*/
-    
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (4, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      ir_ctx = dump_ir_expr (ctx, MAP_FOR_VALUE);
-      t = build_ir_triple (IR_RSHIFT, ir_ctx, build_ir_int_const (10, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x05000000, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-     /*  emit_move_insn
-        (gen_rtx_MEM (SImode, plus_constant (tramp, 4)),
-         expand_binop (SImode, ior_optab,
-            	   expand_shift (RSHIFT_EXPR, SImode, cxt,
-            			 size_int (10), 0, 1),
-            	   GEN_INT (trunc_int_for_mode (0x05000000, SImode)),
-            	   NULL_RTX, 1, OPTAB_DIRECT));*/
-    
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (8, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      ir_func = dump_ir_expr (func, MAP_FOR_VALUE);
-      t = build_ir_triple (IR_AND, ir_func, build_ir_int_const (0x3ff, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x81c06000, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-     /*  emit_move_insn
-        (gen_rtx_MEM (SImode, plus_constant (tramp, 8)),
-         expand_binop (SImode, ior_optab,
-            	   expand_and (SImode, fnaddr, GEN_INT (0x3ff), NULL_RTX),
-            	   GEN_INT (trunc_int_for_mode (0x81c06000, SImode)),
-            	   NULL_RTX, 1, OPTAB_DIRECT));*/
-    
-      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
-      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (12, uinttype, 0), 
-                                  ir_tramp->operand.type, 0);
-      ir_ctx = dump_ir_expr (ctx, MAP_FOR_VALUE);
-      t = build_ir_triple (IR_AND, ir_ctx, build_ir_int_const (0x3ff, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_OR, t, build_ir_int_const (0x8410a000, uinttype, 0), uinttype, 0);
-      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
-     /*  emit_move_insn
-        (gen_rtx_MEM (SImode, plus_constant (tramp, 12)),
-         expand_binop (SImode, ior_optab,
-            	   expand_and (SImode, cxt, GEN_INT (0x3ff), NULL_RTX),
-            	   GEN_INT (trunc_int_for_mode (0x8410a000, SImode)),
-            	   NULL_RTX, 1, OPTAB_DIRECT));*/
-    
-      /* On UltraSPARC a flush flushes an entire cache line.  The trampoline is
-         aligned on a 16 byte boundary so one flush clears it all.  */
-     /*  emit_insn (gen_flush (validize_mem (gen_rtx_MEM (SImode, tramp))));*/
-      func = build_decl (FUNCTION_DECL, get_identifier ("__enable_execute_stack"), /* func name */
-                       build_function_type (void_type_node, /* return type */
-                         build_tree_list (NULL_TREE, ptr_type_node))); /* arg1 type */
-      DECL_ARTIFICIAL (func) = 1;
-      DECL_EXTERNAL (func) = 1;
-      TREE_PUBLIC (func) = 1;
-      TREE_NOTHROW (func) = 1;
-
-      dump_ir_call (gimple_build_call (func, 1, tramp), 0);
-    } 
-  return 0;
 }
 
 static IR_NODE *
