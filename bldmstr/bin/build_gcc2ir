@@ -1028,7 +1028,7 @@ configure_native_compiler()
         --enable-tls \
         --with-as=/usr/ccs/bin/as \
         --without-gnu-as \
-        --disable-bootstrap > $ROOT/logs/config.gcc2ir.log 2>&1
+        > $ROOT/logs/config.gcc2ir.log 2>&1
 }
 
 configure_gccfss()

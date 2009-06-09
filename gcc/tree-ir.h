@@ -269,7 +269,6 @@ extern void push_lni_inline_context (gimple stmt);
 extern void pop_lni_inline_context (gimple stmt);
 
 extern ir_eh_node_hdl_t build_ir_eh_node (ir_eh_node_kind_t);
-extern void sunir_check_builtin_handling (tree function);
 extern int sunir_check_128bits_handling (tree node);
 
 typedef struct region_list
@@ -306,4 +305,5 @@ extern void dump_ir_stmt (gimple stmt);
 /* tree-ir-builtins.c */
 extern IR_NODE * dump_ir_builtin_call (gimple stmt, int need_return);
 extern IR_NODE * get_ir_stack_pointer_reg (void);
+extern void sunir_check_builtin_handling (tree function);
 #endif  /* GCC_TREE_IR_H  */
