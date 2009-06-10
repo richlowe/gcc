@@ -3457,10 +3457,15 @@ output_addr_const (FILE *file, rtx x)
       x = XEXP (x, 0);
       /* Fall through.  */
     case CODE_LABEL:
+#ifdef TARGET_CPU_x86
+        ASM_GENERATE_INTERNAL_LABEL (buf, "L", CODE_LABEL_NUMBER (x));
+#else
       if (!flag_use_rtl_backend)
         ASM_GENERATE_INTERNAL_LABEL (buf, "", CODE_LABEL_NUMBER (x));
       else
         ASM_GENERATE_INTERNAL_LABEL (buf, "L", CODE_LABEL_NUMBER (x));
+#endif
+
 #ifdef ASM_OUTPUT_LABEL_REF
       ASM_OUTPUT_LABEL_REF (file, buf);
 #else
