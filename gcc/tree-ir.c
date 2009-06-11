@@ -556,6 +556,19 @@ dump_ir_funcname (tree fn)
           case BUILT_IN_FFS: if (TARGET_ARCH64) {real_name = "ffs"; break;}
           case BUILT_IN_FFSL:  if (!TARGET_ARCH64) {real_name = "__ffssi2"; break;}
           case BUILT_IN_FFSLL: real_name = "__ffsdi2"; break;
+	  case BUILT_IN_POWI:
+	    real_name = "__powidf2";
+	    break;
+	  case BUILT_IN_POWIF:
+	    real_name = "__powisf2";
+	    break;
+	  case BUILT_IN_POWIL:
+#ifdef TARGET_CPU_x86
+	    real_name = "__powixf2";
+#else
+	    real_name = "__powitf2";
+#endif
+	    break;
           
           default:
             real_name = (* targetm.strip_name_encoding) (

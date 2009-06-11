@@ -23,21 +23,6 @@
 ! Boston, MA 02111-1307, USA.
 !
 
-.inline __builtin_powil,2
-  call	__powitf2
-  nop
-.end
-
-.inline __builtin_powi,2
-  call	__powidf2
-  nop
-.end
-
-.inline __builtin_powif,2
-  call	__powisf2
-  nop
-.end
-
 .inline sqrtf,1
   fsqrts  %f1,%f0
 .end

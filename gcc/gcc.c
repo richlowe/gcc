@@ -796,7 +796,7 @@ proper position among the other output files.  */
       %{m64 : %J/amd64/xprof_fini.o ; \
         m32 : %J/xprof_fini.o ; \
             : %J/xprof_fini.o } \
-         -Bdynamic -ldl } } \
+         -Bdynamic -ldl -lxprof} } \
 "
 #else
 #define LINK_COMMAND_LIB "\
@@ -805,7 +805,7 @@ proper position among the other output files.  */
       %{m64 : %J/amd64/xprof_fini.o ; \
         m32 : %J/xprof_fini.o ; \
             : %J/xprof_fini.o } \
-         -Bdynamic -ldl -lm -lpthread} } \
+         -Bdynamic -ldl -lm -lxprof -lpthread} } \
 "
 #endif
 #endif 
