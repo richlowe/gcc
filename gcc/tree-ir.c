@@ -5101,6 +5101,16 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
       return NULL;
     }
 
+#ifdef TARGET_CPU_x86 
+  {
+    tree fndecl = gimple_call_fndecl (stmt);
+    if (!TARGET_ARCH64
+        && DECL_NAME (fndecl)
+        && !strcmp (IDENTIFIER_POINTER (DECL_NAME (fndecl)), "va_start")) 
+      error ("The macro \"va_start\" shall be expanded with -m32");
+  }
+#endif
+
   fn_ir_type = map_gnu_type_to_IR_TYPE_NODE (gimple_call_return_type (stmt));
 
   fncalltype = map_gnu_type_to_TYPE (gimple_call_return_type (stmt));
