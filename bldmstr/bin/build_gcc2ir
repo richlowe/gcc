@@ -41,7 +41,7 @@ OS_NAME=`uname -r`
 
 # Has to be after linux specific configuration
 ((JOBS = CPUS * 2))
-PARALLEL_BUILD_OPTION="-j $JOBS"
+PARALLEL_BUILD_OPTION="-j 1"
 
 #================================================================================
 #
@@ -915,15 +915,6 @@ setup_defaults()
     then
         export PATH=$ROOT/tools/bin:/usr/sfw/bin:/ws/gccfss/cross-compiler/gnu-i386/gcc42-cross/bin:/ws/gccfss/cross-compiler/tools/bin:/usr/ccs/bin:/bin
     fi
-
-    if [ $BUILDTYPE == i386-solaris ]
-    then
-        # x86 builds seem extremely prone to race conditions
-        # disable parallelism for now until we can deal with
-        # other real issues
-        PARALLEL_BUILD_OPTION="-j 1"
-    fi
-
 }
 
 configure_cross_compiler()
@@ -1112,7 +1103,7 @@ build_gccfss()
                     CFLAGS_FOR_BUILD="-g -frtl-backend" \
 		    > $ROOT/logs/build.gcc2ir.log.$try 2>&1
             else
-	        $GMAKE $PARALLEL_BUILD_OPTION CFLAGS=-g \
+	        $GMAKE $PARALLEL_BUILD_OPTION \
 		    > $ROOT/logs/build.gcc2ir.log.$try 2>&1
             fi
             if [ "$?" == "0" ]
