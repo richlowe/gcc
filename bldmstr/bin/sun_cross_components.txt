@@ -9,6 +9,9 @@ lib/cg/model_cg_sparc64vi.so.3
 lib/cg/model_cg_ultra.so.3
 lib/cg/model_cg_ultra3.so.3
 lib/cg/model_cg_ultraT1.so.3
+lib/cg/model_cg_kt.so.3
+lib/cg/model_cg_ultraAT10.so.3
+lib/cg/model_cg_vt.so.3
 lib/debug/lib_I_dbg_gen.so
 lib/debug/lib_I_dbg_gen.so.1
 lib/debug/sys/dbg_ddwrap.so
