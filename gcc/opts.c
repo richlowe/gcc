@@ -2518,8 +2518,14 @@ handle_xinline_option (const char *arg)
             rest = rest + 3;
             list = tree_ir_noinline_list;
           }
-        else /* Record the func_name in the list of tree_ir_inline_list. */
+        else if (*rest == '_' || ISALNUM (*rest) || *rest == '$') 
+          /* Record the func_name in the list of tree_ir_inline_list. */
           list = tree_ir_inline_list;
+        else /* bad function name. */
+	  {
+	    warning (0, "%c is not a valid character in function name in -xinline. Abandon -xinline option.", *rest);
+	    return;
+	  }
 
         if (strstr (rest,",") == 0)
           n = strlen (rest);

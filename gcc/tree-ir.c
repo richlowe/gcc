@@ -484,9 +484,13 @@ invert_mod2n (unsigned HOST_WIDE_INT x, int n)
 IR_NODE *
 get_ir_chain_reg (TYPE argtype, IR_TYPE_NODE * typep)
 {
+#ifdef TARGET_CPU_x86
+  IR_NODE * ret = build_ir_reg_var ("%ecx", IR_REG_G2, argtype, typep);
+#else
   IR_NODE * ret = TARGET_ARCH64
                   ? build_ir_reg_var ("%g5", IR_REG_G5, argtype, typep)
                   : build_ir_reg_var ("%g2", IR_REG_G2, argtype, typep);
+#endif
   ret->leaf.uplevel_addressed = IR_TRUE;
   ret->leaf.is_volatile = IR_TRUE;
   return ret;

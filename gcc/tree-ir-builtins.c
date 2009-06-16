@@ -54,6 +54,10 @@ Boston, MA 02111-1307, USA.  */
 #include "tree-iterator.h"
 
 #ifdef TARGET_CPU_x86
+IR_NODE *get_ir_stack_pointer_reg (void);
+static IR_NODE *get_ir_frame_pointer_reg (void);
+static IR_NODE *dump_ir_builtin_return_addr (gimple, tree, tree, int);
+static IR_NODE *dump_ir_builtin_init_trampoline (gimple, tree, int);
 
 IR_NODE *
 get_ir_stack_pointer_reg (void)
@@ -143,10 +147,18 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
 static IR_NODE *
 dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
 {
+  warning (0, "builtin_init_trampoline hasn't be implemented."); 
+  abort ();
   /* TODO. */
 }
 
 #else /* Sparc. */
+IR_NODE *get_ir_stack_pointer_reg (void);
+static IR_NODE *get_ir_frame_pointer_reg (void);
+static IR_NODE *get_ir_i7_reg (void);
+static IR_NODE *dump_ir_flushw (gimple stmt ATTRIBUTE_UNUSED);
+static IR_NODE *dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_return);
+static IR_NODE *dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return);
 
 IR_NODE *
 get_ir_stack_pointer_reg (void)
@@ -618,7 +630,7 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
 {
   tree nl_goto_target = TREE_VALUE (arglist);
   tree nl_save_area = TREE_VALUE (TREE_CHAIN (arglist));
-  IR_NODE *n, *fp, *target, *clobber;
+  IR_NODE *n, *fp, *sp, *target, *clobber;
   TRIPLE *args = NULL;
   TYPE argtype = map_gnu_type_to_TYPE (ptr_type_node);
   IR_TYPE_NODE * ir_argtype = map_gnu_type_to_IR_TYPE_NODE (ptr_type_node);
@@ -633,10 +645,12 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
   
 
   n = dump_ir_expr (nl_save_area, MAP_FOR_ADDR);
+#ifndef TARGET_CPU_x86
   if (TARGET_ARCH64)
     n = build_ir_triple (IR_PLUS, n, build_ir_int_const (8, offsettype, 0), n->operand.type, 0);
   else
     n = build_ir_triple (IR_PLUS, n, build_ir_int_const (4, offsettype, 0), n->operand.type, 0);
+#endif
   n = build_ir_triple (IR_IFETCH, n, NULL, argtype, ir_argtype);
   fp = get_tmp_leaf (argtype, ir_argtype);
   build_ir_triple (IR_ASSIGN, fp, n, n->operand.type, NULL);
@@ -649,11 +663,29 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
   n->triple.param_mode = PM_IN;
   TAPPEND (args, (TRIPLE *)n);
   
+#ifdef TARGET_CPU_x86
+  n = dump_ir_expr (nl_save_area, MAP_FOR_ADDR);
+  n = build_ir_triple (IR_PLUS, n, build_ir_int_const (4, offsettype, 0), n->operand.type, 0);
+  n = build_ir_triple (IR_IFETCH, n, NULL, argtype, ir_argtype);
+  sp = get_tmp_leaf (argtype, ir_argtype);
+  build_ir_triple (IR_ASSIGN, sp, n, n->operand.type, NULL);
+  n = build_ir_triple (IR_ASM_INPUT, sp, build_ir_string_const ("r"), argtype, NULL);
+  n->triple.param_mode = PM_IN;
+  TAPPEND (args, (TRIPLE *)n);
+#endif
+  
   clobber = build_ir_triple (IR_ASM_CLOBBER, build_ir_string_const ("memory"), NULL, argtype, NULL);
   clobber->triple.is_volatile = IR_TRUE;
   TAPPEND (args, (TRIPLE *)clobber);
 
-  /* TODO: for x86. */
+#ifdef TARGET_CPU_x86
+    n = build_ir_triple (IR_ASM_STMT, 
+                         build_ir_string_const (
+                                                "movl\t%1,%%ebp\n"
+                                                "movl\t%2,%%esp\n"
+                                                "movl\t%0,%%edx\n\tjmp\t*%%edx\n\t nop"), 
+                         (IR_NODE*)args, argtype, NULL);
+#else   
   if (TARGET_ARCH64)
     n = build_ir_triple (IR_ASM_STMT, 
                          build_ir_string_const ("flushw\n"
@@ -666,6 +698,7 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
                                                 "mov\t%1,%%fp\n"
                                                 "mov\t%0,%%g1\n\trestore\n\tjmp\t%%g1\n\t nop"), 
                          (IR_NODE*)args, argtype, NULL);
+#endif
   clobber->triple.right = n;
   n->triple.is_volatile = IR_TRUE;
   /* I can see no effect of this assignment.
