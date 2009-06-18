@@ -1675,7 +1675,6 @@ tree_regimple (void)
 
   for ( ; !gsi_end_p (gsi); gsi_next (&gsi))
     {
-      tree t;
       gimple stmt = gsi_stmt (gsi);
       location_t loc = 0;
 

@@ -56,7 +56,7 @@ along with GCC; see the file COPYING3.  If not see
       unsigned bytes_in_chunk = 0;					\
       for (; _ascii_bytes < limit; _ascii_bytes++)			\
         {								\
-	  const unsigned char *p;					\
+	  /*const unsigned char *p;	*/				\
 	  if (bytes_in_chunk >= 64)					\
 	    {								\
 	      fputc ('\n', (FILE));					\

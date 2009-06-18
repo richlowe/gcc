@@ -23,6 +23,9 @@ Boston, MA 02111-1307, USA.  */
 #define _IRMODULE_H_
 
 #include "IrProc.h"
+#include "IrSymbol.h"
+#include "IrSection.h"
+#include "IrStaticObj.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -141,6 +144,52 @@ ir_proc_hdl_t ir_iter_next_proc(ir_proc_iter_t *iter);
    If so, TRUE is returned. */
 void ir_iter_reset_proc(ir_proc_iter_t *iter);
 BOOLEAN ir_iter_more_procs(ir_proc_iter_t *iter);
+
+/* Add an init/fini procedure to be called at program startup/termination. */
+BOOLEAN ir_mod_add_initproc(ir_mod_hdl_t module, ir_sym_hdl_t procSym);
+BOOLEAN ir_mod_add_finiproc(ir_mod_hdl_t module, ir_sym_hdl_t procSym);
+
+/* Create a side-door file based on the SunIR module. */
+/* This is only necessary for those components that have not yet phased
+   out side-door files.  Once everyone has stopped using side-door files,
+   this routine should be removed. */
+BOOLEAN ir_mod_generate_sidedoor(ir_mod_hdl_t mod, const char *filename);
+
+/* Find the sobj with the given name.   NULLIRSOBJHDL is returned on failure. */
+ir_sobj_hdl_t ir_mod_get_sobj_by_name(ir_mod_hdl_t module, const char *name);
+
+/* Add an ident string to a module. */
+BOOLEAN ir_mod_add_ident(ir_mod_hdl_t module, const char *ident_string);
+
+/* Allocate a new symbol.
+   NULLIRSYMHDL returned on error. */
+ir_sym_hdl_t ir_mod_new_symbol(ir_mod_hdl_t module, const char *name,
+		ir_sym_binding_t binding, ir_sym_type_t type);
+
+/* Retrieve a symbol by name.   
+   NULLIRSYMHDL is returned on error or if no such sobj exists.
+   Note:  This does not examine a symbol's user name. */
+ir_sym_hdl_t ir_mod_get_symbol_by_name(ir_mod_hdl_t module, const char *name);
+
+/* Allocate a new section within the given module.
+   NULLIRSECTIONHDL is returned on failure. */
+ir_sect_hdl_t ir_mod_new_section(ir_mod_hdl_t module, ir_sect_base_t base, 
+	const char *fragName, BOOLEAN isInGroup, BOOLEAN isComdat);
+
+/* Retrieve one of the predefined sections in this module. */
+ir_sect_hdl_t ir_mod_section(ir_mod_hdl_t module, ir_sect_base_t section);
+
+/* Create a new static data object within the given module. 
+   NULLIRSOBJHDL is returned on failure. */
+ir_sobj_hdl_t ir_mod_new_sobj(ir_mod_hdl_t mod, ir_sym_hdl_t symbol,
+                              uint64_t size, int alignment);
+
+/* Retrieve the handle of the "." symbol. */
+ir_sym_hdl_t ir_mod_dot_symbol(ir_mod_hdl_t module);
+
+/* Add assembly language code.  If the module already contains assembly code,
+   the new code is appended to it. */
+BOOLEAN ir_mod_add_asm(ir_mod_hdl_t module, const char *asm_code);
 
 #ifdef __cplusplus
 }

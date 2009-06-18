@@ -402,7 +402,6 @@ execute_fixup_cfg (void)
 {
   basic_block bb;
   gimple_stmt_iterator gsi;
-  tree_stmt_iterator tsi;
   int todo = gimple_in_ssa_p (cfun) ? TODO_verify_ssa : 0;
 
   cfun->after_inlining = true;

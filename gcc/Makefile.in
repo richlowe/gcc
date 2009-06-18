@@ -1593,10 +1593,10 @@ quickstrap: all
 
 all.internal: start.encap rest.encap doc
 # This is what to compile if making a cross-compiler.
-all.cross: native gcc-cross$(exeext) cpp$(exeext) specs drdr\
+all.cross: native gcc-cross$(exeext) cpp$(exeext) specs \
 	libgcc-support lang.all.cross doc @GENINSRC@ srcextra
 # This is what must be made before installing GCC and converting libraries.
-start.encap: native xgcc$(exeext) cpp$(exeext) specs drdr\
+start.encap: native xgcc$(exeext) cpp$(exeext) specs \
 	libgcc-support lang.start.encap @GENINSRC@ srcextra
 # These can't be made until after GCC can run.
 rest.encap: $(STMP_FIXPROTO) lang.rest.encap
@@ -1624,12 +1624,6 @@ libbackend.a: $(OBJS@onestep@)
 	-rm -rf libbackend.a
 	$(AR) $(AR_FLAGS) libbackend.a $(OBJS@onestep@)
 	-$(RANLIB) $(RANLIB_FLAGS) libbackend.a
-
-drdr: driverdriver.o prefix.o errors.o $(LIBS)
-	$(CC) -o drdr $(LDFLAGS) driverdriver.o prefix.o errors.o $(LIBS)
-
-driverdriver.o: driverdriver.c $(CONFIG_H) $(SYSTEM_H) multilib.h $(TM_H) $(BCONFIG_H)
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(srcdir)/driverdriver.c
 
 # We call this executable `xgcc' rather than `gcc'
 # to avoid confusion if the current directory is in the path

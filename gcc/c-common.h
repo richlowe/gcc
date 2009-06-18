@@ -1045,6 +1045,7 @@ extern void c_finish_omp_flush (tree);
 extern tree c_finish_omp_for (location_t, tree, tree, tree, tree, tree, tree);
 extern void c_split_parallel_clauses (tree, tree *, tree *);
 extern enum omp_clause_default_kind c_omp_predetermined_sharing (tree);
+extern void c_finish_omp_taskwait (void);
 
 /* Not in c-omp.c; provided by the front end.  */
 extern bool c_omp_sharing_predetermined (tree);

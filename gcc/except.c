@@ -82,6 +82,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-ir.h"
 #include "c-common.h"
 #include "gimple.h"
+#include "tree-flow.h"
 
 /* Provide defaults for stuff that may not be defined when using
    sjlj exceptions.  */
@@ -605,10 +606,12 @@ get_action_number (struct eh_region *r)
       if (r->action_number < -3)
         abort ();
       if (r->action_number != -1)
-        if (gate_generate_rtl())
-          crtl->uses_eh_lsda = 1;
-        else
-          cfun->uses_eh_lsda = 1;
+        {
+          if (gate_generate_rtl())
+            crtl->uses_eh_lsda = 1;
+          else
+            cfun->uses_eh_lsda = 1;
+        }
     }
   return r->action_number;
 }
@@ -798,7 +801,7 @@ build_ir_eh_type_index (int filter)
       return call_node;
 }
 
-void
+static void
 generate_one_landing_pad (struct eh_region *region, int exit_label)
 {
   /* this function is based on build_post_landing_pads */

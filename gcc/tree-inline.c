@@ -882,8 +882,8 @@ copy_tree_body_r (tree *tp, int *walk_subtrees, void *data)
 	  /* Replace the RETURN_EXPR with (a copy of) the
 	     MODIFY_EXPR hanging underneath. */ 
 	  *tp = copy_node (assignment); 
-	  new_decl = remap_decl (gimple_assign_lhs (*tp), id);
-	  gimple_assign_set_lhs (*tp, new_decl);
+          new_decl = remap_decl (TREE_OPERAND (*tp, 0), id);
+          TREE_OPERAND (*tp, 0) = new_decl;
 	}
       else /* Else the RETURN_EXPR returns no value.  */
 	{
@@ -3460,7 +3460,7 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id,
   bool purge_dead_abnormal_edges;
   tree t_step;
   tree var;
-  gimple_seq *inlined_body;
+  gimple_seq inlined_body;
   gimple lni_info;
   
   /* Set input_location here so we get the right instantiation context

@@ -3640,7 +3640,7 @@ generate_default_copy_ctor_function (tree decl)
     type_default_copy_ctor 
       = splay_tree_new_ggc (splay_tree_compare_pointers);
 
-  if (st = splay_tree_lookup (type_default_copy_ctor, (splay_tree_key) type))
+  if ((st = splay_tree_lookup (type_default_copy_ctor, (splay_tree_key) type)))
     return (tree) st->value;
 
   ptr_type = build_pointer_type (type);

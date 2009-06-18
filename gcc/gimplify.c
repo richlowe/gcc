@@ -5889,7 +5889,7 @@ gimplify_omp_parallel (tree *expr_p, gimple_seq *pre_p)
   if (OMP_PARALLEL_BODY (expr) == NULL_TREE)
     /* nothing to gimplify for 2nd pass. 1st pass of gimplifier took 
        care of it and set it to NULL in lower_omp_directive() */
-    return GS_ALL_DONE;
+    return;
 
   gimplify_scan_omp_clauses (&OMP_PARALLEL_CLAUSES (expr), pre_p,
 			     OMP_PARALLEL_COMBINED (expr)
@@ -6259,7 +6259,7 @@ goa_stabilize_expr (tree *expr_p, gimple_seq *pre_p, tree lhs_addr,
    this situation as well.  */
 
 static enum gimplify_status
-gimplify_omp_atomic_mutex (tree *expr_p, tree *pre_p, tree addr, tree rhs)
+gimplify_omp_atomic_mutex (tree *expr_p, gimple_seq *pre_p, tree addr, tree rhs)
 {
   tree t;
 
