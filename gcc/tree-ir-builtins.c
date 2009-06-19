@@ -1759,7 +1759,22 @@ dump_ir_builtin_call (gimple stmt, int need_return)
             warning (0, "invalid third argument to %<__builtin_prefetch%>; using zero");
             op2 = 0;
           }
-
+#ifdef TARGET_CPU_x86
+        if (op1 == 0) /* prefetch read */
+          {
+            if (op2 <=1)
+              real_name = "__sun_x86_prefetch_read_once_intrinsic";
+            else
+              real_name = "__sun_x86_prefetch_read_many_intrinsic";
+          }
+        else /* prefetch write */
+          {
+            if (op2 <=1)
+              real_name = "__sun_x86_prefetch_write_once_intrinsic";
+            else
+              real_name = "__sun_x86_prefetch_write_many_intrinsic";
+          }
+#else        
         if (op1 == 0) /* prefetch read */
           {
             if (op2 <=1)
@@ -1774,7 +1789,7 @@ dump_ir_builtin_call (gimple stmt, int need_return)
             else
               real_name = "__sparc_prefetch_write_many_intrinsic";
           }
-        
+#endif        
         fn = build_decl (FUNCTION_DECL, get_identifier (real_name),
                          build_function_type (void_type_node, NULL_TREE));
         DECL_EXTERNAL (fn) = 1;

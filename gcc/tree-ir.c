@@ -632,6 +632,10 @@ dump_ir_funcname (tree fn)
       || strcmp (real_name, "_Znaj") == 0
       || strcmp (real_name, "_ZdlPv") == 0
       || strcmp (real_name, "_ZdaPv") == 0
+      || strcmp (real_name, "__sun_x86_prefetch_read_once_intrinsic") == 0
+      || strcmp (real_name, "__sun_x86_prefetch_read_many_intrinsic") == 0
+      || strcmp (real_name, "__sun_x86_prefetch_write_once_intrinsic") == 0
+      || strcmp (real_name, "__sun_x86_prefetch_write_many_intrinsic") == 0
       || strcmp (real_name, "_ZSt9terminatev") == 0)
     {
         /* Mark operator new and delete and some
