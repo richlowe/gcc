@@ -1204,7 +1204,12 @@ static const char *ssbe_xarch =
 #ifdef TARGET_CPU_x86
 "%{m32: %{Zarchm32=*: -xarch=%*; \
                     : -xarch=generic}; \
-   m64: %{Zarchm64=*: -xarch=%*; \
+   m64: %{Zarchm64=sse3a: -xarch=amd64a; \
+          Zarchm64=amdsse4a: -xarch=amd64a; \
+          Zarchm64=sse3: -xarch=amd64; \
+          Zarchm64=ssse3: -xarch=amd64; \
+          Zarchm64=sse4_1: -xarch=amd64; \
+          Zarchm64=sse4_2: -xarch=amd64; \
                     : -xarch=generic}; \
       : %{Zarchm32=*: -xarch=%*; \
                     : -xarch=generic} } \

@@ -104,9 +104,14 @@ along with GCC; see the file COPYING3.  If not see
              %{!p:%{!pg:-Y P,/usr/ucblib/64:/lib:/usr/lib/64}}} \
              -R /usr/ucblib/64} \
    %{!compat-bsd: \
-     %{!YP,*:%{p|pg:-Y P,/usr/lib/libp/64:/lib/64:/usr/lib/64} \
-             %{!p:%{!pg:-Y P,/lib/64:/usr/lib/64}}}}"
-
+     %{!YP,*:%{p|pg:\
+               %{Zarchm64=sse3a|Zarchm64=amdsse4a: -Y P,%J/amd64a:%J/amd64:/usr/lib/libp/64:/lib/64:/usr/lib/64 ;\
+                 Zarchm64=*: -Y P,%J/amd64:/usr/lib/libp64:/lib/64:/usr/lib/64 ;\
+                      : -Y P,%J/amd64:/usr/lib/libp/64:/lib/64:/usr/lib/64} }\
+             %{!p:%{!pg: \
+               %{Zarchm64=sse3a|Zarchm64=amdsse4a: -Y P,%J/amd64a:%J/amd64:/usr/lib/libp/64:/lib/64:/usr/lib/64 ;\
+                 Zarchm64=*: -Y P,%J/amd64:/usr/lib/libp64:/lib/64:/usr/lib/64 ;\
+                     : -Y P,%J/amd64:/lib/64:/usr/lib/64}}}}}"
 #undef LINK_ARCH64_SPEC
 #define LINK_ARCH64_SPEC LINK_ARCH64_SPEC_BASE
 
