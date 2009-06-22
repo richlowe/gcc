@@ -1348,10 +1348,10 @@ static const char *ssbe_optlevel =
 
 /* some slightly different stuff for iropt */
 static const char *ssiropt_optlevel =
-"%{O:-O3 %{xinline=*: -I} ;\
-   O0: %{xprofile=*: -O3 ; : -O1} %{xinline=*: -I} ;\
-   O1:-O3 %{xinline=*: -I} ;\
-   O2:-O3 %{xinline=*: -I} ;\
+"%{O:-O3 -I ;\
+   O0: %{xprofile=*: -O3 ; : -O1} -I ;\
+   O1:-O3 -I ;\
+   O2:-O3 -I ;\
    O3:-O5 %{xinline=@auto*: ; \
             xinline=*: -I} ;\
    Os:-O3 %{xinline=*: -I} ; \
