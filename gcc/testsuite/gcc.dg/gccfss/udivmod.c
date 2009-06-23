@@ -1,5 +1,6 @@
 /* test inline asm support */
 /* { dg-do run } */
+/* { dg-skip-if "" { "i?86-*-solaris2.10" } { "*" } { "" } } */
 
 typedef int QItype __attribute__ ((mode (QI)));
 typedef unsigned int UQItype __attribute__ ((mode (QI)));

@@ -1175,7 +1175,8 @@ static const char *asm_options =
 #if HAVE_GNU_AS
 /* If GNU AS is used, then convert -w (no warnings), -I, and -v
    to the assembler equivalents.  */
-"%{v} %{w:-W} %{I*} "
+/* Gccfss doesn't want pass -v, -W or -I to fbe. 
+"%{v} %{w:-W} %{I*} " */
 #endif
 "%{xgas: %{v} %{w:-W} %{I*} } %a %Y %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c:-o %d%w%u%O}";
 
@@ -1210,7 +1211,7 @@ static const char *ssbe_xarch =
           Zarchm64=ssse3: -xarch=amd64; \
           Zarchm64=sse4_1: -xarch=amd64; \
           Zarchm64=sse4_2: -xarch=amd64; \
-                    : -xarch=generic}; \
+                    : -xarch=generic64}; \
       : %{Zarchm32=*: -xarch=%*; \
                     : -xarch=generic} } \
  %{Zarch=*: } %{Zarchm32=*: } %{Zarchm64=*: }";

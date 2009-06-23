@@ -5175,6 +5175,9 @@ omp_add_variable (struct gimplify_omp_ctx *ctx, tree decl, unsigned int flags)
   splay_tree_node n;
   unsigned int nflags;
   tree t;
+
+  if (!DECL_P (decl))
+    return;
   
   STRIP_NOPS (decl);
   
