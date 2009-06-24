@@ -5101,6 +5101,11 @@ declare_weak (tree decl)
     error ("weak declaration of %q+D must be public", decl);
   else if (TREE_CODE (decl) == FUNCTION_DECL && TREE_ASM_WRITTEN (decl))
     error ("weak declaration of %q+D must precede definition", decl);
+  else if (SUPPORTS_WEAK && gate_generate_ir ())
+    {
+      if (! DECL_WEAK (decl))
+        weak_decls = tree_cons (NULL, decl, weak_decls);
+    }
   else if (!SUPPORTS_WEAK)
     warning (0, "weak declaration of %q+D not supported", decl);
 
