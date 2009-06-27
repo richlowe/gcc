@@ -65,6 +65,7 @@ extern int app_on; /* X86 HACK */
 #include "tree-iterator.h"
 #include "tree-ir.h"
 #include "c-common.h"
+#include "ir/IrModule.h"
 
 /* fbe cannot support .weakref. We suppress HAVE_GAS_WEAKREF above, however, it seems to
    get turned on later. So resuppress it again */
@@ -148,6 +149,8 @@ static void asm_output_aligned_bss (FILE *, tree, const char *,
 #endif /* BSS_SECTION_ASM_OP */
 static void mark_weak (tree);
 static void output_constant_pool (const char *, tree);
+static ir_sym_type_t get_sunir_sym_type(tree decl);
+
 
 /* Well-known sections, each one associated with some sort of *_ASM_OP.  */
 section *text_section;
@@ -163,11 +166,6 @@ section *sbss_section;
 section *tls_comm_section;
 section *comm_section;
 section *lcomm_section;
-
-/* RAT-TODO: remove when eliminate side door file */
-#ifdef TARGET_CPU_x86
-section *bss_switch_section;
-#endif
 
 /* A SECTION_NOSWITCH section used for declaring global BSS variables.
    May be null.  */
@@ -230,6 +228,14 @@ static GTY (()) tree emutls_object_type;
 #else
 # define EMUTLS_SEPARATOR	"_"
 #endif
+
+/*
+ * Current Static object that we are trying to initialize.
+ * used when flag_use_ir_sd_file is true, to save the
+ * context of the variable fields we are initializing
+ */
+
+ir_sobj_hdl_t current_sunir_sobj;
 
 /* Create an IDENTIFIER_NODE by prefixing PREFIX to the
    IDENTIFIER_NODE NAME's name.  */
@@ -581,6 +587,7 @@ get_section (const char *name, unsigned int flags, tree decl)
     {
       sect = GGC_NEW (section);
       sect->named.common.flags = flags;
+      sect->named.common.ir_hdl = NULL;
       sect->named.name = ggc_strdup (name);
       sect->named.decl = decl;
       *slot = sect;
@@ -739,14 +746,102 @@ section *
 get_named_section (tree decl, const char *name, int reloc)
 {
   unsigned int flags;
-
+  section *sect;
+  
   gcc_assert (!decl || DECL_P (decl));
   if (name == NULL)
     name = TREE_STRING_POINTER (DECL_SECTION_NAME (decl));
 
   flags = targetm.section_type_flags (decl, name, reloc);
 
-  return get_section (name, flags, decl);
+  sect = get_section (name, flags, decl);
+  if (!sect->common.ir_hdl && flag_use_ir_sd_file) 
+    {
+      /* Yuck! what a hack, try to filter out some known
+         section names here */
+      if (strcmp (name, ".ctors") == 0)
+        sect->common.ir_hdl = ir_mod_section (irMod, IR_SECT_CTORS);
+      else if (strcmp (name, ".dtors") == 0)
+        sect->common.ir_hdl = ir_mod_section (irMod, IR_SECT_DTORS);
+      else if (strcmp (name, ".jcr") == 0)
+        sect->common.ir_hdl = ir_mod_section (irMod, IR_SECT_JCR);
+      else if (strcmp (name, ".eh_frame") == 0)
+        sect->common.ir_hdl = ir_mod_section (irMod, IR_SECT_EH_FRAME);
+      else if (DECL_COMDAT (decl))
+        {
+          /* We need to figure out some additional details on how
+             to select the SunIR section for this symbol. */
+          
+          ir_sect_base_t base;
+          switch (categorize_decl_for_section (decl, reloc))
+            {
+            case SECCAT_TEXT:
+              base = IR_SECT_TEXT;
+              break;
+            case SECCAT_RODATA:
+            case SECCAT_RODATA_MERGE_STR:
+            case SECCAT_RODATA_MERGE_STR_INIT:
+            case SECCAT_RODATA_MERGE_CONST:
+              base = IR_SECT_RODATA;
+              break;
+            case SECCAT_SRODATA:
+              gcc_assert (0);
+              break;
+            case SECCAT_DATA:
+            case SECCAT_DATA_REL:
+            case SECCAT_DATA_REL_LOCAL:
+            case SECCAT_DATA_REL_RO:
+            case SECCAT_DATA_REL_RO_LOCAL:
+              base = IR_SECT_DATA;
+              break;
+            case SECCAT_SDATA:
+              gcc_assert (0);
+              break;
+            case SECCAT_BSS:
+              base = IR_SECT_BSS;
+              break;
+            case SECCAT_SBSS:
+              gcc_assert (0);
+              break;
+            case SECCAT_TDATA:
+              base = IR_SECT_TDATA;
+              break;
+            case SECCAT_TBSS:
+              base = IR_SECT_TBSS;
+              break;
+            default:
+              gcc_unreachable ();
+            }
+
+          name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+          name = targetm.strip_name_encoding (name);
+          sect->common.ir_hdl = ir_mod_new_section (irMod, base, name, 1, 1);
+        }
+      else
+        sect->common.ir_hdl =
+          ir_mod_new_section (irMod, IR_SECT_DATA, name, DECL_COMDAT (decl), DECL_COMDAT (decl));
+    }
+  return sect;
+}
+
+static void
+output_asm_object_name (tree decl, FILE *file, const char *name)
+{
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL (decl);
+      gcc_assert (sym != NULL);
+      gcc_assert (ir_sym_name(sym) != NULL);
+      return;
+    }
+  
+#ifdef ASM_DECLARE_OBJECT_NAME
+  last_assemble_variable_decl = decl;
+  ASM_DECLARE_OBJECT_NAME (file, name, decl);
+#else
+  /* Standard thing is just output label for the object.  */
+  ASM_OUTPUT_LABEL (file, name);
+#endif /* ASM_DECLARE_OBJECT_NAME */
 }
 
 /* If required, set DECL_SECTION_NAME to a unique name.  */
@@ -779,15 +874,23 @@ asm_output_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
 {
   gcc_assert (strcmp (XSTR (XEXP (DECL_RTL (decl), 0), 0), name) == 0);
   targetm.asm_out.globalize_decl_name (file, decl);
-  switch_to_section (bss_section);
-#ifdef ASM_DECLARE_OBJECT_NAME
-  last_assemble_variable_decl = decl;
-  ASM_DECLARE_OBJECT_NAME (file, name, decl);
-#else
-  /* Standard thing is just output label for the object.  */
-  ASM_OUTPUT_LABEL (file, name);
-#endif /* ASM_DECLARE_OBJECT_NAME */
-  ASM_OUTPUT_SKIP (file, rounded ? rounded : 1);
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      gcc_assert (sym != NULL);
+      ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+      gcc_assert (sobj == NULL);
+      current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size ? size : 1, 0);
+      assemble_align (DECL_ALIGN (decl));
+      ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_BSS));
+      current_sunir_sobj = NULL;
+    }
+  else
+    {
+      switch_to_section (bss_section);
+      output_asm_object_name (decl, file, name);
+      ASM_OUTPUT_SKIP (file, rounded ? rounded : 1);
+    }
 }
 
 #endif
@@ -804,16 +907,24 @@ asm_output_aligned_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
 			const char *name, unsigned HOST_WIDE_INT size,
 			int align)
 {
-  switch_to_section (bss_section);
-  ASM_OUTPUT_ALIGN (file, floor_log2 (align / BITS_PER_UNIT));
-#ifdef ASM_DECLARE_OBJECT_NAME
-  last_assemble_variable_decl = decl;
-  ASM_DECLARE_OBJECT_NAME (file, name, decl);
-#else
-  /* Standard thing is just output label for the object.  */
-  ASM_OUTPUT_LABEL (file, name);
-#endif /* ASM_DECLARE_OBJECT_NAME */
-  ASM_OUTPUT_SKIP (file, size ? size : 1);
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      gcc_assert (sym != NULL);
+      ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+      gcc_assert (sobj == NULL);
+      current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size ? size : 1, 0);
+      assemble_align (DECL_ALIGN (decl));
+      ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_BSS));
+      current_sunir_sobj = NULL;
+    }
+  else
+    {
+      switch_to_section (bss_section);
+      assemble_align (align);
+      output_asm_object_name (decl, file, name);
+      ASM_OUTPUT_SKIP (file, size ? size : 1);
+    }
 }
 
 #endif
@@ -1479,16 +1590,20 @@ make_decl_rtl (tree decl)
 void
 assemble_asm (tree string)
 {
-  int orig_app_on = app_on;
-  app_enable ();
-
-  if (TREE_CODE (string) == ADDR_EXPR)
-    string = TREE_OPERAND (string, 0);
-
-  fprintf (asm_out_file, "\t%s\n", TREE_STRING_POINTER (string));
-
-  if (!orig_app_on)
-    app_disable ();
+  if (flag_use_ir_sd_file)
+    {
+      ir_mod_add_asm (irMod, TREE_STRING_POINTER (string));
+      ir_mod_add_asm (irMod, "\n");
+    }
+  else
+    {
+      app_enable ();
+      
+      if (TREE_CODE (string) == ADDR_EXPR)
+        string = TREE_OPERAND (string, 0);
+      
+      fprintf (asm_out_file, "\t%s\n", TREE_STRING_POINTER (string));
+    }
 }
 
 /* Record an element in the table of global destructors.  SYMBOL is
@@ -1541,19 +1656,22 @@ default_named_section_asm_out_destructor (rtx symbol, int priority)
 {
   section *sec;
 
+  /* RAT-TODO. Need to define new SunIR interfaces for this */
+  ir_start_arbitrary_asm();
   if (priority != DEFAULT_INIT_PRIORITY)
     sec = get_cdtor_priority_section (priority, 
-				      /*constructor_p=*/false);
+                                      /*constructor_p=*/false);
   else
     sec = get_section (".dtors", SECTION_WRITE, NULL);
-
+  
   int orig_app_on = app_on;
   app_enable ();
-
+  
   assemble_addr_to_section (symbol, sec);
-
+      
   if (!orig_app_on)
     app_disable ();
+  ir_end_arbitrary_asm();
 }
 
 #ifdef DTORS_SECTION_ASM_OP
@@ -1561,6 +1679,8 @@ void
 default_dtor_section_asm_out_destructor (rtx symbol,
 					 int priority ATTRIBUTE_UNUSED)
 {
+  /* RAT-TODO. Need to define new SunIR interfaces for this */
+  ir_start_arbitrary_asm();
   int orig_app_on = app_on;
   app_enable ();
 
@@ -1568,6 +1688,7 @@ default_dtor_section_asm_out_destructor (rtx symbol,
 
   if (!orig_app_on)
     app_disable ();
+  ir_end_arbitrary_asm();
 }
 #endif
 
@@ -1599,19 +1720,23 @@ default_named_section_asm_out_constructor (rtx symbol, int priority)
 {
   section *sec;
 
+  /* RAT-TODO. Need to define new SunIR interfaces for this */
+  ir_start_arbitrary_asm();
+
   if (priority != DEFAULT_INIT_PRIORITY)
     sec = get_cdtor_priority_section (priority, 
-				      /*constructor_p=*/true);
+                                      /*constructor_p=*/true);
   else
     sec = get_section (".ctors", SECTION_WRITE, NULL);
-
   int orig_app_on = app_on;
   app_enable ();
-
+  
   assemble_addr_to_section (symbol, sec);
-
+  
   if (!orig_app_on)
     app_disable ();
+
+  ir_end_arbitrary_asm();
 }
 
 #ifdef CTORS_SECTION_ASM_OP
@@ -1619,11 +1744,14 @@ void
 default_ctor_section_asm_out_constructor (rtx symbol,
 					  int priority ATTRIBUTE_UNUSED)
 {
+  /* RAT-TODO. Need to define new SunIR interfaces for this */
+  ir_start_arbitrary_asm();
   int orig_app_on = app_on;
   app_enable ();
   assemble_addr_to_section (symbol, ctors_section);
   if (!orig_app_on)
     app_disable ();
+  ir_end_arbitrary_asm();
 }
 #endif
 
@@ -1771,12 +1899,8 @@ assemble_start_function (tree decl, const char *fnname)
     ASM_OUTPUT_LABEL (asm_out_file, crtl->subsections.hot_section_label);
 
   /* Tell assembler to move to target machine's alignment for functions.  */
-  align = floor_log2 (DECL_ALIGN (decl) / BITS_PER_UNIT);
-  if (align > 0)
-    {
-      ASM_OUTPUT_ALIGN (asm_out_file, align);
-    }
-
+  assemble_align (DECL_ALIGN (decl));
+  
   /* Handle a user-specified function alignment.
      Note that we still need to align to DECL_ALIGN, as above,
      because ASM_OUTPUT_MAX_SKIP_ALIGN might not do any alignment at all.  */
@@ -1868,6 +1992,13 @@ assemble_zeros (unsigned HOST_WIDE_INT size)
   if (flag_syntax_only)
     return;
 
+  if (flag_use_ir_sd_file) 
+    {
+      gcc_assert (current_sunir_sobj != NULL);
+      ir_sobj_new_skip (current_sunir_sobj, size, NULLIRINITRPOS);
+      return;
+    }
+  
 #ifdef ASM_NO_SKIP_IN_TEXT
   /* The `space' pseudo in the text section outputs nop insns rather than 0s,
      so we must output 0s explicitly in the text section.  */
@@ -1890,6 +2021,13 @@ assemble_align (int align)
 {
   if (align > BITS_PER_UNIT)
     {
+      if (flag_use_ir_sd_file) 
+        {
+          gcc_assert (current_sunir_sobj != NULL);
+          ir_sobj_set_alignment (current_sunir_sobj, 1 << floor_log2 (align / BITS_PER_UNIT));
+          return;
+        }
+      /* Output to ascii file */
       ASM_OUTPUT_ALIGN (asm_out_file, floor_log2 (align / BITS_PER_UNIT));
     }
 }
@@ -1901,6 +2039,13 @@ assemble_string (const char *p, int size)
 {
   int pos = 0;
   int maximum = 2000;
+
+  if (flag_use_ir_sd_file) 
+    {
+      gcc_assert (current_sunir_sobj != NULL);
+      ir_sobj_new_string (current_sunir_sobj, p, NULLIRINITRPOS);
+      return;
+    }
 
   /* If the string is very long, split it up.  */
 
@@ -1926,22 +2071,32 @@ emit_local (tree decl ATTRIBUTE_UNUSED,
 	    unsigned HOST_WIDE_INT size ATTRIBUTE_UNUSED,
 	    unsigned HOST_WIDE_INT rounded ATTRIBUTE_UNUSED)
 {
-/* RAT-TODO revert to orig when remove side door file */
-#ifdef TARGET_CPU_x86
-  switch_to_section(bss_switch_section);
-#endif
-
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      gcc_assert (sym != NULL);
+      ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+      gcc_assert (sobj == NULL);
+      current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size, 0);
+      assemble_align (DECL_ALIGN (decl));
+      ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_COMMON));
+      current_sunir_sobj = NULL;
+      return true;
+    }
+  else
+    { 
 #if defined ASM_OUTPUT_ALIGNED_DECL_LOCAL
-  ASM_OUTPUT_ALIGNED_DECL_LOCAL (asm_out_file, decl, name,
-				 size, DECL_ALIGN (decl));
-  return true;
+      ASM_OUTPUT_ALIGNED_DECL_LOCAL (asm_out_file, decl, name,
+                                     size, DECL_ALIGN (decl));
+      return true;
 #elif defined ASM_OUTPUT_ALIGNED_LOCAL
-  ASM_OUTPUT_ALIGNED_LOCAL (asm_out_file, name, size, DECL_ALIGN (decl));
-  return true;
+      ASM_OUTPUT_ALIGNED_LOCAL (asm_out_file, name, size, DECL_ALIGN (decl));
+      return true;
 #else
-  ASM_OUTPUT_LOCAL (asm_out_file, name, size, rounded);
-  return false;
+      ASM_OUTPUT_LOCAL (asm_out_file, name, size, rounded);
+      return false;
 #endif
+    }
 }
 
 /* A noswitch_section_callback for bss_noswitch_section.  */
@@ -1953,15 +2108,32 @@ emit_bss (tree decl ATTRIBUTE_UNUSED,
 	  unsigned HOST_WIDE_INT size ATTRIBUTE_UNUSED,
 	  unsigned HOST_WIDE_INT rounded ATTRIBUTE_UNUSED)
 {
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      gcc_assert (sym != NULL);
+      if (TREE_PUBLIC (decl))
+        ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+      ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+      gcc_assert (sobj == NULL);
+      current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size, 0);
+      assemble_align (DECL_ALIGN (decl));
+      ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_BSS));
+      current_sunir_sobj = NULL;
+      return true;
+    }
+  else
+    {
 #if defined ASM_OUTPUT_ALIGNED_BSS
-  ASM_OUTPUT_ALIGNED_BSS (asm_out_file, decl, name, size, DECL_ALIGN (decl));
-  return true;
+      ASM_OUTPUT_ALIGNED_BSS (asm_out_file, decl, name, size, DECL_ALIGN (decl));
+      return true;
 #else
-  ASM_OUTPUT_BSS (asm_out_file, decl, name, size, rounded);
-  return false;
+      ASM_OUTPUT_BSS (asm_out_file, decl, name, size, rounded);
+      return false;
 #endif
+#endif
+    }
 }
-#endif
 
 /* A noswitch_section_callback for comm_section.  */
 
@@ -1971,22 +2143,38 @@ emit_common (tree decl ATTRIBUTE_UNUSED,
 	     unsigned HOST_WIDE_INT size ATTRIBUTE_UNUSED,
 	     unsigned HOST_WIDE_INT rounded ATTRIBUTE_UNUSED)
 {
-/* RAT-TODO revert to orig when eliminate side door file */
-#ifdef TARGET_CPU_x86
-  switch_to_section(bss_switch_section);
-#endif
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      gcc_assert (sym != NULL);
+      if (TREE_PUBLIC (decl))
+        ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+      ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+      gcc_assert (sobj == NULL);
+      current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size, 0);
+      assemble_align (DECL_ALIGN (decl));
+      ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_BSS));
+      current_sunir_sobj = NULL;
+      return true;
+    }
+  else
+    {
+      targetm.asm_out.named_section (bss_section->named.name,
+                                    bss_section->named.common.flags,
+                                    bss_section->named.decl);
 
 #if defined ASM_OUTPUT_ALIGNED_DECL_COMMON
-  ASM_OUTPUT_ALIGNED_DECL_COMMON (asm_out_file, decl, name,
+      ASM_OUTPUT_ALIGNED_DECL_COMMON (asm_out_file, decl, name,
 				  size, DECL_ALIGN (decl));
-  return true;
+      return true;
 #elif defined ASM_OUTPUT_ALIGNED_COMMON
-  ASM_OUTPUT_ALIGNED_COMMON (asm_out_file, name, size, DECL_ALIGN (decl));
-  return true;
+      ASM_OUTPUT_ALIGNED_COMMON (asm_out_file, name, size, DECL_ALIGN (decl));
+      return true;
 #else
-  ASM_OUTPUT_COMMON (asm_out_file, name, size, rounded);
-  return false;
+      ASM_OUTPUT_COMMON (asm_out_file, name, size, rounded);
+      return false;
 #endif
+    }
 }
 
 /* A noswitch_section_callback for tls_comm_section.  */
@@ -1997,13 +2185,30 @@ emit_tls_common (tree decl ATTRIBUTE_UNUSED,
 		 unsigned HOST_WIDE_INT size ATTRIBUTE_UNUSED,
 		 unsigned HOST_WIDE_INT rounded ATTRIBUTE_UNUSED)
 {
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      gcc_assert (sym != NULL);
+      if (TREE_PUBLIC (decl))
+        ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+      ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+      gcc_assert (sobj == NULL);
+      current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size, 0);
+      assemble_align (DECL_ALIGN (decl));
+      ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_TBSS));
+      current_sunir_sobj = NULL;
+      return true;
+    }
+  else
+    {
 #ifdef ASM_OUTPUT_TLS_COMMON
-  ASM_OUTPUT_TLS_COMMON (asm_out_file, decl, name, size);
-  return true;
+      ASM_OUTPUT_TLS_COMMON (asm_out_file, decl, name, size);
+      return true;
 #else
-  sorry ("thread-local COMMON data not implemented");
-  return true;
+      sorry ("thread-local COMMON data not implemented");
+      return true;
 #endif
+    }
 }
 
 /* Assemble DECL given that it belongs in SECTION_NOSWITCH section SECT.
@@ -2043,16 +2248,10 @@ assemble_variable_contents (tree decl, const char *name,
 			    bool dont_output_data)
 {
   /* Do any machine/system dependent processing of the object.  */
-#ifdef ASM_DECLARE_OBJECT_NAME
-  last_assemble_variable_decl = decl;
-  ASM_DECLARE_OBJECT_NAME (asm_out_file, name, decl);
-#else
-  /* Standard thing is just output label for the object.  */
-  ASM_OUTPUT_LABEL (asm_out_file, name);
-#endif /* ASM_DECLARE_OBJECT_NAME */
+  output_asm_object_name (decl, asm_out_file, name);
 
   if (!dont_output_data)
-    {
+    { 
       if (DECL_INITIAL (decl)
 	  && DECL_INITIAL (decl) != error_mark_node
 	  && !initializer_zerop (DECL_INITIAL (decl)))
@@ -2064,6 +2263,9 @@ assemble_variable_contents (tree decl, const char *name,
 	/* Leave space for it.  */
 	assemble_zeros (tree_low_cst (DECL_SIZE_UNIT (decl), 1));
     }
+
+  if (flag_use_ir_sd_file)
+    ir_sobj_set_size (current_sunir_sobj, tree_low_cst (DECL_SIZE_UNIT (decl), 1));
 }
 
 /* Initialize emulated tls object TO, which refers to TLS variable
@@ -2212,6 +2414,17 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       return;
     }
 
+  if (flag_use_ir_sd_file && !DECL_SUNIR_SYM_HDL (decl)) 
+    {
+      /* Create a default symbol, all attributes will
+         get filled in as we go on in the assemble process */
+      ir_sym_hdl_t sym = 
+        lookup_sunir_symbol_with_name (targetm.strip_name_encoding (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl))));
+      ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
+      ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
+      DECL_SUNIR_SYM_HDL (decl) = (unsigned int) sym;
+    }
+  
   /* set vtable to public for xipo */ 
   if (globalize_flag 
       && TREE_STATIC (decl)
@@ -2219,7 +2432,7 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       && DECL_ASSEMBLER_NAME_SET_P (decl))
     {
       const char * result = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
-      if (result = strchr (result, '.')) 
+      if ((result = strchr (result, '.'))) 
         if (strstr (result, "_ZTV") == result + 1)
           {
              TREE_STATIC (decl) = 0;
@@ -2276,10 +2489,20 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
     assemble_noswitch_variable (decl, name, sect);
   else
     {
+      ir_sym_hdl_t sym = NULL;
+      if (flag_use_ir_sd_file)
+        {
+          sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL (decl);
+          ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+          gcc_assert (sobj == NULL);
+          current_sunir_sobj = ir_mod_new_sobj (irMod, sym, 0, 4);
+        }
+
       switch_to_section (sect);
-      if (DECL_ALIGN (decl) > BITS_PER_UNIT)
-	ASM_OUTPUT_ALIGN (asm_out_file, floor_log2 (DECL_ALIGN_UNIT (decl)));
+      assemble_align (DECL_ALIGN (decl));
       assemble_variable_contents (decl, name, dont_output_data);
+      if (flag_use_ir_sd_file)
+        current_sunir_sobj = NULL;
     }
 }
 
@@ -2354,6 +2577,9 @@ assemble_external_real (tree decl)
 {
   rtx rtl = DECL_RTL (decl);
 
+  if (flag_use_ir_sd_file)
+    return;
+
   if (MEM_P (rtl) && GET_CODE (XEXP (rtl, 0)) == SYMBOL_REF
       && !SYMBOL_REF_USED (XEXP (rtl, 0))
       && !incorporeal_function_p (decl))
@@ -2393,7 +2619,8 @@ assemble_external (tree decl ATTRIBUTE_UNUSED)
      main body of this code is only rarely exercised.  To provide some
      testing, on all platforms, we make sure that the ASM_OUT_FILE is
      open.  If it's not, we should not be calling this function.  */
-  gcc_assert (asm_out_file);
+  if (!flag_use_ir_sd_file)
+    gcc_assert (asm_out_file);
 
   if (!DECL_P (decl) || !DECL_EXTERNAL (decl) || !TREE_PUBLIC (decl))
     return;
@@ -2480,7 +2707,7 @@ mark_decl_referenced (tree decl)
    followed again, and return the ultimate target of the alias
    chain.  */
 
-/*static*/ inline tree
+/*static inline*/ tree
 ultimate_transparent_alias_target (tree *alias)
 {
   tree target = *alias;
@@ -2522,6 +2749,8 @@ assemble_name (FILE *file, const char *name)
   const char *real_name;
   tree id;
 
+  gcc_assert (flag_use_ir_sd_file == 0);
+  
   real_name = targetm.strip_name_encoding (name);
 
   id = maybe_get_identifier (real_name);
@@ -2537,6 +2766,38 @@ assemble_name (FILE *file, const char *name)
     }
 
   assemble_name_raw (file, name);
+}
+
+/* Lookup an existing symbol with the given name, of missing
+   create a new symbol with the given name */
+ir_sym_hdl_t
+lookup_sunir_symbol_with_name (const char *name)
+{
+  const char *real_name;
+  tree id;
+  ir_sym_hdl_t sym;
+  
+  real_name = targetm.strip_name_encoding (name);
+  id = maybe_get_identifier (real_name);
+  if (id)
+    {
+      tree id_orig = id;
+
+      mark_referenced (id);
+      ultimate_transparent_alias_target (&id);
+      if (id != id_orig)
+	name = IDENTIFIER_POINTER (id);
+      gcc_assert (! TREE_CHAIN (id));
+    }
+  
+  if (name[0] == '*')
+    name++;
+  
+  sym = ir_mod_get_symbol_by_name (irMod, name);
+  if (!sym)
+    sym = ir_mod_new_symbol (irMod, name, IR_SYMBINDING_LOCAL, get_sunir_sym_type (id));
+  
+  return sym;
 }
 
 /* Allocate SIZE bytes writable static space with a gensym name
@@ -2605,12 +2866,8 @@ assemble_trampoline_template (void)
 #endif
 
   /* Write the assembler code to define one.  */
-  align = floor_log2 (TRAMPOLINE_ALIGNMENT / BITS_PER_UNIT);
-  if (align > 0)
-    {
-      ASM_OUTPUT_ALIGN (asm_out_file, align);
-    }
-
+  assembl_align (TRAMPOLINE_ALIGNMENT);
+  
   targetm.asm_out.internal_label (asm_out_file, "LTRAMP", 0);
   TRAMPOLINE_TEMPLATE (asm_out_file);
 
@@ -2677,9 +2934,11 @@ integer_asm_op (int size, int aligned_p)
 void
 assemble_integer_with_op (const char *op, rtx x)
 {
-  fputs (op, asm_out_file);
+  if (!flag_use_ir_sd_file)
+    fputs (op, asm_out_file);
   output_addr_const (asm_out_file, x);
-  fputc ('\n', asm_out_file);
+  if (!flag_use_ir_sd_file)
+    fputc ('\n', asm_out_file);
 }
 
 /* The default implementation of the asm_out.integer target hook.  */
@@ -2694,7 +2953,50 @@ default_assemble_integer (rtx x ATTRIBUTE_UNUSED,
      absolute value fits in a bfd_vma, but not in a bfd_signed_vma.  */
   if (size > UNITS_PER_WORD && size > POINTER_SIZE / BITS_PER_UNIT)
     return false;
-  return op && (assemble_integer_with_op (op, x), true);
+  
+  /* If we are in IR based dise door file, directly generate the
+     initialization here. */
+  if (op) {
+    if (flag_use_ir_sd_file)
+      {
+        if (GET_CODE (x) != CONST_INT)
+          {
+            /* YUCK! even symbols come here and we call this
+               function as integer */
+            output_addr_const (asm_out_file, x);
+            return true;
+          }
+
+        gcc_assert (current_sunir_sobj != NULL);
+
+        switch (size)
+          {
+          case 1:
+            ir_sobj_new_int8 (current_sunir_sobj, INTVAL(x), NULLIRINITRPOS);
+            break;
+          case 2:
+            ir_sobj_new_int16 (current_sunir_sobj, INTVAL(x), NULLIRINITRPOS, !aligned_p);
+            break;
+          case 4:
+            ir_sobj_new_int32 (current_sunir_sobj, INTVAL(x), NULLIRINITRPOS, !aligned_p);
+            break;
+          case 8:
+            ir_sobj_new_int64 (current_sunir_sobj, INTVAL(x), NULLIRINITRPOS, !aligned_p);
+            break;
+          case 16:
+            /* lets break it up */
+            return false;
+          }
+        return true;
+      }
+    else
+      {
+        assemble_integer_with_op (op, x);
+        return true;
+      }
+  }
+  /* Break the constant */
+  return false;
 }
 
 /* Assemble the integer constant X into an object of SIZE bytes.  ALIGN is
@@ -3388,22 +3690,31 @@ static void
 assemble_constant_contents (tree exp, const char *label, unsigned int align)
 {
   HOST_WIDE_INT size;
-
+  
   size = get_constant_size (exp);
 
-  if (globalize_flag && !TREE_PUBLIC (exp)) /* gccfss support for -xipo */
+  if (!flag_use_ir_sd_file && globalize_flag && !TREE_PUBLIC (exp)) /* gccfss support for -xipo */
     targetm.asm_out.globalize_label (asm_out_file, label);
   
-  /* Do any machine/system dependent processing of the constant.  */
+  if (!flag_use_ir_sd_file)
+    {
+      /* Do any machine/system dependent processing of the constant.  */
 #ifdef ASM_DECLARE_CONSTANT_NAME
-  ASM_DECLARE_CONSTANT_NAME (asm_out_file, label, exp, size);
+      ASM_DECLARE_CONSTANT_NAME (asm_out_file, label, exp, size);
 #else
-  /* Standard thing is just output label for the constant.  */
-  ASM_OUTPUT_LABEL (asm_out_file, label);
+      /* Standard thing is just output label for the constant.  */
+      ASM_OUTPUT_LABEL (asm_out_file, label);
 #endif /* ASM_DECLARE_CONSTANT_NAME */
-
+    }
+  
   /* Output the value of EXP.  */
   output_constant (exp, size, align);
+  
+  if (flag_use_ir_sd_file)
+    {
+      gcc_assert (current_sunir_sobj != NULL);
+      ir_sobj_set_size (current_sunir_sobj, (uint64_t) size);
+    }
 }
 
 /* We must output the constant data referred to by SYMBOL; do so.  */
@@ -3428,11 +3739,28 @@ output_constant_def_contents (rtx symbol)
     place_block_symbol (symbol);
   else
     {
+      if (flag_use_ir_sd_file) 
+        {
+          ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
+          ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
+          current_sunir_sobj = ir_sym_def_sobj (sym);
+          if (current_sunir_sobj == NULL)
+            current_sunir_sobj = ir_mod_new_sobj (irMod, sym, 0, 4);
+          
+          int ispublic = TREE_PUBLIC (exp);
+          if (globalize_flag && !ispublic) /* gccfss support for -xipo */
+            ispublic = 1;
+
+          if (ispublic)
+            ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+        }
+      
       switch_to_section (get_constant_section (exp));
       align = get_constant_alignment (exp);
-      if (align > BITS_PER_UNIT)
-	ASM_OUTPUT_ALIGN (asm_out_file, floor_log2 (align / BITS_PER_UNIT));
+      assemble_align (align);
       assemble_constant_contents (exp, XSTR (symbol, 0), align);
+      if (flag_use_ir_sd_file)
+        current_sunir_sobj = NULL;
     }
   if (flag_mudflap)
     mudflap_enqueue_constant (exp);
@@ -3843,7 +4171,7 @@ output_constant_pool_1 (struct constant_descriptor_rtx *desc,
 			unsigned int align)
 {
   rtx x, tmp;
-
+  
   x = desc->constant;
 
   /* See if X is a LABEL_REF (or a CONST referring to a LABEL_REF)
@@ -3880,11 +4208,14 @@ output_constant_pool_1 (struct constant_descriptor_rtx *desc,
   ASM_OUTPUT_SPECIAL_POOL_ENTRY (asm_out_file, x, desc->mode,
 				 align, desc->labelno, done);
 #endif
-
+  
   assemble_align (align);
-
-  /* Output the label.  */
-  targetm.asm_out.internal_label (asm_out_file, "LC", desc->labelno);
+  
+  if (!flag_use_ir_sd_file)
+    {
+      /* Output the label.  */
+      targetm.asm_out.internal_label (asm_out_file, "LC", desc->labelno);
+    }
 
   /* Output the data.  */
   output_constant_pool_2 (desc->mode, x, align);
@@ -3899,6 +4230,7 @@ output_constant_pool_1 (struct constant_descriptor_rtx *desc,
 #ifdef ASM_OUTPUT_SPECIAL_POOL_ENTRY
  done:
 #endif
+
   return;
 }
 
@@ -4005,9 +4337,23 @@ output_constant_pool_contents (struct rtx_constant_pool *pool)
 	  place_block_symbol (desc->sym);
 	else
 	  {
+            if (flag_use_ir_sd_file)
+              {
+                /* Lets create a new symbol for SunIR */
+                char buf[42];
+                ASM_GENERATE_INTERNAL_LABEL (buf, "LC", desc->labelno);
+                ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (buf);
+                ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
+                ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
+                ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
+                gcc_assert (sobj == NULL);
+                current_sunir_sobj = ir_mod_new_sobj (irMod, sym, 0, 4);
+              }
 	    switch_to_section (targetm.asm_out.select_rtx_section
 			       (desc->mode, desc->constant, desc->align));
 	    output_constant_pool_1 (desc, desc->align);
+            if (flag_use_ir_sd_file)
+              current_sunir_sobj = NULL;
 	  }
       }
 }
@@ -4856,6 +5202,15 @@ output_constructor (tree exp, unsigned HOST_WIDE_INT size,
 	  else
 	    output_constant (val, fieldsize, align2);
 
+          if (flag_use_ir_sd_file)
+            {
+              /* We may recursively call the constructor routine
+                 to construct the object of interest, hence each
+                 call will set the size of the object incorrectly
+                 so clear it. YUCK! */
+              ir_sobj_set_size (current_sunir_sobj, 0);
+            }
+          
 	  /* Count its size.  */
 	  total_bytes += fieldsize;
 	}
@@ -5007,6 +5362,12 @@ output_constructor (tree exp, unsigned HOST_WIDE_INT size,
 
   if ((unsigned HOST_WIDE_INT)total_bytes < size)
     assemble_zeros (size - total_bytes);
+  
+  if (flag_use_ir_sd_file)
+    {
+      /* Set the size of the object */
+      ir_sobj_set_size (current_sunir_sobj, size);
+    }
 }
 
 /* Mark DECL as weak.  */
@@ -5126,7 +5487,14 @@ weak_finish_1 (tree decl)
   ASM_WEAKEN_DECL (asm_out_file, decl, name, NULL);
 #else
 #ifdef ASM_WEAKEN_LABEL
-  ASM_WEAKEN_LABEL (asm_out_file, name);
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
+      gcc_assert (sym != NULL);
+      ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
+    }
+  else
+    ASM_WEAKEN_LABEL (asm_out_file, name);
 #else
 #ifdef ASM_OUTPUT_WEAK_ALIAS
   {
@@ -5173,7 +5541,14 @@ weak_finish (void)
 	     defined, otherwise we and weak_finish_1 would use
 	     different macros.  */
 # if defined ASM_WEAKEN_LABEL && ! defined ASM_WEAKEN_DECL
-	  ASM_WEAKEN_LABEL (asm_out_file, IDENTIFIER_POINTER (target));
+          if (flag_use_ir_sd_file)
+            {
+              ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER (target));
+              gcc_assert (sym != NULL);
+              ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
+            }
+          else
+            ASM_WEAKEN_LABEL (asm_out_file, IDENTIFIER_POINTER (target));
 # else
 	  tree decl = find_decl_and_mark_needed (alias_decl, target);
 
@@ -5244,7 +5619,14 @@ globalize_decl (tree decl)
 #ifdef ASM_WEAKEN_DECL
       ASM_WEAKEN_DECL (asm_out_file, decl, name, 0);
 #else
-      ASM_WEAKEN_LABEL (asm_out_file, name);
+      if (flag_use_ir_sd_file)
+        {
+          ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
+          gcc_assert (sym != NULL);
+          ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
+        }
+      else
+        ASM_WEAKEN_LABEL (asm_out_file, name);
 #endif
 
       /* Remove this function from the pending weak list so that
@@ -5371,7 +5753,7 @@ do_assemble_alias (tree decl, tree target)
 	  error ("%Jweakref is not supported in this configuration", decl);
 	  return;
 	}
-#endif
+ #endif
       return;
     }
 
@@ -5391,14 +5773,23 @@ do_assemble_alias (tree decl, tree target)
       globalize_decl (decl);
       maybe_assemble_visibility (decl);
     }
-
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym1, sym2;
+      sym1 = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
+      sym2 = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER (target));
+      ir_sym_set_def_equivalent (sym1, sym2, 0);
+    }
+  else
+    {
 # ifdef ASM_OUTPUT_DEF_FROM_DECLS
-  ASM_OUTPUT_DEF_FROM_DECLS (asm_out_file, decl, target);
+      ASM_OUTPUT_DEF_FROM_DECLS (asm_out_file, decl, target);
 # else
-  ASM_OUTPUT_DEF (asm_out_file,
-		  IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)),
-		  IDENTIFIER_POINTER (target));
+      ASM_OUTPUT_DEF (asm_out_file,
+                      IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)),
+                      IDENTIFIER_POINTER (target));
 # endif
+    }
 #elif defined (ASM_OUTPUT_WEAK_ALIAS) || defined (ASM_WEAKEN_DECL)
   {
     const char *name;
@@ -5580,6 +5971,28 @@ default_assemble_visibility (tree decl, int vis)
 
   const char *name, *type;
 
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_scope_t scope;
+      switch (vis)
+        {
+        case 1:
+          scope = IR_SYMBOLIC_LD_SCOPE;
+          break;
+        case 2:
+        case 3:
+          scope = IR_HIDDEN_LD_SCOPE;
+          break;
+        default:
+          scope = IR_GLOBAL_LD_SCOPE;
+        }
+      
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      gcc_assert (sym != NULL);
+      ir_sym_set_scope (sym, scope);
+      return;
+    }
+      
   int orig_app_on = app_on;
   app_enable ();
 
@@ -5680,21 +6093,29 @@ init_varasm_once (void)
 #ifdef TEXT_SECTION_ASM_OP
   text_section = get_unnamed_section (SECTION_CODE, output_section_asm_op,
 				      TEXT_SECTION_ASM_OP);
+  if (flag_use_ir_sd_file) 
+    text_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_TEXT);
 #endif
 
 #ifdef DATA_SECTION_ASM_OP
   data_section = get_unnamed_section (SECTION_WRITE, output_section_asm_op,
 				      DATA_SECTION_ASM_OP);
+  if (flag_use_ir_sd_file) 
+    data_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_DATA);
 #endif
 
 #ifdef SDATA_SECTION_ASM_OP
   sdata_section = get_unnamed_section (SECTION_WRITE, output_section_asm_op,
 				       SDATA_SECTION_ASM_OP);
+  if (flag_use_ir_sd_file) 
+    sdata_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_DATA);
 #endif
 
 #ifdef READONLY_DATA_SECTION_ASM_OP
   readonly_data_section = get_unnamed_section (0, output_section_asm_op,
 					       READONLY_DATA_SECTION_ASM_OP);
+  if (flag_use_ir_sd_file) 
+    readonly_data_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_RODATA);
 #endif
 
 #ifdef CTORS_SECTION_ASM_OP
@@ -5711,12 +6132,16 @@ init_varasm_once (void)
   bss_section = get_unnamed_section (SECTION_WRITE | SECTION_BSS,
 				     output_section_asm_op,
 				     BSS_SECTION_ASM_OP);
+  if (flag_use_ir_sd_file) 
+    bss_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_BSS);
 #endif
 
 #ifdef SBSS_SECTION_ASM_OP
   sbss_section = get_unnamed_section (SECTION_WRITE | SECTION_BSS,
 				      output_section_asm_op,
 				      SBSS_SECTION_ASM_OP);
+  if (flag_use_ir_sd_file) 
+    sbss_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_BSS);
 #endif
 
   tls_comm_section = get_noswitch_section (SECTION_WRITE | SECTION_BSS
@@ -5725,17 +6150,18 @@ init_varasm_once (void)
 					| SECTION_COMMON, emit_local);
   comm_section = get_noswitch_section (SECTION_WRITE | SECTION_BSS
 				       | SECTION_COMMON, emit_common);
-
-/* RAT-TODO remove when eliminate side door file */
-#ifdef TARGET_CPU_x86
-  bss_switch_section = get_unnamed_section (SECTION_WRITE | SECTION_BSS,
-                                    output_section_asm_op,
-                                    BSS_SECTION_ASM_OP);
-#endif
+  if (flag_use_ir_sd_file) 
+    {
+      tls_comm_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_TBSS);
+      lcomm_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_LBCOMMON);
+      comm_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_COMMON);
+    }
 
 #if defined ASM_OUTPUT_ALIGNED_BSS || defined ASM_OUTPUT_BSS
   bss_noswitch_section = get_noswitch_section (SECTION_WRITE | SECTION_BSS,
 					       emit_bss);
+  if (flag_use_ir_sd_file)
+    bss_noswitch_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_BSS);
 #endif
 
   targetm.asm_out.init_sections ();
@@ -5866,6 +6292,9 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
 {
   char flagchars[10], *f = flagchars;
 
+  if (flag_use_ir_sd_file)
+      return;
+  
   /* If we have already declared this section, we can use an
      abbreviated form to switch back to it -- unless this section is
      part of a COMDAT groups, in which case GAS requires the full
@@ -5934,9 +6363,10 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
 
       if (flags & SECTION_ENTSIZE)
 	fprintf (asm_out_file, ",%d", flags & SECTION_ENTSIZE);
-      if (HAVE_COMDAT_GROUP && (flags & SECTION_LINKONCE))
+      if (HAVE_COMDAT_GROUP && (flags & SECTION_LINKONCE)) {
 	fprintf (asm_out_file, ",%s,comdat",
 		 lang_hooks.decls.comdat_group (decl));
+      }
     }
 
   putc ('\n', asm_out_file);
@@ -6382,10 +6812,14 @@ void
 default_asm_output_anchor (rtx symbol)
 {
   char buffer[100];
-
-  sprintf (buffer, "*. + " HOST_WIDE_INT_PRINT_DEC,
-	   SYMBOL_REF_BLOCK_OFFSET (symbol));
-  ASM_OUTPUT_DEF (asm_out_file, XSTR (symbol, 0), buffer);
+  if (flag_use_ir_sd_file)
+    gcc_assert (0);
+  else
+    {
+      sprintf (buffer, "*. + " HOST_WIDE_INT_PRINT_DEC,
+               SYMBOL_REF_BLOCK_OFFSET (symbol));
+      ASM_OUTPUT_DEF (asm_out_file, XSTR (symbol, 0), buffer);
+    }
 }
 #endif
 
@@ -6501,18 +6935,54 @@ default_valid_pointer_mode (enum machine_mode mode)
 void
 default_globalize_label (FILE * stream, const char *name)
 {
-  fputs (GLOBAL_ASM_OP, stream);
-  assemble_name (stream, name);
-  putc ('\n', stream);
+  if (flag_use_ir_sd_file) 
+    {
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
+      ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+    }
+  else
+    {
+      fputs (GLOBAL_ASM_OP, stream);
+      assemble_name (stream, name);
+      putc ('\n', stream);
+    }
 }
 #endif /* GLOBAL_ASM_OP */
+
+static ir_sym_type_t
+get_sunir_sym_type(tree decl)
+{
+  if (!decl)
+    return IR_SYMTYPE_UNKNOWN;
+  
+  if (TREE_CODE (decl) == FUNCTION_DECL)
+    return IR_SYMTYPE_PROC;
+  else if (TREE_CODE (decl) == VAR_DECL)
+    {
+      if (DECL_THREAD_LOCAL_P (decl))
+        return IR_SYMTYPE_TLS_OBJECT;
+      else
+        return IR_SYMTYPE_OBJECT;
+    }
+  else
+    return IR_SYMTYPE_UNKNOWN;
+}
 
 /* Default function to output code that will globalize a declaration.  */
 void
 default_globalize_decl_name (FILE * stream, tree decl)
 {
   const char *name = XSTR (XEXP (DECL_RTL (decl), 0), 0);
-  targetm.asm_out.globalize_label (stream, name);
+  if (flag_use_ir_sd_file) 
+    {
+      gcc_assert (TREE_CODE(decl) == VAR_DECL
+                  || TREE_CODE(decl) == FUNCTION_DECL);
+      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL (decl);
+      gcc_assert (sym != NULL);
+      ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+    }
+  else
+    targetm.asm_out.globalize_label (stream, name);
 }
 
 /* Default function to output a label for unwind information.  The
@@ -6558,16 +7028,6 @@ default_file_start (void)
   if (targetm.file_start_file_directive)
     output_file_directive (asm_out_file, main_input_filename);
 
-/* RAT-TODO remove when eliminate side door file */
-#ifdef TARGET_CPU_x86
-  fprintf(asm_out_file, "\t.section\t.bss,\"aw\"\n");
-  fprintf(asm_out_file, "Bbss.bss:\n");
-  fprintf(asm_out_file, "\t.section\t.data,\"aw\"\n");
-  fprintf(asm_out_file, "Ddata.data:\n");
-  fprintf(asm_out_file, "\t.section\t.rodata,\"a\"\n");
-  fprintf(asm_out_file, "Drodata.rodata:\n");
-#endif
-
 }
 
 /* This is a generic routine suitable for use as TARGET_ASM_FILE_END
@@ -6593,6 +7053,9 @@ file_end_indicate_exec_stack (void)
 void
 output_section_asm_op (const void *directive)
 {
+  if (flag_use_ir_sd_file)
+    return;
+  
   fprintf (asm_out_file, "%s\n", (const char *) directive);
 }
 
@@ -6603,7 +7066,11 @@ void
 switch_to_section (section *new_section)
 {
   if (in_section == new_section)
-    return;
+    {
+      if (flag_use_ir_sd_file && current_sunir_sobj)
+        ir_sobj_set_section (current_sunir_sobj, new_section->common.ir_hdl);
+      return;
+    }
 
   if (new_section->common.flags & SECTION_FORGET)
     in_section = NULL;
@@ -6634,6 +7101,9 @@ switch_to_section (section *new_section)
     }
 
   new_section->common.flags |= SECTION_DECLARED;
+
+  if (flag_use_ir_sd_file && current_sunir_sobj)
+    ir_sobj_set_section (current_sunir_sobj, new_section->common.ir_hdl);
 }
 
 /* If block symbol SYMBOL has not yet been assigned an offset, place
@@ -6963,20 +7433,38 @@ sunir_output_init_fini (FILE *file, tree decl)
 {
   if (lookup_attribute ("init", DECL_ATTRIBUTES (decl)))
     {
-      fprintf (file, "\t.pushsection\t\".init\"\n");
-      fprintf (asm_out_file, "\tcall\t");
-      fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
-      fprintf (asm_out_file, "\n\tnop\n");
-      fprintf (file, "\t.popsection\n");
+      if (flag_use_ir_sd_file)
+        {
+          ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+          gcc_assert (sym != NULL);
+          ir_mod_add_initproc (irMod, sym);
+        }
+      else
+        {
+          fprintf (file, "\t.pushsection\t\".init\"\n");
+          fprintf (asm_out_file, "\tcall\t");
+          fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
+          fprintf (asm_out_file, "\n\tnop\n");
+          fprintf (file, "\t.popsection\n");
+        }
     }
 
   if (lookup_attribute ("fini", DECL_ATTRIBUTES (decl)))
     {
-      fprintf (file, "\t.pushsection\t\".fini\"\n");
-      fprintf (asm_out_file, "\tcall\t");
-      fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
-      fprintf (asm_out_file, "\n\tnop\n");
-      fprintf (file, "\t.popsection\n");
+      if (flag_use_ir_sd_file)
+        {
+          ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+          gcc_assert (sym != NULL);
+          ir_mod_add_finiproc (irMod, sym);
+        }
+      else
+        {
+          fprintf (file, "\t.pushsection\t\".fini\"\n");
+          fprintf (asm_out_file, "\tcall\t");
+          fprintf (asm_out_file, "%s\n", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
+          fprintf (asm_out_file, "\n\tnop\n");
+          fprintf (file, "\t.popsection\n");
+        }
     }
 }
 

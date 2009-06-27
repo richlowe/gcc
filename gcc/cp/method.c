@@ -445,6 +445,9 @@ use_thunk (tree thunk_fndecl, bool emit_p)
       DECL_INITIAL (thunk_fndecl) = fn_block;
       init_function_start (thunk_fndecl);
       cfun->is_thunk = 1;
+
+      ir_start_arbitrary_asm();
+
       assemble_start_function (thunk_fndecl, fnname);
 
       targetm.asm_out.output_mi_thunk (asm_out_file, thunk_fndecl,
@@ -455,6 +458,27 @@ use_thunk (tree thunk_fndecl, bool emit_p)
       current_function_decl = 0;
       set_cfun (NULL);
       TREE_ASM_WRITTEN (thunk_fndecl) = 1;
+
+      ir_end_arbitrary_asm();
+
+      if (flag_use_ir_sd_file)
+        {
+          /* Some symbol attributes may have been updated
+             during the final emission, since we supressed
+             IR symbol generation, we need to capture this
+             later. */
+          ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (fnname);
+          gcc_assert (DECL_SUNIR_SYM_HDL(thunk_fndecl) == 0);
+          DECL_SUNIR_SYM_HDL(thunk_fndecl) = (unsigned int) sym;
+          if (DECL_WEAK (thunk_fndecl))
+            ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
+          else if (TREE_PUBLIC(thunk_fndecl))
+            ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+          else
+            ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
+          
+          ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+        }
     }
   else
     {

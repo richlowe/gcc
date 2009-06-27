@@ -2822,6 +2822,8 @@ struct tree_decl_common GTY(())
      DbgSymIDs for all other *_DECLs.  */
   unsigned int dbg_sym_id_part1;
   unsigned int dbg_sym_id_part2;
+  /* The Sun IR symbol information */
+  unsigned int ir_sym;
   /* Points to a structure whose details depend on the language in use.  */
   struct lang_decl *lang_specific;
 };
@@ -3365,6 +3367,9 @@ struct tree_decl_non_common GTY(())
 /* dbg_gen symbol identifier for a given decl */
 #define DECL_DBG_SYM_ID_1(DECL) (DECL_COMMON_CHECK (DECL)->decl_common.dbg_sym_id_part1)
 #define DECL_DBG_SYM_ID_2(DECL) (DECL_COMMON_CHECK (DECL)->decl_common.dbg_sym_id_part2)
+
+/* Sun IR symbol information for given decl */
+#define DECL_SUNIR_SYM_HDL(DECL) (DECL_COMMON_CHECK (DECL)->decl_common.ir_sym)
 
 /* True if dbg_gen symbol identifier for a given decl is set.  */
 #define DECL_DBG_SYM_ID_SET_P(DECL) \

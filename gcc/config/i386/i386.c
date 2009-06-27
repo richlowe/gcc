@@ -7323,11 +7323,6 @@ get_pc_thunk_name (char name[32], unsigned int regno)
     ASM_GENERATE_INTERNAL_LABEL (name, "LPR", regno);
 }
 
-/* RAT-TODO: app_enable hack */
-extern int app_on;
-extern void app_enable();
-extern void app_disable();
-
 /* This function generates code for -fpic that loads %ebx with
    the return address of the caller and then returns.  */
 
@@ -7336,9 +7331,9 @@ ix86_file_end (void)
 {
   rtx xops[2];
   int regno;
-  int orig_app_on = app_on;
-  /* RAT-TODO wrap this section declaration to make ir2hf happy */
-  app_enable ();
+  /* RAT-TODO Fix this to go through as IR function with
+     inline ASM */
+  ir_start_arbitrary_asm();
 
   for (regno = 0; regno < 8; ++regno)
     {
@@ -7393,10 +7388,9 @@ ix86_file_end (void)
       output_asm_insn ("ret", xops);
     }
   
-  /* RAT-TODO wrap this section declaration to make ir2hf happy */
-  if (!orig_app_on)
-    app_disable ();
-  
+  /* RAT-TODO Fix this */
+  ir_end_arbitrary_asm ();
+
   if (NEED_INDICATE_EXEC_STACK)
     file_end_indicate_exec_stack ();
 }
@@ -28577,6 +28571,9 @@ static void ATTRIBUTE_UNUSED
 i386_solaris_elf_named_section (const char *name, unsigned int flags,
 				tree decl)
 {
+  if (flag_use_ir_sd_file)
+    return;
+  
   /* With Binutils 2.15, the "@unwind" marker must be specified on
      every occurrence of the ".eh_frame" section, not just the first
      one.  */

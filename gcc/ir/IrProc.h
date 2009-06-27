@@ -299,6 +299,12 @@ void ir_proc_set_must_have_frame(ir_proc_hdl_t proc, BOOLEAN mustHaveFrame);
 BOOLEAN ir_proc_tm_atomic (ir_proc_hdl_t proc);
 void ir_proc_set_tm_atomic (ir_proc_hdl_t proc, BOOLEAN atomic);
 
+BOOLEAN ir_proc_is_global_asm (ir_proc_hdl_t proc);
+void ir_proc_set_is_global_asm (ir_proc_hdl_t proc, BOOLEAN isGlobalAsm);
+
+BOOLEAN ir_proc_tm_callable (ir_proc_hdl_t proc);
+void ir_proc_set_tm_callable (ir_proc_hdl_t proc, BOOLEAN callable);
+
 /* If the forbid_auto_max attribute is true, an error will be reported when
    table data is accessed within a minimized procedure.  If the user sets an
    error handler that returns from this error, maximization will procede. */

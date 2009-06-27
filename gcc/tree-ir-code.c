@@ -660,7 +660,17 @@ ir_backend_fini (void)
 
   /* Populate the module's debug symbol table from dbg_gen. */
   dbg_gen_extract_mod_debug_info (irMod);
-  
+}
+
+void
+ir_finish_assemble (void)
+{
+  if (flag_use_ir_sd_file)
+    {
+      /* Write out the ascii side door file */
+      ir_mod_generate_sidedoor (irMod, asm_file_name);
+    }
+
   /* Previously would write pseudo-procedure here.  This is
      now done when ir_mod_close_for_output() is called. */
   /* Note that this statement must be guarded to prevent an
@@ -668,7 +678,6 @@ ir_backend_fini (void)
      when yabe is being used. */
   ir_mod_close_for_output(irMod); /* !!! check for error */
 }
-
 /* Finish current procedure and if 'do_write' is true, then
    generate debug information for procedure before writing 
    procedure to the IR file. 
@@ -714,5 +723,69 @@ dump_ir_fini (tree fn, int do_write)
     ir_scope_gen_fini ();
 
   lni_fini ();
+}
+
+static int saved_flag_use_ir_sd_file;
+static char *tempname;
+
+/* We are trying to emit arbitrary ASM that cannot be
+   represented in high level SunIR. Push a fake file
+   stream buffer to capture the output and we will
+   later feed this into SunIR as is. */
+
+void
+ir_start_arbitrary_asm (void)
+{
+  gcc_assert (saved_flag_use_ir_sd_file == 0);
+  if (flag_use_ir_sd_file) 
+    {
+      /* To directly modify all the routines to redirect
+         assembly code to IR file is too tedious and error
+         prone. It looks like the easier scheme is to get
+         the routine dumped to a temp file and take the temp
+         file contents and redirect it to the IR based side
+         door file. */
+      tempname = tempnam ("/tmp", "gccfs");
+      if (tempname == NULL)
+        fatal_error ("Could not create temp file for writing asm");
+      asm_out_file = fopen (tempname, "w+");
+      if (asm_out_file == NULL)
+        fatal_error ("Could not create temp file for writing asm");
+
+      /* We are using the RTL backend to generate code, this means, we
+         need to allow all the varasm macros to start working, so cheat
+         and make it look as though the IR based side door file is off */
+      saved_flag_use_ir_sd_file = 1;
+      flag_use_ir_sd_file = 0;
+      
+      /* Force emission of section attributes, by clearing the
+         section information */
+      in_section = NULL;
+    }
+}
+
+void
+ir_end_arbitrary_asm ()
+{
+  if (saved_flag_use_ir_sd_file) 
+    {
+      /* Take the contents of the asm file and move it
+         to the IR based side door file. */
+      char buf[4096];
+      char *line;
+      
+      fflush (asm_out_file);
+      (void) fseek(asm_out_file, 0L, SEEK_SET);
+      
+      while ((line = fgets (buf, 4096, asm_out_file)))
+        ir_mod_add_asm (irMod, line);
+      
+      fclose (asm_out_file);
+      asm_out_file = NULL;
+      unlink (tempname);
+      free (tempname);
+      flag_use_ir_sd_file = 1;
+      saved_flag_use_ir_sd_file = 0;
+    }
 }
 

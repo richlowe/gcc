@@ -1064,6 +1064,12 @@ decode_options (unsigned int argc, const char **argv)
   if (flag_test_coverage || profile_arc_flag || flag_profile_values || flag_branch_probabilities) 
     flag_use_rtl_backend = -1;
 
+  if (flag_use_rtl_backend != 0)
+    {
+      /* Turn off IR based side door file */
+      flag_use_ir_sd_file = 0;
+    }
+  
   if (first_time_p)
     {
       if (flag_pie)

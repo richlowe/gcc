@@ -228,6 +228,11 @@ extern void assemble_label (const char *);
    addition of an underscore).  */
 extern void assemble_name_raw (FILE *, const char *);
 
+/* Lookup the symbol in SunIR if it has already been created.
+   Returns the symbol handle, defined as int * hear to avoid
+   header file inclusion problems */
+extern struct ir_symbol_s *lookup_sunir_symbol_with_name (const char *);
+
 /* Like assemble_name_raw, but should be used when NAME might refer to
    an entity that is also represented as a tree (like a function or
    variable).  If NAME does refer to such an entity, that entity will
@@ -473,6 +478,9 @@ enum section_category
 struct section_common GTY(()) {
   /* The set of SECTION_* flags that apply to this section.  */
   unsigned int flags;
+  
+  /* For SunIR generation */
+  void *GTY ((skip)) ir_hdl;
 };
 
 /* Information about a SECTION_NAMED section.  */
@@ -644,6 +652,9 @@ extern void dbxout_stab_value_label_diff (const char *, const char *);
 extern void dbxout_stab_value_internal_label (const char *, int *);
 extern void dbxout_stab_value_internal_label_diff (const char *, int *,
 						   const char *);
+
+extern struct ir_sobj_s *current_sunir_sobj;
+extern tree ultimate_transparent_alias_target (tree *);
 
 #endif
 

@@ -177,7 +177,7 @@ typedef void (*func_ptr) (void);
    does not start with a count of elements.  */
 #ifdef CTOR_LIST_BEGIN
 CTOR_LIST_BEGIN;
-#elif defined(CTORS_SECTION_ASM_OP)
+#elif defined(CTORS_SECTION_ASM_OP_X) /* Dont want this for gccfss */
 /* Hack: force cc1 to switch to .data section early, so that assembling
    __CTOR_LIST__ does not undo our behind-the-back change to .ctors.  */
 static func_ptr force_to_data[1] __attribute__ ((__unused__)) = { };
@@ -193,7 +193,7 @@ STATIC func_ptr __CTOR_LIST__[1]
 
 #ifdef DTOR_LIST_BEGIN
 DTOR_LIST_BEGIN;
-#elif defined(DTORS_SECTION_ASM_OP)
+#elif defined(DTORS_SECTION_ASM_OP_X)
 asm (DTORS_SECTION_ASM_OP);
 STATIC func_ptr __DTOR_LIST__[1]
   __attribute__ ((aligned(sizeof(func_ptr))))
@@ -474,7 +474,7 @@ __do_global_ctors_1(void)
 
 #ifdef CTOR_LIST_END
 CTOR_LIST_END;
-#elif defined(CTORS_SECTION_ASM_OP)
+#elif defined(CTORS_SECTION_ASM_OP_X) /* Dont want this for GCCFSS */
 /* Hack: force cc1 to switch to .data section early, so that assembling
    __CTOR_LIST__ does not undo our behind-the-back change to .ctors.  */
 static func_ptr force_to_data[1] __attribute__ ((__unused__)) = { };
@@ -491,17 +491,17 @@ STATIC func_ptr __CTOR_END__[1]
 #ifdef DTOR_LIST_END
 DTOR_LIST_END;
 #elif defined(HIDDEN_DTOR_LIST_END)
-#ifdef DTORS_SECTION_ASM_OP
+#ifdef DTORS_SECTION_ASM_OP_X /* Dont want this for GCCFSS */
 asm (DTORS_SECTION_ASM_OP);
 #endif
 func_ptr __DTOR_END__[1]
   __attribute__ ((unused,
-#ifndef DTORS_SECTION_ASM_OP
+#ifndef DTORS_SECTION_ASM_OP_X
 		  section(".dtors"),
 #endif
 		  aligned(sizeof(func_ptr)), visibility ("hidden")))
   = { (func_ptr) 0 };
-#elif defined(DTORS_SECTION_ASM_OP)
+#elif defined(DTORS_SECTION_ASM_OP_X)
 asm (DTORS_SECTION_ASM_OP);
 STATIC func_ptr __DTOR_END__[1]
   __attribute__ ((unused, aligned(sizeof(func_ptr))))

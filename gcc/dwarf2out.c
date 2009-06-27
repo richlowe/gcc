@@ -91,6 +91,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "hashtab.h"
 #include "cgraph.h"
 #include "input.h"
+#include "tree-ir.h"
+#include "tree-pass.h"
 
 #ifdef DWARF2_DEBUGGING_INFO
 static void dwarf2out_source_line (unsigned int, const char *);
@@ -2845,6 +2847,9 @@ output_call_frame_info (int for_eh)
   if (dwarf2out_do_cfi_asm ())
     return;
 
+  /* Setup to emit arbitrary ASM for GCCFSS */
+  ir_start_arbitrary_asm ();
+
   /* If we make FDEs linkonce, we may have to emit an empty label for
      an FDE that wouldn't otherwise be emitted.  We want to avoid
      having an FDE kept around when the function it refers to is
@@ -2880,7 +2885,10 @@ output_call_frame_info (int for_eh)
 	  any_eh_needed = true;
 
       if (! any_eh_needed)
-	return;
+        {
+          ir_end_arbitrary_asm();
+          return;
+        }
     }
 
   /* We're going to be generating comments, so turn on app.  */
@@ -3181,6 +3189,8 @@ output_call_frame_info (int for_eh)
   /* Turn off app to make assembly quicker.  */
   if (flag_debug_asm)
     app_disable ();
+
+  ir_end_arbitrary_asm();
 }
 
 /* Output a marker (i.e. a label) for the beginning of a function, before

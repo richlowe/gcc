@@ -82,6 +82,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "ggc.h"
 #include "cfgloop.h"
 #include "params.h"
+#include "tree-ir.h"
 
 #ifdef XCOFF_DEBUGGING_INFO
 #include "xcoffout.h"		/* Needed for external data
@@ -3424,6 +3425,54 @@ output_address (rtx x)
   PRINT_OPERAND_ADDRESS (asm_out_file, x);
 }
 
+
+/*
+ * Return the SunIR symbol information.
+ */
+
+static ir_sym_hdl_t
+lookup_sunir_symbol (rtx x)
+{
+  char buf[256];
+  ir_sym_hdl_t sym;
+
+  switch (GET_CODE (x))
+    {
+    case PC:
+      sym = ir_mod_dot_symbol (irMod);
+      break;
+      
+    case SYMBOL_REF:
+      sym = lookup_sunir_symbol_with_name (XSTR (x, 0));
+      break;
+
+    case LABEL_REF:
+      x = XEXP (x, 0);
+      /* Fall through.  */
+    case CODE_LABEL:
+      if (!flag_use_rtl_backend)
+        ASM_GENERATE_INTERNAL_LABEL (buf, "", CODE_LABEL_NUMBER (x));
+      else
+        ASM_GENERATE_INTERNAL_LABEL (buf, "L", CODE_LABEL_NUMBER (x));
+
+      sym = lookup_sunir_symbol_with_name (buf);
+      break;
+
+    case ZERO_EXTEND:
+    case SIGN_EXTEND:
+    case SUBREG:
+    case TRUNCATE:
+      sym = lookup_sunir_symbol (XEXP (x, 0));
+      break;
+
+    default:
+      gcc_assert (0);
+      break;
+    }
+  
+  return sym;
+}
+
 /* Print an integer constant expression in assembler syntax.
    Addition and subtraction are the only arithmetic
    that may appear in these expressions.  */
@@ -3432,12 +3481,28 @@ void
 output_addr_const (FILE *file, rtx x)
 {
   char buf[256];
+  rtx x1;
+  ir_sym_hdl_t sym1, sym2;
+  int value;
+
+  if (flag_use_ir_sd_file)
+    gcc_assert (current_sunir_sobj != NULL);
 
  restart:
   switch (GET_CODE (x))
     {
     case PC:
-      putc ('.', file);
+      if (flag_use_ir_sd_file)
+        {
+          if (TARGET_ARCH64)
+            ir_sobj_new_rel64 (current_sunir_sobj, ir_mod_dot_symbol (irMod), 0, 
+                               NULLIRINITRPOS, IR_FALSE);
+          else
+            ir_sobj_new_rel32 (current_sunir_sobj, ir_mod_dot_symbol (irMod), 0, 
+                               NULLIRINITRPOS, IR_FALSE);
+        }
+      else
+        putc ('.', file);
       break;
 
     case SYMBOL_REF:
@@ -3446,11 +3511,24 @@ output_addr_const (FILE *file, rtx x)
 	  mark_decl_referenced (SYMBOL_REF_DECL (x));
 	  assemble_external (SYMBOL_REF_DECL (x));
 	}
+      if (flag_use_ir_sd_file)
+        {
+          sym1 = lookup_sunir_symbol_with_name (XSTR (x, 0));
+          if (TARGET_ARCH64)
+            ir_sobj_new_rel64 (current_sunir_sobj, sym1, 0,
+                               NULLIRINITRPOS, IR_FALSE);
+          else
+            ir_sobj_new_rel32 (current_sunir_sobj, sym1, 0,
+                               NULLIRINITRPOS, IR_FALSE);
+        }
+      else
+        {
 #ifdef ASM_OUTPUT_SYMBOL_REF
-      ASM_OUTPUT_SYMBOL_REF (file, x);
+          ASM_OUTPUT_SYMBOL_REF (file, x);
 #else
-      assemble_name (file, XSTR (x, 0));
+          assemble_name (file, XSTR (x, 0));
 #endif
+        }
       break;
 
     case LABEL_REF:
@@ -3465,15 +3543,28 @@ output_addr_const (FILE *file, rtx x)
       else
         ASM_GENERATE_INTERNAL_LABEL (buf, "L", CODE_LABEL_NUMBER (x));
 #endif
-
+      if (flag_use_ir_sd_file)
+        {
+          sym1 = lookup_sunir_symbol_with_name (buf);
+          if (TARGET_ARCH64)
+            ir_sobj_new_rel64 (current_sunir_sobj, sym1, 0,
+                               NULLIRINITRPOS, IR_FALSE);
+          else
+            ir_sobj_new_rel32 (current_sunir_sobj, sym1, 0,
+                               NULLIRINITRPOS, IR_FALSE);
+        }
+      else
+        {
 #ifdef ASM_OUTPUT_LABEL_REF
-      ASM_OUTPUT_LABEL_REF (file, buf);
+          ASM_OUTPUT_LABEL_REF (file, buf);
 #else
-      assemble_name (file, buf);
+          assemble_name (file, buf);
 #endif
+        }
       break;
 
     case CONST_INT:
+      gcc_assert (flag_use_ir_sd_file == 0);
       fprintf (file, HOST_WIDE_INT_PRINT_DEC, INTVAL (x));
       break;
 
@@ -3486,17 +3577,18 @@ output_addr_const (FILE *file, rtx x)
     case CONST_DOUBLE:
       if (GET_MODE (x) == VOIDmode)
 	{
-	  /* We can use %d if the number is one word and positive.  */
-	  if (CONST_DOUBLE_HIGH (x))
-	    fprintf (file, HOST_WIDE_INT_PRINT_DOUBLE_HEX,
-		     (unsigned HOST_WIDE_INT) CONST_DOUBLE_HIGH (x),
-		     (unsigned HOST_WIDE_INT) CONST_DOUBLE_LOW (x));
-	  else if (CONST_DOUBLE_LOW (x) < 0)
-	    fprintf (file, HOST_WIDE_INT_PRINT_HEX,
-		     (unsigned HOST_WIDE_INT) CONST_DOUBLE_LOW (x));
-	  else
-	    fprintf (file, HOST_WIDE_INT_PRINT_DEC, CONST_DOUBLE_LOW (x));
-	}
+          gcc_assert (flag_use_ir_sd_file == 0);
+          /* We can use %d if the number is one word and positive.  */
+          if (CONST_DOUBLE_HIGH (x))
+            fprintf (file, HOST_WIDE_INT_PRINT_DOUBLE_HEX,
+                     (unsigned HOST_WIDE_INT) CONST_DOUBLE_HIGH (x),
+                     (unsigned HOST_WIDE_INT) CONST_DOUBLE_LOW (x));
+          else if (CONST_DOUBLE_LOW (x) < 0)
+            fprintf (file, HOST_WIDE_INT_PRINT_HEX,
+                     (unsigned HOST_WIDE_INT) CONST_DOUBLE_LOW (x));
+          else
+            fprintf (file, HOST_WIDE_INT_PRINT_DEC, CONST_DOUBLE_LOW (x));
+        }
       else
 	/* We can't handle floating point constants;
 	   PRINT_OPERAND must handle them.  */
@@ -3504,27 +3596,51 @@ output_addr_const (FILE *file, rtx x)
       break;
 
     case CONST_FIXED:
+      gcc_assert (flag_use_ir_sd_file == 0);
       fprintf (file, HOST_WIDE_INT_PRINT_HEX,
-	       (unsigned HOST_WIDE_INT) CONST_FIXED_VALUE_LOW (x));
+               (unsigned HOST_WIDE_INT) CONST_FIXED_VALUE_LOW (x));
       break;
 
     case PLUS:
       /* Some assemblers need integer constants to appear last (eg masm).  */
-      if (GET_CODE (XEXP (x, 0)) == CONST_INT)
-	{
-	  output_addr_const (file, XEXP (x, 1));
-	  if (INTVAL (XEXP (x, 0)) >= 0)
-	    fprintf (file, "+");
-	  output_addr_const (file, XEXP (x, 0));
-	}
+      if (flag_use_ir_sd_file)
+        {
+          if (GET_CODE (XEXP (x, 0)) == CONST_INT)
+            {
+              x1 = XEXP (x, 1);
+              value = INTVAL(XEXP (x, 0));
+            }
+          else
+            {
+              x1 = XEXP (x, 0);
+              value = INTVAL(XEXP (x, 1));
+            }
+          sym1 = lookup_sunir_symbol (x1);
+          if (TARGET_ARCH64)
+            ir_sobj_new_rel64 (current_sunir_sobj, sym1, value,
+                               NULLIRINITRPOS, IR_FALSE);
+          else
+            ir_sobj_new_rel32 (current_sunir_sobj, sym1, value,
+                               NULLIRINITRPOS, IR_FALSE);
+        }
       else
-	{
-	  output_addr_const (file, XEXP (x, 0));
-	  if (GET_CODE (XEXP (x, 1)) != CONST_INT
-	      || INTVAL (XEXP (x, 1)) >= 0)
-	    fprintf (file, "+");
-	  output_addr_const (file, XEXP (x, 1));
-	}
+        {
+          if (GET_CODE (XEXP (x, 0)) == CONST_INT)
+            {
+              output_addr_const (file, XEXP (x, 1));
+              if (INTVAL (XEXP (x, 0)) >= 0)
+                fprintf (file, "+");
+              output_addr_const (file, XEXP (x, 0));
+            }
+          else
+            {
+              output_addr_const (file, XEXP (x, 0));
+              if (GET_CODE (XEXP (x, 1)) != CONST_INT
+                  || INTVAL (XEXP (x, 1)) >= 0)
+                fprintf (file, "+");
+              output_addr_const (file, XEXP (x, 1));
+            }
+        }
       break;
 
     case MINUS:
@@ -3534,18 +3650,45 @@ output_addr_const (FILE *file, rtx x)
       if (GET_CODE (x) != MINUS)
 	goto restart;
 
-      output_addr_const (file, XEXP (x, 0));
-      fprintf (file, "-");
-      if ((GET_CODE (XEXP (x, 1)) == CONST_INT && INTVAL (XEXP (x, 1)) >= 0)
-	  || GET_CODE (XEXP (x, 1)) == PC
-	  || GET_CODE (XEXP (x, 1)) == SYMBOL_REF)
-	output_addr_const (file, XEXP (x, 1));
+      if (flag_use_ir_sd_file)
+        {
+          sym1 = lookup_sunir_symbol (XEXP (x, 0));
+          if (GET_CODE (XEXP (x, 1)) == CONST_INT)
+            {
+              value = INTVAL(XEXP (x, 1));
+              if (TARGET_ARCH64)
+                ir_sobj_new_rel64 (current_sunir_sobj, sym1, -value,
+                                   NULLIRINITRPOS, IR_FALSE);
+              else
+                ir_sobj_new_rel32 (current_sunir_sobj, sym1, -value,
+                                   NULLIRINITRPOS, IR_FALSE);
+            }
+          else
+            {
+              sym2 = lookup_sunir_symbol (XEXP (x, 1));
+              if (TARGET_ARCH64)
+                ir_sobj_new_diff64 (current_sunir_sobj, sym1, sym2, 0,
+                                    NULLIRINITRPOS, IR_FALSE);
+              else
+                ir_sobj_new_diff32 (current_sunir_sobj, sym1, sym2, 0,
+                                    NULLIRINITRPOS, IR_FALSE);
+            }
+        }
       else
-	{
-	  fputs (targetm.asm_out.open_paren, file);
-	  output_addr_const (file, XEXP (x, 1));
-	  fputs (targetm.asm_out.close_paren, file);
-	}
+        { 
+          output_addr_const (file, XEXP (x, 0));
+          fprintf (file, "-");
+          if ((GET_CODE (XEXP (x, 1)) == CONST_INT && INTVAL (XEXP (x, 1)) >= 0)
+              || GET_CODE (XEXP (x, 1)) == PC
+              || GET_CODE (XEXP (x, 1)) == SYMBOL_REF)
+            output_addr_const (file, XEXP (x, 1));
+          else
+            {
+              fputs (targetm.asm_out.open_paren, file);
+              output_addr_const (file, XEXP (x, 1));
+              fputs (targetm.asm_out.close_paren, file);
+            }
+        }
       break;
 
     case ZERO_EXTEND:
@@ -4159,7 +4302,7 @@ rest_of_handle_final (void)
 {
   rtx x;
   const char *fnname;
-
+  
   /* Get the function's name, as described by its RTL.  This may be
      different from the DECL_NAME name used in the source file.  */
 
@@ -4168,7 +4311,9 @@ rest_of_handle_final (void)
   x = XEXP (x, 0);
   gcc_assert (GET_CODE (x) == SYMBOL_REF);
   fnname = XSTR (x, 0);
-
+  
+  ir_start_arbitrary_asm();
+  
   assemble_start_function (current_function_decl, fnname);
   final_start_function (get_insns (), asm_out_file, optimize);
   final (get_insns (), asm_out_file, optimize);
@@ -4195,6 +4340,8 @@ rest_of_handle_final (void)
   if (! quiet_flag)
     fflush (asm_out_file);
 
+  ir_end_arbitrary_asm();
+  
   /* Write DBX symbols if requested.  */
 
   /* Note that for those inline functions where we don't initially

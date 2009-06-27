@@ -179,7 +179,10 @@ cb_ident (cpp_reader * ARG_UNUSED (pfile),
       cpp_string cstr = { 0, 0 };
       if (cpp_interpret_string (pfile, str, 1, &cstr, CPP_STRING))
 	{
-	  ASM_OUTPUT_IDENT (asm_out_file, (const char *) cstr.text);
+          if (flag_use_ir_sd_file)
+            ir_mod_add_ident (irMod, (const char *)cstr.text);
+          else
+            ASM_OUTPUT_IDENT (asm_out_file, (const char *) cstr.text);
 	  free (CONST_CAST (unsigned char *, cstr.text));
 	}
     }

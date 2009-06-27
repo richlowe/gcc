@@ -92,6 +92,7 @@ extern int default_alias_level;
 void dbg_gen_fake_init (void);
 void global_ir_init (void);
 void global_ir_fini (void);
+void ir_finish_assemble (void);
 TWORD map_gnu_type_to_tword (tree);
 TYPE map_gnu_type_to_TYPE (tree);
 IR_TYPE_NODE * map_gnu_type_to_IR_TYPE_NODE (tree);
@@ -306,4 +307,14 @@ extern void dump_ir_stmt (gimple stmt);
 extern IR_NODE * dump_ir_builtin_call (gimple stmt, int need_return);
 extern IR_NODE * get_ir_stack_pointer_reg (void);
 extern void sunir_check_builtin_handling (tree function);
+
+extern void ir_start_arbitrary_asm (void);
+extern void ir_end_arbitrary_asm (void);
+
+/* In omp-low.c */
+extern gimple_seq maybe_catch_exception (gimple_seq);
+
+/* In builtins.c */
+extern tree fold_builtin_constant_p (tree);
+
 #endif  /* GCC_TREE_IR_H  */

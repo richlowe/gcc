@@ -1564,4 +1564,8 @@ pie
 Common RejectNegative Negative(shared)
 Create a position independent executable
 
+fascii-sdfile 
+Common Var(flag_use_ir_sd_file, 0) Init(1)
+Use ascii side door file along with SunIR generation
+
 ; This comment is to ensure we retain the blank line above.

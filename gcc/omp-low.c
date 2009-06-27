@@ -1214,9 +1214,6 @@ new_omp_context (gimple stmt, omp_context *outer_ctx)
   return ctx;
 }
 
-/* Also used in gimple-low.c. */
-gimple_seq maybe_catch_exception (gimple_seq);
-
 /* Finalize task copyfn.  */
 
 static void

@@ -67,6 +67,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "df.h"
 #include "timevar.h"
 #include "vecprim.h"
+#include "tree-ir.h"
 
 /* So we can assign to cfun in this file.  */
 #undef cfun
@@ -5001,6 +5002,8 @@ thread_prologue_and_epilogue_insns (void)
 #endif
   edge_iterator ei;
 
+  ir_start_arbitrary_asm();
+
   rtl_profile_for_bb (ENTRY_BLOCK_PTR);
 #ifdef HAVE_prologue
   if (HAVE_prologue)
@@ -5268,6 +5271,7 @@ epilogue_done:
      in the entry and exit blocks.  */
   epilogue_completed = 1;
   df_update_entry_exit_and_calls ();
+  ir_end_arbitrary_asm();
 }
 
 /* Reposition the prologue-end and epilogue-begin notes after instruction

@@ -29,7 +29,6 @@ Boston, MA 02111-1307, USA.  */
 #include "hard-reg-set.h"
 #include "basic-block.h"
 #include "output.h"
-#include "errors.h"
 #include "flags.h"
 #include "function.h"
 #include "expr.h"
@@ -161,9 +160,6 @@ static void dump_omp_return (gimple stmt);
 static void dump_omp_task (gimple stmt);
 static void dump_omp_taskwait (gimple stmt);
 static void generate_cxx_constructor_wrappers (void);
-
-/* In builtins.c */
-extern tree fold_builtin_constant_p (tree);
 
 omp_ir_context_t *cur_omp_context = NULL;
 struct ir_node_list 
@@ -983,6 +979,7 @@ dump_ir_constructor (tree stmt, enum MAP_FOR map_for)
       const char * label_p;
       int reloc;
       int labelno;
+      ir_sym_hdl_t sym;
       
       labelno = internal_labelno ++; 
       
@@ -1011,22 +1008,41 @@ dump_ir_constructor (tree stmt, enum MAP_FOR map_for)
       align = CONSTANT_ALIGNMENT (stmt, align);
       #endif
       
+      if (flag_use_ir_sd_file)
+        {
+          sym = lookup_sunir_symbol_with_name (label_p);
+          gcc_assert (sym != NULL);
+          ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
+          /* prevent recursive iniialization */
+          gcc_assert (current_sunir_sobj == NULL);
+          current_sunir_sobj = ir_mod_new_sobj (irMod, sym, 0, 4);
+          ir_sobj_set_is_readonly (current_sunir_sobj, 1);
+          ir_sobj_set_treetype (current_sunir_sobj, ir_argtype);
+          ir_sobj_set_is_compiler_generated (current_sunir_sobj, 1);
+        }
+      
       reloc = compute_reloc_for_constant (stmt);
       switch_to_section (targetm.asm_out.select_section (stmt, reloc, align));
-      
-      if (align > BITS_PER_UNIT)
-        {
-          ASM_OUTPUT_ALIGN (asm_out_file, floor_log2 (align / BITS_PER_UNIT));
-        }
-        
+      assemble_align (align);
       if (globalize_flag)
-        targetm.asm_out.globalize_label (asm_out_file, label_p);
+        {
+          if (flag_use_ir_sd_file)
+            ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+          else
+            targetm.asm_out.globalize_label (asm_out_file, label_p);
+        }
 
-      /* Standard thing is just output label for the constant.  */
-      ASM_OUTPUT_LABEL (asm_out_file, label_p);
-      
+      if (!flag_use_ir_sd_file)
+        {
+          /* Standard thing is just output label for the constant.  */
+          ASM_OUTPUT_LABEL (asm_out_file, label_p);
+        }
+
       /* Output the value of constructor. Only zeros? */
       output_constant (stmt, argtype.size, align);
+
+      if (flag_use_ir_sd_file)
+        current_sunir_sobj = NULL;
     }
   return ret;
 }
@@ -1385,13 +1401,13 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
               if (regno <= IR_REG_I7)
                 {
                    if (PCC_ISFLOATING (argtype.tword))
-                     error ("register %qs not expected for floating-type field member %qs.%qs",
+                     error ("register %s not expected for floating-type field member %qs.%qs",
                               regname, IDENTIFIER_POINTER (DECL_NAME (op0)), IDENTIFIER_POINTER (DECL_NAME (op1))); 
                 }
               else if (PCC_ISINTEGRAL (argtype.tword)
                        && (argtype.tword != PCC_INT) && (argtype.tword != PCC_UNSIGNED))
                 {
-                   error ("register %qs not expected for integral-type field member %qs.%qs",
+                   error ("register %s not expected for integral-type field member %qs.%qs",
                             regname, IDENTIFIER_POINTER (DECL_NAME (op0)), IDENTIFIER_POINTER (DECL_NAME (op1))); 
                 }
 
@@ -6850,7 +6866,8 @@ dump_function_ir (tree fn)
   const char * func_name;
   TRIPLE * first_label;
   TYPE result_type;
-
+  ir_sym_hdl_t sunir_sym;
+  
   /* defining result data */
   static int frv_cnt=0;
   char result_name[128];
@@ -6881,6 +6898,23 @@ dump_function_ir (tree fn)
   func_name = (* targetm.strip_name_encoding) (func_name);
   cfun_eh_filter = cfun_eh_exc_ptr = 0;
   
+  /* Create the SunIR symbol structure if needed */
+  if (flag_use_ir_sd_file)
+    {
+      sunir_sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(fn);
+      if (sunir_sym == NULL)
+        {
+          sunir_sym = lookup_sunir_symbol_with_name (func_name);
+          DECL_SUNIR_SYM_HDL(fn) = (unsigned int) sunir_sym;
+        }
+      /* Initially set the symbol to either local or global.
+         Further tweaking will be done as we go on. */
+      ir_sym_set_type (sunir_sym, IR_SYMTYPE_PROC);
+      if (TREE_PUBLIC (fn))
+        ir_sym_set_binding (sunir_sym, IR_SYMBINDING_GLOBAL);
+      else
+        ir_sym_set_binding (sunir_sym, IR_SYMBINDING_LOCAL);
+    }
   /* If this function is `main' and -xpagesize is used, add extra 
      variables to the side door file */
   if (DECL_NAME (fn)
@@ -6977,9 +7011,19 @@ dump_function_ir (tree fn)
 
   /* COMDAT functions should be declared as .global, not .weak */
   if (TREE_PUBLIC (fn) && DECL_COMDAT (fn) && flag_comdat)
-    targetm.asm_out.globalize_label (asm_out_file, func_name);
+    {
+      if (flag_use_ir_sd_file)
+        ir_sym_set_binding (sunir_sym, IR_SYMBINDING_GLOBAL);
+      else
+        targetm.asm_out.globalize_label (asm_out_file, func_name);
+    }
   else if (DECL_WEAK (fn))
-    ASM_WEAKEN_LABEL (asm_out_file, func_name);
+    {
+      if (flag_use_ir_sd_file)
+        ir_sym_set_binding (sunir_sym, IR_SYMBINDING_WEAK);
+      else
+        ASM_WEAKEN_LABEL (asm_out_file, func_name);
+    }
       
   /* COMDAT functions will use Sun comdat section names. */
   if (DECL_SECTION_NAME (fn) == NULL_TREE && DECL_ONE_ONLY (fn)
@@ -7028,10 +7072,22 @@ dump_function_ir (tree fn)
       targetm.asm_out.mark_decl_preserved (func_name); /* empty on sparc */
       if (!TREE_PUBLIC (fn))
         {
-          /* just add a reference in .s file to prevent deletion in cg */
-          fputs ("\t.local ", asm_out_file);
-          assemble_name (asm_out_file, func_name);
-          putc ('\n', asm_out_file);
+          if (!flag_use_ir_sd_file)
+            {
+              /* just add a reference in .s file to prevent deletion in cg */
+              fputs ("\t.local ", asm_out_file);
+              assemble_name (asm_out_file, func_name);
+              putc ('\n', asm_out_file);
+            }
+#ifdef TARGET_CPU_x86
+          else
+            {
+              /* convert it to hidden global to prevent backend deletion.
+                 TODO: Fix this */
+              ir_sym_set_binding (sunir_sym, IR_SYMBINDING_GLOBAL);
+              ir_sym_set_scope (sunir_sym, IR_HIDDEN_LD_SCOPE);
+            }
+#endif
         }
       /* else: external functions are not going to be deleted anyway, therefore
          do nothing */
@@ -7351,8 +7407,6 @@ dump_function_ir (tree fn)
 void
 global_ir_init (void)
 {
-  ir_backend_init ();
-
   init_ir_type_node_htab_once ();
   
   if (globalize_flag && !ir_global_prefix)

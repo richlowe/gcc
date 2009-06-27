@@ -371,6 +371,7 @@ static const param_info lang_independent_params[] = {
    and debugging dumps.  */
 
 FILE *asm_out_file;
+FILE *saved_asm_out_file;
 FILE *aux_info_file;
 FILE *dump_file = NULL;
 const char *dump_file_name;
@@ -703,9 +704,14 @@ output_file_directive (FILE *asm_file, const char *input_name)
 #ifdef ASM_OUTPUT_SOURCE_FILENAME
   ASM_OUTPUT_SOURCE_FILENAME (asm_file, na);
 #else
-  fprintf (asm_file, "\t.file\t");
-  output_quoted_string (asm_file, na);
-  fputc ('\n', asm_file);
+  if (flag_use_ir_sd_file)
+    ir_mod_set_source_file (irMod, na);
+  else 
+    {
+      fprintf (asm_file, "\t.file\t");
+      output_quoted_string (asm_file, na);
+      fputc ('\n', asm_file);
+    }
 #endif
 }
 
@@ -992,9 +998,9 @@ compile_file (void)
 
   varpool_assemble_pending_decls ();
   finish_aliases_2 ();
-  
-  global_ir_fini ();
 
+  global_ir_fini ();
+  
   /* This must occur after the loop to output deferred functions.
      Else the coverage initializer would not be emitted if all the
      functions in this compilation unit were deferred.  */
@@ -1042,8 +1048,17 @@ compile_file (void)
 
       if (strcmp ("(GCC) ", pkgversion_string))
 	pkg_version = pkgversion_string;
-      fprintf (asm_out_file, "%s\"GCC: %s%s\"\n",
-	       IDENT_ASM_OP, pkg_version, version_string);
+      if (flag_use_ir_sd_file)
+        {
+          int len = strlen (pkg_version) + strlen(version_string) + 20;
+          char *buf = xmalloc (len);
+          snprintf (buf, len, "GCC: %s%s", pkg_version, version_string);
+          ir_mod_add_ident (irMod, buf);
+          free (buf);
+        }
+      else
+        fprintf (asm_out_file, "%s\"GCC: %s%s\"\n",
+                 IDENT_ASM_OP, pkg_version, version_string);
     }
 #endif
 
@@ -1051,6 +1066,9 @@ compile_file (void)
      into the assembly file here, and hence we can not output anything to the
      assembly file after this point.  */
   targetm.asm_out.file_end ();
+
+  /* May output stuff to the assembly file, however, this is the end */
+  ir_finish_assemble ();
 }
 
 /* Parse a -d... command line switch.  */
@@ -1350,6 +1368,12 @@ init_asm_output (const char *name)
 	asm_out_file = fopen (asm_file_name, "w+b");
       if (asm_out_file == 0)
 	fatal_error ("can%'t open %s for writing: %m", asm_file_name);
+    }
+
+  if (flag_use_ir_sd_file) 
+    {
+      saved_asm_out_file = asm_out_file;
+      asm_out_file = NULL;
     }
 
   if (!flag_syntax_only)
@@ -1962,7 +1986,7 @@ process_options (void)
   if (flag_signaling_nans)
     flag_trapping_math = 1;
 
-  /* We cannot reassociate if we want traps or signed zeros.  */
+  /* We cannot reassociate if we want traps or signed zeros. ?*/
   if (flag_associative_math && (flag_trapping_math || flag_signed_zeros))
     {
       warning (0, "-fassociative-math disabled; other options take precedence");
@@ -2178,6 +2202,9 @@ finalize (void)
      whether fclose returns an error, since the pages might still be on the
      buffer chain while the file is open.  */
 
+  if (flag_use_ir_sd_file) 
+    asm_out_file = saved_asm_out_file;
+  
   if (asm_out_file)
     {
       if (ferror (asm_out_file) != 0)
@@ -2218,6 +2245,8 @@ do_compile (void)
 	 default FP formats.  */
       init_adjust_machine_modes ();
 
+      ir_backend_init ();
+      
       /* Set up the back-end if requested.  */
       if (!no_backend)
 	backend_init ();

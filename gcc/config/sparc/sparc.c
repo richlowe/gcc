@@ -7916,6 +7916,9 @@ sparc_elf_asm_named_section (const char *name, unsigned int flags,
       return;
     }
 
+  if (flag_use_ir_sd_file)
+      return;
+  
   /* Use Solaris .group and #comdat for comdat variable sections */
   if (flag_comdat && decl
       && TREE_CODE (decl) == VAR_DECL && DECL_COMDAT (decl)
