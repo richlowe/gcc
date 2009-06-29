@@ -69,6 +69,10 @@ typedef enum {
         IR_SECT_JCR,            /* gcc .jcr (java class registration) section */
         IR_SECT_CTORS,          /* gcc .ctors section */
         IR_SECT_DTORS,          /* gcc .dtors section */
+        IR_SECT_DATAREL,        /* gcc .data.rel section */
+        IR_SECT_DATAREL_LOCAL,  /* gcc .data.rel.local section */
+        IR_SECT_DATAREL_RO,     /* gcc .data.rel.ro section */
+        IR_SECT_DATAREL_RO_LOCAL, /* gcc .data.rel.ro.local section */
 	IR_SECT_NULL	/* This must always be last. */
 } ir_sect_base_t;
 

@@ -767,11 +767,10 @@ get_named_section (tree decl, const char *name, int reloc)
         sect->common.ir_hdl = ir_mod_section (irMod, IR_SECT_JCR);
       else if (strcmp (name, ".eh_frame") == 0)
         sect->common.ir_hdl = ir_mod_section (irMod, IR_SECT_EH_FRAME);
-      else if (DECL_COMDAT (decl))
+      else
         {
           /* We need to figure out some additional details on how
              to select the SunIR section for this symbol. */
-          
           ir_sect_base_t base;
           switch (categorize_decl_for_section (decl, reloc))
             {
@@ -784,24 +783,23 @@ get_named_section (tree decl, const char *name, int reloc)
             case SECCAT_RODATA_MERGE_CONST:
               base = IR_SECT_RODATA;
               break;
-            case SECCAT_SRODATA:
-              gcc_assert (0);
-              break;
             case SECCAT_DATA:
-            case SECCAT_DATA_REL:
-            case SECCAT_DATA_REL_LOCAL:
-            case SECCAT_DATA_REL_RO:
-            case SECCAT_DATA_REL_RO_LOCAL:
               base = IR_SECT_DATA;
               break;
-            case SECCAT_SDATA:
-              gcc_assert (0);
+            case SECCAT_DATA_REL:
+              base = IR_SECT_DATAREL;
+              break;
+            case SECCAT_DATA_REL_LOCAL:
+              base = IR_SECT_DATAREL_LOCAL;
+              break;
+            case SECCAT_DATA_REL_RO:
+              base = IR_SECT_DATAREL_RO;
+              break;
+            case SECCAT_DATA_REL_RO_LOCAL:
+              base = IR_SECT_DATAREL_RO_LOCAL;
               break;
             case SECCAT_BSS:
               base = IR_SECT_BSS;
-              break;
-            case SECCAT_SBSS:
-              gcc_assert (0);
               break;
             case SECCAT_TDATA:
               base = IR_SECT_TDATA;
@@ -812,14 +810,18 @@ get_named_section (tree decl, const char *name, int reloc)
             default:
               gcc_unreachable ();
             }
-
-          name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
-          name = targetm.strip_name_encoding (name);
-          sect->common.ir_hdl = ir_mod_new_section (irMod, base, name, 1, 1);
+          
+          
+          if (DECL_COMDAT (decl))
+            {
+              /* Create a comdat section on the provided base section */
+              name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+              name = targetm.strip_name_encoding (name);
+              sect->common.ir_hdl = ir_mod_new_section (irMod, base, name, 1, 1);
+            }
+          else
+            sect->common.ir_hdl = ir_mod_section (irMod, base);
         }
-      else
-        sect->common.ir_hdl =
-          ir_mod_new_section (irMod, IR_SECT_DATA, name, DECL_COMDAT (decl), DECL_COMDAT (decl));
     }
   return sect;
 }
