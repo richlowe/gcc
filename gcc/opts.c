@@ -45,6 +45,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "dbgcnt.h"
 #include "debug.h"
 #include "tree-ir.h"
+#include "c-common.h"
 
 /* Value of the -G xx switch, and whether it was passed or not.  */
 unsigned HOST_WIDE_INT g_switch_value;
@@ -1064,6 +1065,9 @@ decode_options (unsigned int argc, const char **argv)
   if (flag_test_coverage || profile_arc_flag || flag_profile_values || flag_branch_probabilities) 
     flag_use_rtl_backend = -1;
 
+  if (pch_file)
+    flag_use_rtl_backend = -1;
+  
   if (flag_use_rtl_backend != 0)
     {
       /* Turn off IR based side door file */
