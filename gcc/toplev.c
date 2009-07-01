@@ -1402,9 +1402,11 @@ init_asm_output (const char *name)
 	{
 	  /* Print the list of switches in effect
 	     into the assembler file as comments.  */
+	  ir_start_arbitrary_asm ();
 	  print_version (asm_out_file, ASM_COMMENT_START);
 	  print_switch_values (print_to_asm_out_file);
 	  fprintf (asm_out_file, "\n");
+	  ir_end_arbitrary_asm ();
 	}
 #endif
     }

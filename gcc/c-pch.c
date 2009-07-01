@@ -117,9 +117,11 @@ pch_init (void)
 #ifdef ASM_COMMENT_START
   if (flag_verbose_asm)
     {
+      ir_start_arbitrary_asm ();
       fprintf (asm_out_file, "%s ", ASM_COMMENT_START);
       c_common_print_pch_checksum (asm_out_file);
       fputc ('\n', asm_out_file);
+      ir_end_arbitrary_asm ();
     }
 #endif
 
