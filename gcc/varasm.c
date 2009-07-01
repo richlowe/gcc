@@ -2155,7 +2155,10 @@ emit_common (tree decl ATTRIBUTE_UNUSED,
       gcc_assert (sobj == NULL);
       current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size, 0);
       assemble_align (DECL_ALIGN (decl));
-      ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_BSS));
+      if (TREE_PUBLIC (decl))
+        ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_COMMON));
+      else 
+        ir_sobj_set_section (current_sunir_sobj, ir_mod_section (irMod, IR_SECT_BSS));
       current_sunir_sobj = NULL;
       return true;
     }
