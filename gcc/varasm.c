@@ -2045,7 +2045,10 @@ assemble_string (const char *p, int size)
   if (flag_use_ir_sd_file) 
     {
       gcc_assert (current_sunir_sobj != NULL);
-      ir_sobj_new_string (current_sunir_sobj, p, NULLIRINITRPOS);
+      /* string must be null terminated. Use ir_sobj_new_bytes () otherwise. 
+      ir_sobj_new_string (current_sunir_sobj, p, NULLIRINITRPOS); */
+      /* is_ascii is only used to determine print format. */
+      ir_sobj_new_bytes (current_sunir_sobj, size, p, NULLIRINITRPOS, 1 /* is_ascii */); 
       return;
     }
 
