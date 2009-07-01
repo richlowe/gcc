@@ -1306,9 +1306,7 @@ static const char *ssbe_xarch_xchip =
 /* like ssbe_xarch_xchip but with special handling for ultraT2 for cg */
 static const char *sscg_xarch_xchip =
 "%(ssbe_xarch) \
- %{xchip=ultraT2: -xchip=rock ; \
-   xchip=ultraT2plus: -xchip=rock ; \
-   xchip=realT2: -xchip=ultraT2 ; \
+ %{xchip=realT2: -xchip=ultraT2 ; \
    xchip=*: -xchip=%* ; \
           : -xchip=generic } \
  %{xprefetch=* : -xprefetch=%* } \
