@@ -7331,9 +7331,6 @@ ix86_file_end (void)
 {
   rtx xops[2];
   int regno;
-  /* RAT-TODO Fix this to go through as IR function with
-     inline ASM */
-  ir_start_arbitrary_asm();
 
   for (regno = 0; regno < 8; ++regno)
     {
@@ -7388,9 +7385,6 @@ ix86_file_end (void)
       output_asm_insn ("ret", xops);
     }
   
-  /* RAT-TODO Fix this */
-  ir_end_arbitrary_asm ();
-
   if (NEED_INDICATE_EXEC_STACK)
     file_end_indicate_exec_stack ();
 }

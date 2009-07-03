@@ -1062,10 +1062,17 @@ compile_file (void)
     }
 #endif
 
+  /* RAT-TODO Fix this to go through as IR function with
+     inline ASM */
+  ir_start_arbitrary_asm();
+
   /* This must be at the end.  Some target ports emit end of file directives
      into the assembly file here, and hence we can not output anything to the
      assembly file after this point.  */
   targetm.asm_out.file_end ();
+
+  /* RAT-TODO Fix this */
+  ir_end_arbitrary_asm ();
 
   /* May output stuff to the assembly file, however, this is the end */
   ir_finish_assemble ();
