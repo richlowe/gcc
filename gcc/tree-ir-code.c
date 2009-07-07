@@ -335,6 +335,16 @@ dump_ir_init (const char *procname,  tree fn,
 
   ir_proc_set_is_comdat (irProc, (procglobal && DECL_COMDAT (fn) && flag_comdat));
 
+  if (DECL_WEAK (fn) && DECL_ONE_ONLY (fn) && flag_comdat)
+    {
+      /* convert the decl to a COMDAT symbol, as we dont
+         want to mess with the gnu linkonce if we can */
+      TREE_PUBLIC (fn) = 1;
+      DECL_COMDAT (fn) = 1;
+      DECL_WEAK (fn) = 0;
+      ir_proc_set_is_comdat (irProc, 1);
+    }
+  
   /* build heap leaf */
   addr.seg = segtab[HEAP_SEGNO];
   func_heap_leaf = build_ir_leaf (VAR_LEAF, undeftype,

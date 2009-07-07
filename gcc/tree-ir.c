@@ -667,10 +667,23 @@ dump_ir_funcname (tree fn)
   mark_decl_referenced (fn);
 
   gcc_assert(ret->operand.tag ==ISLEAF);
-  if (TREE_PUBLIC (fn) && !DECL_EXTERNAL(fn))
+  if (TREE_PUBLIC (fn))
   {
     enum symbol_visibility vis = DECL_VISIBILITY (fn);
     set_leaf_ld_scope(ret,vis);
+
+    /* Set the sym visibility here also, as when using
+       IR based side door file, we will skip some portions
+       of varasm.c which can result in the symbol visibility
+       not being emitted */
+    if (flag_use_ir_sd_file && vis != VISIBILITY_DEFAULT)
+      {
+        ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (real_name);
+        gcc_assert (sym != NULL);
+        ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+        DECL_SUNIR_SYM_HDL (fn) = (unsigned int) sym;
+        default_assemble_visibility (fn, vis);
+      }
   }
 
   return ret;
@@ -7029,8 +7042,9 @@ dump_function_ir (tree fn)
   if (DECL_SECTION_NAME (fn) == NULL_TREE && DECL_ONE_ONLY (fn)
       && !(TREE_PUBLIC (fn) && DECL_COMDAT (fn) && flag_comdat))
     {
-      (*targetm.asm_out.unique_section) (fn, 0);
-      ir_proc_set_section (irProc, TREE_STRING_POINTER (DECL_SECTION_NAME (fn)));
+      /* Should never get here, as we should have implicitly
+         converted the symbols to COMDAT in tree-ir-code.c */
+      gcc_assert (0);
     }
  
   if (ir_language == FORTRAN && !flag_mark_ir_as_cpp)

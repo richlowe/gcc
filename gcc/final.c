@@ -4312,6 +4312,24 @@ rest_of_handle_final (void)
   gcc_assert (GET_CODE (x) == SYMBOL_REF);
   fnname = XSTR (x, 0);
   
+  if (flag_use_ir_sd_file)
+    {
+      ir_sym_hdl_t sym = DECL_SUNIR_SYM_HDL (current_function_decl);
+      if (!sym)
+        {
+          sym = lookup_sunir_symbol_with_name (fnname);
+          gcc_assert (sym != NULL);
+          DECL_SUNIR_SYM_HDL (current_function_decl) = (unsigned int) sym;
+        }
+      ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      if (DECL_WEAK(current_function_decl))
+        ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
+      else if (TREE_PUBLIC(current_function_decl))
+        ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
+      else
+        ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
+    }
+
   ir_start_arbitrary_asm();
   
   assemble_start_function (current_function_decl, fnname);

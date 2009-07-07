@@ -812,7 +812,7 @@ get_named_section (tree decl, const char *name, int reloc)
             }
           
           
-          if (DECL_COMDAT (decl))
+          if (DECL_COMDAT (decl) || DECL_ONE_ONLY(decl))
             {
               /* Create a comdat section on the provided base section */
               name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
