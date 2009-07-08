@@ -4314,13 +4314,8 @@ rest_of_handle_final (void)
   
   if (flag_use_ir_sd_file)
     {
-      ir_sym_hdl_t sym = DECL_SUNIR_SYM_HDL (current_function_decl);
-      if (!sym)
-        {
-          sym = lookup_sunir_symbol_with_name (fnname);
-          gcc_assert (sym != NULL);
-          DECL_SUNIR_SYM_HDL (current_function_decl) = (unsigned int) sym;
-        }
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (fnname);
+      gcc_assert (sym != NULL);
       ir_sym_set_type (sym, IR_SYMTYPE_PROC);
       if (DECL_WEAK(current_function_decl))
         ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);

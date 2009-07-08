@@ -830,12 +830,7 @@ static void
 output_asm_object_name (tree decl, FILE *file, const char *name)
 {
   if (flag_use_ir_sd_file)
-    {
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL (decl);
-      gcc_assert (sym != NULL);
-      gcc_assert (ir_sym_name(sym) != NULL);
-      return;
-    }
+    return;
   
 #ifdef ASM_DECLARE_OBJECT_NAME
   last_assemble_variable_decl = decl;
@@ -878,7 +873,7 @@ asm_output_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
   targetm.asm_out.globalize_decl_name (file, decl);
   if (flag_use_ir_sd_file)
     {
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
@@ -911,7 +906,7 @@ asm_output_aligned_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
 {
   if (flag_use_ir_sd_file)
     {
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
@@ -1130,6 +1125,7 @@ mergeable_constant_section (enum machine_mode mode ATTRIBUTE_UNUSED,
       flags |= (align / 8) | SECTION_MERGE;
       return get_section (name, flags, NULL);
     }
+
   return readonly_data_section;
 }
 
@@ -2078,7 +2074,7 @@ emit_local (tree decl ATTRIBUTE_UNUSED,
 {
   if (flag_use_ir_sd_file)
     {
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
@@ -2115,7 +2111,7 @@ emit_bss (tree decl ATTRIBUTE_UNUSED,
 {
   if (flag_use_ir_sd_file)
     {
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
       if (TREE_PUBLIC (decl))
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
@@ -2150,7 +2146,7 @@ emit_common (tree decl ATTRIBUTE_UNUSED,
 {
   if (flag_use_ir_sd_file)
     {
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
       if (TREE_PUBLIC (decl))
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
@@ -2192,7 +2188,7 @@ emit_tls_common (tree decl ATTRIBUTE_UNUSED,
 {
   if (flag_use_ir_sd_file)
     {
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
       if (TREE_PUBLIC (decl))
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
@@ -2324,7 +2320,8 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   const char *name;
   rtx decl_rtl, symbol;
   section *sect;
-
+  ir_sym_hdl_t sym;
+  
   if (! targetm.have_tls
       && TREE_CODE (decl) == VAR_DECL
       && DECL_THREAD_LOCAL_P (decl))
@@ -2419,15 +2416,13 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       return;
     }
 
-  if (flag_use_ir_sd_file && !DECL_SUNIR_SYM_HDL (decl)) 
+  if (flag_use_ir_sd_file) 
     {
       /* Create a default symbol, all attributes will
          get filled in as we go on in the assemble process */
-      ir_sym_hdl_t sym = 
-        lookup_sunir_symbol_with_name (targetm.strip_name_encoding (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl))));
+      sym = lookup_sunir_symbol_with_name (targetm.strip_name_encoding (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl))));
       ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
       ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
-      DECL_SUNIR_SYM_HDL (decl) = (unsigned int) sym;
     }
   
   /* set vtable to public for xipo */ 
@@ -2494,10 +2489,9 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
     assemble_noswitch_variable (decl, name, sect);
   else
     {
-      ir_sym_hdl_t sym = NULL;
       if (flag_use_ir_sd_file)
         {
-          sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL (decl);
+          gcc_assert (sym != NULL);
           ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
           gcc_assert (sobj == NULL);
           current_sunir_sobj = ir_mod_new_sobj (irMod, sym, 0, 4);
@@ -5991,8 +5985,8 @@ default_assemble_visibility (tree decl, int vis)
         default:
           scope = IR_GLOBAL_LD_SCOPE;
         }
-      
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl)));
       gcc_assert (sym != NULL);
       ir_sym_set_scope (sym, scope);
       return;
@@ -6079,6 +6073,36 @@ make_decl_one_only (tree decl)
     {
       gcc_assert (SUPPORTS_WEAK);
       DECL_WEAK (decl) = 1;
+    }
+}
+
+/* PCH may mess up the default sections, so we will re-init it.
+   A real hack!! */
+static void
+reinit_ir_sections (void)
+{
+  if (flag_use_ir_sd_file)
+    {
+      if (text_section)
+        text_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_TEXT);
+      if (data_section)
+        data_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_DATA);
+      if (sdata_section)
+        sdata_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_DATA);
+      if (readonly_data_section)
+        readonly_data_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_RODATA);
+      if (bss_section)
+        bss_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_BSS);
+      if (sbss_section)
+        sbss_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_BSS);
+      if (tls_comm_section)
+        tls_comm_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_TBSS);
+      if (lcomm_section)
+        lcomm_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_LBCOMMON);
+      if (comm_section)
+        comm_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_COMMON);
+      if (bss_noswitch_section)
+        bss_noswitch_section->common.ir_hdl = ir_mod_section (irMod, IR_SECT_BSS);
     }
 }
 
@@ -6982,7 +7006,7 @@ default_globalize_decl_name (FILE * stream, tree decl)
     {
       gcc_assert (TREE_CODE(decl) == VAR_DECL
                   || TREE_CODE(decl) == FUNCTION_DECL);
-      ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL (decl);
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
       ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
     }
@@ -7073,7 +7097,12 @@ switch_to_section (section *new_section)
   if (in_section == new_section)
     {
       if (flag_use_ir_sd_file && current_sunir_sobj)
-        ir_sobj_set_section (current_sunir_sobj, new_section->common.ir_hdl);
+        {
+          if (!new_section->common.ir_hdl)
+            reinit_ir_sections ();
+          gcc_assert (new_section->common.ir_hdl);
+          ir_sobj_set_section (current_sunir_sobj, new_section->common.ir_hdl);
+        }
       return;
     }
 
@@ -7108,7 +7137,12 @@ switch_to_section (section *new_section)
   new_section->common.flags |= SECTION_DECLARED;
 
   if (flag_use_ir_sd_file && current_sunir_sobj)
-    ir_sobj_set_section (current_sunir_sobj, new_section->common.ir_hdl);
+    {
+      if (!new_section->common.ir_hdl)
+        reinit_ir_sections ();
+      gcc_assert (new_section->common.ir_hdl);
+      ir_sobj_set_section (current_sunir_sobj, new_section->common.ir_hdl);
+    }
 }
 
 /* If block symbol SYMBOL has not yet been assigned an offset, place
@@ -7440,7 +7474,7 @@ sunir_output_init_fini (FILE *file, tree decl)
     {
       if (flag_use_ir_sd_file)
         {
-          ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+          ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl)));
           gcc_assert (sym != NULL);
           ir_mod_add_initproc (irMod, sym);
         }
@@ -7458,7 +7492,7 @@ sunir_output_init_fini (FILE *file, tree decl)
     {
       if (flag_use_ir_sd_file)
         {
-          ir_sym_hdl_t sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(decl);
+          ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl)));
           gcc_assert (sym != NULL);
           ir_mod_add_finiproc (irMod, sym);
         }

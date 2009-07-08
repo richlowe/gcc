@@ -681,7 +681,6 @@ dump_ir_funcname (tree fn)
         ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (real_name);
         gcc_assert (sym != NULL);
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
-        DECL_SUNIR_SYM_HDL (fn) = (unsigned int) sym;
         default_assemble_visibility (fn, vis);
       }
   }
@@ -6914,12 +6913,7 @@ dump_function_ir (tree fn)
   /* Create the SunIR symbol structure if needed */
   if (flag_use_ir_sd_file)
     {
-      sunir_sym = (ir_sym_hdl_t) DECL_SUNIR_SYM_HDL(fn);
-      if (sunir_sym == NULL)
-        {
-          sunir_sym = lookup_sunir_symbol_with_name (func_name);
-          DECL_SUNIR_SYM_HDL(fn) = (unsigned int) sunir_sym;
-        }
+      sunir_sym = lookup_sunir_symbol_with_name (func_name);
       /* Initially set the symbol to either local or global.
          Further tweaking will be done as we go on. */
       ir_sym_set_type (sunir_sym, IR_SYMTYPE_PROC);

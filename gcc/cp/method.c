@@ -468,8 +468,6 @@ use_thunk (tree thunk_fndecl, bool emit_p)
              IR symbol generation, we need to capture this
              later. */
           ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (fnname);
-          gcc_assert (DECL_SUNIR_SYM_HDL(thunk_fndecl) == 0);
-          DECL_SUNIR_SYM_HDL(thunk_fndecl) = (unsigned int) sym;
           if (DECL_WEAK (thunk_fndecl))
             ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
           else if (TREE_PUBLIC(thunk_fndecl))
