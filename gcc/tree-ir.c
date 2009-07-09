@@ -667,7 +667,7 @@ dump_ir_funcname (tree fn)
   mark_decl_referenced (fn);
 
   gcc_assert(ret->operand.tag ==ISLEAF);
-  if (TREE_PUBLIC (fn))
+  if (TREE_PUBLIC (fn) && !DECL_EXTERNAL (fn))
   {
     enum symbol_visibility vis = DECL_VISIBILITY (fn);
     set_leaf_ld_scope(ret,vis);
