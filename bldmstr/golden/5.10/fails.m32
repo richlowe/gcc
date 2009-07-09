@@ -16,12 +16,24 @@ g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -fast -xipo=2  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -O2 -g  (test for excess errors)
 g++.sum:FAIL: g++.dg/eh/cleanup1.C  -Os  (test for excess errors)
+g++.sum:FAIL: g++.dg/pch/array-1.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/array-1.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/empty.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/empty.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/local-1.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/local-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/pch.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/pch.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/static-1.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/static-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/system-2.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/template-1.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/template-1.C -O2 -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/uninst.C -g assembly comparison
+g++.sum:FAIL: g++.dg/pch/uninst.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/tls/static-1.C execution test
 g++.sum:FAIL: g++.dg/tree-ssa/pr22444.C (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/compile/limits-declparen.c  -O2 -g  (test for excess errors)
@@ -159,25 +171,69 @@ gcc.sum:FAIL: gcc.dg/ipa/modif-1.c scan-ipa-dump inline "param 3[^\n]*modified"
 gcc.sum:FAIL: gcc.dg/ipa/modif-1.c scan-ipa-dump inline "param 5[^\n]*modified"
 gcc.sum:FAIL: gcc.dg/ipa/modif-1.c scan-ipa-dump inline "param 6[^\n]*modified"
 gcc.sum:FAIL: gcc.dg/ipa/modif-1.c scan-ipa-dump inline "param 7[^\n]*modified"
+gcc.sum:FAIL: gcc.dg/pch/counter-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/counter-1.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/counter-3.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/cpp-2.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/cpp-2.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/cpp-3.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/cpp-3.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/decl-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/decl-1.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/decl-2.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/decl-2.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/decl-4.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/decl-4.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/empty.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/empty.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/except-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/except-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/import-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/import-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/import-2.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/import-2.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/inline-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/inline-1.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/inline-3.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/inline-3.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/inline-4.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/inline-4.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-1.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-2.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-2.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-3.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-3.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-4.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/macro-4.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast  -I. (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast -xipo=2  -I. (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/save-temps-1.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-1.c  -O0  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O0  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O1  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O3  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O3 -finline-functions  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -fast  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/static-2.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-2.c  -Os  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-3.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O0  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/static-3.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/struct-1.c -O0 -g assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/struct-1.c  -O2 -g  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/system-1.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/system-1.c  -fast -xipo=2  assembly comparison
+gcc.sum:FAIL: gcc.dg/pch/system-1.c  -O2 -g  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-4.c -O0 -g assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -fast -xipo=2  assembly comparison
 gcc.sum:FAIL: gcc.dg/pch/valid-4.c  -O2 -g  assembly comparison

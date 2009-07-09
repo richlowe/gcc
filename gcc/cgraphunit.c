@@ -419,7 +419,7 @@ cgraph_process_new_functions (void)
 	      /* When not optimizing, be sure we run early local passes anyway
 		 to expand OMP.  */
 	      || !optimize)
-            if (DECL_DONT_GENERATE_SUNIR (fndecl))
+            if (gate_generate_rtl ())
 	    execute_pass_list (pass_early_local_passes.pass.sub);
 	  free_dominance_info (CDI_POST_DOMINATORS);
 	  free_dominance_info (CDI_DOMINATORS);
