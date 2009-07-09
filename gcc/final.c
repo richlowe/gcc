@@ -3666,12 +3666,22 @@ output_addr_const (FILE *file, rtx x)
           else
             {
               sym2 = lookup_sunir_symbol (XEXP (x, 1));
-              if (TARGET_ARCH64)
-                ir_sobj_new_diff64 (current_sunir_sobj, sym1, sym2, 0,
-                                    NULLIRINITRPOS, IR_FALSE);
-              else
-                ir_sobj_new_diff32 (current_sunir_sobj, sym1, sym2, 0,
-                                    NULLIRINITRPOS, IR_FALSE);
+              switch (GET_MODE_UNIT_SIZE (GET_MODE(x)))
+                {
+                case 2:
+                  gcc_unreachable ();
+                  /* Need new SunIR interfaces diff16 */
+                case 4:
+                  ir_sobj_new_diff32 (current_sunir_sobj, sym1, sym2, 0,
+                                      NULLIRINITRPOS, IR_FALSE);
+                  break;
+                case 8:
+                  ir_sobj_new_diff64 (current_sunir_sobj, sym1, sym2, 0,
+                                      NULLIRINITRPOS, IR_FALSE);
+                  break;
+                default:
+                  gcc_unreachable ();
+                }
             }
         }
       else
