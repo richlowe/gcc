@@ -333,6 +333,7 @@ extern int sdb_begin_function_line;
 
 #ifdef BUFSIZ
 extern FILE *asm_out_file;
+extern FILE *saved_asm_out_file;
 #endif
 
 /* The first global object in the file.  */

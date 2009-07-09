@@ -5644,6 +5644,8 @@ handle_error_attribute (tree *node, tree name, tree args,
       flag_use_rtl_backend = -1;
       /* Turn off IR based side door file */
       flag_use_ir_sd_file = 0;
+      if (asm_out_file == NULL)
+        asm_out_file = saved_asm_out_file; 
       if (optimize >= 3)
         flag_inline_functions = 1;
     }
