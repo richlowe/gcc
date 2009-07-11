@@ -41,31 +41,23 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* Output to assembler file text saying following lines
    may contain character constants, extra white space, comments, etc.  */
 
-/*#define ASM_APP_ON "/APP\n"*/
-#define ASM_APP_ON "/ START GCCFSS RTL ASM\n"
+#define ASM_APP_ON "/APP\n"
 
 /* Output to assembler file text saying following lines
    no longer contain unusual constructs.  */
 
-/*#define ASM_APP_OFF "/NO_APP\n" */
-#define ASM_APP_OFF "/ END GCCFSS RTL ASM\n"
+#define ASM_APP_OFF "/NO_APP\n"
 
 /* Output before read-only data.  */
 
-/* RAT-TODO revert when eliminate side door file */
-//#define TEXT_SECTION_ASM_OP "\t.text"
 #define TEXT_SECTION_ASM_OP "\t.section\t.text,\"ax\""
 
 /* Output before writable (initialized) data.  */
 
-/* RAT-TODO revert when eliminate side door file */
-//#define DATA_SECTION_ASM_OP "\t.data"
 #define DATA_SECTION_ASM_OP "\t.section\t.data,\"aw\""
 
 /* Output before writable (uninitialized) data.  */
 
-/* RAT-TODO revert when eliminate side door file */
-//#define BSS_SECTION_ASM_OP "\t.bss"
 #define BSS_SECTION_ASM_OP "\t.section\t.bss,\"aw\""
 
 /* Globalizing directive for a label.  */

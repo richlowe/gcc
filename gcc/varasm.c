@@ -37,8 +37,6 @@ along with GCC; see the file COPYING3.  If not see
 #undef HAVE_GAS_WEAKREF
 #endif
 
-extern int app_on; /* X86 HACK */
-
 #include "tm.h"
 #include "rtl.h"
 #include "tree.h"
@@ -1654,22 +1652,24 @@ default_named_section_asm_out_destructor (rtx symbol, int priority)
 {
   section *sec;
 
-  /* RAT-TODO. Need to define new SunIR interfaces for this */
-  ir_start_arbitrary_asm();
-  if (priority != DEFAULT_INIT_PRIORITY)
-    sec = get_cdtor_priority_section (priority, 
-                                      /*constructor_p=*/false);
-  else
-    sec = get_section (".dtors", SECTION_WRITE, NULL);
-  
-  int orig_app_on = app_on;
-  app_enable ();
-  
-  assemble_addr_to_section (symbol, sec);
+  if (!flag_use_ir_sd_file
+      || priority != DEFAULT_INIT_PRIORITY)
+    {
+      /* RAT-TODO. Need to define new SunIR interfaces for this */
+      ir_start_arbitrary_asm();
+      if (priority != DEFAULT_INIT_PRIORITY)
+        sec = get_cdtor_priority_section (priority, 
+                                          /*constructor_p=*/false);
+      else
+        sec = get_section (".dtors", SECTION_WRITE, NULL);
       
-  if (!orig_app_on)
-    app_disable ();
-  ir_end_arbitrary_asm();
+      assemble_addr_to_section (symbol, sec);
+
+      ir_end_arbitrary_asm();
+    }
+  else
+    ir_mod_add_finiproc (irMod, 
+                         lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
 }
 
 #ifdef DTORS_SECTION_ASM_OP
@@ -1677,16 +1677,10 @@ void
 default_dtor_section_asm_out_destructor (rtx symbol,
 					 int priority ATTRIBUTE_UNUSED)
 {
-  /* RAT-TODO. Need to define new SunIR interfaces for this */
-  ir_start_arbitrary_asm();
-  int orig_app_on = app_on;
-  app_enable ();
-
-  assemble_addr_to_section (symbol, dtors_section);
-
-  if (!orig_app_on)
-    app_disable ();
-  ir_end_arbitrary_asm();
+  if (!flag_use_ir_sd_file)
+    assemble_addr_to_section (symbol, dtors_section);
+  else
+    ir_mod_add_finiproc (irMod, lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
 }
 #endif
 
@@ -1696,9 +1690,6 @@ void
 default_stabs_asm_out_constructor (rtx symbol ATTRIBUTE_UNUSED,
 				   int priority ATTRIBUTE_UNUSED)
 {
-  int orig_app_on = app_on;
-  app_enable ();
-
 #if defined DBX_DEBUGGING_INFO || defined XCOFF_DEBUGGING_INFO
   /* Tell GNU LD that this is part of the static destructor set.
      This will work for any system that uses stabs, most usefully
@@ -1708,9 +1699,6 @@ default_stabs_asm_out_constructor (rtx symbol ATTRIBUTE_UNUSED,
 #else
   sorry ("global constructors not supported on this target");
 #endif
-
-  if (!orig_app_on)
-    app_disable ();
 }
 
 void
@@ -1718,23 +1706,24 @@ default_named_section_asm_out_constructor (rtx symbol, int priority)
 {
   section *sec;
 
-  /* RAT-TODO. Need to define new SunIR interfaces for this */
-  ir_start_arbitrary_asm();
-
-  if (priority != DEFAULT_INIT_PRIORITY)
-    sec = get_cdtor_priority_section (priority, 
-                                      /*constructor_p=*/true);
+  if (!flag_use_ir_sd_file
+      || priority != DEFAULT_INIT_PRIORITY)
+    {
+      /* RAT-TODO. Need to define new SunIR interfaces for this */
+      ir_start_arbitrary_asm();
+      
+      if (priority != DEFAULT_INIT_PRIORITY)
+        sec = get_cdtor_priority_section (priority, 
+                                          /*constructor_p=*/true);
+      else
+        sec = get_section (".ctors", SECTION_WRITE, NULL);
+      
+      assemble_addr_to_section (symbol, sec);
+      
+      ir_end_arbitrary_asm();
+    }
   else
-    sec = get_section (".ctors", SECTION_WRITE, NULL);
-  int orig_app_on = app_on;
-  app_enable ();
-  
-  assemble_addr_to_section (symbol, sec);
-  
-  if (!orig_app_on)
-    app_disable ();
-
-  ir_end_arbitrary_asm();
+    ir_mod_add_initproc (irMod, lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
 }
 
 #ifdef CTORS_SECTION_ASM_OP
@@ -1742,14 +1731,10 @@ void
 default_ctor_section_asm_out_constructor (rtx symbol,
 					  int priority ATTRIBUTE_UNUSED)
 {
-  /* RAT-TODO. Need to define new SunIR interfaces for this */
-  ir_start_arbitrary_asm();
-  int orig_app_on = app_on;
-  app_enable ();
-  assemble_addr_to_section (symbol, ctors_section);
-  if (!orig_app_on)
-    app_disable ();
-  ir_end_arbitrary_asm();
+  if (!flag_use_ir_sd_file)
+    assemble_addr_to_section (symbol, ctors_section);
+  else
+    ir_mod_add_initproc (irMod, lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
 }
 #endif
 
@@ -1840,8 +1825,6 @@ assemble_start_function (tree decl, const char *fnname)
   /* The following code does not need preprocessing in the assembler.  */
 
   app_disable ();
-
-  app_enable ();
 
   if (CONSTANT_POOL_BEFORE_FUNCTION)
     output_constant_pool (fnname, decl);
@@ -1976,9 +1959,6 @@ assemble_end_function (tree decl, const char *fnname ATTRIBUTE_UNUSED)
       ASM_OUTPUT_LABEL (asm_out_file, crtl->subsections.hot_section_end_label);
       switch_to_section (save_text_section);
     }
-  
-  app_disable ();
-
 }
 
 /* Assemble code to leave SIZE bytes of zeros.  */
@@ -5992,9 +5972,6 @@ default_assemble_visibility (tree decl, int vis)
       return;
     }
       
-  int orig_app_on = app_on;
-  app_enable ();
-
   name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
   type = visibility_types[vis];
 
@@ -6013,10 +5990,6 @@ default_assemble_visibility (tree decl, int vis)
     warning (OPT_Wattributes, "visibility attribute not supported "
              "in this configuration; ignored");
 #endif
-
-  if (!orig_app_on)
-    app_disable ();
-
 }
 
 /* A helper function to call assemble_visibility when needed for a decl.  */
@@ -6335,11 +6308,6 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
       return;
     }
 
-  /* RAT-TODO wrap this section declaration to make ir2hf happy */
-  int orig_app_on = app_on;
-  if (flags & SECTION_LINKONCE)
-    app_enable ();
-
   if (!(flags & SECTION_DEBUG))
     *f++ = 'a';
   if (flags & SECTION_WRITE)
@@ -6399,10 +6367,6 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
     }
 
   putc ('\n', asm_out_file);
-  
-  /* RAT-TODO wrap this section declaration to make ir2hf happy */
-  if ((flags & SECTION_LINKONCE) && !orig_app_on)
-    app_disable ();
 }
 
 void
