@@ -6885,11 +6885,8 @@ dump_function_ir (tree fn)
   char result_name[128];
   IR_TYPE_NODE * result_ir_type;
 
-  /* pch generation is on, but flag_use_rtl_backend may be zero
-     because we want to store pre-processed trees in gcc4ss-ed gimple form
-     and not in plain gimple */
-  if (pch_file)
-    return;
+  /* Should not reach here when pch generation is on */
+  gcc_assert (!pch_file);
 
   /* For errors treat it as if IR gen was successful, as
      we will quit anyway. Not doing tis causes wired
@@ -7016,6 +7013,9 @@ dump_function_ir (tree fn)
   if (first_label->op != IR_LABELDEF)
     abort ();
 
+  if (flag_use_ir_sd_file)
+    ir_sym_set_def_procedure (sunir_sym, irProc);
+  
   /* COMDAT functions should be declared as .global, not .weak */
   if (TREE_PUBLIC (fn) && DECL_COMDAT (fn) && flag_comdat)
     {
