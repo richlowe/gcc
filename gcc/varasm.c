@@ -5108,6 +5108,12 @@ output_constructor (tree exp, unsigned HOST_WIDE_INT size,
 
 	      /* Count its size.  */
 	      total_bytes += fieldsize;
+
+               /* Adjust the size for array with class type. */
+               if (flag_use_ir_sd_file && size
+                   && index < hi_index
+                   && ir_sobj_size (current_sunir_sobj) < size)
+                 ir_sobj_set_size (current_sunir_sobj, size);
 	    }
 	}
       else if (field == 0 || !DECL_BIT_FIELD (field))
