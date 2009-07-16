@@ -873,6 +873,8 @@ asm_output_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
     {
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
+      if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
       current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size ? size : 1, 0);
@@ -906,6 +908,8 @@ asm_output_aligned_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
     {
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
+      if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
       current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size ? size : 1, 0);
@@ -1668,8 +1672,11 @@ default_named_section_asm_out_destructor (rtx symbol, int priority)
       ir_end_arbitrary_asm();
     }
   else
-    ir_mod_add_finiproc (irMod, 
-                         lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
+    {
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
+      ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      ir_mod_add_finiproc (irMod, sym); 
+    }
 }
 
 #ifdef DTORS_SECTION_ASM_OP
@@ -1680,7 +1687,11 @@ default_dtor_section_asm_out_destructor (rtx symbol,
   if (!flag_use_ir_sd_file)
     assemble_addr_to_section (symbol, dtors_section);
   else
-    ir_mod_add_finiproc (irMod, lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
+    {
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
+      ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      ir_mod_add_finiproc (irMod, sym); 
+    }
 }
 #endif
 
@@ -1723,7 +1734,11 @@ default_named_section_asm_out_constructor (rtx symbol, int priority)
       ir_end_arbitrary_asm();
     }
   else
-    ir_mod_add_initproc (irMod, lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
+    {
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
+      ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      ir_mod_add_initproc (irMod, sym); 
+    }
 }
 
 #ifdef CTORS_SECTION_ASM_OP
@@ -1734,7 +1749,11 @@ default_ctor_section_asm_out_constructor (rtx symbol,
   if (!flag_use_ir_sd_file)
     assemble_addr_to_section (symbol, ctors_section);
   else
-    ir_mod_add_initproc (irMod, lookup_sunir_symbol_with_name(XSTR (symbol, 0)));
+    {
+      ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
+      ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      ir_mod_add_initproc (irMod, sym); 
+    }
 }
 #endif
 
@@ -2056,6 +2075,10 @@ emit_local (tree decl ATTRIBUTE_UNUSED,
     {
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
+      if (TREE_CODE (decl) == FUNCTION_DECL)
+        ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
       current_sunir_sobj = ir_mod_new_sobj (irMod, sym, size, 0);
@@ -2093,6 +2116,8 @@ emit_bss (tree decl ATTRIBUTE_UNUSED,
     {
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
+      if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       if (TREE_PUBLIC (decl))
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
@@ -2170,6 +2195,7 @@ emit_tls_common (tree decl ATTRIBUTE_UNUSED,
     {
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
+      ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       if (TREE_PUBLIC (decl))
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
@@ -2401,7 +2427,6 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       /* Create a default symbol, all attributes will
          get filled in as we go on in the assemble process */
       sym = lookup_sunir_symbol_with_name (targetm.strip_name_encoding (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl))));
-      ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
       ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
     }
   
@@ -2752,29 +2777,14 @@ assemble_name (FILE *file, const char *name)
 ir_sym_hdl_t
 lookup_sunir_symbol_with_name (const char *name)
 {
-  const char *real_name;
-  tree id;
   ir_sym_hdl_t sym;
-  
-  real_name = targetm.strip_name_encoding (name);
-  id = maybe_get_identifier (real_name);
-  if (id)
-    {
-      tree id_orig = id;
-
-      mark_referenced (id);
-      ultimate_transparent_alias_target (&id);
-      if (id != id_orig)
-	name = IDENTIFIER_POINTER (id);
-      gcc_assert (! TREE_CHAIN (id));
-    }
   
   if (name[0] == '*')
     name++;
   
   sym = ir_mod_get_symbol_by_name (irMod, name);
   if (!sym)
-    sym = ir_mod_new_symbol (irMod, name, IR_SYMBINDING_LOCAL, get_sunir_sym_type (id));
+    sym = ir_mod_new_symbol (irMod, name, IR_SYMBINDING_LOCAL, IR_SYMTYPE_OBJECT);
   
   return sym;
 }
@@ -3721,7 +3731,6 @@ output_constant_def_contents (rtx symbol)
       if (flag_use_ir_sd_file) 
         {
           ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
-          ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
           current_sunir_sobj = ir_sym_def_sobj (sym);
           if (current_sunir_sobj == NULL)
             current_sunir_sobj = ir_mod_new_sobj (irMod, sym, 0, 4);
@@ -4322,7 +4331,6 @@ output_constant_pool_contents (struct rtx_constant_pool *pool)
                 char buf[42];
                 ASM_GENERATE_INTERNAL_LABEL (buf, "LC", desc->labelno);
                 ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (buf);
-                ir_sym_set_type (sym, IR_SYMTYPE_OBJECT);
                 ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
                 ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
                 gcc_assert (sobj == NULL);
@@ -5476,6 +5484,10 @@ weak_finish_1 (tree decl)
     {
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
+      if (TREE_CODE (decl) == FUNCTION_DECL)
+        ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
     }
   else
@@ -5530,6 +5542,10 @@ weak_finish (void)
             {
               ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER (target));
               gcc_assert (sym != NULL);
+              if (TREE_CODE (target) == FUNCTION_DECL)
+                ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+              else if (DECL_P (target) && DECL_THREAD_LOCAL_P (target))
+                ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
               ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
             }
           else
@@ -5608,6 +5624,10 @@ globalize_decl (tree decl)
         {
           ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
           gcc_assert (sym != NULL);
+          if (TREE_CODE (decl) == FUNCTION_DECL)
+            ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+          else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+            ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
           ir_sym_set_binding (sym, IR_SYMBINDING_WEAK);
         }
       else
@@ -5761,8 +5781,21 @@ do_assemble_alias (tree decl, tree target)
   if (flag_use_ir_sd_file)
     {
       ir_sym_hdl_t sym1, sym2;
+
       sym1 = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
       sym2 = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER (target));
+
+      if (TREE_CODE (decl) == FUNCTION_DECL)
+        {
+          ir_sym_set_type (sym1, IR_SYMTYPE_PROC);
+          ir_sym_set_type (sym2, IR_SYMTYPE_PROC);
+        }
+      else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        {
+          ir_sym_set_type (sym1, IR_SYMTYPE_TLS_OBJECT);
+          ir_sym_set_type (sym2, IR_SYMTYPE_TLS_OBJECT);
+        }
+
       ir_sym_set_def_equivalent (sym1, sym2, 0);
     }
   else
@@ -5974,6 +6007,10 @@ default_assemble_visibility (tree decl, int vis)
 
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl)));
       gcc_assert (sym != NULL);
+      if (TREE_CODE (decl) == FUNCTION_DECL)
+        ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       ir_sym_set_scope (sym, scope);
       return;
     }
@@ -6948,25 +6985,6 @@ default_globalize_label (FILE * stream, const char *name)
 }
 #endif /* GLOBAL_ASM_OP */
 
-static ir_sym_type_t
-get_sunir_sym_type(tree decl)
-{
-  if (!decl)
-    return IR_SYMTYPE_UNKNOWN;
-  
-  if (TREE_CODE (decl) == FUNCTION_DECL)
-    return IR_SYMTYPE_PROC;
-  else if (TREE_CODE (decl) == VAR_DECL)
-    {
-      if (DECL_THREAD_LOCAL_P (decl))
-        return IR_SYMTYPE_TLS_OBJECT;
-      else
-        return IR_SYMTYPE_OBJECT;
-    }
-  else
-    return IR_SYMTYPE_UNKNOWN;
-}
-
 /* Default function to output code that will globalize a declaration.  */
 void
 default_globalize_decl_name (FILE * stream, tree decl)
@@ -6978,6 +6996,12 @@ default_globalize_decl_name (FILE * stream, tree decl)
                   || TREE_CODE(decl) == FUNCTION_DECL);
       ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (name);
       gcc_assert (sym != NULL);
+
+      if (TREE_CODE (decl) == FUNCTION_DECL)
+        ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
+
       ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
     }
   else
@@ -7446,6 +7470,7 @@ sunir_output_init_fini (FILE *file, tree decl)
         {
           ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl)));
           gcc_assert (sym != NULL);
+          ir_sym_set_type (sym, IR_SYMTYPE_PROC);
           ir_mod_add_initproc (irMod, sym);
         }
       else
@@ -7464,6 +7489,7 @@ sunir_output_init_fini (FILE *file, tree decl)
         {
           ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl)));
           gcc_assert (sym != NULL);
+          ir_sym_set_type (sym, IR_SYMTYPE_PROC);
           ir_mod_add_finiproc (irMod, sym);
         }
       else
