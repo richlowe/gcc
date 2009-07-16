@@ -3487,7 +3487,8 @@ expand_call_inline (basic_block bb, gimple stmt, copy_body_data *id,
   fn = cgraph_node (fn)->decl;
 
   /* Do not inline across IR and RTL functions. */
-  if (DECL_DONT_GENERATE_SUNIR (fn) != DECL_DONT_GENERATE_SUNIR (current_function_decl) )
+  if (flag_use_rtl_backend != -1 
+      && DECL_DONT_GENERATE_SUNIR (fn) != DECL_DONT_GENERATE_SUNIR (current_function_decl) )
     {
       struct cgraph_node *node = cgraph_node (fn);
       if (node)
@@ -4954,7 +4955,8 @@ tree_can_inline_p (tree caller, tree callee)
 #endif
 
   /* Do not inline across IR and RTL functions. */
-  if (DECL_DONT_GENERATE_SUNIR (caller) != DECL_DONT_GENERATE_SUNIR (callee))
+  if (flag_use_rtl_backend != -1 
+      && DECL_DONT_GENERATE_SUNIR (caller) != DECL_DONT_GENERATE_SUNIR (callee))
     {
       struct cgraph_node *node = cgraph_node (callee);
       if (node)
