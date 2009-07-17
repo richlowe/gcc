@@ -2118,7 +2118,8 @@ emit_bss (tree decl ATTRIBUTE_UNUSED,
       gcc_assert (sym != NULL);
       if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
         ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
-      if (TREE_PUBLIC (decl))
+      if (TREE_PUBLIC (decl)
+          && ir_sym_binding (sym) != IR_SYMBINDING_WEAK)
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
@@ -2580,9 +2581,6 @@ static void
 assemble_external_real (tree decl)
 {
   rtx rtl = DECL_RTL (decl);
-
-  if (flag_use_ir_sd_file)
-    return;
 
   if (MEM_P (rtl) && GET_CODE (XEXP (rtl, 0)) == SYMBOL_REF
       && !SYMBOL_REF_USED (XEXP (rtl, 0))
