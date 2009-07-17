@@ -3444,6 +3444,14 @@ lookup_sunir_symbol (rtx x)
       
     case SYMBOL_REF:
       sym = lookup_sunir_symbol_with_name (XSTR (x, 0));
+      if (SYMBOL_REF_DECL (x))
+        {
+          tree decl = SYMBOL_REF_DECL (x);
+          if (TREE_CODE (decl) == FUNCTION_DECL)
+            ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+          else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+            ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
+        }
       break;
 
     case LABEL_REF:
@@ -3514,6 +3522,14 @@ output_addr_const (FILE *file, rtx x)
       if (flag_use_ir_sd_file)
         {
           sym1 = lookup_sunir_symbol_with_name (XSTR (x, 0));
+          if (SYMBOL_REF_DECL (x)) 
+            {
+              tree decl = SYMBOL_REF_DECL (x); 
+              if (TREE_CODE (decl) == FUNCTION_DECL)
+                ir_sym_set_type (sym1, IR_SYMTYPE_PROC); 
+              else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+                ir_sym_set_type (sym1, IR_SYMTYPE_TLS_OBJECT);
+            }
           if (TARGET_ARCH64)
             ir_sobj_new_rel64 (current_sunir_sobj, sym1, 0,
                                NULLIRINITRPOS, IR_FALSE);

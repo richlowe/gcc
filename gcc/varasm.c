@@ -2428,6 +2428,10 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       /* Create a default symbol, all attributes will
          get filled in as we go on in the assemble process */
       sym = lookup_sunir_symbol_with_name (targetm.strip_name_encoding (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl))));
+      if (TREE_CODE (decl) == FUNCTION_DECL)
+        ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+      else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+        ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       ir_sym_set_binding (sym, IR_SYMBINDING_LOCAL);
     }
   
@@ -2655,6 +2659,12 @@ assemble_external_libcall (rtx fun)
     {
       SYMBOL_REF_USED (fun) = 1;
       targetm.asm_out.external_libcall (fun);
+      if (flag_use_ir_sd_file)
+        {
+          ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (fun, 0));
+          gcc_assert (sym != 0); 
+          ir_sym_set_type (sym, IR_SYMTYPE_PROC); 
+        }
     }
 }
 
@@ -2779,7 +2789,7 @@ lookup_sunir_symbol_with_name (const char *name)
   
   if (name[0] == '*')
     name++;
-  
+
   sym = ir_mod_get_symbol_by_name (irMod, name);
   if (!sym)
     sym = ir_mod_new_symbol (irMod, name, IR_SYMBINDING_LOCAL, IR_SYMTYPE_OBJECT);
@@ -3729,6 +3739,14 @@ output_constant_def_contents (rtx symbol)
       if (flag_use_ir_sd_file) 
         {
           ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
+          if (SYMBOL_REF_DECL (symbol))
+            {
+              tree decl = SYMBOL_REF_DECL (symbol);
+              if (TREE_CODE (decl) == FUNCTION_DECL)
+                ir_sym_set_type (sym, IR_SYMTYPE_PROC);
+              else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+                ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
+            }
           current_sunir_sobj = ir_sym_def_sobj (sym);
           if (current_sunir_sobj == NULL)
             current_sunir_sobj = ir_mod_new_sobj (irMod, sym, 0, 4);
