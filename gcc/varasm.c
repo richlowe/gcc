@@ -3739,13 +3739,17 @@ output_constant_def_contents (rtx symbol)
       if (flag_use_ir_sd_file) 
         {
           ir_sym_hdl_t sym = lookup_sunir_symbol_with_name (XSTR (symbol, 0));
-          if (SYMBOL_REF_DECL (symbol))
+          if (SYMBOL_REF_DECL (symbol) && DECL_P (SYMBOL_REF_DECL (symbol)))
             {
               tree decl = SYMBOL_REF_DECL (symbol);
+
               if (TREE_CODE (decl) == FUNCTION_DECL)
                 ir_sym_set_type (sym, IR_SYMTYPE_PROC);
-              else if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
+              else if (DECL_THREAD_LOCAL_P (decl))
                 ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
+
+              if (TREE_PUBLIC (decl))
+                ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
             }
           current_sunir_sobj = ir_sym_def_sobj (sym);
           if (current_sunir_sobj == NULL)
