@@ -1710,14 +1710,18 @@ static const char *invoke_cg =
     Znofstore: -nofstore; \
            : -fstore} \
   %{xgas: -as_info=no } \
+  %{fno-exceptions: -nounwind} \
 "
 #endif
 "%:add-user-il-routines() %(cg_ipo_options) \
+ %(sscg_spec) \
 "
 #ifdef TARGET_CPU_sparc
 " -is %U.s \
 "
 #endif
+" %{xlinkopt: -xlinkopt=1 ; \
+   xlinkopt=*: -xlinkopt=%* } "
 #ifdef TARGET_CPU_sparc
 " -ir %{save-temps:%b.ircg} %{!save-temps:%U.ircg} \
  %{!xforceas: \
@@ -1726,26 +1730,20 @@ static const char *invoke_cg =
  %{xforceas: \
      %{!S: %{!o*: -os %w%u.s} %{o*: -os %w%u.s} } \
      %{S: %W{s*} %{!o*:-os %w%b.s} %{o*:-os %*} } }\
+ %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: -xcrossfile=1 %{Zipo_fast_phase_1: -OO0} } } \
+  %T \
 "
 #else
 #ifdef TARGET_CPU_x86
 " %{xipo=1|xipo=2: -ipo %{o*: %*} %{!o*: %w%b.o} }\
+  %T \
   %{!S: -S %{save-temps: %b.cgs} %{!save-temps: %w%u.cgs} } \
   %{S:  -S %{!o*: %w%b.s} %{o*: %*} } \
   %{save-temps:%b.ircg} %{!save-temps:%U.ircg} \
+  %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*:  %{Zipo_fast_phase_1: -OO0} } } \
+  %{!S: %{xgas: %(invoke_gas); : %(invoke_fbe) } } \
 " 
 #endif /* TARGET_CPU_x86 */
-#endif
-" %{xlinkopt: -xlinkopt=1 ; \
-   xlinkopt=*: -xlinkopt=%* } "
-#ifdef TARGET_CPU_sparc
-" %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*: -xcrossfile=1 %{Zipo_fast_phase_1: -OO0} } } "
-#else
-#ifdef TARGET_CPU_x86
-" %{xipo=1|xipo=2|xpec|Zpec=*: %{!xprofile=collect*:  %{Zipo_fast_phase_1: -OO0} } } \
- %T \
-  %{!S: %{xgas: %(invoke_gas); : %(invoke_fbe) } }"
-#endif
 #endif
 ;
 
@@ -2037,7 +2035,7 @@ static const struct compiler default_compilers[] =
           %{!fsyntax-only: \
              %{frtl-backend: %(gccfss_invoke_as) ; \
                : %(invoke_iropt) %(ssiropt_spec) %Q \
-                 %(invoke_cg) %(sscg_spec) %T } \
+                 %(invoke_cg) } \
                 %{!S: \
                   %{!frtl-backend: %{xforceas : %(gccfss_invoke_as)}} \
                   %{Zpec=*: %(invoke_ipo1) ; \
@@ -2052,7 +2050,7 @@ static const struct compiler default_compilers[] =
                 %{!fsyntax-only:\
                    %{frtl-backend: %(gccfss_invoke_as) ;\
                      : %(invoke_iropt) %(ssiropt_spec) %Q \
-                       %(invoke_cg) %(sscg_spec) %T }\
+                       %(invoke_cg) }\
 			%{!S: \
                           %{!frtl-backend: %{xforceas: %(gccfss_invoke_as)}} \
                           %{Zpec=*: %(invoke_ipo1) ; \
@@ -2084,7 +2082,7 @@ static const struct compiler default_compilers[] =
                 %{!fsyntax-only:\
                   %{frtl-backend: %(gccfss_invoke_as) ; \
                     : %(invoke_iropt) %(ssiropt_spec) %Q \
-                      %(invoke_cg) %(sscg_spec) %T }\
+                      %(invoke_cg) }\
 		     %{!S: \
                        %{!frtl-backend: %{xforceas: %(gccfss_invoke_as)}} \
                        %{Zpec=*: %(invoke_ipo1) ; \
