@@ -3525,6 +3525,9 @@ output_addr_const (FILE *file, rtx x)
 	}
       if (flag_use_ir_sd_file)
         {
+	  const char *real_name;
+	  tree id;
+
           sym1 = lookup_sunir_symbol_with_name (XSTR (x, 0));
           if (SYMBOL_REF_DECL (x) && DECL_P (SYMBOL_REF_DECL (x))) 
             {
@@ -3544,6 +3547,11 @@ output_addr_const (FILE *file, rtx x)
           else
             ir_sobj_new_rel32 (current_sunir_sobj, sym1, 0,
                                NULLIRINITRPOS, IR_FALSE);
+          /* Need mark referenced for the initializer. */
+	  real_name = targetm.strip_name_encoding (XSTR (x, 0));
+	  id = maybe_get_identifier (real_name);
+	  if (id)
+	    mark_referenced (id);
         }
       else
         {

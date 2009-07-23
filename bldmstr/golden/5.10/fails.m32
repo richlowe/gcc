@@ -162,6 +162,7 @@ gcc.sum:FAIL: gcc.dg/pr39343.c execution test
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/section1.c scan-assembler-not .bss
 gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
 gcc.sum:FAIL: gcc.dg/ipa/iinline-1.c scan-ipa-dump inline "hooray[^\n]*inline copy in main"
 gcc.sum:FAIL: gcc.dg/ipa/ipacost-1.c scan-tree-dump-not optimized "i_can_be_propagated"

@@ -124,6 +124,7 @@ gcc.sum:FAIL: gcc.dg/pr33645-2.c scan-assembler-not var1_t
 gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/section1.c scan-assembler-not .bss
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 16)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 28)
 gcc.sum:FAIL: gcc.dg/va-arg-pack-1.c  (test for errors, line 34)

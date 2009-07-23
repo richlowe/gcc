@@ -1523,8 +1523,11 @@ make_decl_rtl (tree decl)
 	      /* Make this register global, so not usable for anything
 		 else.  */
 #ifdef ASM_DECLARE_REGISTER_GLOBAL
-	      name = IDENTIFIER_POINTER (DECL_NAME (decl));
-	      ASM_DECLARE_REGISTER_GLOBAL (asm_out_file, decl, reg_number, name);
+              if (!flag_use_ir_sd_file)
+                {
+	          name = IDENTIFIER_POINTER (DECL_NAME (decl));
+	          ASM_DECLARE_REGISTER_GLOBAL (asm_out_file, decl, reg_number, name);
+                }
 #endif
 	      nregs = hard_regno_nregs[reg_number][DECL_MODE (decl)];
 	      while (nregs > 0)
@@ -2119,7 +2122,7 @@ emit_bss (tree decl ATTRIBUTE_UNUSED,
       if (DECL_P (decl) && DECL_THREAD_LOCAL_P (decl))
         ir_sym_set_type (sym, IR_SYMTYPE_TLS_OBJECT);
       if (TREE_PUBLIC (decl)
-          && ir_sym_binding (sym) != IR_SYMBINDING_WEAK)
+          && !DECL_WEAK (decl))
         ir_sym_set_binding (sym, IR_SYMBINDING_GLOBAL);
       ir_sobj_hdl_t sobj = ir_sym_def_sobj (sym);
       gcc_assert (sobj == NULL);
