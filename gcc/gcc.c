@@ -1221,13 +1221,9 @@ static const char *ssbe_xarch =
 /* The following two variables are defined in the language specific 
    spec files.  They hold language specific flags passed to iropt and cg */
 /* for C */
-#ifdef TARGET_CPU_sparc
 const char *ssiropt_lang_spec = 
 "%{fexceptions: -h_exception=gcc} \
 ";
-const char *sscg_lang_spec =
-"%{fexceptions: -h_exception=gcc} \
-";           
 
 /* for C++ */
 const char *ssiropt_lang_spec_gxx = 
@@ -1237,6 +1233,16 @@ const char *ssiropt_lang_spec_gxx =
                : -h_exception=gpp } \
 ";
 
+/* for Fortran */
+const char *ssiropt_lang_spec_fortran = 
+"";
+
+#ifdef TARGET_CPU_sparc
+const char *sscg_lang_spec =
+"%{fexceptions: -h_exception=gcc} \
+";           
+
+/* for C++ */
 const char *sscg_lang_spec_gxx =
 "%{ fexceptions: -h_exception=gpp; \
     fno-exceptions: ; \
@@ -1244,8 +1250,6 @@ const char *sscg_lang_spec_gxx =
 ";
 
 /* for Fortran */
-const char *ssiropt_lang_spec_fortran = 
-"";
 const char *sscg_lang_spec_fortran =
 "";           
 #else
@@ -1253,20 +1257,13 @@ const char *sscg_lang_spec_fortran =
 /*RAT-TODO: come back and delete this and use the above for both x86 and sparc
         when we can pass this stuff to ube 
  */
-const char *ssiropt_lang_spec = 
-"";
 const char *sscg_lang_spec =
 "";           
  
 /* for C++ */
-const char *ssiropt_lang_spec_gxx = 
-"";
- 
 const char *sscg_lang_spec_gxx =
 "";
 /* for Fortran */
-const char *ssiropt_lang_spec_fortran = 
-"";
 const char *sscg_lang_spec_fortran =
 "";           
 #endif
