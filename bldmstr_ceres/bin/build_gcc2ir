@@ -517,7 +517,7 @@ install_suncomponents()
 
         # Add the legal licenses
         (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION ; \
-         tar -xf /ws/gccfss/source/scgfss_legal_4.3.2.tar)
+         tar -xf /ws/gccfss/source/scgfss_legal_$GCC_VERSION.tar)
         
 	echo "Installation of Sun components from $SUN_DIR_ROOT to $INSTALL_DIR completed at $(date)" > $ROOT/done/install.suncomponents
 }
@@ -605,10 +605,10 @@ run_tests_installed()
   echo "Running tests for Objc and Fortran"
 
   FINAL_INSTALL_DIR=$INSTALL_DIR/usr
-  # Create links: gcc -> gcc-4.3.2, gfortran -> gfortran-4.3.2
+  # Create links: gcc -> gcc-$GCC_VERSION, gfortran -> gfortran-$GCC_VERSION
   cd $FINAL_INSTALL_DIR/bin
-  ln -s gcc-4.3.2 gcc
-  ln -s gfortran-4.3.2 gfortran
+  ln -s gcc-$GCC_VERSION gcc
+  ln -s gfortran-$GCC_VERSION gfortran
 
   cd $ROOT/build.gcc2ir/gcc
 
@@ -635,7 +635,7 @@ run_tests_installed()
   (cd testsuite.objc-fortran.m32; \
    export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/lib:$LD_LIBRARY_PATH; \
   ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
-    --with-testsuite=/net/gccfss-v890-1/export/prash/gcc-4.3.2/gcc/testsuite \
+    --with-testsuite=$SOURCE_WS/gcc/testsuite \
     --without-gcc --without-g++ \
 	> $ROOT/logs/tests.objc-fortran.m32.log 2>&1); \
     mv *.log *.sum $ROOT/logs/result.m32 )
@@ -643,12 +643,12 @@ run_tests_installed()
   (cd testsuite.objc-fortran.m64; \
    export LD_LIBRARY_PATH=$FINAL_INSTALL_DIR/lib/sparcv9:$LD_LIBRARY_PATH; \
   ($ROOT/src/contrib/test_installed  --prefix=$FINAL_INSTALL_DIR \
-    --with-testsuite=/net/gccfss-v890-1/export/prash/gcc-4.3.2/gcc/testsuite \
+    --with-testsuite=$SOURCE_WS/gcc/testsuite \
     --without-gcc --without-g++ --target_board=unix/-m64 \
 	> $ROOT/logs/tests.objc-fortran.m64.log 2>&1); \
     mv *.log *.sum $ROOT/logs/result.m64 )
 
-  # Remove links: gcc -> gcc-4.3.2, gfortran -> gfortran-4.3.2
+  # Remove links: gcc -> gcc-$GCC_VERSION, gfortran -> gfortran-$GCC_VERSION
   cd $FINAL_INSTALL_DIR/bin
   rm gcc gfortran
 }
@@ -929,8 +929,8 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
 # On OpenSolaris we want the install structure to resemble what we will
 # see on the system, so that we can create packages easily
 # Basically we install everything into
-# /ws/gccfss/builds/4.3.2_s11/<date>/usr/{bin,lib...}
-# /ws/gccfss/builds/4.3.2_s11/<date>/usr/lib/gcc/sparc-sun-solaris2.11/gccfss
+# /ws/gccfss/builds/$GCC_VERSION_s11/<date>/usr/{bin,lib...}
+# /ws/gccfss/builds/$GCC_VERSION_s11/<date>/usr/lib/gcc/sparc-sun-solaris2.11/gccfss
 #
 # We will move SUNW0scgfss also into /usr/compilers first
 manipulate_install_area ()
@@ -939,7 +939,7 @@ manipulate_install_area ()
     then
         # layer the fortran and objc binaries
         ( cd $INSTALL_DIR ;
-          bzip2 -cd /ws/gccfss/source/gfortran_objc_2.tar.bz2 | tar xf - )
+          bzip2 -cd /ws/gccfss/source/gfortran_objc-$GCC_VERSION.tar.bz2 | tar xf - )
 
         # Move the SUNWscgfss firectory also into usr/compilers
         #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
@@ -953,17 +953,17 @@ manipulate_install_area ()
         # Lets create the packages
 	echo "Create packages ..."
         # 1. SUNWgcc432
-        /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+        /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc433/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
 	  > $ROOT/logs/packages.log 2>&1
 
         
         # 2. SUNWgccruntime
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime433/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
 	  >> $ROOT/logs/packages.log 2>&1
 	  
        
        # 3. SUNWscgfss432
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWscgfss432/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWscgfss433/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
 	  >> $ROOT/logs/packages.log 2>&1
     fi
 }
