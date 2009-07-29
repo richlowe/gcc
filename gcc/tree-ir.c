@@ -68,6 +68,8 @@ int flag_comdat = 0;
 int flag_comdat = 1;
 #endif
 
+tree tramp_used = 0;
+
 LANG ir_language;
 
 /* use g++ calling convention == return struct val in [sp+64] even for c++ */
@@ -5265,7 +5267,8 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
           ir_arglist = (IR_NODE *)l;
         }
     }
-  
+
+#ifdef TARGET_CPU_sparc  
   if (op2) /* prepare call to nested function */
     {
       IR_NODE *chain_var = dump_ir_expr (op2, MAP_FOR_VALUE);
@@ -5293,6 +5296,29 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
       /* will set reserved_tailcall flag for ir_callnode later to tell CG that
          %g2/%g5 register is used to pass chain_reg into nested function */
     }
+#else
+  /* x86: Use parameter to pass the variables of containing function. */ 
+  if (op2 || tramp_used) 
+    {
+      if (op2)
+        ir_argp = dump_ir_genargs (op2);
+      else
+        {
+          ir_argp = dump_ir_genargs (tramp_used);
+          tramp_used = NULL;
+        }
+      ir_argp->triple.param_info = IrParamIsDeclared;
+
+      if (ir_arglist == 0)
+        ir_arglist = ir_argp;
+      else
+        {
+          TRIPLE *l = (TRIPLE *) ir_arglist;
+          TAPPEND (l, (TRIPLE *) ir_argp);
+          ir_arglist = (IR_NODE *)l;
+        }
+    }
+#endif
 
   if (for_value)
     { 
@@ -5422,6 +5448,7 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
       ir_callnode->triple.dont_tailcall = IR_TRUE;
     }
 
+#ifdef TARGET_CPU_sparc
   /* it's a nested function call */
   if (op2)
     {
@@ -5449,6 +5476,7 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
           ir_callnode->triple.can_access = ir_copy_overlaps ((LEAF*)chain_reg);
         }
     }
+#endif
 
   /* workaround to disable inlining for no-builtin-FUNCNAME */
   if (ir_dest->operand.tag == ISLEAF && ir_dest->leaf.is_volatile)
@@ -7342,16 +7370,29 @@ dump_function_ir (tree fn)
   
   if (cfun->static_chain_decl) /* cfun is a nested function */
     {
-      /* need to initialize chain_var with contents of %g2 for v8 and %g5 for v9*/
       IR_NODE *chain_var = dump_ir_expr (cfun->static_chain_decl, MAP_FOR_VALUE);
+#ifdef TARGET_CPU_sparc
       IR_NODE *chain_reg, *assign;
       
       if (chain_var->operand.tag != ISLEAF)
         abort ();
 
+      /* need to initialize chain_var with contents of %g2 for v8 and %g5 for v9*/
       chain_reg = get_ir_chain_reg (chain_var->operand.type, chain_var->leaf.typep);
       assign = build_ir_triple (IR_ASSIGN, chain_var, chain_reg, chain_var->operand.type, NULL);
-/*      assign->triple.is_volatile = IR_TRUE;*/
+
+#else
+      /* x86: Use parameter to pass the variables of containing function.*/
+      IR_NODE * p = build_ir_triple (IR_FPARAM, chain_var, (IR_NODE*)func_entry_triple,
+                                     chain_var->operand.type, NULL);
+      if (func_entry_triple->right != NULL)
+        {
+          TRIPLE *tp = (TRIPLE *) func_entry_triple->right;
+          TAPPEND (tp, (TRIPLE *) p);
+          func_entry_triple->right = (IR_NODE *) tp;
+        }
+      func_entry_triple->right = p;
+#endif
     }
   
   /* generate all eh region filter numbers, to be used in PBRANCH triple */

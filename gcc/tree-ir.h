@@ -303,6 +303,7 @@ extern expanded_location ir_location;
 extern IR_NODE * dump_ir_expr (tree stmt, enum MAP_FOR map_for);
 extern IR_NODE * dump_ir_call (gimple stmt, int for_value);
 extern void dump_ir_stmt (gimple stmt);
+extern tree tramp_used;
 
 /* tree-ir-builtins.c */
 extern IR_NODE * dump_ir_builtin_call (gimple stmt, int need_return);

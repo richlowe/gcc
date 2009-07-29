@@ -143,12 +143,156 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
     }
 }
 
+/* Emit IR stmts to initialize the variable parts of a trampoline.
+   It is for x86. */
+
 static IR_NODE *
 dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
 {
-  warning (0, "builtin_init_trampoline hasn't be implemented."); 
-  abort ();
-  /* TODO. */
+  tree tramp = TREE_VALUE (arglist);
+  tree func = TREE_VALUE (TREE_CHAIN (arglist));
+  tree ctx = TREE_VALUE (TREE_CHAIN (TREE_CHAIN (arglist)));
+  IR_NODE *ir_tramp, *ir_func, *ir_ctx, *t;
+  TYPE uinttype = map_gnu_type_to_TYPE (unsigned_intSI_type_node);
+  IR_TYPE_NODE * ir_uinttype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intSI_type_node);
+  TYPE uchartype = map_gnu_type_to_TYPE (unsigned_intQI_type_node);
+  IR_TYPE_NODE * ir_uchartype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intQI_type_node);
+
+  if (TREE_CODE (TREE_TYPE (tramp)) != POINTER_TYPE
+      || TREE_CODE (TREE_TYPE (func)) != POINTER_TYPE
+      || TREE_CODE (TREE_TYPE (ctx)) != POINTER_TYPE)
+    return dump_ir_call (stmt, need_return);
+
+  tramp_used = ctx;
+  if (!TARGET_64BIT)
+    {
+      /* Compute offset from the end of the jmp to the target function.  
+      rtx disp = expand_binop (SImode, sub_optab, fnaddr,
+                               plus_constant (tramp, 10),
+                               NULL_RTX, 1, OPTAB_DIRECT);
+      emit_move_insn (gen_rtx_MEM (QImode, tramp),
+                      gen_int_mode (0xb9, QImode));
+      emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 1)), cxt);
+      emit_move_insn (gen_rtx_MEM (QImode, plus_constant (tramp, 5)),
+                      gen_int_mode (0xe9, QImode));
+      emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 6)), disp);*/
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, build_ir_int_const (0xb9, uchartype, 0), uchartype, ir_uchartype);
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (1, uinttype, 0),
+				  ir_tramp->operand.type, 0);
+      ir_ctx = dump_ir_expr (ctx, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, ir_ctx, uinttype, ir_uinttype);
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (5, uinttype, 0),
+                                  ir_tramp->operand.type, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, build_ir_int_const (0xe9, uchartype, 0), uchartype, ir_uchartype);
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (6, uinttype, 0),
+				 ir_tramp->operand.type, 0);
+      ir_func = dump_ir_expr (func, MAP_FOR_VALUE);
+      t = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_PLUS, t, build_ir_int_const (10, uinttype, 0),
+				t->operand.type, 0);
+      t = build_ir_triple (IR_MINUS, ir_func, t, uinttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
+    }
+  else
+    {
+      int offset = 0;
+      TYPE ulltype = map_gnu_type_to_TYPE (unsigned_intDI_type_node);
+      IR_TYPE_NODE * ir_ulltype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intDI_type_node);
+      TYPE ushorttype = map_gnu_type_to_TYPE (unsigned_intHI_type_node);
+      IR_TYPE_NODE * ir_ushorttype = map_gnu_type_to_IR_TYPE_NODE (unsigned_intHI_type_node);
+
+      /* Try to load address using shorter movl instead of movabs.
+         We may want to support movq for kernel mode, but kernel does not use
+         trampolines at the moment.  */
+      if (x86_64_zext_immediate_operand (func, VOIDmode))
+        {
+          /* fnaddr = copy_to_mode_reg (DImode, fnaddr);
+          emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
+                          gen_int_mode (0xbb41, HImode));
+          emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, offset + 2)),
+                          gen_lowpart (SImode, fnaddr));*/
+	  /* TODO: */
+          warning (0, "This case isn't supported.");
+          offset += 6;
+        }
+      else
+        {
+          /*emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
+                          gen_int_mode (0xbb49, HImode));
+          emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, offset + 2)),
+                          fnaddr);*/
+          ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+	  ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (offset, uinttype, 0),
+				      ir_tramp->operand.type, 0);
+          t = build_ir_int_const (0xbb49, ushorttype, 0);
+	  t = build_ir_triple (IR_ISTORE, ir_tramp, t, ushorttype, ir_ushorttype);
+
+	  ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+	  ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (offset + 2, uinttype, 0),
+ 				      ir_tramp->operand.type, 0);
+          ir_func = dump_ir_expr (func, MAP_FOR_VALUE);
+	  t = build_ir_triple (IR_ISTORE, ir_tramp, ir_func, ulltype, ir_ulltype);
+          offset += 10;
+        }
+      /* Load static chain using movabs to r10.  
+      emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
+                      gen_int_mode (0xba49, HImode));
+      emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, offset + 2)),
+                      cxt);*/
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (offset, uinttype, 0),
+				  ir_tramp->operand.type, 0);
+      t = build_ir_int_const (0xba49, ushorttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, ushorttype, ir_ushorttype);
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (offset + 2, uinttype, 0),
+				 ir_tramp->operand.type, 0);
+      ir_ctx = dump_ir_expr (ctx, MAP_FOR_VALUE);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, ir_ctx, ulltype, ir_ulltype);
+      offset += 10;
+      /* Jump to the r11 
+      emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
+                      gen_int_mode (0xff49, HImode));
+      emit_move_insn (gen_rtx_MEM (QImode, plus_constant (tramp, offset+2)),
+                      gen_int_mode (0xe3, QImode)); */
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (offset, uinttype, 0),
+				  ir_tramp->operand.type, 0);
+      t = build_ir_int_const (0xff49, ushorttype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, ushorttype, ir_ushorttype);
+
+      ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
+      ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (offset + 2, uinttype, 0),
+				ir_tramp->operand.type, 0);
+      t = build_ir_int_const (0xe3, uchartype, 0);
+      t = build_ir_triple (IR_ISTORE, ir_tramp, t, uchartype, ir_uchartype);
+
+      offset += 3;
+      gcc_assert (offset <= TRAMPOLINE_SIZE);
+    }
+
+#ifdef ENABLE_EXECUTE_STACK
+/*  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__enable_execute_stack"),
+                     LCT_NORMAL, VOIDmode, 1, tramp, Pmode);*/
+      func = build_decl (FUNCTION_DECL, get_identifier ("__enable_execute_stack"),
+			 build_function_type (void_type_node, /* return type */
+			 build_tree_list (NULL_TREE, ptr_type_node))); /* arg1 type */
+      DECL_ARTIFICIAL (func) = 1;
+      DECL_EXTERNAL (func) = 1;
+      TREE_PUBLIC (func) = 1;
+      TREE_NOTHROW (func) = 1;
+
+      dump_ir_call (gimple_build_call (func, 1, tramp), 0);
+#endif
 }
 
 #else /* Sparc. */
@@ -325,6 +469,8 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
     }
 }
 
+/* Sparc: Emit IR stmts to initialize the variable parts of a trampoline.*/
+
 static IR_NODE *
 dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
 {
@@ -358,7 +504,6 @@ dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
       t = build_ir_triple (IR_ISTORE, ir_tramp, t, uinttype, ir_uinttype);
       /*emit_move_insn (gen_rtx_MEM (SImode, tramp),
             	  GEN_INT (trunc_int_for_mode (0x83414000, SImode)));*/
-
       ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
       ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (4, uinttype, 0), 
                                   ir_tramp->operand.type, 0);
@@ -473,7 +618,6 @@ dump_ir_builtin_init_trampoline (gimple stmt, tree arglist, int need_return)
             	   expand_and (SImode, fnaddr, GEN_INT (0x3ff), NULL_RTX),
             	   GEN_INT (trunc_int_for_mode (0x81c06000, SImode)),
             	   NULL_RTX, 1, OPTAB_DIRECT));*/
-    
       ir_tramp = dump_ir_expr (tramp, MAP_FOR_VALUE);
       ir_tramp = build_ir_triple (IR_PLUS, ir_tramp, build_ir_int_const (12, uinttype, 0), 
                                   ir_tramp->operand.type, 0);
@@ -644,7 +788,7 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
   
 
   n = dump_ir_expr (nl_save_area, MAP_FOR_ADDR);
-#ifndef TARGET_CPU_x86
+#ifdef TARGET_CPU_sparc
   if (TARGET_ARCH64)
     n = build_ir_triple (IR_PLUS, n, build_ir_int_const (8, offsettype, 0), n->operand.type, 0);
   else
