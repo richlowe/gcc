@@ -5539,6 +5539,8 @@ dump_ir_modify_1 (tree op0, tree op1, IR_NODE * ir_op0, IR_NODE * ir_op1)
   if (IS_RECORD_TYPE (TREE_TYPE (op0))
       /*(TREE_CODE (TREE_TYPE (op0)) == RECORD_TYPE 
        || TREE_CODE (TREE_TYPE (op0)) == UNION_TYPE)*/
+      && !(TREE_CODE (op0) == PARM_DECL 
+           && !tu_pass_by_reference (NULL, TYPE_MODE (TREE_TYPE (op0)), TREE_TYPE (op0), false))
       && TYPE_SIZE (TREE_TYPE (op0)) 
       && TREE_CODE (TYPE_SIZE (TREE_TYPE (op0))) == INTEGER_CST)
     is_indirect = 1;

@@ -630,7 +630,12 @@ run_native_tests()
     # libstdc++ must be tested in the testsuite directory
     # So, we cannot run both -m32 and -m64 in parallel.
     sleep 3
-    cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
+    if [ $BUILDTYPE = i386-solaris ]
+    then
+      cd $ROOT/build.gcc2ir/i386*/libstdc++-v3
+    else
+      cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
+    fi
     $GMAKE -k check EXPECT=$EXPECT RUNTESTFLAGS="--target_board=unix/-m64" > $ROOT/logs/tests.stdc++.m64.log 2>&1
     mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m64
     $GMAKE -k check EXPECT=$EXPECT > $ROOT/logs/tests.stdc++.m32.log 2>&1
