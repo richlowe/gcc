@@ -21888,6 +21888,7 @@ fi
     rm -f conftest.o conftest.s
   fi
 fi
+gcc_cv_as_comdat_group=yes
 echo "$as_me:$LINENO: result: $gcc_cv_as_comdat_group" >&5
 echo "${ECHO_T}$gcc_cv_as_comdat_group" >&6
 

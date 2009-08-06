@@ -1001,7 +1001,7 @@ configure_native_x86_compiler()
         --without-gnu-ld \
         --disable-gnattools \
         --enable-tls \
-        --with-as=/import/gccfss3/rt132876/localx86/bin/as \
+        --with-as=$INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/bin/fbe \
         --without-gnu-as \
         --disable-bootstrap > $ROOT/logs/config.gcc2ir.log 2>&1
 }
