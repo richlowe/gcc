@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #define OFFSZ long
 
 #define IR_MAJOR_VERS 9
-#define IR_MINOR_VERS 0
+#define IR_MINOR_VERS 2
 #define IR_DEV_VERS   0
 
 typedef long long IR_OFFSZ;
@@ -352,10 +352,10 @@ typedef struct leaf {
 	BOOLEAN throw_nothing:1; /* the function call will not throw exceptions */
 	int  leafno;
 	TYPE	type;
+	IR_TYPE_NODE	*typep;
 	LEAF_VALUE val;
 	BOOLEAN	visited; /* used as a flag and/or pointer to auxiliary information*/
 	const char *pass1_id;
-	IR_TYPE_NODE	*typep;
 	struct leaf *next_leaf;
 	struct list *overlap;
 	struct list *neighbors;
@@ -395,6 +395,7 @@ typedef struct triple {
 				 * will be used for vtables etc. */
 	int tripleno;
 	TYPE	type;
+	IR_TYPE_NODE	*typep;
         __extension__ INLINE_FIELD in_line:3; /* user control over inlining */
 	BOOLEAN  pf_load:1;     /* true => this ref should be prefetched */
 	BOOLEAN  pf_cov:1;	/* true => other prefetch "covers" this ref */
@@ -427,7 +428,6 @@ typedef struct triple {
 
 	struct triple *tprev, *tnext;
 	union node_u *left,*right;
-	IR_TYPE_NODE	*typep;
 	BOOLEAN	visited;	/* flag/ptr used repeatedly by various phases */
 	struct list *can_access;/* list of leaves used/defined by side effects*/
 	struct ln_sl *line_num; /* Line number information */
@@ -445,6 +445,7 @@ typedef struct operand {
 	int /*overloaded*/: 28;
 	int number;  /* align with blockno, tripleno, leafno */
 	TYPE type;
+        IR_TYPE_NODE* typep;
 } OPERAND;
 
 typedef union node_u {
