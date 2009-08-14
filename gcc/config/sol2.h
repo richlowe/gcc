@@ -166,7 +166,8 @@ along with GCC; see the file COPYING3.  If not see
              %{!p:%{!pg:-Y P,/usr/ucblib:/usr/ccs/lib:/usr/lib}}} \
              %{!norpath:%{!nodefaultlibs:%{!nostdlib:-R /usr/ucblib}}}} \
    %{!compat-bsd: \
-   %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}}} " \
+     %{!norpath: %{!nodefaultlibs:%{!nostdlib:%{shared-libgcc|shared: -R %H}}}} \
+     %{!norpath: %{fprofile-arcs: -R %J} %{xprofile=collect=*: -R %J} }  " \
 LINK_ARCH32_SPEC_BASE_LIBGUTS \
 "  } "
 
