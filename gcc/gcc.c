@@ -2131,6 +2131,11 @@ static int valid_backend_version(const char *);
 static const char *add_user_il_routines(int, const char **);
 static int is_il_file(char * );
 
+/* runpath to libxprof if needed */
+static const char *libxprof_runpath(int, const char **);
+static const char *libxprof_v9_runpath(int, const char **);
+
+
 /* if -Wd,-w then keep the driver quiet from warnings and notes */
 static int quiet_driver = 0;
 
@@ -3969,6 +3974,8 @@ static const struct spec_function static_spec_functions[] =
   { "add-sun-prefetch",		add_sun_prefetch },
   { "prod-dir-include",		prod_dir_include },
   { "reset-xprefetch-explicit", reset_xprefetch_explicit},
+  { "libxprof-runpath",		libxprof_runpath },
+  { "libxprof-v9-runpath",	libxprof_v9_runpath },
 #ifdef EXTRA_SPEC_FUNCTIONS
   EXTRA_SPEC_FUNCTIONS
 #endif
@@ -12567,6 +12574,33 @@ static const char *is_it_pec_dummy(int dummy __attribute__ ((unused)),
        (strcmp(input_basename,"pec_dummy.cc") == 0) )
           return "-w";
    else return " ";
+}
+
+/* add runpath to libxprof if it exists in prod area */
+static const char *libxprof_runpath(int dummy __attribute__ ((unused)), 
+                           const char** dummy2 __attribute__ ((unused)) ) {
+  char *xprofdir;
+  char *xprofloc;
+  
+  xprofdir = concat(studioproddir, "/usr/lib", NULL);
+  xprofloc = concat(xprofdir, "/libxprof.so", NULL);
+  if (access(xprofloc, R_OK))
+     return " ";
+  else return xstrdup(concat("-R ",xprofdir, NULL));
+  
+}
+
+static const char *libxprof_v9_runpath(int dummy __attribute__ ((unused)), 
+                           const char** dummy2 __attribute__ ((unused)) ) {
+  char *xprofdir;
+  char *xprofloc;
+  
+  xprofdir = concat(studioproddir, "/usr/lib/v9", NULL);
+  xprofloc = concat(xprofdir, "/libxprof.so", NULL);
+  if (access(xprofloc, R_OK))
+     return " ";
+  else return xstrdup(concat("-R ",xprofdir, NULL));
+  
 }
 
 
