@@ -34,10 +34,27 @@ g++.sum:FAIL: g++.dg/pch/template-1.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/template-1.C -O2 -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/uninst.C -g assembly comparison
 g++.sum:FAIL: g++.dg/pch/uninst.C -O2 -g assembly comparison
-g++.sum:FAIL: g++.dg/tls/static-1.C execution test
 g++.sum:FAIL: g++.dg/tree-ssa/pr22444.C (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/compile/limits-declparen.c  -O2 -g  (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/compile/limits-pointer.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O0  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O0  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O1  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O1  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O2  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O2  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O3  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O3  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O3 -finline-functions  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O3 -finline-functions  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -fast  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -fast  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -fast -xipo=2  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -fast -xipo=2  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O2 -g  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -O2 -g  (test for excess errors)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -Os  (internal compiler error)
+gcc.sum:FAIL: gcc.c-torture/compile/labels-3.c  -Os  (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O0  (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O1  (test for excess errors)
 gcc.sum:FAIL: gcc.c-torture/compile/pr38789.c  -O2  (test for excess errors)
@@ -89,6 +106,12 @@ gcc.sum:FAIL: gcc.c-torture/execute/pr38819.c execution,  -O2 -g
 gcc.sum:FAIL: gcc.c-torture/execute/pr38819.c execution,  -Os 
 gcc.sum:FAIL: gcc.c-torture/execute/pr39228.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/pr39228.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.c-torture/execute/string-opt-5.c execution,  -O1 
+gcc.sum:FAIL: gcc.c-torture/execute/string-opt-5.c execution,  -O2 
+gcc.sum:FAIL: gcc.c-torture/execute/string-opt-5.c execution,  -O3 
+gcc.sum:FAIL: gcc.c-torture/execute/string-opt-5.c execution,  -O3 -finline-functions 
+gcc.sum:FAIL: gcc.c-torture/execute/string-opt-5.c execution,  -O2 -g 
+gcc.sum:FAIL: gcc.c-torture/execute/string-opt-5.c execution,  -Os 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/20000320-1.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/20000320-1.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/compare-fp-4.c execution,  -fast 
@@ -145,9 +168,11 @@ gcc.sum:FAIL: gcc.dg/20040206-1.c  (test for warnings, line 10)
 gcc.sum:FAIL: gcc.dg/20040206-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
 gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)
+gcc.sum:FAIL: gcc.dg/array-quals-1.c scan-assembler-not \\.data(?!\\.rel\\.ro)
 gcc.sum:FAIL: gcc.dg/attr-weakref-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/free-1.c  (test for warnings, line 16)
 gcc.sum:FAIL: gcc.dg/funcorder.c scan-assembler-not link_error
+gcc.sum:FAIL: gcc.dg/pr25376.c scan-assembler my_named_section
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 13)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 14)
 gcc.sum:FAIL: gcc.dg/pr27528.c  (test for errors, line 15)
@@ -163,6 +188,7 @@ gcc.sum:FAIL: gcc.dg/pr8788-1.c asm operand 1 (test for warnings, line 14)
 gcc.sum:FAIL: gcc.dg/pr8788-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/pure-1.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/section1.c scan-assembler-not .bss
+gcc.sum:FAIL: gcc.dg/ucnid-6.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/varpool-1.c scan-assembler-not unnecesary_static_initialized_variable
 gcc.sum:FAIL: gcc.dg/ipa/iinline-1.c scan-ipa-dump inline "hooray[^\n]*inline copy in main"
 gcc.sum:FAIL: gcc.dg/ipa/ipacost-1.c scan-tree-dump-not optimized "i_can_be_propagated"
@@ -272,8 +298,6 @@ gcc.sum:FAIL: gcc.dg/torture/ipa-pta-1.c  -fast  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/torture/ipa-pta-1.c  -fast -xipo=2  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/torture/ipa-pta-1.c  -O2 -g  (test for excess errors)
 gcc.sum:FAIL: gcc.dg/torture/ipa-pta-1.c  -Os  (test for excess errors)
-gcc.sum:FAIL: gcc.dg/torture/pr39074-2.c  -fast -xipo=2  execution test
-gcc.sum:FAIL: gcc.dg/torture/pr39074-3.c  -fast -xipo=2  execution test
 gcc.sum:FAIL: gcc.dg/tree-prof/tracer-1.c scan-tree-dump-times tracer "goto <bb 6>;" 2
 gcc.sum:FAIL: gcc.dg/tree-prof/val-prof-5.c scan-tree-dump tree_profile "Div.mod by constant b.*=997 transformation on insn"
 gcc.sum:FAIL: gcc.dg/tree-ssa/inline-2.c (test for excess errors)
@@ -291,10 +315,6 @@ gcc.sum:FAIL: gcc.dg/tree-ssa/useless-1.c scan-tree-dump-times useless "goto" 3
 gcc.sum:FAIL: gcc.dg/tree-ssa/vrp39.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/tree-ssa/vrp44.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/tree-ssa/vrp45.c (test for excess errors)
-gcc.sum:FAIL: gcc.dg/weak/weak-2.c scan-assembler weak[^ \t]*[ \t]_?ffoo1c
-gcc.sum:FAIL: gcc.dg/weak/weak-3.c scan-assembler weak[^ \t]*[ \t]_?ffoo1c
-gcc.sum:FAIL: gcc.dg/weak/weak-4.c scan-assembler weak[^ \t]*[ \t]_?vfoo1c
-gcc.sum:FAIL: gcc.dg/weak/weak-5.c scan-assembler weak[^ \t]*[ \t]_?vfoo1c
 gcc.sum:FAIL: compiler driver --coverage option(s) (compiler options)
 gcc.sum:FAIL: gcc.target/sparc/combined-1.c scan-assembler-times fandnot1	% 4
 gcc.sum:FAIL: gcc.target/sparc/fand.c scan-assembler-times fand	% 3
