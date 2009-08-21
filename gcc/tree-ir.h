@@ -66,8 +66,11 @@ typedef union list_u {	/* union of items stored on LIST structures */
 #define IR_REG_I7 31
 #define IR_REG_F0 32
 #define IR_REG_SP IR_REG_O6
+#ifdef TARGET_CPU_x86
+#define IR_REG_FP 12  
+#else
 #define IR_REG_FP IR_REG_I6
-
+#endif
 
 #define IS_RECORD_TYPE(type) ((TREE_CODE (type) == RECORD_TYPE || TREE_CODE (type) == UNION_TYPE)\
                               && !(TARGET_ARCH64 && (get_type_size (type) <= 32 \

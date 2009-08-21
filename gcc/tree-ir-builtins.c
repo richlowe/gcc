@@ -760,6 +760,18 @@ dump_ir_builtin_va_start (gimple exp)
       return;
     }
 
+#ifdef TARGET_CPU_x86
+  if (TARGET_ARCH64)
+    {
+      gimple_call_set_arg (exp, 1, integer_zero_node);
+      /* __builtin_sysv_va_start may perform the same as va_start. */
+      if (strcmp (IDENTIFIER_POINTER (DECL_NAME (gimple_call_fndecl (exp))), "__builtin_va_start"))
+        SET_DECL_ASSEMBLER_NAME (gimple_call_fndecl (exp), get_identifier ("__builtin_va_start"));
+      (void) dump_ir_call (exp, 0);
+      return;
+    }
+#endif
+
   nextarg = dump_ir_builtin_next_arg ();
   valist = stabilize_va_list (gimple_call_arg (exp,0), 1);
 
@@ -2074,7 +2086,6 @@ dump_ir_builtin_call (gimple stmt, int need_return)
       DECL_EXTERNAL (fn) = 1;
       TREE_PUBLIC (fn) = 1;
       TREE_NOTHROW (fn) = 1;
-      DECL_IN_SYSTEM_HEADER (fn) = 1;
 
       dump_ir_call (gimple_build_call (fn, 0), 0);
 #endif
@@ -2184,6 +2195,11 @@ sunir_check_builtin_handling (tree function)
     case BUILT_IN_BSWAP64:
       DECL_DONT_GENERATE_SUNIR (current_function_decl) = 1;
       DECL_DONT_GENERATE_SUNIR (function) = 1;
+      break;
+    case BUILT_IN_VA_START:
+      /* Currently we can't handle ms_va_start. */
+      if (!strcmp (IDENTIFIER_POINTER (DECL_NAME (function)), "__builtin_ms_va_start"))
+        flag_use_rtl_backend = -1;
       break;
     default:
       break;

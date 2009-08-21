@@ -695,7 +695,11 @@ static long long cur_auto_off = 0;
 static long long
 lookup_auto_offset (tree stmt, TYPE argtype)
 {
+#ifdef TARGET_CPU_x86
+  if (DECL_HAS_IR_OFFSET (stmt)) return DECL_IR_OFFSET (stmt);
+#else
   if (DECL_IR_OFFSET (stmt)) return DECL_IR_OFFSET (stmt);
+#endif
 
   /* anonymous union variables should have same offset as the union */
   if (DECL_VALUE_EXPR (stmt))
@@ -706,6 +710,9 @@ lookup_auto_offset (tree stmt, TYPE argtype)
           long long offset = lookup_auto_offset (object, 
                              map_gnu_type_to_TYPE (TREE_TYPE (object)));
           DECL_IR_OFFSET (stmt) = offset;
+#ifdef TARGET_CPU_x86
+          DECL_HAS_IR_OFFSET (stmt) = 1;
+#endif
           return offset;
         }
     }
@@ -719,6 +726,9 @@ lookup_auto_offset (tree stmt, TYPE argtype)
   cur_auto_off = cur_auto_off & ~(argtype.align - 1LL);
   
   DECL_IR_OFFSET (stmt) = cur_auto_off;
+#ifdef TARGET_CPU_x86
+  DECL_HAS_IR_OFFSET (stmt) = 1;
+#endif
 
   return cur_auto_off;
 }
@@ -730,14 +740,28 @@ lookup_param_offset (tree stmt, TYPE argtype)
 {
   long long off;
   
+#ifdef TARGET_CPU_x86
+  if (DECL_HAS_IR_OFFSET (stmt)) return DECL_IR_OFFSET (stmt);
+#else
   if (TARGET_ARCH64)
     return lookup_auto_offset (stmt, argtype);
-
   if (DECL_IR_OFFSET (stmt)) return DECL_IR_OFFSET (stmt);
+#endif
   
   off = (argtype.size >= 4) ? argtype.size : 4;
-  
+
+#ifdef TARGET_CPU_x86
+  if (TARGET_ARCH64)
+    {
+      cur_param_off = (cur_param_off + argtype.align - 1) & ~(argtype.align - 1);
+      DECL_IR_OFFSET (stmt) = cur_param_off;
+    }
+  else
+#endif
   DECL_IR_OFFSET (stmt) = cur_param_off + off - argtype.size;
+#ifdef TARGET_CPU_x86
+  DECL_HAS_IR_OFFSET (stmt) = 1;
+#endif
   
   cur_param_off += off;
 
@@ -1390,7 +1414,11 @@ dump_ir_component_ref (tree stmt, tree op0, tree op1, const char * fld_name, int
                    && !tu_pass_by_reference (NULL, TYPE_MODE (TREE_TYPE (op0)), 
                                           TREE_TYPE (op0), false)))
         {
+#ifdef TARGET_CPU_x86
+          if (TREE_CODE (op0) == PARM_DECL)
+#else
           if (TREE_CODE (op0) == PARM_DECL && !TARGET_ARCH64)
+#endif
             {
               /* because of overlap in arg_seg, iropt will not allocate 
                  these vars in registers and cg will keep them in stack.
@@ -2376,7 +2404,11 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             int reg;
             
             memset (&addr, 0, sizeof (addr));
+#ifdef TARGET_CPU_x86
+            if (DECL_HAS_IR_OFFSET (stmt)) 
+#else
             if (DECL_IR_OFFSET (stmt)) 
+#endif
               reg = DECL_IR_OFFSET (stmt);
             else
               reg = regno++;
@@ -2388,6 +2420,9 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             
             addr.offset = reg;
             DECL_IR_OFFSET (stmt) = reg;
+#ifdef TARGET_CPU_x86
+            DECL_HAS_IR_OFFSET (stmt) = 1;
+#endif
             leaf = build_ir_leaf (VAR_LEAF, argtype, map_gnu_type_to_IR_TYPE_NODE (var_type), 
                                   (LEAF_VALUE *)&addr, IR_TRUE);
             leaf->pass1_id = build_ir_proc_string (name);
@@ -7150,7 +7185,11 @@ dump_function_ir (tree fn)
   if (TARGET_ARCH64)
     cur_param_off = 0;
   else
+#ifdef TARGET_CPU_x86
+    cur_param_off = 8;
+#else
     cur_param_off = 68;
+#endif
 
   result_ir_type = map_gnu_type_to_IR_TYPE_NODE (result);
   
@@ -7260,7 +7299,13 @@ dump_function_ir (tree fn)
       && TREE_VALUE (tree_last (TYPE_ARG_TYPES (TREE_TYPE (fn)))) != void_type_node)
     {
       IR_NODE * ir_op, * p;
-      
+
+#ifdef TARGET_CPU_x86
+      if (TARGET_ARCH64)      
+        __builtin_va_alist_node = build_decl (PARM_DECL, get_identifier ("..."),
+                                            va_list_type_node);
+      else
+#endif
       __builtin_va_alist_node = build_decl (PARM_DECL, get_identifier ("__builtin_va_alist"),
                                             va_list_type_node);
       DECL_ARG_TYPE (__builtin_va_alist_node) = va_list_type_node;
@@ -7271,8 +7316,15 @@ dump_function_ir (tree fn)
       TREE_PUBLIC (__builtin_va_alist_node) = 0;
       TREE_USED (__builtin_va_alist_node) = 1;
       DECL_CONTEXT (__builtin_va_alist_node) = current_function_decl;
+#ifdef TARGET_CPU_x86
+      if (!TARGET_ARCH64)      
+        {
+#endif
       TREE_THIS_VOLATILE (__builtin_va_alist_node) = 1;
       TREE_ADDRESSABLE (__builtin_va_alist_node) = 1;
+#ifdef TARGET_CPU_x86
+        }
+#endif
       
       ir_op = dump_ir_expr (__builtin_va_alist_node, MAP_FOR_ADDR); 
 

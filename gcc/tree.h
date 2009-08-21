@@ -2693,6 +2693,8 @@ struct tree_memory_partition_tag GTY(())
 /* decl.ir_offset field is used to store offset in stack of automatic 
  * variable or function parameter */
 #define DECL_IR_OFFSET(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.ir_offset)
+/* Only used for x86 to denote if decl has set ir_offset. */
+#define DECL_HAS_IR_OFFSET(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.has_ir_offset)
 
 /* Nonzero in a ..._DECL means this variable is ref'd from a nested function.
    For VAR_DECL nodes, PARM_DECL nodes, and FUNCTION_DECL nodes.
@@ -2810,6 +2812,7 @@ struct tree_decl_common GTY(())
   unsigned tm_callable_attr : 1;
   unsigned tm_abort_ok_attr : 1;
   unsigned tm_pure_attr : 1;
+  unsigned has_ir_offset : 1;
   
   tree size_unit;
   tree initial;

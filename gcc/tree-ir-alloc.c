@@ -892,10 +892,12 @@ build_ir_parm_var (const char *name, IR_OFFSZ offset, TYPE type, IR_TYPE_NODE *t
   ir_ADDRESS addr;
   LEAF *leaf;
 
+#ifndef TARGET_CPU_x86
   if (TARGET_ARCH64) /* TODO XXX V9 */
     {
       return build_ir_auto_var (name, offset, type.size, type.align, 0, type, typep);
     }
+#endif
   
   memset (&addr, 0, sizeof (addr));
   addr.seg = segtab[ARG_SEGNO];
@@ -917,12 +919,14 @@ get_ir_parm_var_leaf (const char *name, IR_OFFSZ offset, TYPE type, IR_TYPE_NODE
   struct ir_leaf_entry *leaf_entry;
   
   memset (&addr, 0, sizeof (addr));
+#ifndef TARGET_CPU_x86
   if (TARGET_ARCH64)
     {
       leaf = get_ir_auto_var_leaf (name, offset, type.size, type.align,
                                    0, type, typep);
     }
   else 
+#endif
     {
       addr.seg = segtab[ARG_SEGNO];
       addr.offset = offset;
