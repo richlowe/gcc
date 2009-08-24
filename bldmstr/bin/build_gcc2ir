@@ -101,7 +101,9 @@ setup_paths()
         GMAKE=/usr/bin/make
     elif [ $BUILDTYPE == i386-solaris ]
     then
-        GIT=/set/sqe/tools/git6/intel-S2/bin/git
+        # Installed local git on gcc-v20z-s05. 
+        # GIT=/set/sqe/tools/git6/intel-S2/bin/git
+        GIT=/usr/local/bin/git
         export PATH=/net/clpt-v490-1/export/data/prash/gas-dir:/usr/sfw/bin:/usr/local/bin:/usr/ccs/bin:/usr/bin:/bin
         EXPECT=/usr/local/bin/expect
     fi
