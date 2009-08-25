@@ -416,7 +416,12 @@ decl_assembler_name_equal (tree decl, const_tree asmname)
 	asmname_str --;
     }
 
+  /* The difference on prefix is set within generate_prefix in tree-ir.c. */
+#ifdef TARGET_CPU_sparc
   if (globalize_flag && decl_str[0] == '$' && decl_str[1] == 'X')
+#elif TARGET_CPU_x86
+  if (globalize_flag && decl_str[0] == '.' && decl_str[1] == 'X')
+#endif
     {
       /* Could assert that
          strncmp (decl_asmname_str, ir_global_prefix, 16) == 0
