@@ -834,6 +834,14 @@ dump_ir_builtin_nonlocal_goto (gimple stmt ATTRIBUTE_UNUSED, tree arglist)
   TAPPEND (args, (TRIPLE *)clobber);
 
 #ifdef TARGET_CPU_x86
+  if (TARGET_ARCH64)
+    n = build_ir_triple (IR_ASM_STMT, 
+                         build_ir_string_const (
+                                                "movq\t%1,%%rbp\n"
+                                                "movq\t%2,%%rsp\n"
+                                                "movq\t%0,%%rdx\n\tjmp\t*%%rdx\n\t nop"), 
+                         (IR_NODE*)args, argtype, NULL);
+  else
     n = build_ir_triple (IR_ASM_STMT, 
                          build_ir_string_const (
                                                 "movl\t%1,%%ebp\n"

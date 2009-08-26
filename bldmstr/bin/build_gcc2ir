@@ -101,11 +101,10 @@ setup_paths()
         GMAKE=/usr/bin/make
     elif [ $BUILDTYPE == i386-solaris ]
     then
-        # Installed local git on gcc-v20z-s05. 
-        # GIT=/set/sqe/tools/git6/intel-S2/bin/git
-        GIT=/usr/local/bin/git
-        export PATH=/net/clpt-v490-1/export/data/prash/gas-dir:/usr/sfw/bin:/usr/local/bin:/usr/ccs/bin:/usr/bin:/bin
+        export PATH=/net/clpt-v490-1/export/data/prash/gas-dir:/usr/sfw/bin:/usr/local/bin:/usr/ccs/bin:/usr/bin:/bin:/set/sqe/tools/git6/intel-S2/bin 
         EXPECT=/usr/local/bin/expect
+        # Make sure $PATH cover git. 
+        GIT=git
     fi
 }
 
@@ -602,6 +601,10 @@ run_native_tests()
         RUNTESTFLAGS="--outdir $ROOT/logs/result.m64 --target_board=unix/-m64" \
 	> $ROOT/logs/tests.gcc.m64.log 2>&1 &
     sleep 3
+
+    # No g++ available for x86 currently. Don't do meaningless testing.  
+    if [ $BUILDTYPE != i386-solaris ]
+    then
     $GMAKE  -k check-g++ EXPECT=$EXPECT  \
         TESTSUITEDIR="testsuite.g++.m32" \
         RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
@@ -613,6 +616,7 @@ run_native_tests()
 	> $ROOT/logs/tests.g++.m64.log 2>&1 &
     
     sleep 3
+    fi 
         
     if [ $BUILDTYPE == sparc-opensolaris ]
     then
