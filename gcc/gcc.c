@@ -1791,7 +1791,7 @@ static const char *invoke_ipo1 =
        %(ssbe_optlevel) -Qy %3\
   -ipo_ir2hfoption_end \
   -ipo_ubeoption_start -iropt %(cg_ipo_options) %(sscg_spec) %T -ipo_ubeoption_end \
-  -ipo_fbeoption_start %{xchip=*} -Qy -ipo_fbeoption_end "
+  -ipo_fbeoption_start %{xchip=*} -Qy %{m32} %{m64} -ipo_fbeoption_end "
 #endif
 #endif
 " %P \
