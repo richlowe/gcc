@@ -61,10 +61,15 @@ static IR_NODE *dump_ir_builtin_init_trampoline (gimple, tree, int);
 IR_NODE *
 get_ir_stack_pointer_reg (void)
 {
+  IR_NODE * ret;
   TYPE argtype = map_gnu_type_to_TYPE (ptr_type_node);
   
-  IR_NODE * ret = build_ir_reg_var ("%esp", IR_REG_SP, argtype, 
-                                     map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+  if (TARGET_ARCH64)
+    ret = build_ir_reg_var ("%rsp", IR_REG_SP, argtype, 
+                            map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+  else
+    ret = build_ir_reg_var ("%esp", IR_REG_SP, argtype, 
+                            map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
   ret->leaf.is_volatile = IR_TRUE;
   return ret;
 }
@@ -72,9 +77,15 @@ get_ir_stack_pointer_reg (void)
 static IR_NODE *
 get_ir_frame_pointer_reg (void)
 {
+  IR_NODE * ret;
   TYPE argtype = map_gnu_type_to_TYPE (ptr_type_node);
-  IR_NODE * ret = build_ir_reg_var ("%ebp", IR_REG_FP, argtype, 
-                                    map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+
+  if (TARGET_ARCH64)
+    ret = build_ir_reg_var ("%rbp", IR_REG_FP, argtype, 
+                            map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
+  else 
+    ret = build_ir_reg_var ("%ebp", IR_REG_FP, argtype, 
+                            map_gnu_type_to_IR_TYPE_NODE (ptr_type_node));
   ret->leaf.is_volatile = IR_TRUE;
   return ret;
 }
@@ -110,7 +121,40 @@ dump_ir_builtin_return_addr (gimple stmt, tree fndecl, tree arglist, int need_re
 
       cfun->builtin_return_addr_called = 1;
 
+#ifdef TARGET_CPU_sparc
       fp = tmp = get_ir_frame_pointer_reg ();
+#elif TARGET_CPU_x86
+      {
+        TRIPLE * tp, * asm_args = NULL;
+        IR_NODE * ir_string, * ir_clobber;
+        tree decl = create_tmp_var_raw (ptr_type_node, NULL);
+
+        TREE_USED (decl) = 1;
+        DECL_ARTIFICIAL (decl) = 1;
+        SET_DECL_ASSEMBLER_NAME (decl, DECL_NAME (decl));
+
+        fp = tmp = dump_ir_expr (decl, MAP_FOR_VALUE);
+
+        if (TARGET_ARCH64)
+          ir_string = build_ir_string_const ("movq %rbp, %0");
+        else
+          ir_string = build_ir_string_const ("mov %ebp, %0");
+
+        ir_clobber = build_ir_string_const ("");
+        tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, ir_clobber, NULL,
+                                        ir_clobber->leaf.type, NULL);
+        TAPPEND (asm_args, (TRIPLE *) tp);
+
+        tp = (TRIPLE*) build_ir_triple (IR_ASM_OUTPUT, fp,
+                                      build_ir_string_const ("=r"),
+                                      fp->leaf.type, NULL);
+        tp->param_mode = PM_OUT;
+        TAPPEND (asm_args, (TRIPLE *) tp);
+
+        (void) build_ir_triple (IR_ASM_STMT, ir_string, (IR_NODE*)asm_args,
+                              ir_string->leaf.type, NULL);
+      }
+#endif
       if (cur_omp_context && (cur_omp_context->pinfo
           || (cur_omp_context->prev_ctx && cur_omp_context->prev_ctx->pinfo)))
         {
@@ -1750,7 +1794,40 @@ dump_ir_builtin_call (gimple stmt, int need_return)
       dump_ir_builtin_va_copy (arglist);
       break;
     case BUILT_IN_STACK_SAVE:
+#ifdef TARGET_CPU_sparc
       ret = get_ir_stack_pointer_reg ();
+#elif TARGET_CPU_x86
+      {
+        TRIPLE * tp, * asm_args = NULL;
+        IR_NODE * ir_string, * ir_clobber;
+        tree decl = create_tmp_var_raw (ptr_type_node, NULL);
+
+        TREE_USED (decl) = 1;
+        DECL_ARTIFICIAL (decl) = 1;
+        SET_DECL_ASSEMBLER_NAME (decl, DECL_NAME (decl));
+
+        ret = dump_ir_expr (decl, MAP_FOR_VALUE);
+
+        if (TARGET_ARCH64)
+          ir_string = build_ir_string_const ("movq %rsp, %0");
+        else
+          ir_string = build_ir_string_const ("mov %esp, %0");
+
+        ir_clobber = build_ir_string_const ("");
+        tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, ir_clobber, NULL,  
+                                        ir_clobber->leaf.type, NULL);
+        TAPPEND (asm_args, (TRIPLE *) tp);
+
+        tp = (TRIPLE*) build_ir_triple (IR_ASM_OUTPUT, ret,
+                                      build_ir_string_const ("=r"),
+                                      ret->leaf.type, NULL);
+        tp->param_mode = PM_OUT;
+        TAPPEND (asm_args, (TRIPLE *) tp);
+
+        (void) build_ir_triple (IR_ASM_STMT, ir_string, (IR_NODE*)asm_args,
+                              ir_string->leaf.type, NULL);
+      }
+#endif
       if (cur_omp_context && (cur_omp_context->pinfo
           || (cur_omp_context->prev_ctx && cur_omp_context->prev_ctx->pinfo)))
         {
@@ -1766,9 +1843,34 @@ dump_ir_builtin_call (gimple stmt, int need_return)
       break;
     case BUILT_IN_STACK_RESTORE:
       {
-        IR_NODE * sp_reg = get_ir_stack_pointer_reg ();
         IR_NODE * var = dump_ir_expr (TREE_VALUE (arglist), MAP_FOR_VALUE);
+#ifdef TARGET_CPU_sparc
+        IR_NODE * sp_reg = get_ir_stack_pointer_reg ();
         ret = build_ir_triple (IR_ASSIGN, sp_reg, var, sp_reg->operand.type, NULL);
+#elif TARGET_CPU_x86
+        TRIPLE * tp, * asm_args = NULL;
+        IR_NODE * ir_string, * ir_clobber;
+
+        if (TARGET_ARCH64)
+          ir_string = build_ir_string_const ("movq %0, %rsp");
+        else
+          ir_string = build_ir_string_const ("mov %0, %esp");
+
+        ir_clobber = build_ir_string_const ("");
+        tp = (TRIPLE*) build_ir_triple (IR_ASM_CLOBBER, ir_clobber, NULL,  
+                                        ir_clobber->leaf.type, NULL);
+        TAPPEND (asm_args, (TRIPLE *) tp);
+
+        tp = (TRIPLE*) build_ir_triple (IR_ASM_INPUT, var,
+                                      build_ir_string_const ("r"),
+                                      var->leaf.type, NULL);
+        tp->param_mode = PM_IN;
+        TAPPEND (asm_args, (TRIPLE *) tp);
+
+        ret = build_ir_triple (IR_ASM_STMT, ir_string, (IR_NODE*)asm_args,
+                              ir_string->leaf.type, NULL);
+#endif
+
         break;
       }
     case BUILT_IN_ADJUST_TRAMPOLINE:
