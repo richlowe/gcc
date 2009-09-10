@@ -260,7 +260,7 @@ $(DONEDIR)/build-v9 :
 		TOOLS="$(BUILDTOOLSV9)" \
 		> $(BUILDDIR)/logs/buildv9.lang 2>&1
 	if test -d "$(BUILDDIR)/lang/postopt/$(CPUV9)" ;then \
-	  cd $(BUILDDIR)/lang/postopt/sparcv9-S2 && \
+	  cd $(BUILDDIR)/lang/postopt/$(CPUV9) && \
 	  $(DMAKE) -j $(JOBS) \
 		install_libldannotate \
 		$(ENVPARMS)	\

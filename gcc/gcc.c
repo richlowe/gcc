@@ -868,7 +868,13 @@ static const char* LINK_COMMAND_GUTS_sparc_x86 =
 	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/v9/libld_annotate.so  \
 }"
 #else
-#define LINK_ANNOTATE_GCCFSS ""
+#define LINK_ANNOTATE_GCCFSS \
+"  %{xannotate=no: ; \
+     xannotate=yes: \
+	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/amd64/libld_annotate.so ; \
+     !xannotate=*: \
+	    -zld32=-S%J/libld_annotate.so -zld64=-S%J/amd64/libld_annotate.so  \
+}"
 #endif
 #endif
 
@@ -1491,8 +1497,10 @@ static const char *libm_il =
     !xannotate: -xannotate=yes} "
 #else
 #ifdef TARGET_CPU_x86
-/* RAT-TODO how do we want to handle this ? */
-#define CG_IPO_OPTIONS ""
+#define CG_IPO_OPTIONS \
+" %{xannotate=yes: -xannotate=yes; \
+    xannotate=no: ; \
+    !xannotate: -xannotate=yes} "
 #endif /* solaris x86 */
 #endif /* solaris TARGET_CPU */
 #endif /* os type */
@@ -5746,7 +5754,9 @@ display_help (void)
   fputs (_("  -xannotate[={no|yes}]    Turn on annotations (default is yes)\n"), stdout);
   fputs (_("  -xarch=<arch>            Compile for architecture <arch>\n"), stdout);
   fputs (_("  -xautopar                Autoparallize\n"), stdout);
+#ifdef TARGET_CPU_sparc
   fputs (_("  -xbinopt=prepare         Prepare binary for Binary Improvement Tools (bit)\n"), stdout);
+#endif
   fputs (_("  -xcache=<cache>          Compile for cache with <cache>\n"), stdout);
   fputs (_("  -xchar=<c>               Same as -fsigned-char or -funsigned-char\n"), stdout);
   fputs (_("  -xchip=<c>               Compile for chip <c>\n"), stdout);
@@ -5759,7 +5769,9 @@ display_help (void)
   fputs (_("  -xipo[=0|1|2]            Invoke IPO at level 1 or 2\n"), stdout);
   fputs (_("  -xipo_archive=[<a>]      Optimize files in library with IPO\n"), stdout);
   fputs (_("  -xlibmil                 Inline some library routines\n"), stdout);
+#ifdef TARGET_CPU_sparc
   fputs (_("  -xlinkopt[=<level>]      Perform link-time optimizations\n"), stdout);
+#endif
   fputs (_("  -xloopinfo               Information about parallelization\n"), stdout);
   fputs (_("  -xmemalign=<val>         Specify maximum assumed memory alignment\n"), stdout);
   fputs (_("  -xopenmp[={noopt|parallel|none}] Enable OpenMP language extensions\n"), stdout);
