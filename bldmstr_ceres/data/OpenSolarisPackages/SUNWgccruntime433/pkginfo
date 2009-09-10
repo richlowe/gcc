@@ -27,16 +27,16 @@
 # package, such as package abbreviation, full package name, package version,
 # and package architecture.
 #
-PKG="SUNWgcc432"
-NAME="GNU Compiler Collection 4.3.2"
+PKG="SUNWgccruntime433"
+NAME="GCC 4.3.3 Runtime libraries"
 ARCH="sparc"
-VERSION="11.11.0,REV=2008.12.23.17.54"
+VERSION="11.11.0,REV=2009.04.07.17.54"
 SUNW_PRODNAME="SunOS"
 SUNW_PRODVERS="5.11/SunOS Development"
 SUNW_PKGTYPE="usr"
 MAXINST="1000"
 CATEGORY="system"
-DESC="GNU Compiler Collection 4.3.2 - C,C++,Obj-C,Fortran"
+DESC="GCC 4.3.3 Runtime - Shared libraries used by gcc and other gnu components"
 VENDOR="Sun Microsystems, Inc."
 HOTLINE="Please contact your local service provider"
 EMAIL=""

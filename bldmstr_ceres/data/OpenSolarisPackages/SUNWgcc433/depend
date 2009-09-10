@@ -48,8 +48,8 @@ P SUNWcnetr	Core Solaris Network Infrastructure (Root)
 P SUNWcsu	Core Solaris, (Usr)
 P SUNWcsd	Core Solaris Devices
 P SUNWcsl	Core Solaris Libraries
+P SUNWlibmsr	SUNWlibmsr Math & Microtasking Libraries (Root)
 P SUNWarc	Archive libraries
 P SUNWgcmn	Common GNU package
-P SUNWgccruntime432	GCC 4.3.2 Runtime libraries
+P SUNWgccruntime433	GCC 4.3.3 Runtime libraries
 P SUNWbinutils	GNU binutils 
-P SUNWscgfss432	Sun Code Generator for GCC For Sun Systems
