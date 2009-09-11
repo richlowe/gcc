@@ -1,0 +1,276 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+#ident  "@(#)prototype_sparc 1.10     09/08/24 SMI"
+#
+# This required package information file contains a list of package contents.
+# The 'pkgmk' command uses this file to identify the contents of a package
+# and their location on the development machine when building the package.
+# Can be created via a text editor or through use of the 'pkgproto' command.
+
+#!search <pathname pathname ...>      # where to find pkg objects
+#!include <filename>                  # include another 'prototype' file
+#!default <mode> <owner> <group>      # default used if not specified on entry
+#!<param>=<value>                     # puts parameter in pkg environment
+
+# packaging files
+!include prototype_com
+
+l none usr/bin/sparc-sun-solaris2.11-c++-4.3.3=g++-4.3.3
+l none usr/bin/sparc-sun-solaris2.11-g++-4.3.3=g++-4.3.3
+l none usr/bin/sparc-sun-solaris2.11-gcc-4.3.3=gcc-4.3.3
+l none usr/bin/sparc-sun-solaris2.11-gfortran-4.3.3=gfortran-4.3.3
+d none usr/include/c++/4.3.3/sparc-sun-solaris2.11 0755 root bin
+d none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits 0755 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/atomic_word.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/basic_file.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/c++allocator.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/c++config.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/c++io.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/c++locale.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/cpu_defines.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/ctype_base.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/ctype_inline.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/ctype_noninline.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/cxxabi_tweaks.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/extc++.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/gthr-default.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/gthr-posix.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/gthr-single.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/gthr-tpf.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/gthr.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/messages_members.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/os_defines.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/stdc++.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/stdtr1c++.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/bits/time_members.h 0444 root bin
+d none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9 0755 root bin
+d none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits 0755 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/atomic_word.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/basic_file.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/c++allocator.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/c++config.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/c++io.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/c++locale.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/cpu_defines.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/ctype_base.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/ctype_inline.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/ctype_noninline.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/cxxabi_tweaks.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/extc++.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/gthr-default.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/gthr-posix.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/gthr-single.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/gthr-tpf.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/gthr.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/messages_members.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/os_defines.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/stdc++.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/stdtr1c++.h 0444 root bin
+f none usr/include/c++/4.3.3/sparc-sun-solaris2.11/sparcv9/bits/time_members.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3 0755 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/amd64/libgcc_s.so.1=../../../../amd64/libgcc_s.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/amd64/libgfortran.so.3=../../../../amd64/libgfortran.so.3.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/amd64/libgomp.so.1=../../../../amd64/libgomp.so.1.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/amd64/libobjc.so.2=../../../../amd64/libobjc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/amd64/libobjc_gc.so.2=../../../../amd64/libobjc_gc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/amd64/libssp.so.0=../../../../amd64/libssp.so.0.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/amd64/libstdc++.so.6=../../../../amd64/libstdc++.so.6.0.10
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/cc1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/cc1obj 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/cc1plus 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/collect2 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/crt1.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/crtbegin.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/crtend.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/crtfastmath.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/crti.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/crtn.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/f951 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/finclude 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/finclude/omp_lib.f90 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/finclude/omp_lib.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/finclude/omp_lib.mod 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/finclude/omp_lib_kinds.mod 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/gcrt1.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/gmon.o 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/README 0444 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/X11=root/usr/X11/include/X11
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/Xm=root/usr/dt/include/Xm
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/curses.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/dat 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/dat/dat_platform_specific.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/firefox 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/firefox/js 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/firefox/js/jslock.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/firefox/qcms 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/firefox/qcms/qcmstypes.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/gc 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/gc/gc_config_macros.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/iso 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/iso/math_c99.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/lcms 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/lcms/lcms.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/libical 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/libical/icaltz-util.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/libpisock 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/libpisock/pi-usb.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/limits.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/math.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/mps 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/mps/prcpucfg.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/mps/secport.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet/ip_compat.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet/ip_fil.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet/ip_lookup.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet/ip_nat.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet/ip_pool.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet/ip_proxy.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/netinet/ip_state.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/openssl 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/openssl/opensslconf.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/pixman-1 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/pixman-1/pixman.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xalloca.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xarch.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xfuncs.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xlibint.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xmd.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xos.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xos_r.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xosdefs.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xthreads.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xtrans 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/X11/include/X11/Xtrans/Xtransint.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/dt 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/dt/include 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/dt/include/Xm 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/dt/include/Xm/XmosP.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/root/usr/dt/include/Xm/Xmos_r.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/scim-1.0 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/scim-1.0/scim_types.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/slang.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/sys 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/sys/epm.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/sys/feature_tests.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/sys/varargs.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/syslimits.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/tidy 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/tidy/platform.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/wchar.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/wx-2.8 0755 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/wx-2.8/wx 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include-fixed/wx-2.8/wx/platform.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/float.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/iso646.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/NXConstStr.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/Object.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/Protocol.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/encoding.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/hash.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/objc-api.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/objc-decls.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/objc-list.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/objc.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/sarray.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/thr.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/objc/typedstream.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/omp.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/ssp 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/ssp/ssp.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/ssp/stdio.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/ssp/string.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/ssp/unistd.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/stdarg.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/stdbool.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/stddef.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/stdfix.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/tgmath.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/unwind.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/include/varargs.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/fixinc.sh 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/fixinc_list 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/fixincl 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/gsyslimits.h 0444 root bin
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/include 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/include/README 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/include/limits.h 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/macro_list 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/mkheaders 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/mkheaders.conf 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/install-tools/mkinstalldirs 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgcc.a 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgcc_eh.a 0444 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgcc_s.so.1=../../../libgcc_s.so.1
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgcc_s.so=../../../libgcc_s.so.1
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgcov.a 0444 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgfortran.so.3=../../../libgfortran.so.3.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgfortran.so=../../../libgfortran.so.3.0.0
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgfortranbegin.a 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgfortranbegin.la 0755 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgomp.so.1=../../../libgomp.so.1.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libgomp.so=../../../libgomp.so.1.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libobjc.so.2=../../../libobjc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libobjc.so=../../../libobjc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libobjc_gc.so.2=../../../libobjc_gc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libobjc_gc.so=../../../libobjc_gc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libssp.so.0=../../../libssp.so.0.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libssp.so=../../../libssp.so.0.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libstdc++.so.6=../../../libstdc++.so.6.0.10
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/libstdc++.so=../../../libstdc++.so.6.0.10
+d none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9 0755 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/crt1.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/crtbegin.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/crtend.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/crtfastmath.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/crti.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/crtn.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/gcrt1.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/gmon.o 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgcc.a 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgcc_eh.a 0444 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgcc_s.so=../../../../sparcv9/libgcc_s.so.1
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgcov.a 0444 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgfortran.so=../../../../sparcv9/libgfortran.so.3.0.0
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgfortranbegin.a 0444 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgfortranbegin.la 0755 root bin
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libgomp.so=../../../../sparcv9/libgomp.so.1.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libobjc.so=../../../../sparcv9/libobjc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libobjc_gc.so=../../../../sparcv9/libobjc_gc.so.2.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libssp.so=../../../../sparcv9/libssp.so.0.0.0
+s none usr/lib/gcc/sparc-sun-solaris2.11/4.3.3/sparcv9/libstdc++.so=../../../../sparcv9/libstdc++.so.6.0.10

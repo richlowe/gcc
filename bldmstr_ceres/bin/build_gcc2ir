@@ -939,7 +939,7 @@ manipulate_install_area ()
     then
         # layer the fortran and objc binaries
         ( cd $INSTALL_DIR ;
-          bzip2 -cd /ws/gccfss/source/gfortran_objc-$GCC_VER.tar.bz2 | tar xf - )
+          bzip2 -cd /ws/gccfss/source/gfortran-objc-$GCC_VER.tar.bz2 | tar xf - )
 
         # Move the SUNWscgfss firectory also into usr/compilers
         #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
@@ -953,11 +953,11 @@ manipulate_install_area ()
         # Lets create the packages
 	echo "Create packages ..."
         # 1. SUNWgcc432
-        /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc433/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+        /bin/pkgmk -o -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc433/prototype_gccfss -b $INSTALL_DIR -d $INSTALL_DIR/.. \
 	  > $ROOT/logs/packages.log 2>&1
 
         # 2. SUNWgccruntime
-       /bin/pkgmk -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime433/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+       /bin/pkgmk -o -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime433/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
 	  >> $ROOT/logs/packages.log 2>&1
 	  
     fi
