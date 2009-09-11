@@ -1,7 +1,5 @@
 #!/bin/ksh -fx
 
-set -x
-
 PATH=/usr/bin:/bin
 
 date
@@ -937,7 +935,6 @@ dependency_libs=' -L$DASH_L_V9 -lgcc_s -lm'" > $ROOT/done/sed$$
 # We will move SUNW0scgfss also into /usr/compilers first
 manipulate_install_area ()
 {
-set -x
     if [ `uname -r` == 5.11 ]
     then
         # layer the fortran and objc binaries
