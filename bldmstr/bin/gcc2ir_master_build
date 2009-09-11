@@ -29,7 +29,7 @@ setup_defaults()
     fi
     if [ $BUILDTYPE == i386-solaris ]
     then
-        LANGWSLIST="$LANGWSLIST /net/cicogna/export/ube6/sstrunk/builds.intel-S2/test0/intel-S2/lang /ws/gccfss/source/gccfss-ube/as158432/latest/lang"
+        LANGWSLIST="$LANGWSLIST /net/cicogna/export/ube6/sstrunk/builds.intel-S2/test0/intel-S2/lang /ws/gccfss/source/gccfss-ube-updated"
     fi
 
     if [ $BUILDTYPE == sparc-linux ]
