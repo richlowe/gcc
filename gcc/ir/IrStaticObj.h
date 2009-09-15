@@ -120,6 +120,10 @@ ir_initr_hdl_t ir_sobj_new_rel32(ir_sobj_hdl_t sobj, ir_sym_hdl_t symbol,
 	int32_t offset, ir_position_t position, BOOLEAN misaligned);
 ir_initr_hdl_t ir_sobj_new_rel64(ir_sobj_hdl_t sobj, ir_sym_hdl_t symbol, 
 	int64_t offset, ir_position_t position, BOOLEAN misaligned);
+/* symbol2 may NOT be "." */
+ir_initr_hdl_t ir_sobj_new_diff16(ir_sobj_hdl_t sobj, ir_sym_hdl_t symbol1, 
+	ir_sym_hdl_t symbol2, int16_t offset, ir_position_t position, 
+	BOOLEAN misaligned);
 /* symbol2 may be "." */
 ir_initr_hdl_t ir_sobj_new_diff32(ir_sobj_hdl_t sobj, ir_sym_hdl_t symbol1, 
 	ir_sym_hdl_t symbol2, int32_t offset, ir_position_t position, 

@@ -3701,8 +3701,9 @@ output_addr_const (FILE *file, rtx x)
               switch (GET_MODE_UNIT_SIZE (GET_MODE(x)))
                 {
                 case 2:
-                  gcc_unreachable ();
-                  /* Need new SunIR interfaces diff16 */
+                  ir_sobj_new_diff16 (current_sunir_sobj, sym1, sym2, 0,
+                                      NULLIRINITRPOS, IR_FALSE);
+                  break;
                 case 4:
                   ir_sobj_new_diff32 (current_sunir_sobj, sym1, sym2, 0,
                                       NULLIRINITRPOS, IR_FALSE);

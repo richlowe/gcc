@@ -1023,7 +1023,13 @@ static const char *cpp_debug_options = "%{d*}";
 "%{xlinkopt: %e-xlinkopt not supported by cross compiler } \
 "
 #else
+#ifdef TARGET_CPU_x86
+#define UNSUPPORTED_OPTIONS_SPEC \
+"%{xlinkopt: %e-xlinkopt not supported by x86 compiler } \
+"
+#else
 #define UNSUPPORTED_OPTIONS_SPEC
+#endif
 #endif
 
 /* NB: This is shared amongst all front-ends, except for Ada.  */

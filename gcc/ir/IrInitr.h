@@ -114,6 +114,10 @@ BOOLEAN ir_initr_rel32(ir_initr_hdl_t initr, ir_sym_hdl_t *symbol,
 /* For INITR_REL64 */
 BOOLEAN ir_initr_rel64(ir_initr_hdl_t initr, ir_sym_hdl_t *symbol, 
 		int64_t *offset, ir_position_t *position, BOOLEAN *misaligned);
+/* For INITR_DIFF16*/
+BOOLEAN ir_initr_diff16(ir_initr_hdl_t initr, ir_sym_hdl_t *symbol1, 
+		ir_sym_hdl_t *symbol2, int16_t *offset, ir_position_t *position,
+		BOOLEAN *misaligned);
 /* For INITR_DIFF32*/
 BOOLEAN ir_initr_diff32(ir_initr_hdl_t initr, ir_sym_hdl_t *symbol1, 
 		ir_sym_hdl_t *symbol2, int32_t *offset, ir_position_t *position,

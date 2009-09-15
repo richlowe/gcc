@@ -70,7 +70,9 @@ lib/prof_lib.o
 lib/prof_tsd.map
 lib/prof_tsd.o
 lib/libld_annotate.so
+lib/amd64/libld_annotate.so
 lib/annotate.map
+lib/amd64/annotate.map
 lib/sys/liblni.so
 lib/sys/liblni.so.1
 lib/sys/libsunir.so

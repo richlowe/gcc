@@ -66,9 +66,10 @@ Boston, MA 02111-1307, USA.  */
   { "-fprofile-values", "-Zprofile-values"}, \
   { "-fbranch-probabilities", "-Zfbranch-probabilities -xprofile=use=a.out" },\
   { "-fprofile-use", "-Zfprofile-use -xprofile=use=a.out" },\
-  { "-fsimple", "-ffast-math -Zfsimple=1" }, \
+  { "-fsimple", "-Zfsimple=1" }, \
   { "-fsimple=0", "-fno-fast-math -Zfsimple=0" }, \
-  { "-fsimple=1", "-ffast-math -Zfsimple=1" }, \
+  { "-fno-trapping-math", "-fno-trapping-math -Zfsimple=1" }, \
+  { "-fsimple=1", "-Zfsimple=1" }, \
   { "-fsimple=2", "-ffast-math -Zfsimple=2" }, \
   { "-fns", "-Zfns=yes" }, \
   { "-fnonstd", "-Zfns=yes -Zftrap=common"}, \
