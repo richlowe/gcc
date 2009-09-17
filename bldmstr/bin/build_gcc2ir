@@ -621,7 +621,7 @@ run_native_tests()
     if [ $BUILDTYPE == sparc-opensolaris ]
     then
         run_tests_installed &
-    else
+    elif [ $BUILDTYPE != i386-solaris ]
         $GMAKE  -k check-fortran EXPECT=$EXPECT  \
             TESTSUITEDIR="testsuite.gfortran.m32" \
             RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
@@ -636,16 +636,14 @@ run_native_tests()
     # libstdc++ must be tested in the testsuite directory
     # So, we cannot run both -m32 and -m64 in parallel.
     sleep 3
-    if [ $BUILDTYPE = i386-solaris ]
+    if [ $BUILDTYPE != i386-solaris ]
     then
-      cd $ROOT/build.gcc2ir/i386*/libstdc++-v3
-    else
-      cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
-    fi
+    cd $ROOT/build.gcc2ir/sparc*/libstdc++-v3
     $GMAKE -k check EXPECT=$EXPECT RUNTESTFLAGS="--target_board=unix/-m64" > $ROOT/logs/tests.stdc++.m64.log 2>&1
     mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m64
     $GMAKE -k check EXPECT=$EXPECT > $ROOT/logs/tests.stdc++.m32.log 2>&1
     mv testsuite/*.sum testsuite/*.log $ROOT/logs/result.m32
+    fi
     
      # Run gdb testsuite with -m32 option
     /bin/ksh ${SCRIPTDIR}/rungdbtest -c $INSTALL_DIR/bin -g /ws/gccfss/gnutools/sparc-S2/gdb-6.8/bin/gdb -T /net/clpt-v490-1/export/data1/jfd/opensource/gdb-6.8/gdb/testsuite  -o "-m32" -r $ROOT/gdb_tests > $ROOT/logs/gdbtest_m32.log 2>&1 &
