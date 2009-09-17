@@ -622,6 +622,7 @@ run_native_tests()
     then
         run_tests_installed &
     elif [ $BUILDTYPE != i386-solaris ]
+    then
         $GMAKE  -k check-fortran EXPECT=$EXPECT  \
             TESTSUITEDIR="testsuite.gfortran.m32" \
             RUNTESTFLAGS="--outdir $ROOT/logs/result.m32" \
