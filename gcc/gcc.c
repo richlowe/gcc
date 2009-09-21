@@ -1721,7 +1721,6 @@ static const char *invoke_cg =
     Znofstore: -nofstore; \
            : -fstore} \
   %{xgas: -as_info=no } \
-  %{fno-exceptions: -nounwind} \
 "
 #endif
 "%:add-user-il-routines() %(cg_ipo_options) \
@@ -6339,14 +6338,17 @@ process_command (int argc, const char **argv)
         {
         /* nothing to do */
         }
-     else if (directory_exists (concat ("/usr/lib/gcc/", spec_machine,
-                                         "/gccfss/", spec_version,
-                                         "/prod", NULL) ) )
+      /* or where they hinted via the environment variable */
+      else if (directory_exists (sunw_studio_path)
+               && valid_backend_version (sunw_studio_path))
         {
-           /* the usual OpenSolaris place */
-           studioproddir = concat ("/usr/lib/gcc/", spec_machine,
-                                   "/gccfss/", spec_version,
-                                   "/prod", NULL);
+           studioproddir = concat (sunw_studio_path, "/prod/", NULL);
+        } 
+      /* or where they hinted via the environment variable */
+      else if (directory_exists (sunw_scgfss_path))
+        {
+           studioproddir = concat (sunw_scgfss_path, "/", 
+                                   spec_version, "/prod/", NULL);
         }
       else if (directory_exists (concat (path_to_driver_wo_driver,
                                          "/../../SUNW0scgfss/", 
@@ -6357,6 +6359,24 @@ process_command (int argc, const char **argv)
                                    "/../../SUNW0scgfss/",
                                    spec_version, "/prod", NULL);
         } 
+      else if (directory_exists (concat (path_to_driver_wo_driver,
+                                         "/../lib/gcc/sparc-sun-solaris2.11/gccfss/", 
+                                         spec_version, "/prod", NULL) ) )
+        {
+           /* the usual OpenSolaris place */
+           studioproddir = concat (path_to_driver_wo_driver, 
+                                   "/../lib/gcc/sparc-sun-solaris2.11/gccfss/",
+                                   spec_version, "/prod", NULL);
+        } 
+     else if (directory_exists (concat ("/usr/lib/gcc/", spec_machine,
+                                         "/gccfss/", spec_version,
+                                         "/prod", NULL) ) )
+        {
+           /* the usual OpenSolaris place */
+           studioproddir = concat ("/usr/lib/gcc/", spec_machine,
+                                   "/gccfss/", spec_version,
+                                   "/prod", NULL);
+        }
       /* how about in /opt/SUNWspro ? */
       else if (directory_exists ("/opt/SUNWspro")
                && valid_backend_version ("/opt/SUNWspro/")) 
@@ -6372,18 +6392,6 @@ process_command (int argc, const char **argv)
            studioproddir = concat (path_to_driver_wo_driver,
                                    "../../SUNWspro/prod/", NULL);
         } 
-      /* or where they hinted via the environment variable */
-      else if (directory_exists (sunw_studio_path)
-               && valid_backend_version (sunw_studio_path))
-        {
-           studioproddir = concat (sunw_studio_path, "/prod/", NULL);
-        } 
-      /* or where they hinted via the environment variable */
-      else if (directory_exists (sunw_scgfss_path))
-        {
-           studioproddir = concat (sunw_scgfss_path, "/", 
-                                   spec_version, "/prod/", NULL);
-        }
     } 
   /* want gcc_exec_prefix and studioproddir as places for library files but
      after the places where gcc normally stashes them; ie. get the Studio 
