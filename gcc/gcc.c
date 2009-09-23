@@ -5807,7 +5807,7 @@ process_command (int argc, const char **argv)
                                    spec_version, "/prod", NULL);
         } 
       else if (directory_exists (concat (path_to_driver_wo_driver,
-                                         "/../lib/gcc/sparc-sun-solaris2.11/gccfss/" 
+                                         "/../lib/gcc/sparc-sun-solaris2.11/gccfss/",
                                          spec_version, "/prod", NULL) ) )
         {
            /* the usual OpenSolaris place */
