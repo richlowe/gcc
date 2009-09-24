@@ -5785,39 +5785,6 @@ process_command (int argc, const char **argv)
         {
         /* nothing to do */
         }
-     else if (directory_exists (concat ("/usr/lib/gcc/", spec_machine,
-                                         "/gccfss/", spec_version,
-                                         "/prod", NULL) ) )
-        {
-           /* the usual OpenSolaris place */
-           studioproddir = concat ("/usr/lib/gcc/", spec_machine,
-                                   "/gccfss/", spec_version,
-                                   "/prod", NULL);
-        }
-      else if (directory_exists (concat (path_to_driver_wo_driver,
-                                         "/../../SUNW0scgfss/", 
-                                         spec_version, "/prod", NULL) ) )
-        {
-           /* the usual place */
-           studioproddir = concat (path_to_driver_wo_driver, 
-                                   "/../../SUNW0scgfss/",
-                                   spec_version, "/prod", NULL);
-        } 
-      /* how about in /opt/SUNWspro ? */
-      else if (directory_exists ("/opt/SUNWspro")
-               && valid_backend_version ("/opt/SUNWspro/")) 
-        {
-           studioproddir = "/opt/SUNWspro/prod/";
-        } 
-      /* how about in ../../SUNWspro , ie with SUNWspro */
-      else if (directory_exists (concat (path_to_driver_wo_driver, 
-                                         "../../SUNWspro/",NULL)) 
-               && valid_backend_version (concat (path_to_driver_wo_driver, 
-						 "../../SUNWspro/", NULL))) 
-        {
-           studioproddir = concat (path_to_driver_wo_driver,
-                                   "../../SUNWspro/prod/", NULL);
-        } 
       /* or where they hinted via the environment variable */
       else if (directory_exists (sunw_studio_path)
                && valid_backend_version (sunw_studio_path))
@@ -5830,6 +5797,48 @@ process_command (int argc, const char **argv)
            studioproddir = concat (sunw_scgfss_path, "/", 
                                    spec_version, "/prod/", NULL);
         }
+      else if (directory_exists (concat (path_to_driver_wo_driver,
+                                         "/../../SUNW0scgfss/", 
+                                         spec_version, "/prod", NULL) ) )
+        {
+           /* the usual place */
+           studioproddir = concat (path_to_driver_wo_driver, 
+                                   "/../../SUNW0scgfss/",
+                                   spec_version, "/prod", NULL);
+        } 
+      else if (directory_exists (concat (path_to_driver_wo_driver,
+                                         "/../lib/gcc/sparc-sun-solaris2.11/gccfss/",
+                                         spec_version, "/prod", NULL) ) )
+        {
+           /* the usual OpenSolaris place */
+           studioproddir = concat (path_to_driver_wo_driver, 
+                                   "/../lib/gcc/sparc-sun-solaris2.11/gccfss/",
+                                   spec_version, "/prod", NULL);
+        } 
+      /* how about in ../../SUNWspro , ie with SUNWspro */
+      else if (directory_exists (concat (path_to_driver_wo_driver, 
+                                         "../../SUNWspro/",NULL)) 
+               && valid_backend_version (concat (path_to_driver_wo_driver, 
+						 "../../SUNWspro/", NULL))) 
+        {
+           studioproddir = concat (path_to_driver_wo_driver,
+                                   "../../SUNWspro/prod/", NULL);
+        } 
+     else if (directory_exists (concat ("/usr/lib/gcc/", spec_machine,
+                                         "/gccfss/", spec_version,
+                                         "/prod", NULL) ) )
+        {
+           /* the usual OpenSolaris place */
+           studioproddir = concat ("/usr/lib/gcc/", spec_machine,
+                                   "/gccfss/", spec_version,
+                                   "/prod", NULL);
+        }
+      /* how about in /opt/SUNWspro ? */
+      else if (directory_exists ("/opt/SUNWspro")
+               && valid_backend_version ("/opt/SUNWspro/")) 
+        {
+           studioproddir = "/opt/SUNWspro/prod/";
+        } 
     } 
   /* want gcc_exec_prefix and studioproddir as places for library files but
      after the places where gcc normally stashes them; ie. get the Studio 
