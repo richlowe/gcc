@@ -6319,16 +6319,6 @@ process_command (int argc, const char **argv)
           fprintf (stdout,"add_prefix(startfile)=%s\n",
                    concat (path_to_driver_wo_driver, "../lib/", NULL));
       
-      add_prefix (&exec_prefixes, 
-                  concat (path_to_driver_wo_driver, "../../SUNW0scgfss/",
-			  spec_version, "/prod/bin/", NULL), 
-		  "GCC", PREFIX_PRIORITY_LAST, 0, 0);
-      
-      if (debug_driver_val & 0x02)
-        fprintf (stdout,"PATH_TO_SS=%s\n",
-                 concat (path_to_driver_wo_driver, "../../SUNW0scgfss/",
- 			spec_version, "/prod/lib/", NULL));
-
       GET_ENVIRONMENT (sunw_studio_path, "SUNW_STUDIO_PATH");
       GET_ENVIRONMENT (sunw_scgfss_path, "SUNW_SCGFSS_PATH");
 
@@ -6345,7 +6335,8 @@ process_command (int argc, const char **argv)
            studioproddir = concat (sunw_studio_path, "/prod/", NULL);
         } 
       /* or where they hinted via the environment variable */
-      else if (directory_exists (sunw_scgfss_path))
+      else if (directory_exists (sunw_scgfss_path)
+               && valid_backend_version (concat (sunw_scgfss_path, "/", spec_version, NULL)))
         {
            studioproddir = concat (sunw_scgfss_path, "/", 
                                    spec_version, "/prod/", NULL);
@@ -6414,6 +6405,9 @@ process_command (int argc, const char **argv)
       /* add in usual location of iropt and cg */
       add_prefix (&exec_prefixes, studioproddir_bin, "GCC",
                     PREFIX_PRIORITY_LAST, 0, 0);
+
+      if (debug_driver_val & 0x02)
+        fprintf (stdout,"PATH_TO_SS=%s\n", studioproddir_lib, NULL);
 
       add_iropt_option ("-h_gen_eh_table", sizeof ("-h_gen_eh_table"));
     }
@@ -12758,7 +12752,7 @@ valid_backend_version (const char *sunwspro_dir)
 
       fclose (redir_file);
 
-      retval = strstr (ss_string, "Sun Studio Ceres") != NULL ; 
+      retval = strstr (ss_string, "Sun Studio") != NULL ; 
 
       if (debug_driver_val & 0x01)
         {
