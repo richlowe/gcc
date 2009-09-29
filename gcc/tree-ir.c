@@ -6055,9 +6055,12 @@ patch_indirect_gotos (void)
 static int
 is_memref_constraint (const char * c)
 {
-  while (*c == '=' || *c == '+') c++;
-  if (*c == 'm' || *c == 'o' || *c == 'v' || *c == 'p')
-    return 1;
+  while (*c)
+    {
+      if (*c == 'm' || *c == 'o' || *c == 'v' || *c == 'p')
+        return 1;
+      c++;
+    }
   return 0;
 }
 
