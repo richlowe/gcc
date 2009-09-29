@@ -3033,7 +3033,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
         
         tree ptr_stmt_type = build_pointer_type (TREE_TYPE (stmt));
         IR_TYPE_NODE *arrloc_ir_type;
-	IR_TYPE_NODE * ir_type = NULL;
+	IR_TYPE_NODE * ir_type = NULL, *ptr_ir_type;
         TYPE arrloc_type;
 
         if (is_field_array != 1 && flag_field_array)
@@ -3052,6 +3052,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
         if (is_field_array == 1)
           {
             ir_type = compute_field_array_ir_type(outer_tree);
+            ptr_ir_type = make_ptr_to_ir_type_node(ir_type);
             inest = op0;
             while (TREE_CODE (op0) != VAR_DECL && TREE_CODE (op0) != PARM_DECL 
       		&& TREE_CODE (op0) != INDIRECT_REF)
@@ -3242,11 +3243,11 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                 arrloc_ir_type = map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (stmt));
           }
         else
-          arrloc_ir_type = compute_field_array_ir_type ( stmt );
+            arrloc_ir_type = compute_field_array_ir_type ( stmt );
                 
         if (is_field_array == 1 && gir_offset)
           {
-            ir_op0 = build_ir_triple (IR_PLUS, ir_op0, gir_offset, ir_op0->operand.type, ir_type); 
+            ir_op0 = build_ir_triple (IR_PLUS, ir_op0, gir_offset, ir_op0->operand.type, ptr_ir_type); 
             gir_offset = NULL;
           }
 
@@ -3598,7 +3599,7 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
                 
         /* generate IR for the arrayloc */
 	if (is_field_array == 1)
-	  ir_arrloc = build_ir_triple (IR_DARRAYLOC, ir_op0, (IR_NODE *)ntuple_pp, map_gnu_type_to_TYPE (ptr_stmt_type), ir_type);
+	  ir_arrloc = build_ir_triple (IR_DARRAYLOC, ir_op0, (IR_NODE *)ntuple_pp, map_gnu_type_to_TYPE (ptr_stmt_type), ptr_ir_type);
 	else
           ir_arrloc = build_ir_triple (IR_ARRAYLOC, ir_op0, (IR_NODE *)ntuple_pp,
                                      map_gnu_type_to_TYPE (ptr_stmt_type), arrloc_ir_type); 

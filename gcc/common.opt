@@ -1433,7 +1433,7 @@ Common RejectNegative Var(flag_tm_mode, 1) VarExists
 Support transactional memory, ={none|htm|phtm|stm} 
 
 ffield-array
-Common Report Var(flag_field_array) Init(0)
+Common Report Var(flag_field_array) Init(1)
 Generate Darrayloc IR triple for a struture field array access.
 
 fgen-more-array
