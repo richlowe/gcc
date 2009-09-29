@@ -1,7 +1,7 @@
 BUILDDIR:sh = pwd
 
 # Reset the path to get rid of anything that may cause trouble--especially .
-PATH=/usr/bin:/bin
+PATH=/usr/bin:/bin:/usr/local/bin:/set/sqe/tools/git/intel-S2/bin/
 
 # LANGWSLIST lists all lang workspaces from which we need to bringover.
 # Users can either:
@@ -442,7 +442,18 @@ $(DONEDIR)/bringovers :
 		$(BRINGOVER) -p $$langws -w $(BUILDDIR)/lang .   \
 			> $(BUILDDIR)/logs/bringover.$$suffix 2>&1;       \
 	done
-	cd $(BUILDDIR)/lang/ct-common; $(SCCS) get SCCS > /dev/null 2>&1
+	if [ "$(CHIP)" = "i386" ] ;then \
+	  mkdir -p $(BUILDDIR)/ube.git; cd $(BUILDDIR)/ube.git; \
+	  git init; \
+	  git fetch /set/ube/GPIA/dev as158432/gccfss440_ube:gccfss >/dev/null 2>&1; \
+	  git checkout gccfss >/dev/null 2>&1; \
+	  rm -rf $(BUILDDIR)/lang/ube; \
+	  rm -rf $(BUILDDIR)/lang/as; \
+	  mv $(BUILDDIR)/ube.git/ube $(BUILDDIR)/lang/; \
+	  mv $(BUILDDIR)/ube.git/as $(BUILDDIR)/lang/; \
+	  cd ..; rm -rf $(BUILDDIR)/ube.git/; \
+	fi 
+	cd $(BUILDDIR)/lang/ct-common; $(SCCS) get SCCS > /dev/null 2>&1 
 	echo Bringovers complete
 	touch $@
 

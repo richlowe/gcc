@@ -27,7 +27,7 @@ setup_defaults()
     then
 	LANGWSLIST="$LANGWSLIST /ws/gccfss/cross-compiler/ceres-lang"
     fi
-    if [ $BUILDTYPE == i386-solaris ]
+    if [ 0 && $BUILDTYPE == i386-solaris ]
     then
         LANGWSLIST="$LANGWSLIST /net/cicogna/export/ube6/sstrunk/builds.intel-S2/test0/intel-S2/lang /ws/gccfss/source/gccfss-ube-updated"
     fi

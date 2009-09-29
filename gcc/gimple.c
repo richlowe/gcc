@@ -3155,7 +3155,9 @@ is_gimple_cast (tree t)
 bool
 is_gimple_call_addr (tree t)
 {
-  return (TREE_CODE (t) == OBJ_TYPE_REF || is_gimple_val (t));
+  return (TREE_CODE (t) == OBJ_TYPE_REF 
+          /* Disallow "call_expr (nop_expr ())". */ 
+          || (is_gimple_val (t) && TREE_CODE (t) != NOP_EXPR));
 }
 
 /* If T makes a function call, return the corresponding CALL_EXPR operand.

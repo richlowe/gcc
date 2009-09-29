@@ -9,5 +9,5 @@ INSTALL_LIBGCC = install-multilib
 # which aren't appropriate for amd64.  Just use the installed
 # versions of: crt1.o crti.o crtn.o gcrt1.o
 EXTRA_MULTILIB_PARTS=gmon.o crtbegin.o crtend.o
-CRTSTUFF_T_CFLAGS += -xgas -frtl-backend
-CRTSTUFF_CFLAGS += -xgas -frtl-backend
+#CRTSTUFF_T_CFLAGS += -xgas -frtl-backend
+#CRTSTUFF_CFLAGS += -xgas -frtl-backend
