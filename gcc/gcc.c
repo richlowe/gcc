@@ -6368,12 +6368,6 @@ process_command (int argc, const char **argv)
                                    "/gccfss/", spec_version,
                                    "/prod", NULL);
         }
-      /* how about in /opt/SUNWspro ? */
-      else if (directory_exists ("/opt/SUNWspro")
-               && valid_backend_version ("/opt/SUNWspro/")) 
-        {
-           studioproddir = "/opt/SUNWspro/prod/";
-        } 
       /* how about in ../../SUNWspro , ie with SUNWspro */
       else if (directory_exists (concat (path_to_driver_wo_driver, 
                                          "../../SUNWspro/",NULL)) 
@@ -6407,7 +6401,7 @@ process_command (int argc, const char **argv)
                     PREFIX_PRIORITY_LAST, 0, 0);
 
       if (debug_driver_val & 0x02)
-        fprintf (stdout,"PATH_TO_SS=%s\n", studioproddir_lib, NULL);
+        fprintf (stdout,"PATH_TO_SS=%s\n", studioproddir_lib);
 
       add_iropt_option ("-h_gen_eh_table", sizeof ("-h_gen_eh_table"));
     }
