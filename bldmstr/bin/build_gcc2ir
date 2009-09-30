@@ -101,7 +101,7 @@ setup_paths()
         GMAKE=/usr/bin/make
     elif [ $BUILDTYPE == i386-solaris ]
     then
-        export PATH=/net/clpt-v490-1/export/data/prash/gas-dir:/usr/sfw/bin:/usr/local/bin:/usr/ccs/bin:/usr/bin:/bin:/set/sqe/tools/git6/intel-S2/bin 
+        export PATH=/usr/sfw/bin:/usr/ccs/bin:/usr/bin:/bin:/usr/local/bin:/set/sqe/tools/git6/intel-S2/bin 
         EXPECT=/usr/local/bin/expect
         # Make sure $PATH cover git. 
         GIT=git

@@ -3954,6 +3954,21 @@ dump_ir_expr (tree stmt, enum MAP_FOR map_for)
             if (argtype.tword != ir_op0->operand.type.tword)
               ret = build_ir_triple (IR_CONV, ret, NULL, argtype, 
                                      map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (stmt)));
+#ifdef TARGET_CPU_x86
+            /* gccfss generates "uchar lshift (i, 1)" for "uchar (i<<1)". 
+               However ube can't handle well with it. The workaround of 6365387 
+               is to convert it to int and then back to original type. */ 
+            else if (TREE_CODE (op0) == CONVERT_EXPR 
+                     && argtype.tword != inttype.tword 
+                     && (TREE_CODE (stmt) == LSHIFT_EXPR
+                         || TREE_CODE (stmt) == RSHIFT_EXPR))
+              {
+                ret = build_ir_triple (IR_CONV, ret, NULL, inttype, 
+                                     map_gnu_type_to_IR_TYPE_NODE (TREE_TYPE (stmt)));
+                ret = build_ir_triple (IR_CONV, ret, NULL, argtype, 
+                                     map_gnu_type_to_IR_TYPE_NODE (integer_type_node));
+              }
+#endif
             break;
 	  case RROTATE_EXPR:
 	  case LROTATE_EXPR:

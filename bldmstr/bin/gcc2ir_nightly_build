@@ -61,6 +61,11 @@ function updateCurrent
 	(cd $INSTALLDIR; find . | cpio -pdum $COMMONDIR/$BUILDNAME/)
     fi
     
+    if [ $BUILDTYPE == "i386-solaris" ]
+    then
+        cd $INSTALLAREA; rm recent_gcc; ln -s $BUILDNAME recent_gcc
+    fi
+
     if [ 1 = `testsHaveFailures $BUILDDIR/logs/test.comparison` ]
     then
 	echo "The $BUILDTYPE build had new test failures."
