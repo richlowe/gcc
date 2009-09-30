@@ -5824,12 +5824,6 @@ process_command (int argc, const char **argv)
                                    "/gccfss/", spec_version,
                                    "/prod", NULL);
         }
-      /* how about in /opt/SUNWspro ? */
-      else if (directory_exists ("/opt/SUNWspro")
-               && valid_backend_version ("/opt/SUNWspro/")) 
-        {
-           studioproddir = "/opt/SUNWspro/prod/";
-        } 
     } 
   /* want gcc_exec_prefix and studioproddir as places for library files but
      after the places where gcc normally stashes them; ie. get the Studio 
@@ -5854,7 +5848,7 @@ process_command (int argc, const char **argv)
                     PREFIX_PRIORITY_LAST, 0, 0);
 
       if (debug_driver_val & 0x02)
-        fprintf (stdout,"PATH_TO_SS=%s\n", studioproddir_lib, NULL);
+        fprintf (stdout,"PATH_TO_SS=%s\n", studioproddir_lib);
 
       add_iropt_option ("-h_gen_eh_table", sizeof ("-h_gen_eh_table"));
     }
