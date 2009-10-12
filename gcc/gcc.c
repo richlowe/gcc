@@ -1551,6 +1551,8 @@ static const char *cg_ipo_options =
 #ifdef TARGET_CPU_sparc
 " \
  %{xregs=*} \
+ %{xprofile=use*: -ip } \
+ %{xprofile=collect=*: } \
  %{Zfma=*: -fma=%* } \
  %{xhwcprof} %{xhwcprof=enable: -xhwcprof}\
  %{xsafe=unboundsym} \
@@ -1607,6 +1609,8 @@ static const char *cg_ipo_options =
   %{Zfsimple=*: -fsimple=%*} \
   %{xregs=frameptr: -ZB; \
            : -Z~B} \
+  %{xprofile=use*: -iropt-prof -use:%+profile%* } \
+  %{xprofile=collect=*: -iropt-prof } \
   %{xbuiltin=*: -xbuiltin=%*} \
   %{Zfns=*: }"
 #endif
@@ -1625,8 +1629,6 @@ static const char *cg_ipo_options =
  %{xlinkopt} %{xlinkopt=*}\
  %{xbinopt=noprepare: } \
  %{xbinopt=prepare} \
- %{xprofile=use*: -ip } \
- %{xprofile=collect=*: } \
  %{xhwcprof} %{xhwcprof=enable: -xhwcprof}\
  %{xunroll=*} \
  %{xsafe=unboundsym} \
