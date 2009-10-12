@@ -285,4 +285,4 @@ s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.3/prod/usr/lib/v9/libxprof.s
 s none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.3/prod/usr/lib/v9/libxprof_audit.so=libxprof_audit.so.1
 d none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.3/LEGAL 0755 root bin
 f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.3/LEGAL/Copyright.html 0644 root bin
-f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.3/LEGAL/SunCodeGeneratorforSPARC432_license.txt 0644 root bin
+f none usr/lib/gcc/sparc-sun-solaris2.11/gccfss/4.3.3/LEGAL/SunCodeGeneratorforSPARC433_license.txt 0644 root bin
