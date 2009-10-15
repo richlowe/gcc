@@ -3334,7 +3334,7 @@ c_parser_compound_statement (c_parser *parser)
            within another __tm_atomic or __tm_abort_ok section. */
         if (current_function_decl 
             && (DECL_IS_TM_ATOMIC_P (current_function_decl) 
-                || DECL_IS_TM_CALLABLE_P (current_function_decl) 
+                || DECL_IS_TM_SAFE_P (current_function_decl) 
                 || DECL_IS_TM_ABORT_OK_P (current_function_decl) 
                 || DECL_IS_TM_PURE_P (current_function_decl))) 
           {

@@ -4887,7 +4887,7 @@ extern tree ovl_cons				(tree, tree);
 extern tree build_overload			(tree, tree);
 extern const char *cxx_printable_name		(tree, int);
 extern void cp_handle_tm_atomic_attribute	(tree *, tree, bool *);
-extern void cp_handle_tm_callable_attribute	(tree *, tree, bool *);
+extern void cp_handle_tm_safe_attribute		(tree *, tree, bool *);
 extern void cp_handle_tm_abort_ok_attribute	(tree *, tree, bool *);
 extern void cp_handle_tm_pure_attribute		(tree *, tree, bool *);
 extern tree build_exception_variant		(tree, tree);

@@ -55,8 +55,8 @@ static enum classify_record cp_classify_record (tree type);
 #define LANG_HOOKS_DECL_PRINTABLE_NAME	cxx_printable_name
 #undef LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR
 #define LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR cp_handle_tm_atomic_attribute  
-#undef LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR
-#define LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR cp_handle_tm_callable_attribute 
+#undef LANG_HOOKS_DECL_HANDLE_TM_SAFE_ATTR
+#define LANG_HOOKS_DECL_HANDLE_TM_SAFE_ATTR cp_handle_tm_safe_attribute 
 #undef LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR
 #define LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR cp_handle_tm_abort_ok_attribute 
 #undef LANG_HOOKS_DECL_HANDLE_TM_PURE_ATTR

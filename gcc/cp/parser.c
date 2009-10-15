@@ -7241,7 +7241,7 @@ cp_parser_compound_statement (cp_parser *parser, tree in_statement_expr,
              within another __tm_atomic or __tm_abort_ok section. */
           if (current_function_decl
               && (DECL_IS_TM_ATOMIC_P (current_function_decl)
-                  || DECL_IS_TM_CALLABLE_P (current_function_decl)
+                  || DECL_IS_TM_SAFE_P (current_function_decl)
                   || DECL_IS_TM_ABORT_OK_P (current_function_decl)
                   || DECL_IS_TM_PURE_P (current_function_decl)))
             {
@@ -16097,7 +16097,7 @@ cp_parser_member_declaration (cp_parser* parser)
                       if (CLASS_TYPE_P (type))
                         {
                           DECL_IS_TM_ATOMIC_P (decl) = CLASS_TYPE_IS_TM_ATOMIC_P (type);
-                          DECL_IS_TM_CALLABLE_P (decl) = CLASS_TYPE_IS_TM_CALLABLE_P (type);
+                          DECL_IS_TM_SAFE_P (decl) = CLASS_TYPE_IS_TM_SAFE_P (type);
                           DECL_IS_TM_ABORT_OK_P (decl) = CLASS_TYPE_IS_TM_ABORT_OK_P (type);
                           DECL_IS_TM_PURE_P (decl) = CLASS_TYPE_IS_TM_PURE_P (type);
                         }

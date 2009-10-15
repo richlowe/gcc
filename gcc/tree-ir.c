@@ -5413,9 +5413,9 @@ dump_ir_call_main (gimple stmt, int for_value, tree return_slot)
                     IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (fn)));
 
       if (flag_tm_mode) 
-        if (DECL_IS_TM_CALLABLE_P (fn)
+        if (DECL_IS_TM_SAFE_P (fn)
             || DECL_IS_TM_ABORT_OK_P (fn))
-          ir_callnode->triple.tm_callable = 1;
+          ir_callnode->triple.tm_safe = 1;
 
       if (!strcmp (name, "__cxa_throw")
           || !strcmp (name, "_Unwind_Resume")) 

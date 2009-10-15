@@ -367,8 +367,8 @@ dump_ir_init (const char *procname,  tree fn,
       if (DECL_IS_TM_ATOMIC_P (fn)) 
         ir_proc_set_tm_atomic (irProc, 1);
 
-      if (DECL_IS_TM_CALLABLE_P (fn) || DECL_IS_TM_ABORT_OK_P (fn))
-        ir_proc_set_tm_callable (irProc, 1);
+      if (DECL_IS_TM_SAFE_P (fn) || DECL_IS_TM_ABORT_OK_P (fn))
+        ir_proc_set_tm_safe (irProc, 1);
     }
 
   /* define entry block */

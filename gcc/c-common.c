@@ -534,7 +534,7 @@ static tree handle_nocommon_attribute (tree *, tree, tree, int, bool *);
 static tree handle_common_attribute (tree *, tree, tree, int, bool *);
 static tree handle_rtl_backend_attribute (tree *, tree, tree, int, bool *);
 static tree handle_tm_atomic_attribute (tree *, tree, tree, int, bool *);
-static tree handle_tm_callable_attribute (tree *, tree, tree, int, bool *);
+static tree handle_tm_safe_attribute (tree *, tree, tree, int, bool *);
 static tree handle_tm_abort_ok_attribute (tree *, tree, tree, int, bool *);
 static tree handle_tm_pure_attribute (tree *, tree, tree, int, bool *);
 static tree handle_noreturn_attribute (tree *, tree, tree, int, bool *);
@@ -785,8 +785,8 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_rtl_backend_attribute },
   { "tm_atomic",              0, 0, true,  false, false,
 			      handle_tm_atomic_attribute },
-  { "tm_callable",            0, 0, true,  false, false,
-			      handle_tm_callable_attribute },
+  { "tm_safe",            0, 0, true,  false, false,
+			      handle_tm_safe_attribute },
   { "tm_abort_ok",            0, 0, true,  false, false,
 			      handle_tm_abort_ok_attribute },
   { "tm_pure",                0, 0, true,  false, false,
@@ -5274,12 +5274,12 @@ c_check_tm_calling_rules (tree function)
         error ("__tm_abort can only be called from within a __tm_abort_ok section.");
     }
   else if (DECL_IS_TM_ATOMIC_P (current_function_decl)
-           || DECL_IS_TM_CALLABLE_P (current_function_decl))
+           || DECL_IS_TM_SAFE_P (current_function_decl))
     {
-      if (!DECL_IS_TM_CALLABLE_P (function)
+      if (!DECL_IS_TM_SAFE_P (function)
           && !DECL_IS_TM_PURE_P (function)
           && !STATEMENT_LIST_TM_WAIVER (cur_stmt_list))
-        error ("Only functions labeled either tm_callable or tm_pure can be called from within an atomic or callable section.");
+        error ("Only functions labeled either tm_safe or tm_pure can be called from within an atomic or safe section.");
     }
   else if (STATEMENT_LIST_TM_WAIVER (cur_stmt_list))
     {
@@ -5298,7 +5298,7 @@ c_check_tm_calling_rules (tree function)
 void
 c_handle_tm_atomic_attribute (tree *node, tree name, bool * no_add_attrs);
 void
-c_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs);
+c_handle_tm_safe_attribute (tree *node, tree name, bool * no_add_attrs);
 void
 c_handle_tm_abort_ok_attribute (tree *node, tree name, bool * no_add_attrs);
 void
@@ -5338,7 +5338,7 @@ handle_tm_atomic_attribute (tree *node, tree name, tree ARG_UNUSED (args),
 }
 
 void
-c_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs)
+c_handle_tm_safe_attribute (tree *node, tree name, bool * no_add_attrs)
 {
   if (TREE_CODE (*node) != FUNCTION_DECL)
     {
@@ -5348,7 +5348,7 @@ c_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs)
     }
   else
     {
-      DECL_IS_TM_CALLABLE_P (*node) = 1;
+      DECL_IS_TM_SAFE_P (*node) = 1;
       if (DECL_IS_TM_PURE_P (*node) == 1)
         error ("%qE attribute can't combine with tm_pure", name);
     }
@@ -5357,7 +5357,7 @@ c_handle_tm_callable_attribute (tree *node, tree name, bool * no_add_attrs)
 }
 
 static tree
-handle_tm_callable_attribute (tree *node, tree name, tree ARG_UNUSED (args),
+handle_tm_safe_attribute (tree *node, tree name, tree ARG_UNUSED (args),
                               int ARG_UNUSED (flags), bool * no_add_attrs)
 {
   if (flag_tm_mode == 0)
@@ -5366,7 +5366,7 @@ handle_tm_callable_attribute (tree *node, tree name, tree ARG_UNUSED (args),
       *no_add_attrs = true;
       return NULL_TREE;
     }
-  lang_hooks.handle_tm_callable_attribute (node, name, no_add_attrs);
+  lang_hooks.handle_tm_safe_attribute (node, name, no_add_attrs);
   return NULL_TREE;
 }
 
@@ -5416,9 +5416,9 @@ c_handle_tm_pure_attribute (tree *node, tree name, bool * no_add_attrs)
     {
       DECL_IS_TM_PURE_P (*node) = 1;
       if (DECL_IS_TM_ATOMIC_P (*node) 
-          || DECL_IS_TM_CALLABLE_P (*node)
+          || DECL_IS_TM_SAFE_P (*node)
           || DECL_IS_TM_ABORT_OK_P (*node))
-        error ("%qE attribute can't combine with tm_atomic, tm_callable or tm_abort_ok", name);
+        error ("%qE attribute can't combine with tm_atomic, tm_safe or tm_abort_ok", name);
     }
 
   return;

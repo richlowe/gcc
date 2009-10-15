@@ -421,8 +421,8 @@ typedef struct triple {
                                  * indicating that the istore will write to to
                                  * memory directly, bypass all caches.
                                  */
-        BOOLEAN tm_callable:1;  /* tm_callable/tm_only call */
-        BOOLEAN tm_atomic_block:1;      /* __tm_atomic_block */
+        BOOLEAN tm_safe:1;      /* [[transaction_safe]] call */
+        BOOLEAN tm_atomic_block:1;      /* __transaction [[atomic{,outer}]] block */
         unsigned unused:28;     /* sizeof(TRIPLE) == (k * sizeof(double)) */
         unsigned prof_id;	/* for profile feedback */
 

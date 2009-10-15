@@ -350,7 +350,7 @@ struct lang_hooks
   const char *(*decl_printable_name) (tree decl, int verbosity);
   
   void *(*handle_tm_atomic_attribute) (tree *, tree, bool *);
-  void *(*handle_tm_callable_attribute) (tree *, tree, bool *);
+  void *(*handle_tm_safe_attribute) (tree *, tree, bool *);
   void *(*handle_tm_abort_ok_attribute) (tree *, tree, bool *);
   void *(*handle_tm_pure_attribute) (tree *, tree, bool *);
 

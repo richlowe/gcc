@@ -1826,7 +1826,7 @@ duplicate_decls (tree newdecl, tree olddecl, bool newdecl_is_friend)
 	  DECL_LOOPING_CONST_OR_PURE_P (newdecl) 
 	    |= DECL_LOOPING_CONST_OR_PURE_P (olddecl);
 	  DECL_IS_TM_ATOMIC_P (newdecl) |= DECL_IS_TM_ATOMIC_P (olddecl);
-          DECL_IS_TM_CALLABLE_P (newdecl) |= DECL_IS_TM_CALLABLE_P (olddecl);
+          DECL_IS_TM_SAFE_P (newdecl) |= DECL_IS_TM_SAFE_P (olddecl);
           DECL_IS_TM_ABORT_OK_P (newdecl) |= DECL_IS_TM_ABORT_OK_P (olddecl);
           DECL_IS_TM_PURE_P (newdecl) |= DECL_IS_TM_PURE_P (olddecl);
 	  /* Keep the old RTL.  */
@@ -12266,7 +12266,7 @@ finish_function (int flags)
       if (fncon && CLASS_TYPE_P (fncon))
         {
           DECL_IS_TM_ATOMIC_P (fndecl) |= CLASS_TYPE_IS_TM_ATOMIC_P (fncon);
-          DECL_IS_TM_CALLABLE_P (fndecl) |= CLASS_TYPE_IS_TM_CALLABLE_P (fncon);
+          DECL_IS_TM_SAFE_P (fndecl) |= CLASS_TYPE_IS_TM_SAFE_P (fncon);
           DECL_IS_TM_ABORT_OK_P (fndecl) |= CLASS_TYPE_IS_TM_ABORT_OK_P (fncon);
           DECL_IS_TM_PURE_P (fndecl) |= CLASS_TYPE_IS_TM_PURE_P (fncon);
         }

@@ -302,8 +302,8 @@ void ir_proc_set_tm_atomic (ir_proc_hdl_t proc, BOOLEAN atomic);
 BOOLEAN ir_proc_is_global_asm (ir_proc_hdl_t proc);
 void ir_proc_set_is_global_asm (ir_proc_hdl_t proc, BOOLEAN isGlobalAsm);
 
-BOOLEAN ir_proc_tm_callable (ir_proc_hdl_t proc);
-void ir_proc_set_tm_callable (ir_proc_hdl_t proc, BOOLEAN callable);
+BOOLEAN ir_proc_tm_safe (ir_proc_hdl_t proc);
+void ir_proc_set_tm_safe (ir_proc_hdl_t proc, BOOLEAN safe);
 
 /* If the forbid_auto_max attribute is true, an error will be reported when
    table data is accessed within a minimized procedure.  If the user sets an

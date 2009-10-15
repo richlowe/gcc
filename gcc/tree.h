@@ -2294,7 +2294,7 @@ extern enum machine_mode vector_type_mode (const_tree);
   (ARRAY_TYPE_CHECK (NODE)->type.transparent_union_flag)
 
 #define CLASS_TYPE_IS_TM_ATOMIC_P(T) (TYPE_CHECK (T)->type.tm_atomic_attr)
-#define CLASS_TYPE_IS_TM_CALLABLE_P(T) (TYPE_CHECK (T)->type.tm_callable_attr)
+#define CLASS_TYPE_IS_TM_SAFE_P(T) (TYPE_CHECK (T)->type.tm_safe_attr)
 #define CLASS_TYPE_IS_TM_ABORT_OK_P(T) (TYPE_CHECK (T)->type.tm_abort_ok_attr)
 #define CLASS_TYPE_IS_TM_PURE_P(T) (TYPE_CHECK (T)->type.tm_pure_attr)
 
@@ -2364,7 +2364,7 @@ struct tree_type GTY(())
   unsigned int dbg_gen_type_part2;
   unsigned int ir_type_node_valid:1;
   unsigned tm_atomic_attr : 1; 
-  unsigned tm_callable_attr : 1; 
+  unsigned tm_safe_attr : 1; 
   unsigned tm_abort_ok_attr : 1; 
   unsigned tm_pure_attr : 1; 
   /* Used for generating exact ir tagnames for typedef .  */
@@ -2809,7 +2809,7 @@ struct tree_decl_common GTY(())
   /* supporting transactional memory. the attributes could be applied to 
      functions or classes. */
   unsigned tm_atomic_attr : 1;
-  unsigned tm_callable_attr : 1;
+  unsigned tm_safe_attr : 1;
   unsigned tm_abort_ok_attr : 1;
   unsigned tm_pure_attr : 1;
   unsigned has_ir_offset : 1;
@@ -2845,8 +2845,8 @@ extern void decl_value_expr_insert (tree, tree);
 
 #define DECL_IS_TM_ATOMIC_P(NODE)	\
   (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_atomic_attr)
-#define DECL_IS_TM_CALLABLE_P(NODE)	\
-  (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_callable_attr)
+#define DECL_IS_TM_SAFE_P(NODE)	\
+  (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_safe_attr)
 #define DECL_IS_TM_ABORT_OK_P(NODE)	\
   (TREE_CHECK2 (NODE, VAR_DECL, FUNCTION_DECL)->decl_common.tm_abort_ok_attr)
 #define DECL_IS_TM_PURE_P(NODE)	\

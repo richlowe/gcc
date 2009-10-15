@@ -52,7 +52,7 @@ extern tree lhd_staticp (tree);
 extern void lhd_print_tree_nothing (FILE *, tree, int);
 extern const char *lhd_decl_printable_name (tree, int);
 extern void c_handle_tm_atomic_attribute (tree *, tree, bool *);
-extern void c_handle_tm_callable_attribute (tree *, tree, bool *);
+extern void c_handle_tm_safe_attribute (tree *, tree, bool *);
 extern void c_handle_tm_abort_ok_attribute (tree *, tree, bool *);
 extern void c_handle_tm_pure_attribute (tree *, tree, bool *);
 extern const char *lhd_dwarf_name (tree, int);
@@ -113,7 +113,7 @@ extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
 #define LANG_HOOKS_PRINT_ERROR_FUNCTION lhd_print_error_function
 #define LANG_HOOKS_DECL_PRINTABLE_NAME	lhd_decl_printable_name
 #define LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR c_handle_tm_atomic_attribute 
-#define LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR c_handle_tm_callable_attribute 
+#define LANG_HOOKS_DECL_HANDLE_TM_SAFE_ATTR c_handle_tm_safe_attribute 
 #define LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR c_handle_tm_abort_ok_attribute 
 #define LANG_HOOKS_DECL_HANDLE_TM_PURE_ATTR c_handle_tm_pure_attribute
 #define LANG_HOOKS_DWARF_NAME		lhd_dwarf_name
@@ -270,7 +270,7 @@ extern tree lhd_make_node (enum tree_code);
   LANG_HOOKS_PRINT_IDENTIFIER, \
   LANG_HOOKS_DECL_PRINTABLE_NAME, \
   LANG_HOOKS_DECL_HANDLE_TM_ATOMIC_ATTR, \
-  LANG_HOOKS_DECL_HANDLE_TM_CALLABLE_ATTR, \
+  LANG_HOOKS_DECL_HANDLE_TM_SAFE_ATTR, \
   LANG_HOOKS_DECL_HANDLE_TM_ABORT_OK_ATTR, \
   LANG_HOOKS_DECL_HANDLE_TM_PURE_ATTR, \
   LANG_HOOKS_DWARF_NAME, \
