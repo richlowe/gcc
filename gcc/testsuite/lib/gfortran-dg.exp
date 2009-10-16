@@ -86,6 +86,15 @@ proc gfortran-dg-runtest { testcases default-extra-flags } {
     global DG_TORTURE_OPTIONS torture_with_loops
 
     torture-init
+    # GCCFSS: Override the DG_TORTURE_OPTIONS from gcc-dg.exp to exclude -fast.
+    set DG_TORTURE_OPTIONS [list \
+        { -O0 } \
+        { -O1 } \
+        { -O2 } \
+        { -O3 } \
+        { -O3 -finline-functions } \
+        { -O2 -g } \
+        { -Os } ]
     set-torture-options $DG_TORTURE_OPTIONS
 
     foreach test $testcases {
