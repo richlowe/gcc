@@ -30,8 +30,8 @@ export GCCPACKAGE=SUNW0gccfss
 # Lang workspaces used by gcc4ss builds
 #export LANGWSINT=/net/kits.sfbay/compilers/branches/ceres/src/lang
 #export LANGWSLISTDEFAULT="$LANGWSINT /import/backend-src/ceres_patch/lang"
-export LANGWSINT=/ws/gccfss/source/ceres/lang
-export LANGWSLISTDEFAULT="$LANGWSINT /ws/gccfss/source/ceres_patch/lang/"
+export LANGWSINT=/net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/src/lang
+export LANGWSLISTDEFAULT="$LANGWSINT /ws/gccfss/source/ceres_patch_433/lang"
 export GCC2IRWS="/ws/gccfss/source/gcc.git"
 export GCC_VERSION="4.3.3" 
 export GCC_VER="433" 
