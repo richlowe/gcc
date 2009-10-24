@@ -10,14 +10,14 @@ PATH=/usr/bin:/bin
 #   * set LANGWSLIST explicitly to specify the complete list of workspaces 
 
 EXTRALANGWS =
-LANGWSLIST = $(EXTRALANGWS) /import/backend-src/ceres_patch/lang /shared/dp/sstrunk/latest/src/lang
+LANGWSLIST = "/net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/src/lang $(EXTRALANGWS)"
 
 BM_BUILD_DATE:sh = /bin/date +\%Y/\%m/\%d
 BM_BUILD_NAME="gccfss_lang"
 BM_COMMON_IMPORT="$(BUILDDIR)/shelf"
 BM_COMMON_EXPORT="$(BUILDDIR)/shelf"
-BM_UTIL = /import/backend-src/ceres_patch/build_util
-BM_IMPORT = /set/sstrunk/import
+BM_UTIL = /net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/src/build_util
+BM_IMPORT = /net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/input/import
 BUILD_MODE = 
 GCCVERSION = "4.3.3"
 DONEDIR = $(BUILDDIR)/done
@@ -30,9 +30,9 @@ ALT_SHELF_386=/ws/gccfss/cross-compiler/crossshelf
 CHIP:sh = /bin/uname -p
 OSNAME:sh = /bin/uname -s
 
-CBE-i386 = /shared/dp/sstrunk/cbe/inst/intel-S2
-CBE-sparc = /shared/dp/sstrunk/cbe/inst/sparc-S2
-CBE-unknown = /shared/dp/sstrunk/cbe/inst/sparc-S2
+CBE-i386 = /shared/dp/branches/ceres/buildarea/cbe/inst/intel-S2
+CBE-sparc = /shared/dp/branches/ceres/buildarea/cbe/inst/sparc-S2
+CBE-unknown = /shared/dp/branches/ceres/buildarea/cbe/inst/sparc-S2
 SPARCCBE = $(CBE-$(CHIP))
 
 CPU-SunOS = sparc-S2
