@@ -12,12 +12,16 @@ PATH=/usr/bin:/bin
 EXTRALANGWS =
 LANGWSLIST = "/net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/src/lang $(EXTRALANGWS)"
 
+# settings for BM_IMPORT, GOLDEN_SHELF-i386, and GOLDEN_SHELF-sparc
+# are taken from
+# /net/kits.sfbay/compilers/branches/ceres/buildarea/control/config
+
 BM_BUILD_DATE:sh = /bin/date +\%Y/\%m/\%d
 BM_BUILD_NAME="gccfss_lang"
 BM_COMMON_IMPORT="$(BUILDDIR)/shelf"
 BM_COMMON_EXPORT="$(BUILDDIR)/shelf"
-BM_UTIL = /net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/src/build_util
-BM_IMPORT = /net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/input/import
+BM_UTIL = /import/backend-src/ceres_patch/build_util
+BM_IMPORT = /net/kits.sfbay/compilers/branches/ceres/import
 BUILD_MODE = 
 GCCVERSION = "4.3.3"
 DONEDIR = $(BUILDDIR)/done
@@ -25,7 +29,7 @@ DESTDIR = $(BUILDDIR)/langinstall/$(GCCVERSION)/prod
 LOGDIR = $(BUILDDIR)/logs
 JOBS = 4
 ROOTDIR = $(BUILDDIR)/lang
-TRAIN_NAME = sstrunk
+TRAIN_NAME = gccfss433
 ALT_SHELF_386=/ws/gccfss/cross-compiler/crossshelf                  
 CHIP:sh = /bin/uname -p
 OSNAME:sh = /bin/uname -s
@@ -111,8 +115,10 @@ STRIP-sparc-S2 = /usr/ccs/bin/strip
 STRIP-sparc-Linux = /usr/bin/strip
 STRIP = $(STRIP-$(CPU))
 
-GOLDEN_SHELF-i386 = $(BM_IMPORT)/shelf/intel-S2
-GOLDEN_SHELF-sparc = $(BM_IMPORT)/shelf/sparc-S2
+#GOLDEN_SHELF-i386 = $(BM_IMPORT)/shelf/intel-S2
+#GOLDEN_SHELF-sparc = $(BM_IMPORT)/shelf/sparc-S2
+GOLDEN_SHELF-i386 = /net/kits.sfbay/compilers/branches/ceres/buildarea/fcs+01_patches/output/shelf/intel-S2
+GOLDEN_SHELF-sparc = /net/kits.sfbay/compilers/branches/ceres/buildarea/fcs+01_patches/output/shelf/sparc-S2
 GOLDEN_SHELF-unknown = /import/backend-src/mars_gcc/linuxshelf
 GOLDEN_SHELF- = /bad/directory
 GOLDEN_SHELF = $(GOLDEN_SHELF-$(CHIP))
