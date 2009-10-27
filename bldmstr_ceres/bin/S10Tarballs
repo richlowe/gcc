@@ -1,0 +1,66 @@
+#/bin/ksh
+
+set -x
+
+trap 'echo ERROR; exit 1' ERR
+
+function usage {
+	echo "Usage: $0 <nightly_build_dir> <dest_dir>"
+	echo "where <nightly_build_dir> is something like 20091026_ceres_gcc433"
+	exit 1
+}
+
+if [ $# -ne 1 ]
+then
+	usage
+fi
+
+NIGHTLY=$1
+
+# All scripts are run from the same directory as this one.
+SCRIPTDIR=$(/bin/dirname $0)
+
+# Set common configuration variables
+. $SCRIPTDIR/commonconfig
+
+case $GCC_VERSION in
+
+	4.3.3) BUILDAREA=/net/clpt-v490-1/export/data/bldmstr/$NIGHTLY;;
+
+	4.4.0) BUILDAREA=/net/clpt-v490-1/export/data1/bldmstr/$NIGHTLY;;
+
+	*) Echo "Error: Unknown GCC_VERSION"
+	   exit 1
+	   ;;
+esac
+
+BUILDS=/ws/gccfss/builds/$GCC_VERSION/$NIGHTLY
+RELEASES=/ws/gccfss/releases/$GCC_VERSION/$NIGHTLY
+
+if [ ! -d $RELEASES ]; then
+	mkdir -p $RELEASES
+fi
+
+# scgfss
+TARFILE=$RELEASES/SUNW0scgfss$GCC_VER.tar
+rm -f $TARFILE $TARFILE.bz2
+(cd $BUILDS; tar cf $TARFILE SUNW0scgfss)
+bzip2 $TARFILE
+
+# gccfss runtime
+TARFILE=$RELEASES/SUNWgccfss_runtime$GCC_VER.tar
+rm -f $TARFILE $TARFILE.bz2
+(cd $BUILDS/gcc; tar cf $TARFILE lib/lib* lib/sparcv9/lib*)
+bzip2 $TARFILE
+
+# gccfss
+TARFILE=$RELEASES/SUNWgccfss$GCC_VER.tar
+rm -f $TARFILE $TARFILE.bz2
+(cd $BUILDS; tar cf $TARFILE gcc)
+bzip2 $TARFILE
+
+# src
+TARFILE=$RELEASES/gccfss${GCC_VER}_src.tar
+rm -f $TARFILE $TARFILE.bz2
+(cd $BUILDAREA; tar cf $TARFILE src)
+bzip2 $TARFILE
