@@ -29,8 +29,6 @@
    Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-/* Modified by Sun Microsystems 2009 */
-
 /* You have to define the following before including this file:
 
    UWtype -- An unsigned type, default type for operations (typically a "word")
@@ -345,7 +343,7 @@ UDItype __umulsidi3 (USItype, USItype);
 
 #if (defined (__i386__) || defined (__i486__)) && W_TYPE_SIZE == 32
 #define add_ssaaaa(sh, sl, ah, al, bh, bl) \
-  __asm__ ("addl %1,%5\n\tadcl %0,%3"              \
+  __asm__ ("add{l} %1,%5\n\tadc{l} %0,%3"              \
 	   : "=r" ((USItype) (sh)),					\
 	     "=&r" ((USItype) (sl))					\
 	   : "%0" ((USItype) (ah)),					\
@@ -353,7 +351,7 @@ UDItype __umulsidi3 (USItype, USItype);
 	     "%1" ((USItype) (al)),					\
 	     "g" ((USItype) (bl)))
 #define sub_ddmmss(sh, sl, ah, al, bh, bl) \
-  __asm__ ("subl %1,%5\n\tsbbl %0,%3"              \
+  __asm__ ("sub{l} %1,%5\n\tsbb{l} %0,%3"              \
 	   : "=r" ((USItype) (sh)),					\
 	     "=&r" ((USItype) (sl))					\
 	   : "0" ((USItype) (ah)),					\
@@ -361,13 +359,13 @@ UDItype __umulsidi3 (USItype, USItype);
 	     "1" ((USItype) (al)),					\
 	     "g" ((USItype) (bl)))
 #define umul_ppmm(w1, w0, u, v) \
-  __asm__ ("mull %3"							\
+  __asm__ ("mul{l} %3"							\
 	   : "=a" ((USItype) (w0)),					\
 	     "=d" ((USItype) (w1))					\
 	   : "%0" ((USItype) (u)),					\
 	     "rm" ((USItype) (v)))
 #define udiv_qrnnd(q, r, n1, n0, dv) \
-  __asm__ ("divl %4"							\
+  __asm__ ("div{l} %4"							\
 	   : "=a" ((USItype) (q)),					\
 	     "=d" ((USItype) (r))					\
 	   : "0" ((USItype) (n0)),					\
@@ -381,7 +379,7 @@ UDItype __umulsidi3 (USItype, USItype);
 
 #if (defined (__x86_64__) || defined (__i386__)) && W_TYPE_SIZE == 64
 #define add_ssaaaa(sh, sl, ah, al, bh, bl) \
-  __asm__ ("addq {%5,%1|%1,%5}\n\tadcq {%3,%0|%0,%3}"		\
+  __asm__ ("add{q} {%5,%1|%1,%5}\n\tadc{q} {%3,%0|%0,%3}"		\
 	   : "=r" ((UDItype) (sh)),					\
 	     "=&r" ((UDItype) (sl))					\
 	   : "%0" ((UDItype) (ah)),					\
@@ -389,7 +387,7 @@ UDItype __umulsidi3 (USItype, USItype);
 	     "%1" ((UDItype) (al)),					\
 	     "rme" ((UDItype) (bl)))
 #define sub_ddmmss(sh, sl, ah, al, bh, bl) \
-  __asm__ ("subq {%5,%1|%1,%5}\n\tsbbq {%3,%0|%0,%3}"		\
+  __asm__ ("sub{q} {%5,%1|%1,%5}\n\tsbb{q} {%3,%0|%0,%3}"		\
 	   : "=r" ((UDItype) (sh)),					\
 	     "=&r" ((UDItype) (sl))					\
 	   : "0" ((UDItype) (ah)),					\
@@ -397,13 +395,13 @@ UDItype __umulsidi3 (USItype, USItype);
 	     "1" ((UDItype) (al)),					\
 	     "rme" ((UDItype) (bl)))
 #define umul_ppmm(w1, w0, u, v) \
-  __asm__ ("mulq %3"							\
+  __asm__ ("mul{q} %3"							\
 	   : "=a" ((UDItype) (w0)),					\
 	     "=d" ((UDItype) (w1))					\
 	   : "%0" ((UDItype) (u)),					\
 	     "rm" ((UDItype) (v)))
 #define udiv_qrnnd(q, r, n1, n0, dv) \
-  __asm__ ("divq %4"							\
+  __asm__ ("div{q} %4"							\
 	   : "=a" ((UDItype) (q)),					\
 	     "=d" ((UDItype) (r))					\
 	   : "0" ((UDItype) (n0)),					\

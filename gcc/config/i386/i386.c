@@ -26698,12 +26698,23 @@ x86_file_start (void)
 #if TARGET_MACHO
   darwin_file_start ();
 #endif
+  if (flag_use_ir_sd_file)
+    {
+      asm_out_file = saved_asm_out_file;
+    }
+
   if (X86_FILE_START_VERSION_DIRECTIVE)
     fputs ("\t.version\t\"01.01\"\n", asm_out_file);
   if (X86_FILE_START_FLTUSED)
     fputs ("\t.global\t__fltused\n", asm_out_file);
   if (ix86_asm_dialect == ASM_INTEL)
     fputs ("\t.intel_syntax noprefix\n", asm_out_file);
+
+  if (flag_use_ir_sd_file)
+    {
+      saved_asm_out_file = asm_out_file;
+      asm_out_file = NULL;
+    }
 }
 
 int

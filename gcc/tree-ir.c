@@ -6602,10 +6602,86 @@ dump_ir_stmt (gimple stmt)
         tree _outputs, _clobbers;
         IR_NODE * ir_string, * t;
         TRIPLE * asm_args = NULL;
+        char * new_p = NULL, * p = gimple_asm_string (stmt);
        
         check_asm_expr (stmt); /* emit erros/warnings if needed */
 
-        ir_string = build_ir_string_const (gimple_asm_string (stmt));
+#ifdef ASSEMBLER_DIALECT
+        {
+          char c;
+          int dialect_number = ASSEMBLER_DIALECT;
+          int index = 0;
+          int dialect = 0;
+
+          new_p = (char *) xmalloc (strlen (p) + 1);
+
+          while ((c = *p ++))
+            switch (c)
+            {
+            case '{':
+              {
+                int i;
+
+                if (dialect)
+                  output_operand_lossage ("nested assembly dialect alternatives");
+                else
+                  dialect = 1;
+
+                /* If we want the first dialect, do nothing.  Otherwise, skip
+                   DIALECT_NUMBER of strings ending with '|'.  */
+                for (i = 0; i < dialect_number; i++)
+                {
+                  while (*p && *p != '}' && *p++ != '|')
+                    ;
+                  if (*p == '}')
+                    break;
+                  if (*p == '|')
+                    p++;
+                }
+              }
+              break;               
+
+            case '}':
+              if (! dialect)
+                new_p[index++]=c; /* c is '}' */
+              dialect = 0;
+              break;               
+
+            case '|':
+              if (dialect)
+                {
+                  /* Skip to close brace.  */
+                  do
+                  {
+                    if (*p == '\0')
+                      {
+                        output_operand_lossage ("unterminated assembly dialect alternative");
+                        break;
+                      }
+                  }
+                  while (*p++ != '}');
+                  dialect = 0;
+                }
+              else
+                new_p[index++]=c; /* c is '|' */
+              break;               
+
+            default:
+              new_p[index++] = c;
+              break;               
+            }
+
+          new_p[index] = 0;
+          p = new_p; 
+        }
+#endif
+
+        ir_string = build_ir_string_const (p);
+#ifdef ASSEMBLER_DIALECT
+        if (new_p)
+          free (new_p); 
+        new_p = NULL;
+#endif
 
         if (gimple_asm_input_p (stmt))
         /* if old-style asm, pass it as is */
