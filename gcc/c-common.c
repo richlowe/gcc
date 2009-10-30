@@ -2919,11 +2919,7 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
          (intop, 0) == int_type (ex. int variable)
          (intop, 1) == const */
       if (TREE_CODE (intop) == MINUS_EXPR)
-#ifdef GCC_STYLE
         subcode = (subcode == PLUS_EXPR ? MINUS_EXPR : PLUS_EXPR);
-#else
-        resultcode = (resultcode == PLUS_EXPR ? MINUS_EXPR : PLUS_EXPR);
-#endif
 	
 	  /* gcc style:
         ptrop +- (intop, 1) +- (intop, 0)
@@ -2942,9 +2938,33 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 			       convert (int_type, TREE_OPERAND (intop, 1)), 1);
       intop = convert (int_type, TREE_OPERAND (intop, 0));
 #else
-      ptrop = build_binary_op (subcode, ptrop,
-                               convert (int_type, TREE_OPERAND (intop, 0)), 1);
-      intop = convert (int_type, TREE_OPERAND (intop, 1));
+      intop0 = convert (int_type, TREE_OPERAND (intop, 0));
+      if (TYPE_PRECISION (TREE_TYPE (intop0)) != TYPE_PRECISION (sizetype))
+        intop0 = convert (c_common_type_for_size (TYPE_PRECISION (sizetype),
+                                                  TYPE_UNSIGNED (sizetype)), intop0);
+      intop0 = build_binary_op (MULT_EXPR, intop0,
+                                convert (TREE_TYPE (intop0), size_exp), 1);
+      
+      intop1 = convert (int_type, TREE_OPERAND (intop, 1));
+      if (TYPE_PRECISION (TREE_TYPE (intop1)) != TYPE_PRECISION (sizetype))
+        intop1 = convert (c_common_type_for_size (TYPE_PRECISION (sizetype),
+                                                  TYPE_UNSIGNED (sizetype)), intop1);
+      intop1 = build_binary_op (MULT_EXPR, intop1,
+                                convert (TREE_TYPE (intop1), size_exp), 1);
+      
+      /* adding intop0 and intop1 in opposite order allows
+         extra folding of constants like intop1 to happen, 
+         but we don't want to fold at all to make sure that no extra
+         type conversion is added by fold() or order of '&addr + var*cnst + cnst'
+         is changed.
+         ptrop = fold (build2 (subcode, result_type, ptrop, intop1));
+         return fold (build2 (resultcode, result_type, ptrop, intop0)); */
+      ptrop = /*do not fold*/ (build2 (resultcode, result_type, ptrop, intop0));
+      ret = /*do not fold*/ (build2 (subcode, result_type, ptrop, intop1));
+      if (TREE_CONSTANT (ret))
+        ret = fold (ret);
+      fold_undefer_and_ignore_overflow_warnings ();
+      return ret;
 #endif
     }
 
@@ -2963,12 +2983,19 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 		   build_binary_op (MULT_EXPR, intop,
 				    convert (TREE_TYPE (intop), size_exp), 1));
 				    
+  /* NEW: have to convert to ptr type (UNSIGNED INT). */
+  /* do not convert to ptr type. ptr + int = ptr in SunIR */
+  /* intop = build_binary_op (MULT_EXPR, intop, convert (TREE_TYPE (intop), size_exp), 1); */
+
   /* Create the sum or difference.  */
   if (resultcode == MINUS_EXPR)
     intop = fold_build1 (NEGATE_EXPR, sizetype, intop);
     
   ret = fold_build2 (POINTER_PLUS_EXPR, result_type, ptrop, intop);
   
+  if (TREE_CONSTANT (ret))
+    ret = fold (ret);
+
   fold_undefer_and_ignore_overflow_warnings ();
 
   return ret;
