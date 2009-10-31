@@ -1565,15 +1565,6 @@ static const char *cg_ipo_options =
                                    : -xmemalign=8i }}} \
  %{xlibmopt: -xlibmopt } \
  %{Zfns=yes: -fns }\
- %{m64 : -il %F/"
- #ifdef __linux__
-  "64"
- #else
-  "sparcv9"
- #endif
-  "/gccbuiltins.il ;\
-   m32 : -il %F/gccbuiltins.il ;\
-       : -il %F/gccbuiltins.il } \
  %{Zfma=*: -fma=%* } \
  %{xlibmil: \
     %{m64: %{Zarchm64=v9: -il %J/v9/libm.il;\
@@ -1615,7 +1606,22 @@ static const char *cg_ipo_options =
   %{Zfns=*: }"
 #endif
 #endif
-"%(libm_il) \
+ "%{m64 : -il %F/"
+ #ifdef __linux__
+  "64"
+ #else
+ #ifdef TARGET_CPU_sparc
+  "sparcv9"
+ #else
+ #ifdef TARGET_CPU_x86
+  "amd64"
+ #endif
+ #endif
+ #endif
+ "/gccbuiltins.il ;\
+ m32 : -il %F/gccbuiltins.il ;\
+     : -il %F/gccbuiltins.il } \
+ %(libm_il) \
  %(mvis_il) \
  %{xvector*} %{!xvector* : -xvector=no } \
  %{xthreadvar*} \

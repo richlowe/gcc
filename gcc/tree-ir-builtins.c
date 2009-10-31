@@ -1514,35 +1514,35 @@ map_sync2solaris_fname (enum built_in_function fcode)
   switch (fcode)
     {
     case BUILT_IN_ADD_AND_FETCH_N:
-      return "atomic_add_32";
+      return "atomic_add_32_nv";
     case BUILT_IN_ADD_AND_FETCH_1:
-      return "atomic_add_8";
+      return "atomic_add_8_nv";
     case BUILT_IN_ADD_AND_FETCH_2:
-      return "atomic_add_16";
+      return "atomic_add_16_nv";
     case BUILT_IN_ADD_AND_FETCH_4:
-      return "atomic_add_32";
+      return "atomic_add_32_nv";
     case BUILT_IN_ADD_AND_FETCH_8:
-      return "atomic_add_64";
+      return "atomic_add_64_nv";
     case BUILT_IN_OR_AND_FETCH_N:
-      return "atomic_or_32";
+      return "atomic_or_32_nv";
     case BUILT_IN_OR_AND_FETCH_1:
-      return "atomic_or_8";
+      return "atomic_or_8_nv";
     case BUILT_IN_OR_AND_FETCH_2:
-      return "atomic_or_16";
+      return "atomic_or_16_nv";
     case BUILT_IN_OR_AND_FETCH_4:
-      return "atomic_or_32";
+      return "atomic_or_32_nv";
     case BUILT_IN_OR_AND_FETCH_8:
-      return "atomic_or_64";
+      return "atomic_or_64_nv";
     case BUILT_IN_AND_AND_FETCH_N:
-      return "atomic_and_32";
+      return "atomic_and_32_nv";
     case BUILT_IN_AND_AND_FETCH_1:
-      return "atomic_and_8";
+      return "atomic_and_8_nv";
     case BUILT_IN_AND_AND_FETCH_2:
-      return "atomic_and_16";
+      return "atomic_and_16_nv";
     case BUILT_IN_AND_AND_FETCH_4:
-      return "atomic_and_32";
+      return "atomic_and_32_nv";
     case BUILT_IN_AND_AND_FETCH_8:
-      return "atomic_and_64";
+      return "atomic_and_64_nv";
     case BUILT_IN_VAL_COMPARE_AND_SWAP_N:
       return "atomic_cas_32";
     case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
