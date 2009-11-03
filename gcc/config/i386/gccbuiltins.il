@@ -23,6 +23,11 @@
 ! Boston, MA 02111-1307, USA.
 !
 
+.inline __clzsi2,0
+  bsrl  (%esp),%eax
+  xorl  $31, %eax
+.end
+
 .inline sqrtf,0
   flds    (%esp)
   fsqrt
