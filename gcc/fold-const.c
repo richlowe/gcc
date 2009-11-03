@@ -7430,7 +7430,17 @@ fold_plusminus_mult_expr (enum tree_code code, tree type, tree arg0, tree arg1)
   else if (TREE_CODE (arg1) == INTEGER_CST)
     {
       arg10 = build_one_cst (type);
-      arg11 = arg1;
+      /* As we canonicalize A - 2 to A + -2 get rid of that sign for
+        the purpose of this canonicalization.  */
+      if (TREE_INT_CST_HIGH (arg1) == -1
+         && negate_expr_p (arg1)
+         && code == PLUS_EXPR)
+       {
+         arg11 = negate_expr (arg1);
+         code = MINUS_EXPR;
+       }
+      else
+       arg11 = arg1;
     }
   else
     {
