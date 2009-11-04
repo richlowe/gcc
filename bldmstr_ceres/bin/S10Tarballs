@@ -1,11 +1,11 @@
-#/bin/ksh
+#! /usr/bin/bash
 
 set -x
 
 trap 'echo ERROR; exit 1' ERR
 
 function usage {
-	echo "Usage: $0 <nightly_build_dir> <dest_dir>"
+	echo "Usage: $0 <nightly_build_dir>"
 	echo "where <nightly_build_dir> is something like 20091026_ceres_gcc433"
 	exit 1
 }
@@ -27,6 +27,8 @@ case $GCC_VERSION in
 
 	4.3.3) BUILDAREA=/net/clpt-v490-1/export/data/bldmstr/$NIGHTLY;;
 
+	4.3.4) BUILDAREA=/net/clpt-v490-1/export/data/bldmstr/$NIGHTLY;;
+
 	4.4.0) BUILDAREA=/net/clpt-v490-1/export/data1/bldmstr/$NIGHTLY;;
 
 	*) Echo "Error: Unknown GCC_VERSION"
@@ -40,6 +42,9 @@ RELEASES=/ws/gccfss/releases/$GCC_VERSION/$NIGHTLY
 if [ ! -d $RELEASES ]; then
 	mkdir -p $RELEASES
 fi
+
+# strip the shared libraries
+find $BUILDS -type f -name lib\*.so\* | xargs strip -x
 
 # scgfss
 TARFILE=$RELEASES/SUNW0scgfss$GCC_VER.tar
