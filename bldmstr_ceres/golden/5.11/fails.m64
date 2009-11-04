@@ -261,6 +261,7 @@ gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O3 -finline-functions  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -O2 -g  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_1.f90  -Os  execution test
+gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_1.f90  -O2  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O0  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O1  execution test
 gfortran.sum:FAIL: gfortran.dg/large_real_kind_form_io_2.f90  -O2  execution test
