@@ -100,6 +100,7 @@ gcc.sum:FAIL: gcc.c-torture/execute/ieee/pr38016.c execution,  -fast
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/pr38016.c execution,  -fast -xipo=2 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast 
 gcc.sum:FAIL: gcc.c-torture/execute/ieee/unsafe-fp-assoc.c execution,  -fast -xipo=2 
+gcc.sum:FAIL: gcc.dg/cpp/_Pragma3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/cpp/ucnid-3.c (test for excess errors)
 gcc.sum:FAIL: gcc.dg/20060410.c scan-assembler foo
 gcc.sum:FAIL: gcc.dg/always_inline3.c (test for excess errors)

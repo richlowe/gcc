@@ -32,7 +32,7 @@ function compareFailureFiles {
 		usage;
 	fi
 
-	diff $GOLDENFILE $RESULTFILE > $TEMPFILE1
+	diff -b $GOLDENFILE $RESULTFILE > $TEMPFILE1
 
 	grep '^<' $TEMPFILE1 > /dev/null
 	if [ $? -eq 0 ]
