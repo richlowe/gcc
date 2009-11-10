@@ -1673,7 +1673,17 @@ cc1-checksum.c : cc1-dummy$(exeext) build/genchecksum$(build_exeext)
 
 cc1-checksum.o : cc1-checksum.c
 
-cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS) gccbuiltins-$(target).il
+CPU:=$(shell /bin/uname -p)
+MARCH-sparc=sparcv9
+MARCH-i386=amd64
+MARCH=$(MARCH-$(CPU))
+
+gccbuiltins.il: $(srcdir)/config/$(CPU)/gccbuiltins.il $(srcdir)/config/$(CPU)/gccbuiltins-m64.il
+	$(INSTALL_DATA) $(srcdir)/config/$(CPU)/gccbuiltins.il gccbuiltins.il
+	if [ ! -d $(MARCH) ];then mkdir $(MARCH);fi
+	$(INSTALL_DATA) $(srcdir)/config/$(CPU)/gccbuiltins-m64.il $(MARCH)/gccbuiltins.il
+
+cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS) gccbuiltins.il  
 	if [ "x${SUNW_SCGFSS_PATH}" = x ] ; then \
 	  echo You must set SUNW_SCGFSS_PATH to point to sparc backend package >&2; \
 	  false; \
@@ -1687,16 +1697,6 @@ cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS) gccbuiltins-$(targe
 		-L $(scgfss_lib_dir)/sys \
 		-R \$$ORIGIN/../../../../lib/gcc/$(target_noncanonical)/$(version); \
 	fi
-gccbuiltins-sparc-sun-solaris2.11.il: gccbuiltins-sparc-sun-solaris2.10.il
-gccbuiltins-sparc-sun-solaris2.10.il: $(srcdir)/config/sparc/gccbuiltins.il $(srcdir)/config/sparc/gccbuiltins-m64.il
-	$(INSTALL_DATA) $(srcdir)/config/sparc/gccbuiltins.il gccbuiltins.il
-	if [ ! -d sparcv9 ];then mkdir sparcv9;fi
-	$(INSTALL_DATA) $(srcdir)/config/sparc/gccbuiltins-m64.il sparcv9/gccbuiltins.il
-
-gccbuiltins-i386-pc-solaris2.10.il: $(srcdir)/config/i386/gccbuiltins.il $(srcdir)/config/i386/gccbuiltins-m64.il
-	$(INSTALL_DATA) $(srcdir)/config/i386/gccbuiltins.il gccbuiltins.il
-	if [ ! -d amd64 ];then mkdir amd64;fi
-	$(INSTALL_DATA) $(srcdir)/config/i386/gccbuiltins-m64.il amd64/gccbuiltins.il
 
 #
 # Build libgcc.a.
@@ -4173,27 +4173,19 @@ maintainer-clean:
 # Entry points `install' and `uninstall'.
 # Also use `install-collect2' to install collect2 when the config files don't.
 
+install-gccbuiltins.il: installdirs gccbuiltins.il $(MARCH)/gccbuiltins.il
+	rm -f $(DESTDIR)$(libsubdir)/gccbuiltins.il
+	$(INSTALL_DATA) gccbuiltins.il $(DESTDIR)$(libsubdir)/gccbuiltins.il
+	rm -f $(DESTDIR)$(libsubdir)/$(MARCH)/gccbuiltins.il
+	(cd $(DESTDIR)$(libsubdir); if [ ! -d $(MARCH) ];then mkdir $(MARCH);fi)
+	$(INSTALL_DATA) $(MARCH)/gccbuiltins.il $(DESTDIR)$(libsubdir)/$(MARCH)/gccbuiltins.il
+
 # Copy the compiler files into directories where they will be run.
 # Install the driver last so that the window when things are
 # broken is small.
-install: install-common install-gccbuiltins-$(target).il $(INSTALL_HEADERS) \
+install: install-common install-gccbuiltins.il $(INSTALL_HEADERS) \
     install-cpp install-man install-info install-@POSUB@ \
     install-driver 
-
-install-gccbuiltins-sparc-sun-solaris2.11.il: install-gccbuiltins-sparc-sun-solaris2.10.il
-install-gccbuiltins-sparc-sun-solaris2.10.il: installdirs gccbuiltins.il sparcv9/gccbuiltins.il
-	rm -f $(DESTDIR)$(libsubdir)/gccbuiltins.il
-	$(INSTALL_DATA) gccbuiltins.il $(DESTDIR)$(libsubdir)/gccbuiltins.il
-	rm -f $(DESTDIR)$(libsubdir)/sparcv9/gccbuiltins.il
-	(cd $(DESTDIR)$(libsubdir); if [ ! -d sparcv9 ];then mkdir sparcv9;fi)
-	$(INSTALL_DATA) sparcv9/gccbuiltins.il $(DESTDIR)$(libsubdir)/sparcv9/gccbuiltins.il
-
-install-gccbuiltins-i386-pc-solaris2.10.il: installdirs gccbuiltins.il amd64/gccbuiltins.il
-	rm -f $(DESTDIR)$(libsubdir)/gccbuiltins.il
-	$(INSTALL_DATA) gccbuiltins.il $(DESTDIR)$(libsubdir)/gccbuiltins.il
-	rm -f $(DESTDIR)$(libsubdir)/amd64/gccbuiltins.il
-	(cd $(DESTDIR)$(libsubdir); if [ ! -d amd64 ];then mkdir amd64;fi)
-	$(INSTALL_DATA) amd64/gccbuiltins.il $(DESTDIR)$(libsubdir)/amd64/gccbuiltins.il
 
 # Handle cpp installation.
 install-cpp: installdirs cpp$(exeext)
