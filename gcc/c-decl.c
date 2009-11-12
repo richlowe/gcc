@@ -1707,6 +1707,7 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
       DECL_TLS_MODEL (newdecl) = DECL_TLS_MODEL (olddecl);
       C_DECL_THREADPRIVATE_P (newdecl) = 1;
       register_threadprivate_variable (newdecl, NULL_TREE, NULL_TREE, NULL_TREE);
+      remove_threadprivate_variable (olddecl);
     }
 
   if (CODE_CONTAINS_STRUCT (TREE_CODE (olddecl), TS_DECL_WITH_VIS))

@@ -11152,6 +11152,27 @@ register_threadprivate_variable (tree tpvar, tree ctor,
     }
 }
 
+void
+remove_threadprivate_variable (tree decl)
+{
+  struct varpool_node *node;
+  tree tls_ptr;
+
+  tls_ptr = lookup_threadprivate_variable (decl);
+  if (tls_ptr == NULL_TREE)
+    return;
+
+  node = varpool_node (tls_ptr);
+
+  /* Skipped dumping it in varpool_assemble_decl. */
+  DECL_EXTERNAL (tls_ptr) = 1;
+
+  /* Marked it as candidate for varpool_remove_unreferenced_decls. */
+  node->finalized = false;
+
+  splay_tree_remove (thread_private_list, (splay_tree_key) decl);
+}
+
 tree
 lookup_threadprivate_variable (tree decl)
 {

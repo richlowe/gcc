@@ -153,6 +153,7 @@ extern void dump_function_ir (tree);
 extern void global_ir_init (void);
 extern void global_ir_fini (void);
 extern void register_threadprivate_variable (tree, tree, tree, tree);
+extern void remove_threadprivate_variable (tree);
 extern void dump_ir_threadprivate_fn (void);
 extern tree lookup_threadprivate_variable (tree decl);
 extern tree cxx_omp_constructor_wrapper_for_irgen (tree, location_t, int);
