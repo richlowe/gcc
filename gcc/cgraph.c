@@ -1077,7 +1077,9 @@ cgraph_add_new_function (tree fndecl, bool lowered)
           tree_lowering_passes (fndecl);
 	bitmap_obstack_initialize (NULL);
 	if (!gimple_in_ssa_p (DECL_STRUCT_FUNCTION (fndecl)) && optimize)
-          if (DECL_DONT_GENERATE_SUNIR (fndecl))
+          /* gccfss don't need call pass_early_local_passes.sub here
+             since we might call it in pass_all_passes_rtl.sub later. */
+          if (0)
 	  execute_pass_list (pass_early_local_passes.sub);
 	bitmap_obstack_release (NULL);
 	tree_rest_of_compilation (fndecl);

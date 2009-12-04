@@ -466,7 +466,9 @@ tree_lowering_passes (tree fn)
   bitmap_obstack_initialize (NULL);
   execute_pass_list (all_lowering_passes);
   if (optimize && cgraph_global_info_ready)
-    if (DECL_DONT_GENERATE_SUNIR (fn))
+    /* gccfss don't need call pass_early_local_passes.sub here
+       since we might call it in pass_all_passes_rtl.sub later. */
+    if (0)
     execute_pass_list (pass_early_local_passes.sub);
   free_dominance_info (CDI_POST_DOMINATORS);
   free_dominance_info (CDI_DOMINATORS);

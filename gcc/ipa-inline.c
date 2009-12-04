@@ -349,7 +349,8 @@ cgraph_check_inline_limits (struct cgraph_node *to, struct cgraph_node *what,
   int limit;
   HOST_WIDE_INT stack_size_limit, inlined_stack;
 
-  if ( DECL_DONT_GENERATE_SUNIR (what->decl) != DECL_DONT_GENERATE_SUNIR (to->decl))
+  if (flag_use_rtl_backend != -1
+      && DECL_DONT_GENERATE_SUNIR (what->decl) != DECL_DONT_GENERATE_SUNIR (to->decl))
     {
       if (reason)
         *reason = N_("Do not across inline between IR and RTL functions");

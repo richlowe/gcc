@@ -478,7 +478,9 @@ cgraph_process_new_functions (void)
 	      /* When not optimizing, be sure we run early local passes anyway
 		 to expand OMP.  */
 	      || !optimize)
-            if (DECL_DONT_GENERATE_SUNIR (fndecl))
+            /* gccfss don't need call pass_early_local_passes.sub here  
+               since we might call it in pass_all_passes_rtl.sub later. */
+            if (0)
 	    execute_pass_list (pass_early_local_passes.sub);
 	  free_dominance_info (CDI_POST_DOMINATORS);
 	  free_dominance_info (CDI_DOMINATORS);
@@ -873,9 +875,9 @@ cgraph_analyze_function (struct cgraph_node *node)
     {
       bitmap_obstack_initialize (NULL);
       tree_register_cfg_hooks ();
+      /* gccfss don't need call pass_early_local_passes.sub here  
+         since we might call it in pass_all_passes_rtl.sub later. */
       /* FIXME execute_pass_list (pass_early_local_passes.sub); */
-      if (DECL_DONT_GENERATE_SUNIR (current_function_decl))
-        execute_pass_list (pass_early_local_passes.sub); 
       free_dominance_info (CDI_POST_DOMINATORS);
       free_dominance_info (CDI_DOMINATORS);
       bitmap_obstack_release (NULL);

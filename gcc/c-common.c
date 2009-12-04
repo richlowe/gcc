@@ -5148,10 +5148,12 @@ handle_error_attribute (tree *node, tree name, tree args,
     /* Do nothing else, just set the attribute.  We'll get at
        it later with lookup_attribute.  */
     {
+#if 0 /* The workaround may expose more problems. Abandon it. */
       /* workaround for rfe 6788857. */
       flag_use_rtl_backend = -1;
       if (optimize >= 3)
         flag_inline_functions = 1;
+#endif
     }
   else
     {
