@@ -1035,14 +1035,14 @@ static const char *cpp_debug_options = "%{d*}";
  %{xexplicitpar:} \
  %{xprofile=*: \
     %{O: ;\
-      O0: -O1 %N`-xprofile' requires `-O1', `-O2', `-O3' or `-fast', assuming `-O1' option ;\
+      O0: %{!ftest-coverage: -O1 %N`-xprofile' requires `-O1', `-O2', `-O3' or `-fast', assuming `-O1' option} ;\
       O1: ;\
       O2: ;\
       Os: ;\
       O3: ;\
       O*: ;\
       Zfast: ;\
-        : -O1 %N`-xprofile' requires `-O1', `-O2', `-O3' or `-fast', assuming `-O1' option } }\
+        : %{!ftest-coverage: -O1 %N`-xprofile' requires `-O1', `-O2', `-O3' or `-fast', assuming `-O1' option} } }\
  %{ftest-coverage: %{xipo*: %<xipo* %e`-ftest-coverage' and `-xipo' are incompatible}}\
  %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants}"
 

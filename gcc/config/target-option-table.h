@@ -63,7 +63,7 @@ Boston, MA 02111-1307, USA.  */
   { "-fPIC", "-xcode=pic32" }, \
   { "-fprofile-arcs", "-Zfprofile-arcs -xprofile=collect=a.out" },\
   { "-fprofile-generate", "-Zfprofile-generate -xprofile=collect=a.out" },\
-  { "-fprofile-values", "-Zprofile-values"}, \
+  { "-fprofile-values", "-Zfprofile-values"}, \
   { "-fbranch-probabilities", "-Zfbranch-probabilities -xprofile=use=a.out" },\
   { "-fprofile-use", "-Zfprofile-use -xprofile=use=a.out" },\
   { "-fsimple", "-ffast-math -Zfsimple=1" }, \
