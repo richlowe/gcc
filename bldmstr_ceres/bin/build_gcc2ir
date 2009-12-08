@@ -57,7 +57,7 @@ case "$OS_NAME" in
 	;;
 esac
 
-DEFAULT_SUN_DIR=/ws/gccfss/builds/$GCC_VERSION/current_gcc/SUNW0scgfss
+DEFAULT_SUN_DIR=/ws/gccfss/builds/$GCC_VERSION/current_gcc/SUNW0scgfss/$GCC_VERSION
 SPARC_INSTALL_DIR=
 ROOT=
 FORCE_BRINGOVER=0
@@ -69,7 +69,6 @@ NIGHTLY_BUILD_MODE=0
 PARALLEL_BUILD_OPTION="-j $JOBS"
 BOOTSTRAP_OPTION=
 DEBUG_MODE=0
-LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
 INCLUDE_HEADERS=/ws/gccfss/source/Studio12U1_include_headers
 
 trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
@@ -339,7 +338,7 @@ install_crosscompiler_suncomponents ()
 	    exit 1
         fi
 
-	SUN_DIR_ROOT=$SUN_DIR/$GCC_VERSION/prod
+	SUN_DIR_ROOT=$SUN_DIR/prod
 
 	if [ ! -d $SUN_DIR_ROOT ]
 	then
@@ -426,7 +425,7 @@ install_suncomponents()
 {
 	# SUN_DIR_ROOT is the dir just above the bin and lib directories
 	# from which we want to copy.
-	SUN_DIR_ROOT=$SUN_DIR/$GCC_VERSION/prod
+	SUN_DIR_ROOT=$SUN_DIR/prod
 	
 	echo "Installing Sun components from $SUN_DIR_ROOT to $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod ..."
 
@@ -446,7 +445,7 @@ install_suncomponents()
 
 	# Copy the files.
 	cd $SUN_DIR_ROOT
-	cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SOURCE_WS/bldmstr_ceres/bin/sun_components.txt
+	tar cf - . | (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod; tar xf -)
 	# Set read/execute permission on directories created by cpio.  
 	# This is only necessary for Linux
 	find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
@@ -462,12 +461,6 @@ install_suncomponents()
 		do \
 			find . -name "$file*" |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib ;\
 		done)
-		#else
-		# Do not need install developing libmtsk.so.1.
-		# Install libmtsk.so.1 from current_ceres build area.
-		# cd $LIBMTSK_DIR
-		# ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib
-		# cd sparcv9; ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9
 	fi
 
 	# Create the links for the user tools and their man pages.
@@ -493,27 +486,6 @@ install_suncomponents()
         # install area
         mkdir -p  $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
         cp -r $INCLUDE_HEADERS/* $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
-
-	# create soft links for v8plusc/v9c subdirectories
-	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
-	ln -s sparcfmaf v8plusc
-	ln -s sparcfmaf/64 v9c
-        # create soft links for sparcima subdirectory
-        ln -s sparcfmaf sparcima
-        # create soft links for v8plusd,v9d subdirectories
-        # CR 6829027. vis.il lives in v8plusd and v9d,
-        # move it to sparcfmaf, and create links to
-        # sparcima. sparcima is again a link to sparcfmaf
-        mv v8plusd/vis.il sparcfmaf/vis.il
-        mv v9d/vis.il sparcfmaf/64/vis.il
-        rm -rf v8plusd
-        rm -rf v9d
-        ln -s sparcima v8plusd
-        ln -s sparcima/64 v9d
-        # create links for sparcvis and sparcvis2
-        ln -s v8plusa sparcvis
-        ln -s v8plusb sparcvis2
-        ln -s v8plus sparc
 
         # Add the legal licenses
         (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION ; \
@@ -556,11 +528,6 @@ prepare_tests()
   # make sure to work without license file
   SN_SERIAL_FILE=
   export SN_SERIAL_FILE
-
-  # Do not need link developing libmtsk.so.1.
-  # for libmtsk.so
-  #cd $ROOT/build.gcc2ir/gcc; ln -s $LIBMTSK_DIR/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
-  #cd $ROOT/build.gcc2ir/gcc/sparcv9; ln -s $LIBMTSK_DIR/sparcv9/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
 }
 
 prepare_tests_cross()
@@ -604,11 +571,7 @@ run_tests_installed()
   # Running test for Objc and Fortran
   echo "Running tests for Objc and Fortran"
 
-  FINAL_INSTALL_DIR=$INSTALL_DIR/usr
-  # Create links: gcc -> gcc-$GCC_VERSION, gfortran -> gfortran-$GCC_VERSION
-  cd $FINAL_INSTALL_DIR/bin
-  ln -s gcc-$GCC_VERSION gcc
-  ln -s gfortran-$GCC_VERSION gfortran
+  FINAL_INSTALL_DIR=${INSTALL_DIR}${PREFIX}
 
   cd $ROOT/build.gcc2ir/gcc
 
@@ -647,10 +610,6 @@ run_tests_installed()
     --without-gcc --without-g++ --target_board=unix/-m64 \
 	> $ROOT/logs/tests.objc-fortran.m64.log 2>&1); \
     mv *.log *.sum $ROOT/logs/result.m64 )
-
-  # Remove links: gcc -> gcc-$GCC_VERSION, gfortran -> gfortran-$GCC_VERSION
-  cd $FINAL_INSTALL_DIR/bin
-  rm gcc gfortran
 }
 
 run_tests_parallel()
@@ -937,28 +896,28 @@ manipulate_install_area ()
 {
     if [ `uname -r` == 5.11 ]
     then
-        # layer the fortran and objc binaries
-        ( cd $INSTALL_DIR ;
-          bzip2 -cd /ws/gccfss/source/gfortran-objc-$GCC_VER.tar.bz2 | tar xf - )
+#        # layer the fortran and objc binaries
+#        ( cd $INSTALL_DIR ;
+#          bzip2 -cd /ws/gccfss/source/gfortran-objc-$GCC_VER.tar.bz2 | tar xf - )
 
         # Move the SUNWscgfss firectory also into usr/compilers
         #mv $INSTALL_DIR/../$SUNINSTSUBDIR $INSTALL_DIR/usr/compilers
 	( cd $INSTALL_DIR;
-	  mv ../$SUNINSTSUBDIR usr/lib/gcc/sparc-sun-solaris2.11/gccfss )
+	  mv ../$SUNINSTSUBDIR ./$PREFIX/lib/gcc/sparc-sun-solaris2.11/gccfss )
 
         # correct SUNW_SCGFSS_PATH for future tests.         
-        SUNW_SCGFSS_PATH=$INSTALL_DIR/usr/lib/gcc/sparc-sun-solaris2.11/gccfss
+        SUNW_SCGFSS_PATH=$INSTALL_DIR/$PREFIX/lib/gcc/sparc-sun-solaris2.11/gccfss
         export SUNW_SCGFSS_PATH
 
-        # Lets create the packages
-	echo "Create packages ..."
-        # 1. SUNWgcc432
-        /bin/pkgmk -o -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc433/prototype_gccfss -b $INSTALL_DIR -d $INSTALL_DIR/.. \
-	  > $ROOT/logs/packages.log 2>&1
-
-        # 2. SUNWgccruntime
-       /bin/pkgmk -o -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime433/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
-	  >> $ROOT/logs/packages.log 2>&1
+#        # Lets create the packages
+#	echo "Create packages ..."
+#        # 1. SUNWgcc432
+#        /bin/pkgmk -o -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgcc$GCC_VER/prototype_gccfss -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+#	  > $ROOT/logs/packages.log 2>&1
+#
+#        # 2. SUNWgccruntime
+#       /bin/pkgmk -o -f ${SCRIPTDIR}/../data/OpenSolarisPackages/SUNWgccruntime$GCC_VER/prototype -b $INSTALL_DIR -d $INSTALL_DIR/.. \
+#	  >> $ROOT/logs/packages.log 2>&1
 	  
     fi
 }
@@ -1084,13 +1043,13 @@ then
 	# When building cross compiler we need quite a bit of
 	# different setup and configure.
         $SOURCE_WS/configure \
-            --prefix=$INSTALL_DIR \
+	    --prefix=$INSTALL_DIR \
 	    --target=sparc-sun-solaris2.10 \
 	    --disable-gnattools \
 	    --disable-libmudflap \
 	    --enable-languages=c,c++ \
 	    --with-gnu-as \
-            --with-ld=/usr/ccs/bin/ld \
+	    --with-ld=/usr/ccs/bin/ld \
 	    --without-gnu-ld > $ROOT/logs/config.gcc2ir.log 2>&1
     elif [ `uname -r` = 5.11 ]
     then
@@ -1099,18 +1058,15 @@ then
 	export AS="/usr/ccs/bin/as"
         export AS_FOR_TARGET="/usr/ccs/bin/as"
 	$SOURCE_WS/configure \
-            --prefix=/usr \
-            --program-suffix=-$GCC_VERSION \
-            --infodir=/usr/share/info \
-	    --mandir=/usr/share/man \
-	    --libexecdir=/usr/lib \
-            --enable-shared \
-            --disable-static \
-            --with-system-zlib \
-            --enable-checking=release \
-            --enable-languages=c,c++,objc \
-            --disable-libobjc \
-            --with-cpu=v9 \
+	    --prefix=$PREFIX \
+	    --libexecdir=$PREFIX/lib \
+	    --enable-shared \
+	    --disable-static \
+	    --with-system-zlib \
+	    --enable-checking=release \
+	    --enable-languages=c,c++,objc \
+	    --disable-libobjc \
+	    --with-cpu=v9 \
 	    --without-gnu-ld \
 	    --with-ld=/usr/ccs/bin/ld \
 	    --without-gnu-as \
@@ -1119,15 +1075,15 @@ then
 	    --with-gmp-lib=/usr/lib \
 	    --with-mpfr-include=/usr/include/mpfr \
 	    --with-mpfr-lib=/usr/lib \
-            --disable-libtool-lock \
-            --enable-threads=posix \
+	    --disable-libtool-lock \
+	    --enable-threads=posix \
 	    --enable-tls=yes \
 	    --enable-c99 \
-            --enable-libssp \
-            --enable-nls \
-            --enable-wchar_t \
-            --enable-libstdcxx-allocator=mt \
-            --with-pic > $ROOT/logs/config.gcc2ir.log 2>&1
+	    --enable-libssp \
+	    --enable-nls \
+	    --enable-wchar_t \
+	    --enable-libstdcxx-allocator=mt \
+	    --with-pic > $ROOT/logs/config.gcc2ir.log 2>&1
     else
 	if [ "$OS_NAME" = "Linux" ]
 	then
@@ -1143,7 +1099,7 @@ then
 	$SOURCE_WS/configure \
 	    --prefix= \
 	    --enable-shared \
-            --disable-static \
+	    --disable-static \
 	    --with-system-zlib \
 	    --enable-checking=release \
 	    --enable-languages=c,c++ \

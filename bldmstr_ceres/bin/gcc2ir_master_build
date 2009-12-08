@@ -153,7 +153,7 @@ then
 		exit 1
 	fi
 
-	SUNINSTALL="$BUILDDIR/langinstall"
+	SUNINSTALL="$BUILDDIR/langinstall/$GCC_VERSION"
 fi
 
 # Build and install gcc2ir

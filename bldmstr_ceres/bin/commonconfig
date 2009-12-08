@@ -30,6 +30,9 @@ export GCCPACKAGE=SUNW0gccfss
 # Lang workspaces used by gcc4ss builds
 export LANGWSINT=/net/kits.sfbay/compilers/branches/ceres/buildarea/gccfss433/src/lang
 export LANGWSLISTDEFAULT="$LANGWSINT"
+
+# GCC values
 export GCC2IRWS="/ws/gccfss/source/gcc.git"
 export GCC_VERSION="4.3.3" 
 export GCC_VER="433" 
+export PREFIX=/usr/gcc/4.3
