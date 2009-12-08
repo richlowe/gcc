@@ -583,3 +583,15 @@ lang_specific_pre_link (void)	/* Not used for F77.  */
 
 /* Number of extra output files that lang_specific_pre_link may generate.  */
 int lang_specific_extra_outfiles = 0;	/* Not used for F77.  */
+
+#ifdef TARGET_OPTION_TRANSLATE_TABLE
+const struct {
+  const char *const option_found;
+  const char *const replacements;
+} target_option_translations[] =
+{
+  TARGET_OPTION_TRANSLATE_TABLE,
+  { 0, 0 }
+};
+#endif
+
