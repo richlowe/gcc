@@ -69,6 +69,7 @@ NIGHTLY_BUILD_MODE=0
 PARALLEL_BUILD_OPTION="-j $JOBS"
 BOOTSTRAP_OPTION=
 DEBUG_MODE=0
+LIBMTSK_DIR=/import/backend-blds/compilers/current_ceres/prod/usr/lib/nightly/
 INCLUDE_HEADERS=/ws/gccfss/source/Studio12U1_include_headers
 
 trap 'echo >&2 ERROR: a command has failed--check log files;exit 2' $ERROR_TRAP
@@ -445,7 +446,7 @@ install_suncomponents()
 
 	# Copy the files.
 	cd $SUN_DIR_ROOT
-	tar cf - . | (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod; tar xf -)
+	cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod < $SOURCE_WS/bldmstr_ceres/bin/sun_components.txt
 	# Set read/execute permission on directories created by cpio.  
 	# This is only necessary for Linux
 	find $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod -type d -exec chmod a+rx {} \;
@@ -461,6 +462,12 @@ install_suncomponents()
 		do \
 			find . -name "$file*" |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib ;\
 		done)
+		#else
+		# Do not need install developing libmtsk.so.1.
+		# Install libmtsk.so.1 from current_ceres build area.
+		# cd $LIBMTSK_DIR
+		# ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib
+		# cd sparcv9; ls libmtsk.so* |cpio -pdum $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/v9
 	fi
 
 	# Create the links for the user tools and their man pages.
@@ -486,6 +493,27 @@ install_suncomponents()
         # install area
         mkdir -p  $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
         cp -r $INCLUDE_HEADERS/* $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/include
+
+	# create soft links for v8plusc/v9c subdirectories
+	cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION/prod/lib/
+	ln -s sparcfmaf v8plusc
+	ln -s sparcfmaf/64 v9c
+        # create soft links for sparcima subdirectory
+        ln -s sparcfmaf sparcima
+        # create soft links for v8plusd,v9d subdirectories
+        # CR 6829027. vis.il lives in v8plusd and v9d,
+        # move it to sparcfmaf, and create links to
+        # sparcima. sparcima is again a link to sparcfmaf
+        mv v8plusd/vis.il sparcfmaf/vis.il
+        mv v9d/vis.il sparcfmaf/64/vis.il
+        rm -rf v8plusd
+        rm -rf v9d
+        ln -s sparcima v8plusd
+        ln -s sparcima/64 v9d
+        # create links for sparcvis and sparcvis2
+        ln -s v8plusa sparcvis
+        ln -s v8plusb sparcvis2
+        ln -s v8plus sparc
 
         # Add the legal licenses
         (cd $INSTALL_DIR/../$SUNINSTSUBDIR/$GCC_VERSION ; \
@@ -528,6 +556,11 @@ prepare_tests()
   # make sure to work without license file
   SN_SERIAL_FILE=
   export SN_SERIAL_FILE
+
+  # Do not need link developing libmtsk.so.1.
+  # for libmtsk.so
+  #cd $ROOT/build.gcc2ir/gcc; ln -s $LIBMTSK_DIR/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
+  #cd $ROOT/build.gcc2ir/gcc/sparcv9; ln -s $LIBMTSK_DIR/sparcv9/libmtsk.so.1 libmtsk.so.1; ln -s libmtsk.so.1 libmtsk.so
 }
 
 prepare_tests_cross()
