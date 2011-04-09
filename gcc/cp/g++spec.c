@@ -325,9 +325,6 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
   /* Add `-lstdc++' if we haven't already done so.  */
   if (library > 0)
     {
-      arglist[j++] = saw_m64_flag
-	? "-R" LIBDIR "/amd64"
-	: "-R" LIBDIR;
       arglist[j] = shared_libgcc == 0 ? LIBSTDCXX_STATIC
 	: saw_profile_flag ? LIBSTDCXX_PROFILE : LIBSTDCXX;
       if (arglist[j][0] != '-' || arglist[j][1] == 'l')

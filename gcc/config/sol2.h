@@ -123,12 +123,12 @@ along with GCC; see the file COPYING3.  If not see
    %{YP,*} \
    %{R*} \
    %{compat-bsd: \
-     %{!YP,*:%{p|pg:-Y P,/usr/ucblib:/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/usr/lib} \
-             %{!p:%{!pg:-Y P,/usr/ucblib:/usr/ccs/lib:/usr/lib}}} \
-             -R /usr/ucblib} \
+     %{!YP,*:%{p|pg:-Y P,/usr/ucblib:/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib -R /usr/ucblib:/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib} \
+             %{!p:%{!pg:-Y P,/usr/ucblib:/usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib -R /usr/ucblib:/usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib}}} \
+             } \
    %{!compat-bsd: \
-     %{!YP,*:%{p|pg:-Y P,/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/usr/lib} \
-             %{!p:%{!pg:-Y P,/usr/ccs/lib:/usr/lib}}}}"
+     %{!YP,*:%{p|pg:-Y P,/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib -R /usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib} \
+             %{!p:%{!pg:-Y P,/usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib -R /usr/ccs/lib:/lib:/usr/lib:/usr/sfw/lib}}}}"
 
 #undef LINK_ARCH32_SPEC
 #define LINK_ARCH32_SPEC LINK_ARCH32_SPEC_BASE
