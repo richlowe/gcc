@@ -106,5 +106,57 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef NO_PROFILE_COUNTERS
 
+/* Override i386/sol2.h version: return 8-byte vectors in MMX registers if
+   possible, matching Sun Studio 12 Update 1+ compilers and other x86
+   targets.  */
+#undef TARGET_SUBTARGET_DEFAULT
+#define TARGET_SUBTARGET_DEFAULT \
+	(MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS)
+
+#define SUBTARGET_OPTIMIZATION_OPTIONS				\
+  { OPT_LEVELS_1_PLUS, OPT_momit_leaf_frame_pointer, NULL, 1 }
+
+#define MULTILIB_DEFAULTS { "m32" }
+
+#undef LINK_ARCH64_SPEC_BASE
+#define LINK_ARCH64_SPEC_BASE \
+  "%{G:-G} \
+   %{YP,*} \
+   %{R*} \
+   %{compat-bsd: \
+     %{!YP,*:%{p|pg:-Y P,/usr/ucblib/64:/usr/lib/libp/64:/lib/64:/usr/lib/64} \
+             %{!p:%{!pg:-Y P,/usr/ucblib/64:/lib/64:/usr/lib/64}}} \
+             -R /usr/ucblib/64} \
+   %{!compat-bsd: \
+     %{!YP,*:%{p|pg:-Y P,/usr/lib/libp/64:/lib/64:/usr/lib/64} \
+             %{!p:%{!pg:-Y P,/lib/64:/usr/lib/64}}}}"
+
+#undef LINK_ARCH64_SPEC
+#define LINK_ARCH64_SPEC LINK_ARCH64_SPEC_BASE
+
+#ifdef TARGET_GNU_LD
+/* Since binutils 2.21, GNU ld supports new *_sol2 emulations to strictly
+   follow the Solaris 2 ABI.  Prefer them if present.  */
+#ifdef HAVE_LD_SOL2_EMULATION
+#define I386_EMULATION "elf_i386_sol2"
+#define X86_64_EMULATION "elf_x86_64_sol2"
+#else
+#define I386_EMULATION "elf_i386"
+#define X86_64_EMULATION "elf_x86_64"
+#endif
+
+#define TARGET_LD_EMULATION "%{m64:-m " X86_64_EMULATION "}" \
+			    "%{!m64:-m " I386_EMULATION "} "
+#else
+#define TARGET_LD_EMULATION ""
+#endif
+
+#undef LINK_ARCH_SPEC
+#define LINK_ARCH_SPEC TARGET_LD_EMULATION \
+		       "%{m64:" LINK_ARCH64_SPEC "}%{!m64:" LINK_ARCH32_SPEC "}"
+
+/* We do not need to search a special directory for startup files.  */
+#undef MD_STARTFILE_PREFIX
+
 #undef MCOUNT_NAME
 #define MCOUNT_NAME "_mcount"
