@@ -172,12 +172,12 @@
    %{YP,*} \
    %{R*} \
    %{compat-bsd: \
-     %{!YP,*:%{p|pg:-Y P,/usr/ucblib/sparcv9:/usr/lib/libp/sparcv9:/usr/lib/sparcv9} \
-       %{!p:%{!pg:-Y P,/usr/ucblib/sparcv9:/usr/lib/sparcv9}}} \
-     -R /usr/ucblib/sparcv9} \
+     %{!YP,*:%{p|pg:-Y P,/usr/ucblib/64:/usr/lib/libp/64:/lib/64:/usr/lib/64:/usr/sfw/lib/64 -R /usr/ucblib/64:/usr/lib/libp/64:/lib/64:/usr/lib/64:/usr/sfw/lib/64} \
+       %{!p:%{!pg:-Y P,/usr/ucblib/64:/lib/64:/usr/lib/64:/usr/sfw/lib/64 -R /usr/ucblib/64:/lib/64:/usr/lib/64:/usr/sfw/lib/64}}} \
+     } \
    %{!compat-bsd: \
-     %{!YP,*:%{p|pg:-Y P,/usr/lib/libp/sparcv9:/usr/lib/sparcv9} \
-       %{!p:%{!pg:-Y P,/usr/lib/sparcv9}}}}"
+     %{!YP,*:%{p|pg:-Y P,/usr/lib/libp/64:/lib/64:/usr/lib/64:/usr/sfw/lib/64 -R /usr/lib/libp/64:/lib/64:/usr/lib/64:/usr/sfw/lib/64} \
+       %{!p:%{!pg:-Y P,/lib/64:/usr/lib/64:/usr/sfw/lib/64 -R /lib/64:/usr/lib/64:/usr/sfw/lib/64}}}}"
 
 #define LINK_ARCH64_SPEC LINK_ARCH64_SPEC_BASE
 
