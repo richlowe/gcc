@@ -19,11 +19,11 @@ void abort (void);
 
 #pragma align 8(not_defined)
 
-#pragma align 9(odd_align)	/* { dg-error "invalid alignment" } */
-#pragma align 256(high_align)	/* { dg-error "invalid alignment" } */
-#pragma align -1(neg_align)	/* { dg-error "malformed" } */
-#pragma align bad_align		/* { dg-error "malformed" } */
-#pragma align 1(bad_align	/* { dg-error "malformed" } */
+#pragma align 9(odd_align)	/* { dg-warning "invalid alignment" } */
+#pragma align 256(high_align)	/* { dg-warning "invalid alignment" } */
+#pragma align -1(neg_align)	/* { dg-warning "malformed" } */
+#pragma align bad_align		/* { dg-warning "malformed" } */
+#pragma align 1(bad_align	/* { dg-warning "malformed" } */
 
 int x1, x2, x4, x8, y8, z8, x16, y16, x32, x64, x128, y128, z128;
 
