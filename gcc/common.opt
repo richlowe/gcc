@@ -214,6 +214,10 @@ Wunused-variable
 Common Var(warn_unused_variable) Warning
 Warn when a variable is unused
 
+Wvastart-last-param
+Common Var(warn_vastart_last_param) Init(1) Warning
+Warn when the 2nd argument to va_start() is not the last formal parameter
+
 Wvolatile-register-var
 Common Var(warn_register_var) Warning
 Warn when a register variable is declared volatile

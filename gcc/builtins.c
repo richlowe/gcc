@@ -11435,7 +11435,9 @@ fold_builtin_next_arg (tree exp, bool va_start_p)
 	     argument.  We just warn and set the arg to be the last
 	     argument so that we will get wrong-code because of
 	     it.  */
-	  warning (0, "second parameter of %<va_start%> not last named argument");
+            if (warn_vastart_last_param)
+                warning (0, "second parameter of %<va_start%> not last "
+                  "named argument");
 	}
       /* We want to verify the second parameter just once before the tree
 	 optimizers are run and then avoid keeping it in the tree,
