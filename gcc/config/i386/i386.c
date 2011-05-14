@@ -1656,7 +1656,7 @@ struct stack_local_entry GTY(())
 					      <- HARD_FRAME_POINTER
    [saved regs]
 
-   [padding0]
+   [padding05]
 
    [saved SSE regs]
 
@@ -1670,7 +1670,7 @@ struct stack_local_entry GTY(())
   */
 struct ix86_frame
 {
-  int padding0;
+  int padding05;
   int nsseregs;
   int nregs;
   int padding1;
@@ -7802,12 +7802,12 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
 
   /* Align SSE reg save area.  */
   if (frame->nsseregs)
-    frame->padding0 = ((offset + 16 - 1) & -16) - offset;
+    frame->padding05 = ((offset + 16 - 1) & -16) - offset;
   else
-    frame->padding0 = 0;
+    frame->padding05 = 0;
   
   /* SSE register save area.  */
-  offset += frame->padding0 + frame->nsseregs * 16;
+  offset += frame->padding05 + frame->nsseregs * 16;
 
   /* Va-arg area */
   frame->va_arg_size = ix86_varargs_gpr_size + ix86_varargs_fpr_size;
@@ -7882,7 +7882,7 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
   fprintf (stderr, "size: %ld\n", (long)size);
   fprintf (stderr, "nregs: %ld\n", (long)frame->nregs);
   fprintf (stderr, "nsseregs: %ld\n", (long)frame->nsseregs);
-  fprintf (stderr, "padding0: %ld\n", (long)frame->padding0);
+  fprintf (stderr, "padding05: %ld\n", (long)frame->padding0);
   fprintf (stderr, "alignment1: %ld\n", (long)stack_alignment_needed);
   fprintf (stderr, "padding1: %ld\n", (long)frame->padding1);
   fprintf (stderr, "va_arg: %ld\n", (long)frame->va_arg_size);
@@ -8258,7 +8258,7 @@ ix86_expand_prologue (void)
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
-  allocate = frame.to_allocate + frame.nsseregs * 16 + frame.padding0;
+  allocate = frame.to_allocate + frame.nsseregs * 16 + frame.padding05;
 
   if (!frame.save_regs_using_mov)
     ix86_emit_save_regs ();
@@ -8335,7 +8335,7 @@ ix86_expand_prologue (void)
 	  || crtl->stack_realign_needed)
         ix86_emit_save_regs_using_mov (stack_pointer_rtx,
 				       frame.to_allocate
-				       + frame.nsseregs * 16 + frame.padding0);
+				       + frame.nsseregs * 16 + frame.padding05);
       else
         ix86_emit_save_regs_using_mov (hard_frame_pointer_rtx,
 				       -frame.nregs * UNITS_PER_WORD);
@@ -8349,7 +8349,7 @@ ix86_expand_prologue (void)
     ix86_emit_save_sse_regs_using_mov (hard_frame_pointer_rtx,
 				       - frame.nregs * UNITS_PER_WORD
 				       - frame.nsseregs * 16
-				       - frame.padding0);
+				       - frame.padding05);
 
   pic_reg_used = false;
   if (pic_offset_table_rtx
@@ -8512,7 +8512,7 @@ ix86_expand_epilogue (int style)
   if (crtl->calls_eh_return && style != 2)
     offset -= 2;
   offset *= -UNITS_PER_WORD;
-  offset -= frame.nsseregs * 16 + frame.padding0;
+  offset -= frame.nsseregs * 16 + frame.padding05;
 
   /* If we're only restoring one register and sp is not valid then
      using a move instruction to restore the register since it's
@@ -8554,7 +8554,7 @@ ix86_expand_epilogue (int style)
 	  ix86_emit_restore_regs_using_mov (stack_pointer_rtx,
 					    frame.to_allocate
 					    + frame.nsseregs * 16
-					    + frame.padding0, style == 2);
+					    + frame.padding05, style == 2);
 	}
       else
         {
@@ -8563,7 +8563,7 @@ ix86_expand_epilogue (int style)
 	  ix86_emit_restore_regs_using_mov (hard_frame_pointer_rtx,
 					    offset
 					    + frame.nsseregs * 16
-					    + frame.padding0, style == 2);
+					    + frame.padding05, style == 2);
         }
 
       /* eh_return epilogues need %ecx added to the stack pointer.  */
@@ -8592,7 +8592,7 @@ ix86_expand_epilogue (int style)
 	      tmp = plus_constant (tmp, (frame.to_allocate
                                          + frame.nregs * UNITS_PER_WORD
 					 + frame.nsseregs * 16
-					 + frame.padding0));
+					 + frame.padding05));
 	      emit_insn (gen_rtx_SET (VOIDmode, stack_pointer_rtx, tmp));
 	    }
 	}
@@ -8601,7 +8601,7 @@ ix86_expand_epilogue (int style)
 				   GEN_INT (frame.to_allocate
 					    + frame.nregs * UNITS_PER_WORD
 					    + frame.nsseregs * 16
-					    + frame.padding0),
+					    + frame.padding05),
 				   style);
       /* If not an i386, mov & pop is faster than "leave".  */
       else if (TARGET_USE_LEAVE || optimize_function_for_size_p (cfun)
@@ -8646,7 +8646,7 @@ ix86_expand_epilogue (int style)
 	  pro_epilogue_adjust_stack (stack_pointer_rtx, stack_pointer_rtx,
 				     GEN_INT (frame.to_allocate
 				     	      + frame.nsseregs * 16
-					      + frame.padding0), style);
+					      + frame.padding05), style);
 	}
 
       for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
