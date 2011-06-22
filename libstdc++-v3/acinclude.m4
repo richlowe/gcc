@@ -2444,7 +2444,11 @@ AC_DEFUN([GLIBCXX_ENABLE_ATOMIC_BUILTINS], [
   old_CXXFLAGS="$CXXFLAGS"
   
   # Compile unoptimized.
-  CXXFLAGS='-O0 -S'
+  # XXX: On sparc, use the lowest practical CPU level # to avoid false positives
+  case $host in
+      sparc*-*solaris*) CXXFLAGGS='-O0 -S -mcpu=v8';;
+      *) CXXFLAGS='-O0 -S';;
+  esac
 
   # Fake what AC_TRY_COMPILE does, without linking as this is
   # unnecessary for a builtins test.
