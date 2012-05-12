@@ -169,7 +169,7 @@ solaris_pragma_init (cpp_reader *pfile ATTRIBUTE_UNUSED)
   while (1)
     {
       tree decl = identifier_global_value (t);
-      if (decl && TREE_CODE_CLASS (TREE_CODE (decl)) == 'd')
+      if (decl && DECL_P (decl))
 	{
 	  tree init_list = build_tree_list (get_identifier ("init"),
 					    NULL);
@@ -227,7 +227,7 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
   while (1)
     {
       tree decl = identifier_global_value (t);
-      if (decl && TREE_CODE_CLASS (TREE_CODE (decl)) == 'd')
+      if (decl && DECL_P (decl))
 	{
 	  tree fini_list = build_tree_list (get_identifier ("fini"),
 					    NULL);
