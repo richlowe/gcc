@@ -79,6 +79,10 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 #endif
 
+#ifndef ASSUME_32BIT_CALLERS
+#define ASSUME_32BIT_CALLERS 0
+#endif
+
 
 /* If this is nonzero, we do not bother generating VOLATILE
    around volatile memory references, and we are willing to
@@ -7358,7 +7362,8 @@ expand_expr_real_1 (tree exp, rtx target, enum machine_mode tmode,
 	     same mode we got when the variable was declared.  */
 	  pmode = promote_mode (type, DECL_MODE (exp), &unsignedp,
 				(TREE_CODE (exp) == RESULT_DECL
-				 || TREE_CODE (exp) == PARM_DECL) ? 1 : 0);
+				 || (!ASSUME_32BIT_CALLERS &&
+				   TREE_CODE (exp) == PARM_DECL)) ? 1 : 0);
 	  gcc_assert (GET_MODE (decl_rtl) == pmode);
 
 	  temp = gen_lowpart_SUBREG (mode, decl_rtl);

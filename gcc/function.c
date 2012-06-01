@@ -83,6 +83,10 @@ along with GCC; see the file COPYING3.  If not see
 #define NAME__MAIN "__main"
 #endif
 
+#ifndef ASSUME_32BIT_CALLERS
+#define ASSUME_32BIT_CALLERS 0
+#endif
+
 /* Round a value to the lowest integer less than it that is a multiple of
    the required alignment.  Avoid using division in case the value is
    negative.  Assume the alignment is a power of two.  */
@@ -2783,7 +2787,8 @@ assign_parm_setup_reg (struct assign_parm_data_all *all, tree parm,
   /* This is not really promoting for a call.  However we need to be
      consistent with assign_parm_find_data_types and expand_expr_real_1.  */
   promoted_nominal_mode
-    = promote_mode (data->nominal_type, data->nominal_mode, &unsignedp, 1);
+    = promote_mode (data->nominal_type, data->nominal_mode, &unsignedp,
+      ASSUME_32BIT_CALLERS ? 0 : 1);
 
   parmreg = gen_reg_rtx (promoted_nominal_mode);
 

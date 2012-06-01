@@ -2402,3 +2402,5 @@ extern int sparc_indent_opcode;
 
 /* We use gcc _mcount for profiling.  */
 #define NO_PROFILE_COUNTERS 0
+
+#define ASSUME_32BIT_CALLERS sparc_assume_32bit_callers

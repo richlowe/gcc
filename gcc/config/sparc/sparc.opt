@@ -106,6 +106,10 @@ mstd-struct-return
 Target Report RejectNegative Var(sparc_std_struct_return)
 Enable strict 32-bit psABI struct return checking.
 
+massume-32bit-callers
+Target Report Var(sparc_assume_32bit_callers)
+Allow 64bit sparcv9 code to function with 32bit sparcv7 direct callers.
+
 Mask(LITTLE_ENDIAN)
 ;; Generate code for little-endian
 

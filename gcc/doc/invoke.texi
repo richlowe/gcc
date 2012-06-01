@@ -15124,6 +15124,16 @@ With @option{-mno-integer-ldd-std}, GCC does not use the @code{ldd}
 and @code{std} instructions for integer operands in 32-bit mode.  This
 is for use with legacy code using 64-bit quantities which are not
 64-bit aligned.
+
+@item -massume-32bit-callers
+@opindex massume-32bit-callers
+With @option{-massume-32bit-callers}, The type promotion of function
+arguments is altered such that integer arguments smaller than the word
+size are extended in the caller rather callee.  This is necessary for
+system calls from 32bit processes to 64bit callers in certain
+systems.  This option should not be used in any situation other than
+compiling the kernels of such systems, and has not been tested outside
+of that scenario.
 @end table
 
 These @samp{-m} options are supported in addition to the above
