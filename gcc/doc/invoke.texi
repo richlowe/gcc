@@ -15129,11 +15129,11 @@ is for use with legacy code using 64-bit quantities which are not
 @opindex massume-32bit-callers
 With @option{-massume-32bit-callers}, The type promotion of function
 arguments is altered such that integer arguments smaller than the word
-size are extended in the caller rather callee.  This is necessary for
-system calls from 32bit processes to 64bit callers in certain
-systems.  This option should not be used in any situation other than
-compiling the kernels of such systems, and has not been tested outside
-of that scenario.
+size are extended in the callee rather than the caller.  This is
+necessary for system calls from 32bit processes to 64bit kernels in
+certain systems.  This option should not be used in any situation
+other than compiling the kernels of such systems, and has not been
+tested outside of that scenario.
 @end table
 
 These @samp{-m} options are supported in addition to the above
