@@ -5185,6 +5185,7 @@ ix86_function_regparm (const_tree type, const_tree decl)
   if (decl
       && TREE_CODE (decl) == FUNCTION_DECL
       && optimize
+      && (TARGET_64BIT || !flag_strict_calling_conventions)
       && !(profile_flag && !flag_fentry))
     {
       /* FIXME: remove this CONST_CAST when cgraph.[ch] is constified.  */
@@ -5261,8 +5262,9 @@ ix86_function_sseregparm (const_tree type, const_tree decl, bool warn)
 
   /* For local functions, pass up to SSE_REGPARM_MAX SFmode
      (and DFmode for SSE2) arguments in SSE registers.  */
-  if (decl && TARGET_SSE_MATH && optimize
-      && !(profile_flag && !flag_fentry))
+  if (decl && TARGET_SSE_MATH && optimize &&
+      (TARGET_64BIT || !flag_strict_calling_conventions) &&
+      !(profile_flag && !flag_fentry))
     {
       /* FIXME: remove this CONST_CAST when cgraph.[ch] is constified.  */
       struct cgraph_local_info *i = cgraph_local_info (CONST_CAST_TREE(decl));
