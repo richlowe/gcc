@@ -1225,7 +1225,7 @@ i[34567]86-*-solaris2*)
 		thread_file=solaris
 		;;
 	*)
-		extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
+		extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtbeginS.o crtend.o crtendS.o"
 	esac
 	;;
 i[4567]86-wrs-vxworks|i[4567]86-wrs-vxworksae)
@@ -2224,7 +2224,7 @@ sparc64-*-solaris2* | sparcv9-*-solaris2*)
 		tm_file="${tm_file} sparc/sol2-gas.h sparc/sol2-gas-bi.h"
 	fi
 	tm_file="${tm_file} tm-dwarf2.h"
-	tmake_file="t-sol2 sparc/t-sol2 sparc/t-sol2-64 sparc/t-crtfm"
+	tmake_file="t-sol2 t-svr4 sparc/t-sol2 sparc/t-sol2-64 sparc/t-crtfm"
 	if test x$gnu_ld = xyes; then
 		tmake_file="$tmake_file t-slibgcc-elf-ver"
 	else
@@ -2234,7 +2234,7 @@ sparc64-*-solaris2* | sparcv9-*-solaris2*)
 	cxx_target_objs="sol2-c.o"
 	extra_objs="sol2.o"
 	tm_p_file="${tm_p_file} sol2-protos.h"
-	extra_parts="crt1.o crti.o crtn.o gcrt1.o crtbegin.o crtend.o"
+	extra_parts="crt1.o crti.o crtn.o gcrt1.o crtbegin.o crtbeginS.o crtend.o crtendS.o"
 	case ${enable_threads}:${have_pthread_h}:${have_thread_h} in
 	  "":yes:* | yes:yes:* ) thread_file=posix ;;
 	  "":*:yes | yes:*:yes ) thread_file=solaris ;;
@@ -2254,7 +2254,7 @@ sparc-*-solaris2*)
 	if test x$gas = xyes; then
 		tm_file="${tm_file} sparc/sol2-gas.h"
 	fi
-	tmake_file="t-sol2 sparc/t-sol2 sparc/t-crtfm"
+	tmake_file="t-sol2 t-svr4 sparc/t-sol2 sparc/t-crtfm"
 	if test x$gnu_ld = xyes; then
 		tmake_file="$tmake_file t-slibgcc-elf-ver"
 	else
@@ -2274,7 +2274,7 @@ sparc-*-solaris2*)
 	cxx_target_objs="sol2-c.o"
 	extra_objs="sol2.o"
 	tm_p_file="${tm_p_file} sol2-protos.h"
-	extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
+	extra_parts="gmon.o crtbegin.o crtbeginS.o crtend.o crtendS.o"
 	case ${enable_threads}:${have_pthread_h}:${have_thread_h} in
 	  "":yes:* | yes:yes:* )
 		thread_file=posix

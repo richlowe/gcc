@@ -8,4 +8,4 @@ INSTALL_LIBGCC = install-multilib
 # GCC contains i386 assembler sources for some of the startfiles
 # which aren't appropriate for amd64.  Just use the installed
 # versions of: crt1.o crti.o crtn.o gcrt1.o
-EXTRA_MULTILIB_PARTS=gmon.o crtbegin.o crtend.o
+EXTRA_MULTILIB_PARTS=gmon.o crtbegin.o crtbeginS.o crtend.o crtendS.o
