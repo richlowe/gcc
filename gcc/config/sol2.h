@@ -97,7 +97,7 @@ along with GCC; see the file COPYING3.  If not see
        %{p|pg:-ldl} -lc}}"
 
 #undef  ENDFILE_SPEC
-#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
+#define ENDFILE_SPEC "%{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
 
 /* We don't use the standard svr4 STARTFILE_SPEC because it's wrong for us.  */
 #undef STARTFILE_SPEC
@@ -108,7 +108,7 @@ along with GCC; see the file COPYING3.  If not see
 	                    %{pg:gcrt1.o%s gmon.o%s} \
                             %{!pg:crt1.o%s}}}} \
 			crti.o%s %(startfile_arch) \
-			crtbegin.o%s"
+			%{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
 
 #undef STARTFILE_ARCH32_SPEC
 #define STARTFILE_ARCH32_SPEC "%{ansi:values-Xc.o%s} \

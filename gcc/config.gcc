@@ -1225,7 +1225,7 @@ i[34567]86-*-solaris2*)
 		thread_file=solaris
 		;;
 	*)
-		extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
+		extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtbeginS.o crtend.o crtendS.o"
 	esac
 	;;
 i[4567]86-wrs-vxworks|i[4567]86-wrs-vxworksae)

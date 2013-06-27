@@ -322,7 +322,7 @@ i[34567]86-*-solaris2*)
 	*-*-solaris2.1[0-9]*)
 		# Solaris 2.10 provides crt1.o, crti.o, crtn.o, and gcrt1.o as
 		# part of the base system.
-		extra_parts="gmon.o crtbegin.o crtend.o"
+		extra_parts="gmon.o crtbegin.o crtbeginS.o crtend.o crtendS.o"
 		;;
 	*)
 		extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
