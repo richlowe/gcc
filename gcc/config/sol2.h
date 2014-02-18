@@ -238,4 +238,6 @@ extern GTY(()) tree solaris_pending_inits;
 extern GTY(()) tree solaris_pending_finis;
 
 /* Allow macro expansion in #pragma pack.  */
-#define HANDLE_PRAGMA_PACK_WITH_EXPANSION
+#define HANDLE_PRAGMA_PACK_WITH_EXPANSION 1
+
+#define HANDLE_PRAGMA_PACK_PUSH_POP 1
