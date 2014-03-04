@@ -157,7 +157,7 @@ along with GCC; see the file COPYING3.  If not see
 #if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
 #define STARTFILE_CRTBEGIN_SPEC "%{shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
 #else
-#define STARTFILE_CRTBEGIN_SPEC	"crtbegin.o%s"
+#define STARTFILE_CRTBEGIN_SPEC	"%{shared:crtbeginS.o%s;:crtbegin.o%s}"
 #endif
 
 /* We don't use the standard svr4 STARTFILE_SPEC because it's wrong for us.  */
@@ -182,7 +182,7 @@ along with GCC; see the file COPYING3.  If not see
 #if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
 #define ENDFILE_CRTEND_SPEC "%{shared|pie:crtendS.o%s;:crtend.o%s}"
 #else
-#define ENDFILE_CRTEND_SPEC "crtend.o%s"
+#define ENDFILE_CRTEND_SPEC "%{shared:crtendS.o%s;:crtend.o%s}"
 #endif
 
 #undef  ENDFILE_SPEC
