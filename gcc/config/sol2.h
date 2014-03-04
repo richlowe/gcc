@@ -137,12 +137,12 @@ along with GCC; see the file COPYING3.  If not see
 	                    %{pg:gcrt1.o%s gmon.o%s} \
                             %{!pg:crt1.o%s}}}} \
 			crti.o%s %(startfile_arch) \
-			crtbegin.o%s"
+			%{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC \
   "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s} \
-   crtend.o%s crtn.o%s"
+   %{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
 
 #undef LINK_ARCH32_SPEC_BASE
 #define LINK_ARCH32_SPEC_BASE \

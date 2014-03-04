@@ -62,7 +62,7 @@ along with GCC; see the file COPYING3.  If not see
 #define ASM_CPU_DEFAULT_SPEC ""
 
 #define ASM_CPU_SPEC ""
- 
+
 /* Don't include ASM_PIC_SPEC.  While the Solaris 8 and 9 assembler accepts
    -K PIC, it gives many warnings:
 	R_386_32 relocation is used for symbol "<symbol>"
@@ -76,7 +76,7 @@ along with GCC; see the file COPYING3.  If not see
    %{mpc32:crtprec32.o%s} \
    %{mpc64:crtprec64.o%s} \
    %{mpc80:crtprec80.o%s} \
-   crtend.o%s crtn.o%s"
+   %{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
 
 #define SUBTARGET_CPU_EXTRA_SPECS \
   { "cpp_subtarget",	 CPP_SUBTARGET_SPEC },		\
