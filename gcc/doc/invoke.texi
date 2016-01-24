@@ -12300,6 +12300,10 @@ Generate code for the large code model.  This makes no assumptions about
 addresses and sizes of sections.  Pointers are 64 bits.  Programs can be
 statically linked only.
 
+@item -msave-args
+@opindex msave-args
+Save integer-sized arguments on the stack on function entry.
+
 @item -mstrict-align
 @opindex mstrict-align
 Do not assume that unaligned memory references are handled by the system.
