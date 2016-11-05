@@ -64,14 +64,7 @@
 static void moncontrol (int);
 extern void monstartup (char *, char *);
 extern void _mcleanup (void);
-extern void internal_mcount (
-#ifdef __x86_64__
-			     char *, unsigned short *
-#else
-			     void
-#endif
-			     );
-
+extern void internal_mcount (char *, unsigned short *);
 
 struct phdr {
                 char    *lpc;
@@ -86,7 +79,7 @@ struct phdr {
 #define ARCDENSITY 2
 #define MINARCS 50
 #define BASEADDRESS 0x8000000 /* On Solaris 2 X86 all executables start here
-				 and not at 0 */ 
+				 and not at 0 */
 
 struct tostruct {
   char *selfpc;
@@ -250,7 +243,7 @@ _mcleanup (void)
 
 #ifdef __x86_64__
 /* See GLIBC for additional information about this technique.  */
-asm(".globl _mcount\n" 
+asm(".globl _mcount\n"
     "\t.type\t_mcount, @function\n"
     "_mcount:\n"
     /* The compiler calls _mcount after the prologue, and does not
@@ -282,43 +275,42 @@ asm(".globl _mcount\n"
     );
 #else
 /* Solaris 2 libraries use _mcount.  */
-asm(".globl _mcount; _mcount: jmp internal_mcount");
+asm(".globl _mcount\n"
+    "_mcount:\n"
+    /* Save and restore the call-clobbered registers.  */
+    "	pushl	%eax\n"
+    "	pushl	%ecx\n"
+    "	pushl	%edx\n"
+    "	movl	12(%esp), %edx\n"
+    "	movl	4(%ebp), %eax\n"
+    "	call	internal_mcount\n"
+    "	popl	%edx\n"
+    "	popl	%ecx\n"
+    "	popl	%eax\n"
+    "	ret\n");
 /* This is for compatibility with old versions of gcc which used mcount.  */
-asm(".globl mcount; mcount: jmp internal_mcount");
+asm(".globl mcount\n"
+    "mcount:\n"
+    /* Save and restore the call-clobbered registers.  */
+    "	pushl	%eax\n"
+    "	pushl	%ecx\n"
+    "	pushl	%edx\n"
+    "	movl	12(%esp), %edx\n"
+    "	movl	4(%ebp), %eax\n"
+    "	call	internal_mcount\n"
+    "	popl	%edx\n"
+    "	popl	%ecx\n"
+    "	popl	%eax\n"
+    "	ret\n");
 #endif
 
 void
-internal_mcount (
-#ifdef __x86_64__
-		 char *selfpc,
-		 unsigned short *frompcindex
-#else
-		 void
-#endif
-		 )
+internal_mcount (char *selfpc, unsigned short *frompcindex)
 {
-#ifndef __x86_64__
-	register char			*selfpc;
-	register unsigned short		*frompcindex;
-#endif
 	register struct tostruct	*top;
 	register struct tostruct	*prevtop;
 	register long			toindex;
 	static char already_setup;
-
-#ifndef __x86_64__
-	/*
-	 *	find the return address for mcount,
-	 *	and the return address for mcount's caller.
-	 */
-
-	/* selfpc = pc pushed by mcount call.
-	   This identifies the function that was just entered.  */
-	selfpc = (void *) __builtin_return_address (0);
-	/* frompcindex = pc in preceding frame.
-	   This identifies the caller of the function just entered.  */
-	frompcindex = (void *) __builtin_return_address (1);
-#endif
 
 	if(!already_setup) {
           extern char etext[];
@@ -449,7 +441,7 @@ moncontrol(int mode)
       profil((unsigned short *)(sbuf + sizeof(struct phdr)),
 	     ssiz - sizeof(struct phdr),
 	     (size_t)s_lowpc, s_scale);
-      
+
       profiling = 0;
     } else {
       /* stop */
