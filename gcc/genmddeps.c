@@ -15,7 +15,11 @@
    along with this program; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+#ifdef GENERATOR_FILE
 #include "bconfig.h"
+#else
+#include "config.h"
+#endif
 #include "system.h"
 #include "coretypes.h"
 #include "errors.h"

@@ -96,6 +96,30 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
     return __sync_val_compare_and_swap(p, o, n) == o;			\
   }
 
+#define GENERATE_TEST_AND_SET(type, size)				\
+  type __sync_lock_test_and_set_ ## size (type *p, type n)		\
+  {									\
+    unsigned long aligned_addr = ((unsigned long) p) & ~3UL;		\
+    int shift = (((unsigned long) p) & 3) * 8;				\
+    unsigned mask = ((1U << ((sizeof n) * 8)) - 1) << shift;		\
+    unsigned old, tmp1;							\
+									\
+    asm volatile ("1:\n\t"						\
+		  "lr.w.aq %[old], %[mem]\n\t"				\
+		  "and %[tmp1], %[old], %[not_mask]\n\t"		\
+		  "or %[tmp1], %[tmp1], %[n]\n\t"			\
+		  "sc.w.rl %[tmp1], %[tmp1], %[mem]\n\t"		\
+		  "bnez %[tmp1], 1b\n\t"				\
+		  "1:"							\
+		  : [old] "=&r" (old),					\
+		    [mem] "+A" (*(volatile unsigned*) aligned_addr),	\
+		    [tmp1] "=&r" (tmp1)					\
+		  : [n] "r" ((((unsigned) n) << shift) & mask),		\
+		    [not_mask] "r" (~mask));				\
+									\
+    return (type) (old >> shift);					\
+  }
+
 #define GENERATE_ALL(type, size)					\
   GENERATE_FETCH_AND_OP(type, size, add, add, DONT_INVERT, o + v)	\
   GENERATE_FETCH_AND_OP(type, size, sub, sub, DONT_INVERT, o - v)	\
@@ -103,7 +127,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
   GENERATE_FETCH_AND_OP(type, size, xor, xor, DONT_INVERT, o ^ v)	\
   GENERATE_FETCH_AND_OP(type, size, or, or, DONT_INVERT, o | v)		\
   GENERATE_FETCH_AND_OP(type, size, nand, and, INVERT, ~(o & v))	\
-  GENERATE_COMPARE_AND_SWAP(type, size)
+  GENERATE_COMPARE_AND_SWAP(type, size)					\
+  GENERATE_TEST_AND_SET(type, size)
 
 GENERATE_ALL(unsigned char, 1)
 GENERATE_ALL(unsigned short, 2)

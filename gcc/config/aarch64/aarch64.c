@@ -1562,6 +1562,7 @@ static const struct attribute_spec aarch64_attribute_table[] =
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
+  SUBTARGET_ATTRIBUTE_TABLE,
   { "aarch64_vector_pcs", 0, 0, false, true,  true,  true,
 			  handle_aarch64_vector_pcs_attribute, NULL },
   { "arm_sve_vector_bits", 1, 1, false, true,  false, true,
@@ -10225,7 +10226,7 @@ sizetochar (int size)
 			pattern (so the mode needs to be adjusted).
      'z':		Output address of a typical LDP or STP.  */
 
-static void
+void
 aarch64_print_operand (FILE *f, rtx x, int code)
 {
   rtx elt;
@@ -23973,6 +23974,16 @@ aarch64_libgcc_floating_mode_supported_p
 #undef TARGET_PREFERRED_ELSE_VALUE
 #define TARGET_PREFERRED_ELSE_VALUE \
   aarch64_preferred_else_value
+
+#ifdef SUBTARGET_INSERT_ATTRIBUTES
+#undef TARGET_INSERT_ATTRIBUTES
+#define TARGET_INSERT_ATTRIBUTES SUBTARGET_INSERT_ATTRIBUTES
+#endif
+
+#ifdef SUBTARGET_ATTRIBUTE_TABLE
+#undef TARGET_ATTRIBUTE_TABLE
+#define TARGET_ATTRIBUTE_TABLE aarch64_attribute_table
+#endif
 
 #undef TARGET_INIT_LIBFUNCS
 #define TARGET_INIT_LIBFUNCS aarch64_init_libfuncs

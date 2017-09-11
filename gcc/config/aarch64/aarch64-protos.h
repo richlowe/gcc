@@ -763,6 +763,8 @@ extern bool aarch64_classify_address (struct aarch64_address_info *, rtx,
 				      machine_mode, bool,
 				      aarch64_addr_query_type = ADDR_QUERY_M);
 
+extern void aarch64_print_operand (FILE *f, rtx x, int code);
+
 /* Defined in common/config/aarch64-common.c.  */
 bool aarch64_handle_option (struct gcc_options *, struct gcc_options *,
 			     const struct cl_decoded_option *, location_t);

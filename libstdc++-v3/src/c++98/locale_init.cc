@@ -69,12 +69,12 @@ namespace
 
   using namespace std;
 
-  typedef char fake_locale_Impl[sizeof(locale::_Impl)]
-  __attribute__ ((aligned(__alignof__(locale::_Impl))));
+  typedef char fake_locale_Impl[sizeof(std::locale::_Impl)]
+  __attribute__ ((aligned(__alignof__(std::locale::_Impl))));
   fake_locale_Impl c_locale_impl;
 
-  typedef char fake_locale[sizeof(locale)]
-  __attribute__ ((aligned(__alignof__(locale))));
+  typedef char fake_locale[sizeof(std::locale)]
+  __attribute__ ((aligned(__alignof__(std::locale))));
   fake_locale c_locale;
 
   typedef char fake_name_vec[sizeof(char*)]
@@ -219,7 +219,7 @@ namespace
   fake_codecvt_c32_c8 codecvt_c32_c8;
 #endif
 
-  // Storage for "C" locale caches.
+  // Storage for "C" std::locale caches.
   typedef char fake_num_cache_c[sizeof(std::__numpunct_cache<char>)]
   __attribute__ ((aligned(__alignof__(std::__numpunct_cache<char>))));
   fake_num_cache_c numpunct_cache_c;
