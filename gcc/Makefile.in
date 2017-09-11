@@ -2930,11 +2930,11 @@ s-omp-device-properties-h: @omp_device_property_deps@
 # any system header is included.
 gengtype-lex.c : gengtype-lex.l
 	-$(FLEX) $(FLEXFLAGS) -o$@ $< && { \
-	  echo '#ifdef HOST_GENERATOR_FILE' > $@.tmp; \
-	  echo '#include "config.h"'       >> $@.tmp; \
-	  echo '#else'                     >> $@.tmp; \
-	  echo '#include "bconfig.h"'      >> $@.tmp; \
-	  echo '#endif'                    >> $@.tmp; \
+	  echo '#ifdef GENERATOR_FILE' > $@.tmp; \
+	  echo '#include "bconfig.h"' >> $@.tmp; \
+	  echo '#else' >> $@.tmp; \
+	  echo '#include "config.h"' >> $@.tmp; \
+	  echo '#endif' >> $@.tmp; \
 	  cat $@ >> $@.tmp; \
 	  mv $@.tmp $@; \
 	}

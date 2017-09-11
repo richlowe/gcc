@@ -5057,7 +5057,7 @@ alpha_print_operand_punct_valid_p (unsigned char code)
 /* Implement TARGET_PRINT_OPERAND.  The alpha-specific
    operand codes are documented below.  */
 
-static void
+void
 alpha_print_operand (FILE *file, rtx x, int code)
 {
   int i;
@@ -9847,6 +9847,27 @@ alpha_can_change_mode_class (machine_mode from, machine_mode to,
 }
 
 /* Initialize the GCC target structure.  */
+#ifdef SUBTARGET_ATTRIBUTE_TABLE
+/* Table of valid machine attributes.  */
+static const struct attribute_spec alpha_attribute_table[] =
+{
+  /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
+       affects_type_identity, handler, exclude } */
+  SUBTARGET_ATTRIBUTE_TABLE,
+  { NULL, 0, 0, false, false, false, false, NULL, NULL }
+};
+#endif
+
+#ifdef SUBTARGET_INSERT_ATTRIBUTES
+#undef TARGET_INSERT_ATTRIBUTES
+#define TARGET_INSERT_ATTRIBUTES SUBTARGET_INSERT_ATTRIBUTES
+#endif
+
+#ifdef SUBTARGET_ATTRIBUTE_TABLE
+#undef TARGET_ATTRIBUTE_TABLE
+#define TARGET_ATTRIBUTE_TABLE alpha_attribute_table
+#endif
+
 #if TARGET_ABI_OPEN_VMS
 # undef TARGET_ATTRIBUTE_TABLE
 # define TARGET_ATTRIBUTE_TABLE vms_attribute_table

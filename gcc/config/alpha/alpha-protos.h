@@ -117,3 +117,6 @@ class rtl_opt_pass;
 
 extern rtl_opt_pass *make_pass_handle_trap_shadows (gcc::context *);
 extern rtl_opt_pass *make_pass_align_insns (gcc::context *);
+
+extern void alpha_print_operand (FILE *file, rtx x, int code);
+

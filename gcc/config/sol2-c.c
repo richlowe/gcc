@@ -264,6 +264,11 @@ solaris_pragma_fini (cpp_reader *pfile ATTRIBUTE_UNUSED)
     }
 }
 
+static void
+solaris_pragma_ident (cpp_reader *pfile ATTRIBUTE_UNUSED)
+{
+}
+
 /* Register Solaris-specific #pragma directives.  */
 
 void
@@ -272,4 +277,5 @@ solaris_register_pragmas (void)
   c_register_pragma_with_expansion (0, "align", solaris_pragma_align);
   c_register_pragma (0, "init", solaris_pragma_init);
   c_register_pragma (0, "fini", solaris_pragma_fini);
+  c_register_pragma (0, "ident", solaris_pragma_ident);
 }

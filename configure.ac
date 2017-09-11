@@ -1065,6 +1065,18 @@ case "${target}" in
     ;;
   *-*-vxworks*)
     ;;
+  aarch64*-*-solaris2*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs target-libiberty"
+    noconfigdirs="$noconfigdirs target-libmudflap target-libgomp target-libitm"
+    case "${host}" in
+        aarch64*-*-solaris2*)
+        ;;
+        *)
+            noconfigdirs="$noconfigdirs target-libstdc++-v3"
+        ;;
+    esac
+    ;;
   alpha*-dec-osf*)
     # ld works, but does not support shared libraries.
     # gas doesn't generate exception information.
@@ -1072,6 +1084,18 @@ case "${target}" in
     ;;
   alpha*-*-*vms*)
     noconfigdirs="$noconfigdirs gdb target-newlib target-libgloss"
+    ;;
+  alpha*-*-solaris2*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs target-libiberty"
+    noconfigdirs="$noconfigdirs target-libmudflap target-libgomp target-libitm"
+    case "${host}" in
+        alpha*-*-solaris2*)
+        ;;
+        *)
+            noconfigdirs="$noconfigdirs target-libstdc++-v3"
+        ;;
+    esac
     ;;
   alpha*-*-*)
     # newlib is not 64 bit ready
@@ -1228,6 +1252,18 @@ case "${target}" in
     ;;
   powerpc-*-beos*)
     noconfigdirs="$noconfigdirs gdb"
+    ;;
+  riscv64-*-solaris2*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs target-libiberty"
+    noconfigdirs="$noconfigdirs target-libmudflap target-libgomp target-libitm"
+    case "${host}" in
+        riscv*-*-solaris2*)
+        ;;
+        *)
+            noconfigdirs="$noconfigdirs target-libstdc++-v3"
+        ;;
+    esac
     ;;
   rs6000-*-lynxos*)
     noconfigdirs="$noconfigdirs gprof"

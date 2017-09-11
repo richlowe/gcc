@@ -3452,6 +3452,14 @@ foo:	.long	25
 	tls_first_major=2
 	tls_first_minor=13
 	tls_as_opt=--fatal-warnings
+	case "$target" in
+		alpha*-*-solaris2.*)
+			on_solaris=yes
+			tga_func=__tls_get_addr
+		;;
+		*)
+		;;
+	esac
 	;;
   arc*-*-*)
     conftest_s='
@@ -4216,7 +4224,7 @@ AS_HELP_STRING([--disable-fix-cortex-a53-843419],
     ;;
 
   # All TARGET_ABI_OSF targets.
-  alpha*-*-linux* | alpha*-*-*bsd*)
+  alpha*-*-linux* | alpha*-*-*bsd* | alpha*-*-solaris2*)
     gcc_GAS_CHECK_FEATURE([explicit relocation support],
 	gcc_cv_as_alpha_explicit_relocs, [2,12,0],,
 [	.set nomacro
@@ -6321,7 +6329,8 @@ case "$target" in
   *-*-solaris2*)
     # <link.h> needs both a dl_iterate_phdr declaration and support for
     # compilation with largefile support.
-    if grep dl_iterate_phdr $target_header_dir/link.h > /dev/null 2>&1 \
+    if test x"$gnu_ld" = xno \
+      && grep dl_iterate_phdr $target_header_dir/link.h > /dev/null 2>&1 \
       && grep 'large file capable' $target_header_dir/link.h > /dev/null 2>&1; then
       gcc_cv_target_dl_iterate_phdr=yes
     else
