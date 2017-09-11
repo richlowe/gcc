@@ -108,6 +108,7 @@
 #define ENDIAN_SPEC "-mlittle-endian"
 #endif
 
+#undef MULTILIB_DEFAULTS
 #if TARGET_DATA_MODEL == 1
 #define ABI_SPEC  "-mabi=lp64"
 #define MULTILIB_DEFAULTS { "mabi=lp64" }

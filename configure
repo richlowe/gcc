@@ -1269,9 +1269,7 @@ do
     ac_useropt_orig=$ac_useropt
     ac_useropt=`$as_echo "$ac_useropt" | sed 's/[-+.]/_/g'`
     case $ac_user_opts in
-      *"
-"with_$ac_useropt"
-"*) ;;
+      *""with_$ac_useropt""*) ;;
       *) ac_unrecognized_opts="$ac_unrecognized_opts$ac_unrecognized_sep--without-$ac_useropt_orig"
 	 ac_unrecognized_sep=', ';;
     esac
@@ -3825,6 +3823,18 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-rda"
     ;;
   *-*-vxworks*)
+    ;;
+  aarch64*-*-solaris2*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs target-libiberty"
+    noconfigdirs="$noconfigdirs target-libmudflap target-libgomp target-libitm"
+    case "${host}" in
+        aarch64*-*-solaris2*)
+        ;;
+        *)
+            noconfigdirs="$noconfigdirs target-libstdc++-v3"
+        ;;
+    esac
     ;;
   alpha*-dec-osf*)
     # ld works, but does not support shared libraries.

@@ -1062,6 +1062,8 @@ extern bool aarch64_classify_address (struct aarch64_address_info *, rtx,
 
 void aarch64_set_asm_isa_flags (aarch64_feature_flags);
 
+void aarch64_print_operand (FILE *, rtx, int);
+
 /* Defined in common/config/aarch64-common.cc.  */
 void aarch64_set_asm_isa_flags (gcc_options *, aarch64_feature_flags);
 bool aarch64_handle_option (struct gcc_options *, struct gcc_options *,

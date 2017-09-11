@@ -7188,7 +7188,8 @@ case "$target" in
   *-*-solaris2*)
     # <link.h> needs both a dl_iterate_phdr declaration and support for
     # compilation with largefile support.
-    if grep dl_iterate_phdr $target_header_dir/link.h > /dev/null 2>&1 \
+    if test x"$gnu_ld" = xno \
+      && grep dl_iterate_phdr $target_header_dir/link.h > /dev/null 2>&1 \
       && grep 'large file capable' $target_header_dir/link.h > /dev/null 2>&1; then
       gcc_cv_target_dl_iterate_phdr=yes
     else

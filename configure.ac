@@ -1052,6 +1052,18 @@ case "${target}" in
     ;;
   *-*-vxworks*)
     ;;
+  aarch64*-*-solaris2*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs target-libiberty"
+    noconfigdirs="$noconfigdirs target-libmudflap target-libgomp target-libitm"
+    case "${host}" in
+        aarch64*-*-solaris2*)
+        ;;
+        *)
+            noconfigdirs="$noconfigdirs target-libstdc++-v3"
+        ;;
+    esac
+    ;;
   alpha*-dec-osf*)
     # ld works, but does not support shared libraries.
     # gas doesn't generate exception information.

@@ -100,7 +100,7 @@ esac
 
 case ${host} in
   aarch64*-*-freebsd* | aarch64*-*-linux* | aarch64*-*-fuchsia* |\
-  aarch64*-*-darwin*)
+  aarch64*-*-solaris* | aarch64*-*-darwin*)
     case ${target} in
       aarch64*-*-*)
 	host_extra_gcc_objs="driver-aarch64.o"
