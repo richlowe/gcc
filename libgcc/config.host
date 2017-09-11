@@ -353,6 +353,9 @@ case ${host} in
     extra_parts="$extra_parts crtbeginS.o crtendS.o"
   else
     case ${host} in
+      aarch64*-*-solaris2*)
+        extra_parts="$extra_parts crtbegin.o crtend.o"
+        ;;
       i?86-*-solaris2* | x86_64-*-solaris2*)
         # Solaris 10+/x86 provides crt1.o, crti.o, crtn.o, and gcrt1.o as
         # part of the base system.
@@ -465,6 +468,12 @@ aarch64*-*-vxworks7*)
 	tmake_file="${tmake_file} ${cpu_type}/t-lse"
 	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
 	tmake_file="${tmake_file} t-dfprules"
+	;;
+aarch64*-*-solaris2*)
+	tmake_file="${tmake_file} ${cpu_type}/t-aarch64 aarch64/t-sol2"
+	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
+	extra_parts="$extra_parts crtfastmath.o crtbeginS.o crtendS.o"
+	md_unwind_header=aarch64/aarch64-unwind.h
 	;;
 alpha*-*-linux*)
 	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee t-crtfm alpha/t-linux"
