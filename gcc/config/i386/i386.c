@@ -13013,6 +13013,7 @@ ix86_compute_frame_layout (void)
     }
 
 
+#if 0
   if (getenv("DEBUG_FRAME_STUFF") != NULL)
     {
       printf("nmsave_args: %d\n", frame->nmsave_args);
@@ -13028,6 +13029,7 @@ ix86_compute_frame_layout (void)
       printf("sse_reg_save_offset: %llx\n", frame->sse_reg_save_offset);
 
     }
+#endif
 }
 
 /* This is semi-inlined memory_address_length, but simplified
