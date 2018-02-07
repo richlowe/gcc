@@ -12067,7 +12067,8 @@ indirect_thunk_name (char name[32], int regno, bool need_bnd_p,
   if (regno >= 0 && ret_p)
     gcc_unreachable ();
 
-  if (USE_HIDDEN_LINKONCE)
+  if (USE_HIDDEN_LINKONCE ||
+      (cfun->machine->indirect_branch_type == indirect_branch_thunk_extern))
     {
       const char *bnd = need_bnd_p ? "_bnd" : "";
       if (regno >= 0)
