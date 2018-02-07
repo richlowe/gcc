@@ -100,7 +100,7 @@ operator new (std::size_t sz, std::align_val_t al)
     sz += align - rem;
 #endif
 
-  while (__builtin_expect ((p = aligned_alloc (align, sz)) == 0, false))
+  while (__builtin_expect ((p = std::aligned_alloc (align, sz)) == 0, false))
     {
       new_handler handler = std::get_new_handler ();
       if (! handler)
