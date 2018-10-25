@@ -470,6 +470,7 @@ static const struct default_options default_options_table[] =
     { OPT_LEVELS_1_PLUS, OPT_ftree_sink, NULL, 1 },
     { OPT_LEVELS_1_PLUS, OPT_ftree_slsr, NULL, 1 },
     { OPT_LEVELS_1_PLUS, OPT_ftree_ter, NULL, 1 },
+    { OPT_LEVELS_1_PLUS, OPT_fomit_frame_pointer, NULL, 0 },
 
     /* -O1 (and not -Og) optimizations.  */
     { OPT_LEVELS_1_PLUS_NOT_DEBUG, OPT_fbranch_count_reg, NULL, 1 },
@@ -484,6 +485,7 @@ static const struct default_options default_options_table[] =
     { OPT_LEVELS_1_PLUS_NOT_DEBUG, OPT_ftree_bit_ccp, NULL, 1 },
     { OPT_LEVELS_1_PLUS_NOT_DEBUG, OPT_ftree_sra, NULL, 1 },
     { OPT_LEVELS_1_PLUS_NOT_DEBUG, OPT_ftree_pta, NULL, 1 },
+
 
     /* -O2 and -Os optimizations.  */
     { OPT_LEVELS_2_PLUS, OPT_fcaller_saves, NULL, 1 },
