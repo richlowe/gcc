@@ -12365,7 +12365,7 @@ ix86_emit_save_reg_using_mov (machine_mode mode, unsigned int regno,
 /* Emit code to save registers using MOV insns.
    First register is stored at CFA - CFA_OFFSET.  */
 static void
-ix86_emit_save_regs_using_mov (struct ix86_frame &frame)
+ix86_emit_save_regs_using_mov (const struct ix86_frame &frame)
 {
   unsigned int regno;
   HOST_WIDE_INT cfa_offset = frame.arg_save_offset;
