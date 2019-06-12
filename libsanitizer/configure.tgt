@@ -43,7 +43,9 @@ case "${target}" in
 	;;
   s390*-*-linux*)
 	;;
+  # XXX: illumos header issues must be fixed first
   sparc*-*-solaris2.11*)
+	UNSUPPORTED=1
 	;;
   arm*-*-linux*)
 	;;
@@ -63,7 +65,9 @@ case "${target}" in
   x86_64-*-darwin[1]* | i?86-*-darwin[1]*)
 	TSAN_SUPPORTED=no
 	;;
+  # XXX: illumos header issues must be fixed first
   x86_64-*-solaris2.11* | i?86-*-solaris2.11*)
+	UNSUPPORTED=1
 	;;
   *)
 	UNSUPPORTED=1
