@@ -21,35 +21,6 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #define CPP_SPEC "%{pthread:-D_REENTRANT}"
-#define GNU_USER_DYNAMIC_LINKER "/lib/ld.so.1"
-
-#ifdef TARGET_FIX_ERR_A53_835769_DEFAULT
-#define CA53_ERR_835769_SPEC \
-  " %{!mno-fix-cortex-a53-835769:--fix-cortex-a53-835769}"
-#else
-#define CA53_ERR_835769_SPEC \
-  " %{mfix-cortex-a53-835769:--fix-cortex-a53-835769}"
-#endif
-
-#ifdef TARGET_FIX_ERR_A53_843419_DEFAULT
-#define CA53_ERR_843419_SPEC \
-  " %{!mno-fix-cortex-a53-843419:--fix-cortex-a53-843419}"
-#else
-#define CA53_ERR_843419_SPEC \
-  " %{mfix-cortex-a53-843419:--fix-cortex-a53-843419}"
-#endif
-
-#undef LINK_SPEC
-#define LINK_SPEC "%{G*} %{R*} %{h*}	\
-   %{static:-Bstatic}					\
-   %{shared:-shared}					\
-   %{symbolic:-Bsymbolic}				\
-   %{!static:%{rdynamic:-export-dynamic}}	\
-   -dynamic-linker " GNU_USER_DYNAMIC_LINKER "	\
-   %{mbig-endian:-EB} %{mlittle-endian:-EL} -X	\
-  -maarch64elf%{mabi=ilp32*:32}%{mbig-endian:b}" \
-  CA53_ERR_835769_SPEC \
-  CA53_ERR_843419_SPEC
 
 #undef TARGET_SUN_TLS
 #define TARGET_SUN_TLS 1
@@ -106,4 +77,3 @@ along with GCC; see the file COPYING3.  If not see
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS
 #define ENDFILE_ARCH_SPEC ""
-
