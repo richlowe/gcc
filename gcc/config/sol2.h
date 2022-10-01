@@ -458,7 +458,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* collect2.c can only parse GNU nm -n output.  Solaris nm needs -png to
    produce the same format.  */
-#undef NM_FLAGS
 #define NM_FLAGS "-png"
 
 #define STDC_0_IN_SYSTEM_HEADERS 1
