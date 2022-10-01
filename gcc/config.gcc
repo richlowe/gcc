@@ -1155,11 +1155,6 @@ alpha*-*-linux*)
 	tmake_file="${tmake_file} alpha/t-linux alpha/t-alpha"
 	extra_options="${extra_options} alpha/elf.opt"
 	;;
-alpha*-*-solaris2*)
-	tm_file="elfos.h ${tm_file} alpha/elf.h sol2.h alpha/sol2.h"
-	extra_options="${extra_options} alpha/elf.opt"
-	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee alpha/t-sol2"
-	;;
 alpha*-*-netbsd*)
 	tm_file="elfos.h ${tm_file} ${nbsd_tm_file} alpha/elf.h alpha/netbsd.h"
 	tmake_file="${tmake_file} alpha/t-alpha"
@@ -2468,18 +2463,6 @@ microblaze*-*-elf)
 	cxx_target_objs="${cxx_target_objs} microblaze-c.o"
 	tmake_file="${tmake_file} microblaze/t-microblaze"
         ;;
-riscv64-*-solaris2*)
-	tm_file="${tm_file} elfos.h sol2.h riscv/sol2.h"
-	case "x${enable_multilib}" in
-	xno) ;;
-	xyes) tmake_file="${tmake_file} riscv/t-sol2-multilib" ;;
-	*) echo "Unknown value for enable_multilib"; exit 1
-	esac
-	tmake_file="${tmake_file} riscv/t-riscv riscv/t-sol2"
-	gnu_ld=yes
-	gas=yes
-	gcc_cv_initfini_array=yes
-	;;
 riscv*-*-linux*)
 	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
 	case "x${enable_multilib}" in

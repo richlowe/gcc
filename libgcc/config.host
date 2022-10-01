@@ -297,8 +297,8 @@ case ${host} in
     extra_parts="$extra_parts crtbeginS.o crtendS.o"
   else
     case ${host} in
-      aarch64*-*-solaris2* | alpha*-*-solaris2* | riscv64-*-solaris2*)
-        extra_parts="crtbegin.o crtend.o"
+      aarch64*-*-solaris2*)
+        extra_parts="$extra_parts crtbegin.o crtend.o"
         ;;
       i?86-*-solaris2* | x86_64-*-solaris2*)
         # Solaris 10+/x86 provides crt1.o, crti.o, crtn.o, and gcrt1.o as
@@ -347,9 +347,6 @@ arm-*-vxworks*)
 esac
 
 case ${host} in
-aarch64*-*-solaris2* | alpha*-*-solaris2* | riscv64-*-solaris2*)
-  enable_execute_stack=enable-execute-stack-empty.c;
-  ;;
 *-*-darwin* | *-*-dragonfly* | *-*-freebsd* | *-*-netbsd* | *-*-openbsd* | \
   *-*-solaris2*)
   enable_execute_stack=enable-execute-stack-mprotect.c
@@ -415,10 +412,6 @@ alpha*-*-linux*)
 	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee t-crtfm alpha/t-linux"
 	extra_parts="$extra_parts crtfastmath.o"
 	md_unwind_header=alpha/linux-unwind.h
-	;;
-alpha*-*-solaris2*)
-	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee t-crtfm alpha/t-sol2"
-	extra_parts="$extra_parts crtfastmath.o crtbeginS.o crtendS.o"
 	;;
 alpha*-*-freebsd*)
 	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee t-crtfm"
@@ -1274,11 +1267,6 @@ powerpcle-*-eabi*)
 pru-*-*)
 	tmake_file="${tmake_file} t-softfp-sfdf t-softfp-excl t-softfp t-gnu-prefix pru/t-pru"
 	tm_file="$tm_file pru/pru-abi.h"
-	;;
-riscv64-*-solaris2*)
-	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address}"
-	tmake_file="${tmake_file} riscv/t-sol2"
-	extra_parts="$extra_parts crtfastmath.o crtbeginS.o crtendS.o"
 	;;
 riscv*-*-linux*)
 	tmake_file="${tmake_file} riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address} t-slibgcc-libgcc"
