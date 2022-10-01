@@ -321,7 +321,6 @@ static const struct attribute_spec riscv_attribute_table[] =
   /* Syntax: { name, min_len, max_len, decl_required, type_required,
 	       function_type_required, affects_type_identity, handler,
 	       exclude } */
-  SUBTARGET_ATTRIBUTE_TABLE,
 
   /* The attribute telling no prologue/epilogue.  */
   { "naked",	0,  0, true, false, false, false,
@@ -3289,7 +3288,7 @@ riscv_memmodel_needs_release_fence (enum memmodel model)
    'z'	Print x0 if OP is zero, otherwise print OP normally.
    'i'	Print i if the operand is not a register.  */
 
-void
+static void
 riscv_print_operand (FILE *file, rtx op, int letter)
 {
   machine_mode mode = GET_MODE (op);
@@ -5325,11 +5324,6 @@ riscv_gpr_save_operation_p (rtx op)
 
 #undef TARGET_MERGE_DECL_ATTRIBUTES
 #define TARGET_MERGE_DECL_ATTRIBUTES riscv_merge_decl_attributes
-
-#ifdef SUBTARGET_INSERT_ATTRIBUTES
-#undef TARGET_INSERT_ATTRIBUTES
-#define TARGET_INSERT_ATTRIBUTES SUBTARGET_INSERT_ATTRIBUTES
-#endif
 
 #undef TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE riscv_attribute_table

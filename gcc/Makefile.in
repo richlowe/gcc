@@ -2656,7 +2656,7 @@ ALL_GTFILES_H := $(sort $(GTFILES_H) $(GTFILES_LANG_H))
 $(ALL_GTFILES_H) gtype-desc.c gtype-desc.h gtype.state: s-gtype ; @true
 
 ### Common flags to gengtype [e.g. -v or -B backupdir]
-GENGTYPE_FLAGS= 
+GENGTYPE_FLAGS=
 
 gtyp-input.list: s-gtyp-input ; @true
 s-gtyp-input: Makefile
@@ -2923,11 +2923,11 @@ s-omp-device-properties-h: @omp_device_property_deps@
 # any system header is included.
 gengtype-lex.c : gengtype-lex.l
 	-$(FLEX) $(FLEXFLAGS) -o$@ $< && { \
-	  echo '#ifdef GENERATOR_FILE' > $@.tmp; \
-	  echo '#include "bconfig.h"' >> $@.tmp; \
-	  echo '#else' >> $@.tmp; \
-	  echo '#include "config.h"' >> $@.tmp; \
-	  echo '#endif' >> $@.tmp; \
+	  echo '#ifdef HOST_GENERATOR_FILE' > $@.tmp; \
+	  echo '#include "config.h"'       >> $@.tmp; \
+	  echo '#else'                     >> $@.tmp; \
+	  echo '#include "bconfig.h"'      >> $@.tmp; \
+	  echo '#endif'                    >> $@.tmp; \
 	  cat $@ >> $@.tmp; \
 	  mv $@.tmp $@; \
 	}
