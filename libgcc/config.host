@@ -307,8 +307,9 @@ case ${host} in
     extra_parts="$extra_parts crtbeginS.o crtendS.o"
   else
     case ${host} in
+      # XXXARM: This is a hack because we can't sniff for the real CRTs
       aarch64*-*-solaris2*)
-        extra_parts="$extra_parts crtbegin.o crtend.o"
+        extra_parts="$extra_parts crtp.o crtpg.o crtbegin.o crtend.o crtbeginS.o crtendS.o"
         ;;
       i?86-*-solaris2* | x86_64-*-solaris2*)
         # Solaris 10+/x86 provides crt1.o, crti.o, crtn.o, and gcrt1.o as
