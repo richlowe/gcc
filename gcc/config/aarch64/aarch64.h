@@ -1458,7 +1458,8 @@ extern const char *aarch64_rewrite_mcpu (int argc, const char **argv);
    MCPU_TO_MARCH_SPEC
 
 #define EXTRA_SPECS						\
-  { "asm_cpu_spec",		ASM_CPU_SPEC }
+  { "asm_cpu_spec",		ASM_CPU_SPEC },		\
+  SUBTARGET_EXTRA_SPECS
 
 #define ASM_OUTPUT_POOL_EPILOGUE  aarch64_asm_output_pool_epilogue
 
