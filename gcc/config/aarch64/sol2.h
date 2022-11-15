@@ -436,9 +436,6 @@ extern GTY(()) tree solaris_pending_finis;
     }								\
   while (0)
 
-#undef	CC1_SPEC
-#define CC1_SPEC "%{!fno-PIC: -fPIC}%{!moutline-atomics: -mno-outline-atomics}"
-
 #undef LIB_SPEC
 #define LIB_SPEC \
   "%{!symbolic:\
