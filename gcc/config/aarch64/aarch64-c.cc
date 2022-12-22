@@ -53,7 +53,6 @@ static void
 aarch64_define_unconditional_macros (cpp_reader *pfile)
 {
   builtin_define ("__aarch64__");
-  builtin_define ("__aarch64");
   builtin_define ("__ARM_64BIT_STATE");
 
   builtin_define ("__ARM_ARCH_ISA_A64");
