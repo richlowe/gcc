@@ -132,6 +132,10 @@ mtp=
 Target RejectNegative Joined Enum(tp_reg) Var(aarch64_tpidr_reg) Init(AARCH64_TPIDR_EL0) Save
 Specify the thread pointer register.
 
+msave-args
+Target Mask(SAVE_ARGS)
+Save integer arguments on the stack at function entry.
+
 mstrict-align
 Target Mask(STRICT_ALIGN) Save
 Don't assume that unaligned accesses are handled by the system.
