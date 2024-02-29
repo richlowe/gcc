@@ -7693,6 +7693,10 @@ aarch64_output_probe_sve_stack_clash (rtx base, rtx adjustment,
 static bool
 aarch64_needs_frame_chain (void)
 {
+  if (TARGET_SAVE_ARGS)
+    return true;
+
+  /* Force a frame chain for EH returns so the return address is at FP+8.  */
   if (frame_pointer_needed)
     return true;
 
@@ -7765,6 +7769,12 @@ aarch64_need_old_pstate_sm ()
   return false;
 }
 
+static HOST_WIDE_INT
+aarch64_nsaved_args(void)
+{
+  return (crtl->args.info.aapcs_ncrn);
+}
+
 /* Mark the registers that need to be saved by the callee and calculate
    the size of the callee-saved registers area and frame record (both FP
    and LR may be omitted).  */
@@ -7805,6 +7815,16 @@ aarch64_layout_frame (void)
   if (crtl->calls_eh_return)
     for (regno = 0; EH_RETURN_DATA_REGNO (regno) != INVALID_REGNUM; regno++)
       frame.reg_offset[EH_RETURN_DATA_REGNO (regno)] = SLOT_REQUIRED;
+
+  /* ... and any argument register we wish to preserve the value of */
+  if (TARGET_SAVE_ARGS) {
+    for (regno = R0_REGNUM; regno <= R7_REGNUM; regno++) {
+      /* NB: This relies on r0-r7 being regno's 0...8 */
+      if (regno < aarch64_nsaved_args()) {
+	frame.reg_offset[regno] = SLOT_REQUIRED;
+      }
+    }
+  }
 
   /* ... and any callee saved register that dataflow says is live.  */
   for (regno = R0_REGNUM; regno <= R30_REGNUM; regno++)
@@ -8676,6 +8696,10 @@ aarch64_restore_callee_saves (poly_int64 bytes_below_sp,
 	  || regno == frame.wb_pop_candidate2)
 	return true;
 
+      /* If this is a saved argument, it must not be restored */
+      if (TARGET_SAVE_ARGS && regno < aarch64_nsaved_args())
+	return true;
+
       /* The shadow call stack code restores LR separately.  */
       if (frame.is_scs_enabled && regno == LR_REGNUM)
 	return true;
@@ -8830,6 +8854,11 @@ aarch64_get_separate_components (void)
 	   the slots are often out of reach of ST1D and LD1D anyway.  */
 	machine_mode mode = aarch64_reg_save_mode (regno);
 	if (mode == VNx2DImode && BYTES_BIG_ENDIAN)
+	  continue;
+
+	/* If this is a saved argument register, punt, they're handled
+	   specially */
+	if (TARGET_SAVE_ARGS && regno < aarch64_nsaved_args())
 	  continue;
 
 	poly_int64 offset = frame.reg_offset[regno];
@@ -18213,6 +18242,10 @@ aarch64_override_options_after_change_1 (struct gcc_options *opts)
      Set x_flag_omit_frame_pointer to the special value 2 to differentiate
      between -fomit-frame-pointer (1) and -fno-omit-frame-pointer (2).  */
   aarch64_use_frame_pointer = opts->x_flag_omit_frame_pointer != 1;
+
+  if (TARGET_SAVE_ARGS)
+    aarch64_use_frame_pointer = 1;
+
   if (opts->x_flag_omit_frame_pointer == 0)
     opts->x_flag_omit_frame_pointer = 2;
 
