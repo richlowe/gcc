@@ -31,7 +31,7 @@ _Bool __aarch64_have_lse_atomics
 
 /* Gate availability of __getauxval on glibc.  All AArch64-supporting glibc
    versions support it.  */
-#ifdef __gnu_linux__
+#if defined(__gnu_linux__)
 
 # define AT_HWCAP	16
 # define HWCAP_ATOMICS	(1 << 8)
@@ -45,4 +45,17 @@ init_have_lse_atomics (void)
   __aarch64_have_lse_atomics = (hwcap & HWCAP_ATOMICS) != 0;
 }
 
-#endif /* __gnu_linux__  */
+#elif defined(__illumos__) /* __gnu_linux__  */
+
+#include <sys/auxv.h>
+
+static void __attribute__((constructor))
+init_have_lse_atomics (void)
+{
+  uint32_t hwc[2] = {0};
+
+  (void) getisax(&hwc, 2);
+
+  __aarch64_have_lse_atomics = (hwc[0] & AV_AARCH64_LSE) != 0;
+}
+#endif

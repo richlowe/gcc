@@ -415,7 +415,7 @@ aarch64*-*-vxworks7*)
 	;;
 aarch64*-*-solaris2*)
 	tmake_file="${tmake_file} ${cpu_type}/t-aarch64 aarch64/t-sol2"
-	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
+	tmake_file="${tmake_file} ${cpu_type}/t-lse ${cpu_type}/t-softfp t-softfp t-crtfm"
 	extra_parts="$extra_parts crtfastmath.o crtbeginS.o crtendS.o"
 	md_unwind_header=aarch64/aarch64-unwind.h
 	;;
