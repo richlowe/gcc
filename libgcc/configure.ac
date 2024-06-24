@@ -356,6 +356,9 @@ case ${host} in
        sparc*-*-solaris2*)
          if test -f "$libgcc_libdir/crt1.o"; then libgcc_cv_solaris_crts=yes; fi
 	 ;;
+       aarch64*-*-solaris2*)
+         if test -f "$libgcc_libdir/crt1.o"; then libgcc_cv_solaris_crts=yes; fi
+	 ;;
      esac])
   if test $libgcc_cv_solaris_crts = yes; then
     AC_DEFINE(HAVE_SOLARIS_CRTS, 1,

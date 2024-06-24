@@ -3102,6 +3102,13 @@ gcc_GAS_CHECK_FEATURE([cfi directives], gcc_cv_as_cfi_directive,
 	    gcc_cv_as_cfi_directive=no
 	  fi
 	  ;;
+	aarch64-*-solaris2.*)
+	  if gcc_fn_eh_frame_ro; then
+	    gcc_cv_as_cfi_directive=yes
+	  else
+	    gcc_cv_as_cfi_directive=no
+	  fi
+	  ;;
       esac
     fi
     ;;
@@ -3257,7 +3264,7 @@ if test $gcc_cv_as_section_exclude_e = no; then
 	sparc*-*-solaris2*)
 	  conftest_s='.section "foo1", #exclude'
 	  ;;
-	i?86-*-solaris2* | x86_64-*-solaris2*)
+	i?86-*-solaris2* | x86_64-*-solaris2* | aarch64-*-solaris2*)
 	  conftest_s='.section foo1, #exclude'
 	  ;;      
       esac
@@ -6245,6 +6252,9 @@ case $target in
          if test -h "$target_libdir/gcrt1.o"; then gcc_cv_solaris_crts=yes; fi
 	 ;;
        sparc*-*-solaris2*)
+         if test -f "$target_libdir/crt1.o"; then gcc_cv_solaris_crts=yes; fi
+	 ;;
+       aarch64*-*-solaris2*)
          if test -f "$target_libdir/crt1.o"; then gcc_cv_solaris_crts=yes; fi
 	 ;;
      esac])

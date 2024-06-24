@@ -5116,6 +5116,9 @@ else
        sparc*-*-solaris2*)
          if test -f "$libgcc_libdir/crt1.o"; then libgcc_cv_solaris_crts=yes; fi
 	 ;;
+       aarch64*-*-solaris2*)
+         if test -f "$libgcc_libdir/crt1.o"; then libgcc_cv_solaris_crts=yes; fi
+	 ;;
      esac
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_solaris_crts" >&5
