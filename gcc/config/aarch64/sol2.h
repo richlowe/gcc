@@ -409,6 +409,13 @@ along with GCC; see the file COPYING3.  If not see
 /* Static stack checking is supported by means of probes.  */
 #define STACK_CHECK_STATIC_BUILTIN 1
 
+/* The illumos linker will not merge a read-only .eh_frame section with a
+   read-write .eh_frame section.  None of the encodings used with non-PIC code
+   require runtime relocations. Since there is no backwards compatibility
+   issue, we use a read-only section for .eh_frame. */
+#undef EH_TABLES_CAN_BE_READ_ONLY
+#define EH_TABLES_CAN_BE_READ_ONLY 1
+
 #define TARGET_POSIX_IO
 
 /* Solaris 10 has the float and long double forms of math functions.
