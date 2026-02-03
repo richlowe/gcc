@@ -202,7 +202,7 @@ main (int ac, char **av)
     {
       const char *real_exe_name = "g" PERSONALITY;
 #ifdef CROSS_DIRECTORY_STRUCTURE
-      real_exe_name = concat (target_machine, "-", "g" PERSONALITY, NULL);
+      real_exe_name = concat (target_machine, "-", PERSONALITY, NULL);
 #endif
       exe_name = find_a_file (&path, real_exe_name, X_OK);
       if (!exe_name)
